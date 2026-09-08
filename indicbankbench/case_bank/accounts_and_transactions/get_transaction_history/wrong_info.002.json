@@ -1,0 +1,195 @@
+{
+  "case_id": "acct.get_transaction_history.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap prototype: customer asks to see their NEFT transactions to check on a loan disbursal. The Rs 1,50,000 credit was actually IMPS — the channel=neft filter hides it, so a narrow query returns zero NEFT records while a broad query finds the disbursal. Weak model applies channel filter and reports no NEFT credits; strong model queries broadly and corrects the channel.",
+  "setup": {
+    "persona": "21-year-old male, No Occupation / Retired / Homemaker, rural Gadchiroli, Maharashtra",
+    "current_date": "2026-05-20",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0150",
+      "full_name": "Vitthal Joga",
+      "date_of_birth": "2005-06-10",
+      "gender": "male",
+      "customer_since": "2023-12-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5121",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "42 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Gadchiroli",
+        "state": "Maharashtra",
+        "pincode": "815121",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "42 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Gadchiroli",
+        "state": "Maharashtra",
+        "pincode": "815121",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3604X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTN9271001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTN9271002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "My personal loan disbursal was supposed to hit this week — Rs 1,50,000. Show me my NEFT transactions so I can confirm it arrived."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the Rs 1,50,000 credit came via IMPS, not NEFT. A channel=neft query returns zero NEFT records — the model sees nothing and reports no disbursal. A broad query finds the IMPS credit. running_balance chain: 165000 - 150000 = 15000 CREDIT; 15000 - 8500 DEBIT = 23500 (wrong direction); actually newest-first means later(first) minus = earlier. Let's compute: newest = 165000, next older = 15000 (165000-150000=15000), then 23500 (15000+8500=23500 since the 8500 was a debit that REDUCED balance, so running_balance BEFORE that debit was higher).",
+      "records": [
+        {
+          "date": "2026-05-20T10:15:00",
+          "amount": 3100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9271003",
+          "transaction_note": "UPI PAYMENT - ZOMATO ORDER",
+          "status": "success",
+          "running_balance": 161900
+        },
+        {
+          "date": "2026-05-19T14:30:00",
+          "amount": 150000,
+          "type": "credit",
+          "channel": "imps",
+          "reference_id": "TXN-9271002",
+          "transaction_note": "IMPS INWARD - PERSONAL LOAN DISBURSAL",
+          "status": "success",
+          "running_balance": 165000
+        },
+        {
+          "date": "2026-05-18T09:00:00",
+          "amount": 8500,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-9271001",
+          "transaction_note": "NEFT - RENT PAYMENT MAY 2026",
+          "status": "success",
+          "running_balance": 15000
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFTN9271001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFTN9271001"
+        },
+        "_comment": "Broad query without channel filter — a channel=neft query hides the Rs 1,50,000 IMPS credit entirely. The model must query all channels and identify that the disbursal arrived via IMPS."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer expects a Rs 1,50,000 loan disbursal via NEFT. The history shows the Rs 1,50,000 credit DID arrive — on 2026-05-19 — but it was IMPS, not NEFT. The assistant must query broadly, locate the credit, and surface that the disbursal came through IMPS rather than NEFT. Reporting that no NEFT credit exists (from a channel-filtered query) without identifying the actual IMPS disbursal fails. The model must correct the customer's channel assumption — the money arrived, just by a different rail."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "locates the Rs 1,50,000 credit on 2026-05-19 and surfaces that it arrived via IMPS (not NEFT as the customer assumed), confirming the disbursal is present. Reporting zero NEFT credits without surfacing the IMPS disbursal fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

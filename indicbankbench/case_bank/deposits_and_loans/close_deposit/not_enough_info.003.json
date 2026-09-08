@@ -1,0 +1,283 @@
+{
+  "case_id": "depl.close_deposit.not_enough_info.003",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 call-then-clarify on a WRITE-adjacent ambiguity (the sibling .001 is the pure-question twin, FD-vs-RD). The customer says 'close my deposit' while holding an FD (Rs 1,00,000) and an RD (Rs 6,000/month) — and close_deposit closes exactly one. The blessed path fetches both detail records so the question can name real candidates, then asks which one — closing either on a guess is an irreversible write on the wrong deposit. The careless failure: closing the first record fetched (the FD) without asking. Grounding the question in the two fetched products is what this adds over the bare 'which one?' of .001.",
+  "setup": {
+    "persona": "38-year-old male, No Occupation / Retired / Homemaker, rural Sultanpur, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0057",
+      "full_name": "Anand Kumar",
+      "date_of_birth": "1988-08-04",
+      "gender": "male",
+      "customer_since": "2019-05-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4795",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Sultanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "494795",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Sultanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "494795",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4731X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXCL95501",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDXCL95503",
+          "type": "fd",
+          "label": "TK Fixed Deposit"
+        },
+        {
+          "product_id": "TKRDXCL95504",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXCL95502",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need the money — close my deposit please."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDXCL95503",
+          "principal_amount": 100000,
+          "interest_rate": 6.0,
+          "tenure_months": 12,
+          "start_date": "2026-02-10",
+          "maturity_date": "2027-02-10",
+          "maturity_amount": 106167,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXCL95501",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDXCL95504",
+          "monthly_installment": 6000,
+          "installments_paid": 6,
+          "total_deposited": 36000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2026-02-05",
+          "next_debit_date": "2026-09-05",
+          "maturity_date": "2028-02-05",
+          "maturity_amount": 154514,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXCL95501",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDXCL95503"
+          ]
+        }
+      },
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDXCL95504"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "close_deposit": {
+        "required": {},
+        "_comment": "Must NOT be called — which deposit is genuinely ambiguous (an FD and an RD), and closing either on a guess is an irreversible write on the wrong product. The blessed path names both candidates and asks."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks to close 'my deposit' while holding an FD (Rs 1,00,000, maturing 2027-02-10) and an RD (Rs 6,000/month, maturing 2028-02-05). close_deposit closes exactly one deposit, so the assistant should fetch both detail records and ask which one the customer wants closed — naming the two candidates — rather than closing one on a guess. Closing either deposit without asking, or asking 'is it the FD?' while already closing it, is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant fetches both deposit records and asks which one to close, naming the FD and the RD — rather than closing one on a guess. Any close_deposit call fails; a question that grounds both candidates passes."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

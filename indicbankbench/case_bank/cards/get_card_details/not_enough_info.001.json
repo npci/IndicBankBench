@@ -1,0 +1,230 @@
+{
+  "case_id": "cards.get_card_details.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: two cards (debit+credit), customer says 'check my card' singular. Must ask which.",
+  "setup": {
+    "persona": "26-year-old female, No Occupation / Retired / Homemaker, urban Amreli, Gujarat",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0362",
+      "full_name": "Sonalben Patel",
+      "date_of_birth": "2000-08-06",
+      "gender": "female",
+      "customer_since": "2019-03-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4035",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Amreli",
+        "state": "Gujarat",
+        "pincode": "384035",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Amreli",
+        "state": "Gujarat",
+        "pincode": "384035",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9209X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRD7100001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRD7100002",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCCRD7100003",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "calculate_emi",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you check my card? I want to see the details."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only.",
+      "records": [
+        {
+          "card_id": "TKCCRD7100002",
+          "masked_number": "****4321",
+          "card_type": "debit",
+          "network": "RuPay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2028-06"
+        },
+        {
+          "card_id": "TKCCRD7100003",
+          "masked_number": "****9876",
+          "card_type": "credit",
+          "network": "Visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 215000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2027-11"
+        }
+      ]
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Fetching both cards is an acceptable resolution for ambiguous singular phrasing."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer has two cards (debit and credit) and asks to check 'my card' without specifying which. The assistant must ask ONE focused question to disambiguate and must NOT call get_card_details or guess."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which card (debit or credit) rather than calling get_card_details or guessing. Calling the tool fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

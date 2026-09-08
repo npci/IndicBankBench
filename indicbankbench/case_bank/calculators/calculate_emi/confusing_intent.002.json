@@ -1,0 +1,203 @@
+{
+  "case_id": "calc.calculate_emi.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction to an earlier argument (loan tenure: 4 years -> 5 years) on a rate->EMI chain with a derive-args dependency (A4: the EMI's rate must come from the rates tool output, so batching both calls in one turn fails). The corrected tenure changes the EMI from 20,483 to 17,195. Named careless failure mode: answering with the 4-year EMI because the model never re-runs the calculator after the correction (or carries tenure=48 into the call) — the arg_gate pins tenure=60 and rate=10.5, so the stale call fails A3.",
+  "setup": {
+    "persona": "40-year-old female, Handicraft Workers in Wood and Related, rural Bhind, Madhya Pradesh",
+    "current_date": "2026-08-12",
+    "current_time": "14:30",
+    "login_context": {
+      "customer_id": "SCN0575",
+      "full_name": "Meena Bai",
+      "date_of_birth": "1986-09-21",
+      "gender": "female",
+      "customer_since": "2020-10-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0216",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "57 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Bhind",
+        "state": "Madhya Pradesh",
+        "pincode": "330216",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "57 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Bhind",
+        "state": "Madhya Pradesh",
+        "pincode": "330216",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2462X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCEI4502001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCEI4502002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the monthly EMI on a ₹8,00,000 personal loan for 4 years?"
+    },
+    {
+      "content": "Actually, make that 5 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "slab": "personal loan",
+          "rate": 10.5
+        }
+      ],
+      "static_output": {
+        "product_type": "personal_loan",
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 17195,
+        "total_interest": 231707,
+        "total_payment": 1031707,
+        "schedule": [
+          {
+            "installment_no": 1,
+            "principal_component": 10195,
+            "interest_component": 7000,
+            "closing_balance": 789805
+          },
+          {
+            "installment_no": 60,
+            "principal_component": 17045,
+            "interest_component": 150,
+            "closing_balance": 0
+          }
+        ]
+      },
+      "_comment": "8,00,000 at 10.5% over 60 months: EMI = 17,195.12 -> 17,195; total payment 10,31,707 -> interest 2,31,707. Month 1 interest = 800000 x 10.5/1200 = 7,000; closing balance chains to 0 at installment 60."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 60
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_emi"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "personal_loan"
+        },
+        "_comment": "The rate must be sourced from the rates tool (10.5), never from memory."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 800000,
+          "rate": 10.5
+        },
+        "_comment": "principal and the tool-sourced rate are invariant across the pre-correction (48mo) and corrected (60mo) calls — the mid-flight correction means a compliant model legitimately calls once at each tenure. tenure_months is deliberately NOT pinned (confusing_intent.001 precedent): the corrected final tenure (60) is verified by the R bar, not A3. A rate other than the tool-sourced 10.5 still fails A3."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the EMI on a 4-year 8,00,000 personal loan, then corrects the tenure to 5 years. The assistant must compute with the corrected tenure: fetch the personal loan rate (10.5) from get_deposit_loan_rates and call calculate_emi(principal=800000, rate=10.5, tenure_months=60) = INR 17,195 per month (total interest 2,31,707). Reporting the pre-correction 4-year EMI (INR 20,483) is the careless failure this case catches — the correction must propagate into the calculator call and the final answer, and the rate must come from the rates tool (A4 ordering: rates before EMI)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the EMI is computed at the CORRECTED 5-year tenure with the tool-sourced 10.5 rate and reported as INR 17,195 per month; FAIL if the 4-year figure (INR 20,483) is reported or the rate is not sourced from the rates tool."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

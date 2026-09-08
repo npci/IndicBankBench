@@ -1,0 +1,200 @@
+{
+  "case_id": "calc.calculate_rd_maturity.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 product routing (FD vs RD): the customer describes depositing a FIXED AMOUNT EVERY MONTH — that is a Recurring Deposit, not a Fixed Deposit. The signal is 'every month'. The trap is calculate_fd_maturity, which takes a lump-sum principal: feeding ₹5,000 into it as an FD principal produces a nonsensically tiny maturity. The assistant must infer RD, source the RD rate, and call calculate_rd_maturity(monthly_installment=5000, tenure=24). The word 'FD' is never used by the customer, so this is intent inference, not clarification. Using calculate_fd_maturity fails A2 (calculate_rd_maturity is expected; FD is not in the allowed set), so the wrong-tool error is caught deterministically.",
+  "setup": {
+    "persona": "40-year-old male, Shot Firer, rural Khammam, Telangana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0014",
+      "full_name": "Shriram Venkati",
+      "date_of_birth": "1986-01-23",
+      "gender": "male",
+      "customer_since": "2012-05-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3640",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "1 MG Road",
+        "line2": "Indiranagar",
+        "city": "Khammam",
+        "state": "Telangana",
+        "pincode": "963640",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "1 MG Road",
+        "line2": "Indiranagar",
+        "city": "Khammam",
+        "state": "Telangana",
+        "pincode": "963640",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1313X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGBJ5838001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGBJ5838002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_deposit_closure_quote",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to save ₹5,000 every month for the next 2 years. How much will I have at the end?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 128762,
+        "interest_earned": 8762,
+        "total_principal_invested": 120000
+      },
+      "_comment": "₹5,000/month for 24 months at 6.75%, quarterly compounding = 128761.64 -> 128762 (interest 8762) per CONVENTIONS.md §2. It was 128100/8100 — roughly 6.48% on a simple-interest average-balance basis, i.e. computed at about the FD rate without compounding, which is exactly the pair of errors §2 exists to prevent. The case makes the model SOURCE 6.75%, so a result that cannot be derived from 6.75% contradicts a model that checks its own arithmetic. deposits create_rd/not_enough_info.001 already published 128762 for the identical calculation."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — this is the WRONG tool here. If a model mistakenly treats ₹5,000/month as an FD lump sum, it lands here; A2 flags that the wrong tool was used.",
+      "output": {
+        "maturity_amount": 5350,
+        "interest_earned": 350,
+        "total_principal_invested": 5000
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "Must query the RD rate card, not FD — 'every month' is a recurring deposit."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        }
+      },
+      "_comment": "calculate_fd_maturity is exposed but must NOT be used — depositing a fixed amount monthly is an RD. A calculate_fd_maturity call fails A2 (it is not in the allowed set).",
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer describes putting aside ₹5,000 every month for 2 years — a Recurring Deposit, even though they never say 'RD'. The assistant should infer this (the 'every month' signal), source the RD rate from get_deposit_loan_rates (6.75%), and call calculate_rd_maturity with monthly_installment 5000, rate 6.75, tenure 24, reporting maturity ₹1,28,762 and interest ₹8,762 on ₹1,20,000 invested. Treating ₹5,000 as an FD lump sum (calculate_fd_maturity) is the misrouting this case targets and gives a nonsensical figure. Asking 'did you mean an RD?' is acceptable but weaker — the intent is clear enough to act on."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant recognises a monthly-savings plan as a Recurring Deposit, sources the RD rate, and reports the RD maturity (₹1,28,762 on ₹1,20,000 invested, ₹8,762 interest). Treating it as an FD lump sum, or reporting an FD figure, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

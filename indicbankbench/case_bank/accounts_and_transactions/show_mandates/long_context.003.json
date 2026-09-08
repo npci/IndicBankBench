@@ -1,0 +1,295 @@
+{
+  "case_id": "acct.show_mandates.long_context.003",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 cross-account filter under noise (the siblings .001/.002 covered summarization and staleness). The customer holds a salary and a savings account, each with mandates. A long prior thread chatted about the salary account's mandates (Netflix, HDFC SIP, gym). The live ask is 'what's still active on my SAVINGS account?' — show_mandates returns rows for both accounts unless filtered, so the model must pass the savings account_id and report only its rows (LIC premium, electricity autopay, insurance premium) with their statuses. The careless failure: reciting the salary-account mandates (the ones from the conversation) or merging both accounts into one list.",
+  "setup": {
+    "persona": "38-year-old male, Knitting-Machine Operator, Automatic, urban Mainpuri, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0399",
+      "full_name": "Krishna Singh",
+      "date_of_birth": "1988-03-26",
+      "gender": "male",
+      "customer_since": "2014-10-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3182",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "63 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Mainpuri",
+        "state": "Uttar Pradesh",
+        "pincode": "793182",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "63 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Mainpuri",
+        "state": "Uttar Pradesh",
+        "pincode": "793182",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6341X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXML61001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKXML61002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXML61003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What all is debited automatically from my salary account?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "show_mandates",
+              "arguments": {
+                "account_id": "TKXML61001"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"mandates\": [{\"mandate_id\": \"MNDXML61011\", \"type\": \"si\", \"payee\": \"Netflix\", \"amount\": 649, \"frequency\": \"monthly\", \"status\": \"active\", \"next_debit_date\": \"2026-09-01\", \"account_id\": \"TKXML61001\"}, {\"mandate_id\": \"MNDXML61012\", \"type\": \"si\", \"payee\": \"HDFC Mutual Fund SIP\", \"amount\": 5000, \"frequency\": \"monthly\", \"status\": \"active\", \"next_debit_date\": \"2026-09-05\", \"account_id\": \"TKXML61001\"}, {\"mandate_id\": \"MNDXML61013\", \"type\": \"upi_autopay\", \"payee\": \"FitZone Gym\", \"amount\": 1500, \"frequency\": \"monthly\", \"status\": \"paused\", \"next_debit_date\": \"2026-10-01\", \"account_id\": \"TKXML61001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "On your salary account: Netflix Rs 649 (active), HDFC SIP Rs 5,000 (active), FitZone Gym Rs 1,500 (paused)."
+      },
+      {
+        "role": "user",
+        "content": "Pause the gym one for now."
+      },
+      {
+        "role": "assistant",
+        "content": "The gym mandate is already paused — it shows paused on record."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "create_rd",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "And what's still active on my savings account?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "mandate_id": "MNDXML61021",
+          "type": "si",
+          "payee": "LIC Premium",
+          "amount": 2200,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-10",
+          "account_id": "TKXML61002"
+        },
+        {
+          "mandate_id": "MNDXML61022",
+          "type": "upi_autopay",
+          "payee": "BESCOM Electricity",
+          "amount": 1800,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-12",
+          "account_id": "TKXML61002"
+        },
+        {
+          "mandate_id": "MNDXML61023",
+          "type": "si",
+          "payee": "HDFC Ergo Insurance",
+          "amount": 950,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-15",
+          "account_id": "TKXML61002"
+        },
+        {
+          "mandate_id": "MNDXML61024",
+          "type": "si",
+          "payee": "Spotify",
+          "amount": 119,
+          "frequency": "monthly",
+          "status": "cancelled",
+          "next_debit_date": "2026-08-01",
+          "account_id": "TKXML61002"
+        },
+        {
+          "mandate_id": "MNDXML61011",
+          "type": "si",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKXML61001"
+        },
+        {
+          "mandate_id": "MNDXML61012",
+          "type": "si",
+          "payee": "HDFC Mutual Fund SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKXML61001"
+        },
+        {
+          "mandate_id": "MNDXML61013",
+          "type": "upi_autopay",
+          "payee": "FitZone Gym",
+          "amount": 1500,
+          "frequency": "monthly",
+          "status": "paused",
+          "next_debit_date": "2026-10-01",
+          "account_id": "TKXML61001"
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKXML61002"
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKXML61002"
+        },
+        "forbidden_ids": [
+          "TKXML61001"
+        ],
+        "_comment": "The question is about the SAVINGS account. Passing the salary account or no account at all (which returns both accounts' rows) is the careless failure — the reply must then be about savings only."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks what is still active on the SAVINGS account after a long thread about the salary account's mandates. The assistant must fetch show_mandates for the savings account only and report: LIC Premium Rs 2,200 (active), BESCOM Electricity Rs 1,800 (active) and HDFC Ergo Insurance Rs 950 (active) — with Spotify cancelled. Reciting the salary-account mandates (Netflix, HDFC SIP, gym — the ones already discussed) or mixing both accounts into one list is the careless failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant queries the SAVINGS account and reports its active mandates only (LIC Rs 2,200, BESCOM Rs 1,800, HDFC Ergo Rs 950; Spotify cancelled), without dragging in the salary account's mandates. Answering from the salary-account rows or merging both accounts fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

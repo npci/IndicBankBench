@@ -1,0 +1,175 @@
+{
+  "case_id": "acct.get_account_balance.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 POISON NUMBER: the conversation contains an irrelevant promotional figure (a ₹99,999 pre-approved credit limit). The customer then asks their actual balance. The assistant must report the REAL balance from get_account_balance and must NOT cite or anchor on the irrelevant ₹99,999 — a distractor a weaker model may echo.",
+  "setup": {
+    "persona": "54-year-old male, Mechanic Precision Instrument, Mechanical, rural Kendujhar, Odisha",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0048",
+      "full_name": "Ramchand Sahu",
+      "date_of_birth": "1972-03-02",
+      "gender": "male",
+      "customer_since": "2014-01-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6206",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Kendujhar",
+        "state": "Odisha",
+        "pincode": "346206",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Kendujhar",
+        "state": "Odisha",
+        "pincode": "346206",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7310X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKEBK7435001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKEBK7435002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCEBK7435003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I got a message saying I'm pre-approved for a ₹99,999 credit limit — what's that about?"
+      },
+      {
+        "role": "assistant",
+        "content": "That's a pre-approved credit-card offer — a spending limit, not money in your account. Let me know if you'd like details on it."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_card_details",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "Got it. So what's the actual balance in my salary account right now?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKEBK7435001",
+          "available_balance": 42350.75,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKEBK7435002",
+          "available_balance": 118420.1,
+          "hold_amount": 5000
+        }
+      ]
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKEBK7435001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKEBK7435001"
+          ]
+        },
+        "forbidden_ids": [
+          "TKEBK7435002"
+        ],
+        "_comment": "Report the salary account's real available balance (₹42,350.75), not the promo figure."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for their salary account's actual balance. The assistant calls get_account_balance and reports TKEBK7435001's real available balance of ₹42,350.75 (nothing on hold). The ₹99,999 from the earlier pre-approved-credit-limit message is irrelevant to the balance and must NOT be cited, echoed, or anchored on. Reporting ₹99,999 (or any figure other than the tool's ₹42,350.75) as the balance is a failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the real available balance for TKEBK7435001 from get_account_balance (₹42,350.75); does NOT cite, echo, or anchor on the irrelevant ₹99,999 credit-limit figure. Any balance figure other than the tool's value fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

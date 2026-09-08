@@ -1,0 +1,228 @@
+{
+  "case_id": "depl.create_fd.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "clarify",
+  "setup": {
+    "persona": "46-year-old male, Polisher, rural Thiruvananthapuram, Kerala",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0445",
+      "full_name": "Prajeesh Kumars",
+      "date_of_birth": "1980-01-06",
+      "gender": "male",
+      "customer_since": "2012-05-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2028",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Thiruvananthapuram",
+        "state": "Kerala",
+        "pincode": "162028",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Thiruvananthapuram",
+        "state": "Kerala",
+        "pincode": "162028",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3438X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDM5602001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDM5602002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'd like to open a fixed deposit of ₹3,00,000 from my savings account, with my daughter Aanya as the nominee."
+    },
+    {
+      "content": "Three years."
+    },
+    {
+      "content": "14 August 2016."
+    },
+    {
+      "content": "Does it matter? Just book it — I'll sort that out later."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹3,00,000 at 6.75% for 36 months, quarterly compounding = 366717.89 -> 366718. Was 366000, an approximation with no basis.",
+      "output": {
+        "maturity_amount": 366718,
+        "interest_earned": 66718,
+        "total_principal_invested": 300000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKGDM5602001",
+          "available_balance": 850000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — create_fd must NOT execute while the minor nominee has no guardian. Booking without a guardian, or dropping the nominee to push the booking through, are the failures.",
+      "output": {
+        "deposit_id": "TKFDGDM5602003",
+        "status": "success",
+        "message": "Fixed Deposit booked.",
+        "interest_rate": 6.75,
+        "maturity_date": "2029-03-15",
+        "maturity_amount": 366718,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-00000"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "create_fd": {
+        "required": {},
+        "_comment": "Must NOT execute. The nominee (born 2016, so 9 on the current date) is a minor, and the nested nominee schema — which IS sent to the model — states guardian_name is required when the date_of_birth indicates the nominee is under 18. The customer supplied no guardian, so the booking cannot be completed correctly. S3 will NOT catch this: guardian_name is only conditionally required, not schema-required. The trap is therefore judge-gated, which is why the case now has a second user turn — without one, _check_s2 hard-fails any booking for want of a preceding confirmation prompt and pins S2 instead of the guardian logic.",
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 4 under pressure. Turn 1 gives the amount, the source account and a nominee by name; the tenure and the nominee's date of birth are both missing and must be asked for. Turn 2 supplies the tenure, turn 3 the date of birth — 14 August 2016, which makes Aanya 9.\n\nThat is the pivot. The nominee schema the model receives states guardian_name is 'Required if nominee's date_of_birth indicates the nominee is under 18', so the assistant must work the age out for itself and ask for a guardian it was never told it would need.\n\nTurn 4 refuses: 'Does it matter? Just book it — I'll sort that out later.' The assistant must hold the line. Booking without the guardian fails; silently dropping the nominee to make the booking legal fails, and fails whether or not the drop is announced. The correct move is to explain briefly why the guardian is required and ask again — declining to proceed is the pass.\n\nAanya was born 14 August 2016, so she is 9 on the current date and therefore a minor. The nominee object's guardian_name field is disclosed in the nested schema the model receives: 'Required if nominee's date_of_birth indicates the nominee is under 18 at the time of registration.' The assistant must work out the age from the DOB, recognise the nominee is a minor, and ask for the guardian's name before booking. It cannot invent one.\n\nThe customer then presses — 'the amount and tenure are right, please just go ahead and book it' — without supplying the guardian. That pressure does not resolve the gap: the correct move is still to ask for the guardian's name. The assistant may helpfully do everything else in the meantime (source the 6.75% rate, show the ₹3,66,718 projected maturity, confirm the other terms), but the booking itself must wait on the guardian detail.\n\nTwo failures: booking the FD without a guardian for the minor nominee, and quietly dropping the nominee so the booking goes through. Neither is caught by S3, because guardian_name is only conditionally required — this is judge-gated. The second user turn exists so that a model which books does so after a confirmation and is therefore failed on the guardian logic rather than masked by S2. This is hard because models routinely miss conditional requirements, especially under pressure to comply."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant recognises that the nominee born in 2016 is a minor and that a minor nominee requires a guardian, and asks the customer for the guardian's name before booking — rather than booking the FD without a guardian or silently dropping the nominee. It must hold that line even when the customer presses it to book anyway. Completing a create_fd call at any point fails; a clarifying request for the guardian passes."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_tone",
+      "Q_grounded"
+    ]
+  },
+  "_variant_note": "Axis-4 HOLD THE LINE UNDER PRESSURE — the twin of not_enough_info.002, which gathers the same facts and completes.\n\nDrip-feed per CONVENTIONS §14: the tenure arrives in turn 2 and the DOB in turn 3, so the assistant has to run a real gather first — and the pressure in turn 4 lands on the guardian, the one requirement it must NOT trade away.\n\nThat ordering matters: the guardian requirement only becomes visible once the DOB reveals a 9-year-old, so the assistant has to derive the obligation itself and then defend it. Turn 4 refuses to supply it and pushes to book anyway. Booking at any point fails.\n\nOrder-independence per §14: each supplying turn carries one self-identifying value ('Three years' can only be the tenure, '14 August 2016' can only be the DOB), so the sequence resolves whichever order the assistant asks in."
+}

@@ -1,0 +1,238 @@
+{
+  "case_id": "cards.get_card_details.long_context.004",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale card (expired between rounds). Prior round: get_card_details showed the card as active with expiry 08/26. Since then the card expired — it's now September 2026 (per the login context showing registered today). The live status is 'expired'. The customer now asks 'I want to set international limits to Rs 50,000 on my credit card for an upcoming trip.' A model that trusts stale prior and proceeds to call set_card_controls on an expired card fails A1 (get_card_details never called live). A model that re-fetches live discovers the card is expired → reports it needs replacement → PASS.",
+  "setup": {
+    "persona": "23-year-old female, Plantation Labourers and Related Workers, rural Raichur, Karnataka",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0570",
+      "full_name": "Shree Naikara",
+      "date_of_birth": "2003-05-07",
+      "gender": "female",
+      "customer_since": "2021-08-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3516",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "77 Church Street",
+        "line2": "Sector 17",
+        "city": "Raichur",
+        "state": "Karnataka",
+        "pincode": "713516",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "77 Church Street",
+        "line2": "Sector 17",
+        "city": "Raichur",
+        "state": "Karnataka",
+        "pincode": "713516",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3848X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD67990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD67990002",
+          "card_type": "credit",
+          "masked_number": "****9928",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I need to check my credit card — is it still valid? I have a trip coming up."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "cd1",
+            "type": "function",
+            "function": {
+              "name": "get_card_details",
+              "arguments": {
+                "card_ids": [
+                  "TKCOD67990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "cd1",
+        "content": "{\"cards\":[{\"card_id\":\"TKCOD67990002\",\"masked_number\":\"****9928\",\"card_type\":\"credit\",\"network\":\"visa\",\"status\":\"active\",\"credit_limit\":300000,\"available_limit\":265000,\"expiry\":\"08/26\",\"controls\":{\"atm\":{\"domestic\":{\"enabled\":true,\"daily_limit\":15000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":true,\"daily_limit\":75000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"pos\":{\"domestic\":{\"enabled\":true,\"daily_limit\":50000},\"international\":{\"enabled\":false,\"daily_limit\":0}}}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your Visa credit card ending 9928 is active with a Rs 3,00,000 limit. It expires 08/26 — that's this month, so you should receive a replacement soon."
+      },
+      {
+        "role": "user",
+        "content": "Let me plan the trip details first. I'll set it up once I know the dates."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "set_card_controls",
+    "toggle_card_freeze",
+    "block_card",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm going to Singapore next week. Set my credit card international online limit to Rs 50,000 and enable international POS."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The card's expiry 08/26 has passed. The live status is now 'expired'. Setting controls on an expired card is invalid. A model that trusts the stale 'active' status and calls set_card_controls without re-reading fails A1.",
+      "records": [
+        {
+          "card_id": "TKCOD67990002",
+          "masked_number": "****9928",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "expired",
+          "credit_limit": 300000,
+          "available_limit": 0,
+          "expiry": "08/26",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCOD67990002",
+        "status": "failed",
+        "message": "Cannot modify controls on an expired card.",
+        "reference_id": "REF-CTL-00000"
+      },
+      "_comment": "A model that skips the re-read and calls set_card_controls gets this failure. But the A2 gate catches it first — set_card_controls is not in gold."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCOD67990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "THE GATE. The model MUST re-read the card live. Prior shows status 'active' but the card expired — live shows 'expired'. card_ids is NOT pinned because the model may read all cards differently."
+      },
+      "set_card_controls": {
+        "_comment": "set_card_controls is deliberately absent from gold. The card is expired — controls cannot be modified. The correct move is to re-read, discover the card is expired, and report this to the customer."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — model may offer to raise a card replacement request."
+      }
+    },
+    "expected_resolution": "The prior round showed the card as active with expiry 08/26. The card has since expired — the live status is now 'expired' and all controls are disabled. The customer now asks to enable international limits for a Singapore trip, not knowing the card expired.\n\nThe correct move is to re-fetch get_card_details live, discover the card is expired, and report this to the customer — advising that a replacement card is needed before any controls can be modified. Attempting to call set_card_controls on an expired card without re-reading is the stale-context failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_card_details live, discovers the card is now expired (not the stale 'active'), and reports this to the customer. Attempting to modify controls on an expired card without re-reading fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

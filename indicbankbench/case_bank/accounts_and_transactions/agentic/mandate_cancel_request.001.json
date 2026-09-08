@@ -1,0 +1,251 @@
+{
+  "case_id": "acct.agentic.mandate_cancel_request.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — read-then-write where the write's target derives from the read's output: the customer names the payee (FitPro Gym), and the mandate's identity (MND-5208002) exists ONLY in the show_mandates result, so the request description must be built from that fetch (A4 order). No tool can cancel a mandate — the description of show_mandates directs to raise_request — so the correct path is list, then raise a service_quality request citing the right mandate. Named careless failure modes: (a) telling the customer nothing can be done (the tool description says route via raise_request); (b) raising a request against the wrong mandate (Netflix or the LIC premium — both also monthly/yearly debits in the same list).",
+  "setup": {
+    "persona": "28-year-old male, Mukadam, Salt Production, rural Buxar, Bihar",
+    "current_date": "2026-08-16",
+    "current_time": "13:30",
+    "login_context": {
+      "customer_id": "SCN0122",
+      "full_name": "Shivsagar Kumar",
+      "date_of_birth": "1998-10-12",
+      "gender": "male",
+      "customer_since": "2021-01-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7149",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Buxar",
+        "state": "Bihar",
+        "pincode": "347149",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Buxar",
+        "state": "Bihar",
+        "pincode": "347149",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8109X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMDR5208001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMDR5208002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "FitPro Gym has been debiting me monthly even after I cancelled my membership — please get that mandate cancelled."
+    },
+    {
+      "content": "Yes, please go ahead and raise the service quality request."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "mandate_id": "MND-MDR-5208001",
+          "type": "upi_autopay",
+          "payee": "FitPro Gym",
+          "amount": 999,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKMDR5208001"
+        },
+        {
+          "mandate_id": "MND-MDR-5208002",
+          "type": "upi_autopay",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-03",
+          "account_id": "TKMDR5208001"
+        },
+        {
+          "mandate_id": "MND-MDR-5208003",
+          "type": "si",
+          "payee": "LIC Premium",
+          "amount": 12400,
+          "frequency": "yearly",
+          "status": "active",
+          "next_debit_date": "2027-02-14",
+          "account_id": "TKMDR5208001"
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-SQ-52081",
+        "status": "success",
+        "message": "Service quality request registered and routed to the mandates team."
+      },
+      "_comment": "category is echoed by the executor."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net. There is no transaction to locate for a mandate cancellation, so this read is optional noise."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-16T13:30:00",
+        "last_update": "2026-08-16T13:30:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKMDR5208001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "service_quality",
+          "account_id": "TKMDR5208001",
+          "description": "Customer requests cancellation of the FitPro Gym mandate (MND-MDR-5208001, Rs 999 monthly) on savings account TKMDR5208001 — membership already cancelled with the merchant but debits continue."
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "show_mandates",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKMDR5208001"
+        },
+        "_comment": "The FitPro Gym mandate (and its ID) is only obtainable from this read; the write's description derives from it."
+      },
+      "raise_request": {
+        "required": {
+          "category": "service_quality"
+        },
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKMDR5208001",
+              null
+            ]
+          }
+        },
+        "_comment": "No tool can cancel a mandate directly; the disclosed path is raise_request. The request must target the FitPro Gym mandate (judged on the description), with the customer-stated category."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer wants the FitPro Gym monthly mandate (Rs 999) cancelled. No tool cancels a mandate, so the assistant must first list the mandates on the savings account (show_mandates) to identify the FitPro Gym entry (MND-MDR-5208001) — distinguishing it from the Netflix (Rs 649 monthly) and LIC Premium (Rs 12,400 yearly) mandates — then, per the disclosed path, raise a service_quality request citing that mandate, and report the request id (REQ-SQ-52081). Refusing to act at all ('no tool can cancel') without routing via raise_request, or raising a request against the wrong mandate, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant identifies the FitPro Gym mandate from show_mandates and raises a service_quality request targeting it (after confirmation), then reports the request id; FAIL if it claims nothing can be done without routing to raise_request, or if the request targets the Netflix or LIC mandate."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,273 @@
+{
+  "case_id": "depl.update_deposit_renewal.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-6 filter-trap: customer says 'change the renewal on my FD to no_renewal — the one I opened last year in March, I need the cash when it matures.' Has two FDs, both 'last year': March 2025 FD (Rs 2,00,000 at 6.75%, matures soon) and Nov 2025 FD (Rs 3,00,000 at 6.5%). Customer's description matches the March FD. A model that quarries only the matching FD (deposit_ids filter) changes its renewal but misses the Nov FD which also has renew_principal_interest — and BOTH need review. Broad query surfaces both FDs and their renewal instructions.",
+  "setup": {
+    "persona": "30-year-old male, Slaughterer, rural Banas Kantha, Gujarat",
+    "current_date": "2026-08-24",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0324",
+      "full_name": "Yogesh Kumar",
+      "date_of_birth": "1996-11-18",
+      "gender": "male",
+      "customer_since": "2022-09-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1014",
+      "registered_email": "y*****@gmail.com",
+      "communication_address": {
+        "line1": "95 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Banas Kantha",
+        "state": "Gujarat",
+        "pincode": "531014",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "95 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Banas Kantha",
+        "state": "Gujarat",
+        "pincode": "531014",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5842X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKURD9610001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDU9610002",
+          "type": "fd",
+          "label": "Wealth Builder FD"
+        },
+        {
+          "product_id": "TKFDU9610003",
+          "type": "fd",
+          "label": "Safe Return FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCUR9610004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Change the renewal on my FD to no_renewal — the one I opened in March last year. I'll need the cash when it matures."
+    },
+    {
+      "content": "Ok, go ahead and update it."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer names 'March last year' as identifier for the FD. Wealth Builder FD (TKFDU9610002, Rs 2,00,000 at 6.75%, 18mo, started Mar 2025, matures Sept 2026 — soon!) has maturity_instruction: renew_principal_interest. Safe Return FD (TKFDU9610003, Rs 3,00,000 at 6.5%, 24mo, started Nov 2025) ALSO has renew_principal_interest. A deposit_ids filter for just the March FD changes its renewal but misses the Nov FD which ALSO needs review. Broad query surfaces both FDs with their renewal instructions. Wealth Builder Maturity: 200000*(1+6.75/400)^(4*18/12) = 200000*(1+6.75/400)^6 = 200000*1.1062 = 221240.",
+      "records": [
+        {
+          "deposit_id": "TKFDU9610002",
+          "principal_amount": 200000,
+          "interest_rate": 6.75,
+          "tenure_months": 18,
+          "start_date": "2025-03-15",
+          "maturity_date": "2026-09-15",
+          "maturity_amount": 221240,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "renew_principal_interest",
+          "payout_account": "TKURD9610001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDU9610003",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-11-01",
+          "maturity_date": "2027-11-01",
+          "maturity_amount": 341611,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "renew_principal_interest",
+          "payout_account": "TKURD9610001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDU9610002",
+        "instruction": "no_renewal",
+        "maturity_date": "2026-09-15",
+        "status": "success",
+        "message": "Maturity instruction updated to no_renewal.",
+        "reference_id": "REF-REN-96101"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDU9610002",
+            "TKFDU9610003"
+          ]
+        }
+      },
+      {
+        "tool": "update_deposit_renewal",
+        "arguments": {
+          "deposit_id": "TKFDU9610002",
+          "instruction": "no_renewal"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "update_deposit_renewal"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDU9610002",
+                "TKFDU9610003"
+              ],
+              [
+                "TKFDU9610003",
+                "TKFDU9610002"
+              ]
+            ]
+          }
+        },
+        "_comment": "FILTER TRAP: customer names the March FD specifically. Broad query reveals the Nov FD also has renew_principal_interest. Filtering to only one FD's deposit_id hides the second FD's instruction."
+      },
+      "update_deposit_renewal": {
+        "required": {
+          "deposit_id": "TKFDU9610002",
+          "instruction": "no_renewal"
+        },
+        "_comment": "Change the March FD's instruction to no_renewal. But should also flag the Nov FD with renew_principal_interest."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer wants to change the March 2025 FD's renewal to no_renewal. The Wealth Builder FD (Rs 2,00,000, matures Sep 2026 — only 22 days!) has renew_principal_interest and should be changed as requested. But the Safe Return FD (Rs 3,00,000, started Nov 2025) ALSO has renew_principal_interest — if the customer wants to review all auto-renewals, this one should be flagged too. The assistant must query both FDs, change the March FD's instruction, AND proactively ask about the Nov FD's renewal instruction. Updating only the March FD without surfacing the Nov FD fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both FDs, updates the March FD (matures Sep 2026) to no_renewal, AND proactively asks about the Nov FD's renew_principal_interest instruction. Updating only the March FD without mentioning the Nov FD fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

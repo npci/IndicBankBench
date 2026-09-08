@@ -1,0 +1,232 @@
+{
+  "case_id": "csc.raise_request.long_context.002",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior raised dispute for TXN-RSE-00001. New unauthorised debit TXN-RSE-00002 from different merchant. Must look up new transaction via get_transaction_history, then raise fresh request.",
+  "setup": {
+    "persona": "54-year-old female, No Occupation / Retired / Homemaker, rural Lakhimpur, Assam",
+    "current_date": "2026-10-12",
+    "current_time": "11:30",
+    "login_context": {
+      "customer_id": "SCN0114",
+      "full_name": "Sabla Bibi",
+      "date_of_birth": "1972-02-05",
+      "gender": "female",
+      "customer_since": "2013-03-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9937",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Lakhimpur",
+        "state": "Assam",
+        "pincode": "919937",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Lakhimpur",
+        "state": "Assam",
+        "pincode": "919937",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6338X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRRA9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRRA9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I see an unauthorized debit of Rs 3,200."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "d1",
+            "type": "function",
+            "function": {
+              "name": "raise_request",
+              "arguments": {
+                "category": "unauthorized_debit",
+                "account_id": "TKRRA9700001",
+                "related_transaction_id": "TXN-RSE-00001",
+                "description": "Unauthorised debit from unknown merchant."
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "d1",
+        "content": "{\"request_id\":\"REQ-DSP-9700001\",\"status\":\"raised\",\"category\":\"unauthorized_debit\",\"message\":\"Dispute raised.\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Done — dispute REQ-DSP-9700001 raised for the unauthorized debit."
+      },
+      {
+        "role": "user",
+        "content": "Thanks. I hope there aren't more of these."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "raise_request",
+    "get_all_requests",
+    "get_request_status",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "There IS another one — I just spotted a debit for Rs 4,500 to some company called QUICKPAY on October 10. I definitely didn't authorise that. Can you raise another dispute?"
+    },
+    {
+      "content": "Yes, raise the dispute."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "New unauthorised debit TXN-RSE-00002.",
+      "records": [
+        {
+          "date": "2026-10-10T08:15:00",
+          "amount": 4500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-RSE-00002",
+          "transaction_note": "UPI - QUICKPAY SERVICES",
+          "status": "success",
+          "running_balance": 45600
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-DSP-9700002",
+        "status": "raised",
+        "category": "unauthorized_debit",
+        "message": "Dispute raised for Rs 4,500 QUICKPAY debit."
+      }
+    },
+    "get_all_requests": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": ""
+      }
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKRRA9700001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "account_id": "TKRRA9700001",
+          "related_transaction_id": "TXN-RSE-00002",
+          "description": "Unauthorised debit of Rs 4,500 from QUICKPAY."
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKRRA9700001"
+        }
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "account_id": "TKRRA9700001",
+          "related_transaction_id": "TXN-RSE-00002"
+        },
+        "forbidden_ids": [
+          "TXN-RSE-00001"
+        ],
+        "_comment": "Must be new dispute for TXN-RSE-00002, NOT old one."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "expected_resolution": "Prior raised dispute for TXN-RSE-00001. Now NEW unauthorised debit TXN-RSE-00002. Must verify via get_transaction_history, then raise new raise_request for correct reference. Re-submitting old dispute fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "verifies TXN-RSE-00002 exists and raises new dispute for it — not stale TXN-RSE-00001. Re-submitting old dispute fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

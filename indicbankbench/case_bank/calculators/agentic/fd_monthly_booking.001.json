@@ -1,0 +1,258 @@
+{
+  "case_id": "calc.agentic.fd_monthly_booking.001",
+  "axis": "general_agentic_multitool",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates+calculate_fd_maturity+get_account_balance+create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — four-tool booking chain whose trap is the monthly-payout convention: for payout_type monthly the calculator returns maturity = PRINCIPAL ONLY (interest is paid out along the way), and the create_fd write must carry payout_type monthly. Named careless failure modes: (a) quoting the compounded maturity (4,55,056) as what the monthly-payout FD returns — it returns 4,00,000 at maturity plus ~2,167/month along the way; (b) booking without payout_type (or as cumulative). Both are pinned: the calc call's payout_type is a required gate arg, and the write's payout_type too, so a model that omits or flips the mode fails A3. The monthly interest figure follows the bank's simple monthly-payout convention (P x r/12).",
+  "setup": {
+    "persona": "55-year-old female, No Occupation / Retired / Homemaker, rural Darrang, Assam",
+    "current_date": "2026-04-20",
+    "current_time": "10:50",
+    "login_context": {
+      "customer_id": "SCN0021",
+      "full_name": "Jahanara Barbhuiya",
+      "date_of_birth": "1971-07-08",
+      "gender": "female",
+      "customer_since": "2018-02-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3930",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Darrang",
+        "state": "Assam",
+        "pincode": "973930",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Darrang",
+        "state": "Assam",
+        "pincode": "973930",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8311X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFMB5713001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFMB5713002",
+          "type": "fd",
+          "label": "TK Monthly Income Fixed Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFMB5713003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "create_fd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I have a 2-year FD paying interest monthly — how much comes to me each month? And I want to book another ₹4,00,000 for 2 years with the same monthly interest option, from my savings account."
+    },
+    {
+      "content": "Yes, please go ahead and book it."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "slab": "12–24 months",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        }
+      ],
+      "static_output": {
+        "product_type": "fd",
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 400000,
+        "interest_earned": 52000,
+        "total_principal_invested": 400000
+      },
+      "_comment": "payout_type monthly: maturity = PRINCIPAL ONLY (tool's own note). Monthly payout = 400000 x 6.5%/12 = 2,166.67 -> 2,167/month; 52,000 total over 24 months (bank's simple monthly-payout convention)."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKFMB5713001",
+          "available_balance": 520000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFMB5713021",
+        "status": "success",
+        "message": "Fixed Deposit booked with monthly interest payout.",
+        "interest_rate": 6.5,
+        "maturity_date": "2028-04-20",
+        "maturity_amount": 400000,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-57131"
+      },
+      "_comment": "principal_amount and payout_type are echoed by the executor (input ∩ output names). maturity_amount = principal only, consistent with monthly payout."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 400000,
+          "rate": 6.5,
+          "tenure_months": 24,
+          "payout_type": "monthly"
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFMB5713001"
+          ]
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 400000,
+          "tenure_months": 24,
+          "source_account": "TKFMB5713001",
+          "payout_type": "monthly"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "optional_ok": {
+          "tenure_months": {
+            "allowed": [
+              24,
+              null
+            ]
+          }
+        },
+        "_comment": "Rate for the 2-year booking comes from the card (6.5)."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 400000,
+          "rate": 6.5,
+          "tenure_months": 24,
+          "payout_type": "monthly"
+        },
+        "_comment": "The projection must be in the requested mode: monthly payout -> maturity = principal only. Omitting payout_type (default cumulative) fails A3."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKFMB5713001"
+          ]
+        },
+        "_comment": "The savings account funds the principal (5,20,000 available covers 4,00,000)."
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 400000,
+          "tenure_months": 24,
+          "source_account": "TKFMB5713001",
+          "payout_type": "monthly"
+        },
+        "_comment": "The booking must carry the monthly payout mode; booking cumulative (or omitting the mode) fails A3. maturity_instruction is deliberately absent — renew_principal_interest is invalid for non-cumulative payouts, and the default no_renewal applies."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer holds a 2-year monthly-income FD and wants to know the monthly payout, then book a new 4,00,000 two-year FD with the same monthly option from savings. The assistant must fetch the 2-year FD rate (6.5), project with calculate_fd_maturity in payout_type monthly: maturity is the PRINCIPAL ONLY (4,00,000) and the interest — 4,00,000 x 6.5%/12 = 2,167 per month, 52,000 over the tenure — is paid out monthly. It must verify the savings balance (5,20,000) and, after confirmation, book create_fd(400000, 24, savings, payout_type monthly), reporting the monthly-payout booking (REF-FD-57131). Quoting the compounded maturity (4,55,056) as the monthly option's maturity, or booking without the monthly mode, is the careless failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant states the monthly payout (~INR 2,167/month, 52,000 total) with maturity = principal only (INR 4,00,000), checks the savings balance, and books the new FD with payout_type monthly after confirmation; FAIL if it reports the compounded maturity (INR 4,55,056) for the monthly option, books cumulative, or skips the rate/balance prerequisites."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

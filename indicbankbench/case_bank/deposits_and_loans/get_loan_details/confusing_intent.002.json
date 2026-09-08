@@ -1,0 +1,306 @@
+{
+  "case_id": "depl.get_loan_details.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Tier-2 filter-trap (status-to-ID implication): customer says 'I want to go over what I'm paying every month' — IMPLIES active loans (those with ongoing payments). The model that queries only the active home loan misses the closed personal loan whose repayment is relevant context: the customer may not realise it's fully repaid. The model that queries both loan_ids surfaces the closed loan and catches the oversight.",
+  "setup": {
+    "persona": "30-year-old male, Ships’ Deck Ratings, Barge Crews and Boatmen, rural Barwani, Madhya Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0514",
+      "full_name": "Rahul Singh",
+      "date_of_birth": "1996-01-03",
+      "gender": "male",
+      "customer_since": "2014-05-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7064",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "25 MG Road",
+        "line2": "Alkapuri",
+        "city": "Barwani",
+        "state": "Madhya Pradesh",
+        "pincode": "927064",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "25 MG Road",
+        "line2": "Alkapuri",
+        "city": "Barwani",
+        "state": "Madhya Pradesh",
+        "pincode": "927064",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0514X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "loan": 2,
+        "rd": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKLDR04001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNLDR04002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        },
+        {
+          "product_id": "TKLNLDR04003",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCLDR04004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm reviewing my monthly budget — can you pull up my loan details? I want to go over what I'm paying every month."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two loans: home loan (active, EMI ₹39,337 ongoing) and personal loan (closed, repaid in full). The closed loan's outstanding is zero, which the customer may not realise — they might still be budgeting for its EMI. EMI computed per CONVENTIONS §5 (EMI = P×i/(1−(1+i)^−n)).",
+      "records": [
+        {
+          "loan_id": "TKLNLDR04002",
+          "type": "home",
+          "principal": 4500000,
+          "outstanding": 3737953,
+          "emi_amount": 39337,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 160,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKLDR04001"
+        },
+        {
+          "loan_id": "TKLNLDR04003",
+          "type": "personal",
+          "principal": 500000,
+          "outstanding": 0,
+          "emi_amount": 10747,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 15,
+          "tenure_remaining": 0,
+          "status": "closed",
+          "next_due_date": null,
+          "emi_account_id": "TKLDR04001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNLDR04002",
+            "TKLNLDR04003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "forbidden_ids": [],
+        "_comment": "Must query both loans. 'What I'm paying every month' implies active loans, but the model must not infer a single-loan selection. The trap: querying only the home loan excludes the closed personal loan whose zero outstanding is key information."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to 'go over what I'm paying every month' — conversational language that implies active loans but does not state a status filter. The assistant must query both loans: the home loan (active, ₹45 lakh principal, ₹37,37,953 outstanding, EMI ₹39,337, next due 2026-09-05) is the monthly payment the customer asked about. The personal loan (closed, ₹5 lakh principal originally, outstanding ₹0, fully repaid) is key context — the customer may still be budgeting for its ₹10,747 EMI without realising the loan is closed. Reporting only the home loan and suppressing the closed personal loan because 'paying every month' implies active fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports on BOTH loans: the active home loan with ongoing EMI of ₹39,337 AND the closed personal loan (repaid in full, outstanding ₹0). Mentioning only the home loan and omitting the closed personal loan because the customer said 'paying every month' fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

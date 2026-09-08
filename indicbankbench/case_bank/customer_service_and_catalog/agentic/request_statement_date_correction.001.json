@@ -1,0 +1,251 @@
+{
+  "case_id": "csc.agentic.request_statement_date_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests+request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'request duplicate statement for my dispute REQ-DS-88001, covering Jan to June 2026.' get_all_requests shows REQ-DS-88001 is a dispute filed July 2026 for a transaction dated 15 July. The customer's date range (Jan-Jun) is wrong — the actual transaction is July. Correction: request_duplicate_statement must cover the correct date range, not the customer's wrong range.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, rural Paschim Medinipur, West Bengal",
+    "current_date": "2026-08-24",
+    "current_time": "12:00",
+    "login_context": {
+      "customer_id": "SCN0113",
+      "full_name": "Falguni Majhi",
+      "date_of_birth": "2006-02-13",
+      "gender": "female",
+      "customer_since": "2024-11-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7249",
+      "registered_email": "f*****@gmail.com",
+      "communication_address": {
+        "line1": "50 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Paschim Medinipur",
+        "state": "West Bengal",
+        "pincode": "377249",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "50 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Paschim Medinipur",
+        "state": "West Bengal",
+        "pincode": "377249",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9129X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSD9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSD9800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_all_requests",
+    "get_card_details",
+    "get_products_and_offers",
+    "get_request_status",
+    "get_transaction_history",
+    "raise_request",
+    "request_duplicate_statement",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a duplicate statement for my account — it's related to a dispute I filed, reference REQ-DS-88001. The transaction happened in Jan this year, so generate it for January to June 2026."
+    },
+    {
+      "content": "Yes, go ahead — request the statement covering the actual transaction month."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-DS-88001",
+          "category": "dispute",
+          "status": "open",
+          "raised_date": "2026-07-20",
+          "last_updated_date": "2026-08-01",
+          "description": "Disputed POS transaction of ₹45,000 on 2026-07-15 at Electronics World."
+        }
+      ],
+      "static_output": {
+        "total_count": 1,
+        "limit": 50,
+        "offset": 0
+      },
+      "_comment": "REQ-DS-88001: dispute filed July 2026 for July 15 transaction. Customer wrongly remembers it as January."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-STM-98001",
+        "status": "success",
+        "message": "Duplicate statement requested and will be emailed to registered address."
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      },
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKCSD9800001",
+          "from_date": "2026-07-01",
+          "to_date": "2026-07-31"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_all_requests",
+        "request_duplicate_statement"
+      ]
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must fetch all requests — REQ-DS-88001 shows the real transaction date is July 15, not January."
+      },
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKCSD9800001"
+        },
+        "optional_ok": {
+          "from_date": {
+            "allowed": [
+              "2026-01-01",
+              "2026-06-01",
+              "2026-07-01"
+            ]
+          },
+          "to_date": {
+            "allowed": [
+              "2026-06-30",
+              "2026-07-31",
+              "2026-08-24"
+            ]
+          }
+        },
+        "_comment": "Customer said Jan-Jun 2026, but the dispute is for a July 15 transaction. The statement should cover the correct period. R judge verifies the date range is corrected."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'request duplicate statement for my dispute REQ-DS-88001, covering Jan-Jun 2026.' get_all_requests shows the dispute was filed July 2026 for a July 15 transaction — the customer misremembered the month. The assistant must correct: 'Your dispute REQ-DS-88001 is for a transaction on July 15, 2026, not January. I'd generate the statement for July 2026 instead of Jan-Jun.' After confirmation, calls request_duplicate_statement with the corrected date range."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches all requests, discovers REQ-DS-88001 covers a July transaction not January, communicates the date correction, and after confirmation requests the statement covering July 2026. FAIL if the statement is requested for Jan-Jun without acknowledging the correction."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

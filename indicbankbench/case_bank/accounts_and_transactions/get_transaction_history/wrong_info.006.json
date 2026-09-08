@@ -1,0 +1,205 @@
+{
+  "case_id": "acct.get_transaction_history.wrong_info.006",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'IMPS credits this month'. The Rs 60,000 credit came via NEFT (not IMPS) and was actually LAST month (June 28). A channel=imps search returns nothing; a channel-unfiltered query finds it but it's also outside the 'this month' range. a strong model-style broad query (no channel, no date) finds the evidence.",
+  "setup": {
+    "persona": "48-year-old male, Monitor, Telephone, urban Thrissur, Kerala",
+    "current_date": "2026-07-05",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0108",
+      "full_name": "Hari Nair",
+      "date_of_birth": "1978-05-09",
+      "gender": "male",
+      "customer_since": "2016-08-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5460",
+      "registered_email": "h*****@gmail.com",
+      "communication_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Thrissur",
+        "state": "Kerala",
+        "pincode": "685460",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Thrissur",
+        "state": "Kerala",
+        "pincode": "685460",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7268X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCHD9403001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCHD9403002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "My client sent Rs 60,000 via IMPS this month — show me my IMPS credits so I can confirm it's in."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "DOUBLE FILTER TRAP: the Rs 60,000 credit (TXN-9403002) came via NEFT (not IMPS) AND on June 28 (last month, not 'this month'). Both a channel=imps and a date_range this_month filter independently hide it. Broad query (all channels, all dates) finds it.",
+      "records": [
+        {
+          "date": "2026-07-03T14:20:00",
+          "amount": 1800,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9403004",
+          "transaction_note": "UPI - AMAZON",
+          "status": "success",
+          "running_balance": 82535
+        },
+        {
+          "date": "2026-07-01T09:00:00",
+          "amount": 3500,
+          "type": "debit",
+          "channel": "imps",
+          "reference_id": "TXN-9403003",
+          "transaction_note": "IMPS - MOBILE RECHARGE OPERATOR",
+          "status": "success",
+          "running_balance": 84335
+        },
+        {
+          "date": "2026-06-28T16:45:00",
+          "amount": 60000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-9403002",
+          "transaction_note": "NEFT - CLIENT PAYMENT INV-2406",
+          "status": "success",
+          "running_balance": 87835
+        },
+        {
+          "date": "2026-06-15T11:30:00",
+          "amount": 27835,
+          "type": "credit",
+          "channel": "imps",
+          "reference_id": "TXN-9403001",
+          "transaction_note": "IMPS - REIMBURSEMENT",
+          "status": "success",
+          "running_balance": 27835
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCHD9403001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKCHD9403001"
+        },
+        "_comment": "Broad query — a channel=imps filter misses the Rs 60,000 NEFT credit; a date_range this_month filter misses it because it's from June 28. The model must query without channel and without a tight date range, then identify that the credit arrived via NEFT last month. Either filter alone is sufficient to hide the evidence."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer expects an IMPS credit of Rs 60,000 'this month'. The Rs 60,000 DID arrive — on 2026-06-28 via NEFT (channel and date both wrong). The assistant must query broadly and surface that the credit came through NEFT on June 28 (last month), not IMPS this month. Reporting zero IMPS credits in July without surfacing the NEFT credit from June 28 fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "locates the Rs 60,000 credit (TXN-9403002, NEFT, 2026-06-28) and surfaces that it arrived via a different channel (NEFT) and earlier than assumed (June 28, last month). Reporting zero IMPS credits in July without surfacing the actual NEFT credit fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

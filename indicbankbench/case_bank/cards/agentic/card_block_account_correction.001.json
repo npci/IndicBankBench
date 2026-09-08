@@ -1,0 +1,285 @@
+{
+  "case_id": "cards.agentic.card_block_account_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_account_details+get_card_details+block_card",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'block the debit card linked to my salary account — it's been compromised.' get_account_details reveals the customer only has savings accounts (no salary account type). The debit card is linked to savings_01. get_card_details confirms. Correction: block_card on the card actually linked to the primary savings account.",
+  "setup": {
+    "persona": "59-year-old male, Duplicating Machine Operator, rural Gonda, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "10:30",
+    "login_context": {
+      "customer_id": "SCN0702",
+      "full_name": "Shan Ahmed",
+      "date_of_birth": "1967-11-28",
+      "gender": "male",
+      "customer_since": "2022-09-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1598",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "119 Mill Road",
+        "line2": "Bandra East",
+        "city": "Gonda",
+        "state": "Uttar Pradesh",
+        "pincode": "211598",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "119 Mill Road",
+        "line2": "Bandra East",
+        "city": "Gonda",
+        "state": "Uttar Pradesh",
+        "pincode": "211598",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0743X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCBA9900001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCBA9900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Block my debit card — the one linked to my salary account. It's been compromised, there's fraud on it. Block it immediately."
+    },
+    {
+      "content": "Yes, block the debit card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "No salary account. Only one savings account TKACC9900001. The customer's 'salary account' is an informal reference to their only savings account.",
+      "records": [
+        {
+          "account_id": "TKCBA9900001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road Branch",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Shan Ahmed",
+              "role": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Single debit card TKCCBA9900002. Customer said 'linked to salary account' but no salary account exists. The debit card is linked to the only savings account.",
+      "records": [
+        {
+          "card_id": "TKCCBA9900002",
+          "masked_number": "****8802",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "04/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card permanently blocked and hotlisted across all payment networks.",
+        "reference_id": "REF-BLK-99001"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKCBA9900001"
+          ]
+        }
+      },
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCBA9900002"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCCBA9900002",
+          "reason": "fraud"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_account_details",
+        "block_card"
+      ],
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKCBA9900001"
+          ]
+        },
+        "_comment": "Fetch account details — reveals the customer has no salary account, only a savings account."
+      },
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCCBA9900002"
+          ]
+        },
+        "_comment": "Fetch card details — confirms the debit card is linked to the only savings account."
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCCBA9900002",
+          "reason": "fraud"
+        },
+        "_comment": "Block the correct card. Customer said 'salary account' but there is no salary account — the account type correction is: salary → savings."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'block the debit card linked to my salary account.' get_account_details reveals the customer only has a savings account — no salary account type exists. get_card_details confirms TKCCBA9900002 is the only debit card. The assistant must correct: 'You don't have a salary account — your only account is a savings account. The debit card TKCCBA9900002 is linked to your savings account. I'll block it for you.' After confirmation, calls block_card with card_id=TKCCBA9900002 and reason=fraud."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant checks account details (discovers no salary account exists), fetches card details, communicates the account-type correction, and after confirmation blocks the correct card. FAIL if the assistant doesn't surface the account-type mismatch."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "case_id": "csc.get_insurance_details.happy.001",
+  "axis": "1_happy_path",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 insurance read: the customer asks about their policy — sum assured and when the next premium is due. Straight fetch-and-report from get_insurance_details. Grounding trap: premium is per premium_frequency cycle (₹42,000 yearly), so the assistant should report it correctly as the yearly premium due on the due date, not conflate frequency. Inventing figures or misreporting the due date fails.",
+  "setup": {
+    "persona": "36-year-old female, No Occupation / Retired / Homemaker, urban Hyderabad, Telangana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0112",
+      "full_name": "Sharada Reddy",
+      "date_of_birth": "1990-02-27",
+      "gender": "female",
+      "customer_since": "2013-11-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6153",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "pincode": "686153",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "pincode": "686153",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6173X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGNR9901001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "POL990102",
+          "type": "policy",
+          "label": "TK LifeSecurity Term Plan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCGNR9901003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the sum assured on my life policy, and when is my next premium due?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "policy_id": "POL990102",
+          "policy_type": "life",
+          "insurer": "SBI Life",
+          "sum_assured": 5000000,
+          "premium": 42000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-08-01",
+          "status": "active"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — get_products_and_offers stays A2-forbidden here (the conflict was resolved by keeping it forbidden). The mock does NOT permit the call: it is absent from gold.tool_calls and arg_gate, so A2 still fails it. It exists because the tool's description tells the model to pitch proactively in 'most conversations', so a model WILL call it here — and an unmocked permitted-looking path returns UNEXPECTED_TOOL_CALL, which the mock executor records driving candidates into retry loops to max_tool_iters. A looped case writes no score.json and vanishes from the denominator instead of failing visibly. With the mock the model fails cleanly on A2. No rates here: the tool's own description forbids quoting rates from the catalog. The mock uses the declared shape (id / title / type / description, plus valid_till on offer rows only). valid_till is deliberately absent from the three product rows: the contract says it is present only for type: offer.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        },
+        {
+          "id": "PRD-PL-2002",
+          "title": "TK Personal Loan",
+          "type": "loan",
+          "description": "Unsecured personal loan, tenure up to 60 months."
+        },
+        {
+          "id": "PRD-CC-2003",
+          "title": "TK Rewards Credit Card",
+          "type": "card",
+          "description": "Rewards on everyday spends; annual fee waiver on qualifying usage."
+        },
+        {
+          "id": "OFF-PL-3021",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to ₹10,00,000, minimal documentation. Indicative only.",
+          "valid_till": "2026-06-30"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "POL990102"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {
+          "policy_ids": [
+            "POL990102"
+          ]
+        }
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks their policy's sum assured and next premium due date. The assistant should fetch get_insurance_details for POL990102 and report: sum assured ₹50,00,000, and the next premium of ₹42,000 (yearly) due on 2026-08-01, on an active SBI Life policy. Misreporting the sum assured or due date, or conflating the premium frequency, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the two things the customer asked for — the sum assured (₹50,00,000) and the next premium DUE DATE (2026-08-01) — grounded in the tool output. Stating the premium AMOUNT (₹42,000) too is fine but NOT required (the customer asked when it's due, not how much). Misstating the sum assured or the due date, or inventing figures, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

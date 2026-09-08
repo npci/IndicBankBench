@@ -1,0 +1,316 @@
+{
+  "case_id": "depl.agentic.fd_to_rd_amount_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+get_deposit_loan_rates+calculate_rd_maturity+get_account_balance+create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'my FD will mature with ₹2,00,000 — start an RD at ₹18,000 per month for 1 year.' get_fd_details shows actual maturity ₹1,71,972 (₹1.5L at 6.75% for 24mo). Corrected RD installment from balance.",
+  "setup": {
+    "persona": "30-year-old male, Shunting Jamadar, rural Tumkur, Karnataka",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0736",
+      "full_name": "Basavanneppa Hirekodi",
+      "date_of_birth": "1996-02-06",
+      "gender": "male",
+      "customer_since": "2014-07-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8173",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Tumkur",
+        "state": "Karnataka",
+        "pincode": "498173",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Tumkur",
+        "state": "Karnataka",
+        "pincode": "498173",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7953X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDR9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDRL8801",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TCFDR9600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "create_fd",
+    "create_rd",
+    "get_account_balance",
+    "get_card_details",
+    "get_deposit_loan_rates",
+    "get_fd_details",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "My FD is maturing soon — I'll get about ₹2,00,000. Start a 1-year RD at ₹18,000 per month from those proceeds."
+    },
+    {
+      "content": "Yes, go ahead — book it at ₹14,000 per month."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDRL8801",
+          "principal_amount": 150000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2024-08-20",
+          "maturity_date": "2026-08-20",
+          "maturity_amount": 171972,
+          "payout_type": "cumulative",
+          "status": "matured",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDR9600001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ],
+      "_comment": "Matured FD: ₹1.5L at 6.75% for 24mo = ₹1,71,972. Customer overestimates at ₹2L."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRDNB9601",
+        "status": "success",
+        "message": "Recurring Deposit booked. ₹14,000 will be debited monthly from TKFDR9600001.",
+        "interest_rate": 7.0,
+        "maturity_date": "2027-08-24",
+        "maturity_amount": 174491,
+        "monthly_debit_date": 24,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-96001"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "product_type": "rd",
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 174491,
+        "interest_earned": 6509,
+        "total_principal_invested": 168000
+      },
+      "_comment": "₹14,000/month for 12 months at 7.0%."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKFDR9600001",
+          "available_balance": 171972,
+          "hold_amount": 0
+        }
+      ],
+      "_comment": "₹1,71,972 available. ₹18,000 x 12 = ₹2,16,000 exceeds. ₹14,000 x 12 = ₹1,68,000 fits."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — no RDs."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDRL8801"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 12
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 14000,
+          "rate": 7.0,
+          "tenure_months": 12
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFDR9600001"
+          ]
+        }
+      },
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 14000,
+          "tenure_months": 12,
+          "source_account": "TKFDR9600001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "create_rd"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ],
+      [
+        "calculate_rd_maturity",
+        "create_rd"
+      ],
+      [
+        "get_account_balance",
+        "create_rd"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDRL8801"
+          ]
+        },
+        "_comment": "Reveals actual FD maturity = ₹1,71,972, not ₹2,00,000."
+      },
+      "create_rd": {
+        "required": {
+          "monthly_installment": 14000,
+          "tenure_months": 12,
+          "source_account": "TKFDR9600001"
+        },
+        "_comment": "CORRECTED monthly_installment=14000. Customer said ₹18,000 — FD proceeds insufficient."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'reinvest my matured FD (₹2L) into RD at ₹18,000/month.' The assistant looks up the FD — actual maturity is ₹1,71,972, not ₹2,00,000. ₹18,000/month x 12 = ₹2,16,000 exceeds the FD proceeds. The assistant must correct: 'Your FD matured at ₹1,71,972, not ₹2,00,000. I can start an RD at ₹14,000/month — projected maturity ₹1,74,491 at 7.0%.' After confirmation, calls create_rd with monthly_installment=14000."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant looks up the matured FD, discovers actual ₹1,71,972 is less than customer's estimate, recalculates a feasible RD, communicates the correction, and after confirmation books create_rd with monthly_installment=14000. FAIL if create_rd is called with monthly_installment=18000."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

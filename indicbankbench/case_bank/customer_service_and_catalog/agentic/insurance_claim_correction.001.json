@@ -1,0 +1,270 @@
+{
+  "case_id": "csc.agentic.insurance_claim_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'file a claim dispute for my policy POL-TK-6010 — raise it as unauthorized transaction on my insurance.' get_insurance_details shows POL-TK-6010 is a term_plan (different from what the customer thinks), and it has an active nominee. The customer's assumption about what to dispute is wrong. Correction: raise_request with the actual policy context.",
+  "setup": {
+    "persona": "50-year-old male, Call Centre Executive, urban Bharatpur, Rajasthan",
+    "current_date": "2026-08-24",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0697",
+      "full_name": "Ali Gafar",
+      "date_of_birth": "1976-01-25",
+      "gender": "male",
+      "customer_since": "2012-11-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2736",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "97 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Bharatpur",
+        "state": "Rajasthan",
+        "pincode": "972736",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "97 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Bharatpur",
+        "state": "Rajasthan",
+        "pincode": "972736",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6823X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCIG9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "POL-TK-6010",
+          "type": "policy",
+          "label": "TK Secure Life Plan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCIG9800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_all_requests",
+    "get_card_details",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_request_status",
+    "get_transaction_history",
+    "raise_request",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to raise a dispute on my insurance policy POL-TK-6010 — there's been an unauthorized transaction and I want to file it now. If that doesn't fit, just raise it as an other request."
+    },
+    {
+      "content": "Yes, raise it — go ahead."
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "policy_id": "POL-TK-6010",
+          "policy_type": "term",
+          "insurer": "SBI Life",
+          "sum_assured": 2500000,
+          "premium": 12450,
+          "premium_frequency": "annual",
+          "premium_due_date": "2027-03-15",
+          "status": "active"
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "POL-TK-6010 is a term insurance plan — no transaction disputes apply to life insurance in the same way as banking transactions."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-POL-6011",
+        "status": "success",
+        "message": "Dispute logged for insurance policy POL-TK-6010.",
+        "category": "other"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "POL-TK-6010"
+          ]
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "other",
+          "description": "Customer enquiry regarding policy POL-TK-6010 (term plan). Concern about premium deductions during annual cycle."
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_insurance_details",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "optional_ok": {
+          "policy_ids": {
+            "allowed": [
+              [
+                "POL-TK-6010"
+              ]
+            ]
+          }
+        },
+        "_comment": "Fetch policy details — reveals it's a term plan, not a banking product susceptible to 'unauthorized transactions'."
+      },
+      "raise_request": {
+        "required": {},
+        "optional_ok": {
+          "category": {
+            "allowed": [
+              "other",
+              "unauthorized_debit"
+            ]
+          }
+        },
+        "_comment": "Correction: policy type term_plan ≠ transaction dispute. The assistant must contextualise the raise. R judge verifies the correction is surfaced."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'file a dispute on insurance POL-TK-6010 for unauthorized transaction.' get_insurance_details shows it's a term life insurance plan — 'unauthorized transaction' is a banking concept that doesn't apply to life insurance premiums. The assistant must correct: 'POL-TK-6010 is a term life insurance plan — unauthorized transaction disputes apply to banking transactions, not insurance premiums. I can raise a general enquiry about your concern with the annual premium.' After confirmation, calls raise_request with the appropriate context."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches insurance details, discovers it's a term plan (not a banking product with transaction disputes), communicates the category mismatch, and after confirmation raises a contextualized request. FAIL if the assistant raises an unauthorized_debit dispute on a life insurance policy without correction."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

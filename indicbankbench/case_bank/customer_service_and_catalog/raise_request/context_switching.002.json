@@ -1,0 +1,271 @@
+{
+  "case_id": "csc.raise_request.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 multi-thread with TWO writes: the customer opens a dispute (which needs the transaction reference found via get_transaction_history) and then adds a cheque-book order; one confirmation covers both. Both writes must execute — dropping either sub-task fails A1. Careless failure mode: resolving the dispute and forgetting the cheque-book order (or vice versa).",
+  "setup": {
+    "persona": "26-year-old female, Midwifery Attendant, rural Bhopal, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0142",
+      "full_name": "Sapna Bai",
+      "date_of_birth": "2000-08-14",
+      "gender": "female",
+      "customer_since": "2019-06-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3587",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "pincode": "753587",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "pincode": "753587",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6754X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRSQ2050001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRSQ2050002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Two things today. First — raise an unauthorized debit dispute for the Rs 15,000 charge on my savings account from Tuesday."
+    },
+    {
+      "content": "Second — order a 25-leaf cheque book for me too."
+    },
+    {
+      "content": "Go ahead with both."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-DSP-20510",
+        "category": "unauthorized_debit",
+        "status": "success",
+        "message": "Unauthorized debit dispute logged (REQ-DSP-20510) and routed to the review team."
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CB-20520",
+        "status": "success",
+        "message": "Cheque book of 25 leaves ordered for TKCRSQ2050001; dispatched to your registered address in 5-7 working days.",
+        "delivery_address": "68 Park Avenue, Anna Nagar, Bhopal 753587"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool."
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "The Rs 15,000 Tuesday charge with its reference_id. Chain: 66200 - 15000 = 51200.",
+      "records": [
+        {
+          "date": "2026-08-11T12:30:00",
+          "amount": 15000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-2053001",
+          "transaction_note": "POS PURCHASE - UNKNOWN MERCHANT",
+          "status": "success",
+          "running_balance": 51200
+        },
+        {
+          "date": "2026-08-09T10:00:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-2053002",
+          "transaction_note": "UPI - SWIGGY PAYMENT",
+          "status": "success",
+          "running_balance": 66200
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCRSQ2050001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "account_id": "TKCRSQ2050001",
+          "related_transaction_id": "TXN-2053001",
+          "description": "Customer disputes a Rs 15,000 unauthorized debit from 2026-08-11."
+        }
+      },
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKCRSQ2050001",
+          "leaves": 25
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKCRSQ2050001"
+        }
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-2053001"
+        }
+      },
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKCRSQ2050001",
+          "leaves": 25
+        }
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer opens two threads: an unauthorized-debit dispute for the Rs 15,000 Tuesday charge (the assistant must locate the transaction first and pass its reference as related_transaction_id) and a 25-leaf cheque-book order. One confirmation covers both. The assistant must execute BOTH writes after the go-ahead. Dropping either sub-task — e.g. logging the dispute and never ordering the cheque book — fails.",
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "executes BOTH writes after confirmation: the unauthorized_debit dispute referencing the Rs 15,000 transaction AND the 25-leaf cheque-book order. Dropping either one fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

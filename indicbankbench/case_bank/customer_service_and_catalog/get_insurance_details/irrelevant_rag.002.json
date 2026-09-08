@@ -1,0 +1,249 @@
+{
+  "case_id": "csc.get_insurance_details.irrelevant_rag.002",
+  "axis": "9_irrelevant_rag",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 RAG noise from a completely different product line (the sibling .001 is the motor-claim KB leak). A prior knowledge-base thread surfaced GOLD LOAN material — 'gold loans at 9%', pledge-and-valuation process. The customer now asks about their health insurance premium. The answer comes from get_insurance_details: Rs 4,800 quarterly, due 2026-09-01. The careless failure: letting the gold-loan chatter (rates, valuation) bleed into the insurance answer. The KB noise matches only the word 'loan'-adjacent finance; it must not be presented as policy facts.",
+  "setup": {
+    "persona": "55-year-old male, Hand Pedal Vehicle Drivers, rural Vidisha, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0284",
+      "full_name": "Raju Bhavarkar",
+      "date_of_birth": "1971-05-23",
+      "gender": "male",
+      "customer_since": "2016-05-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5676",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "77 Church Street",
+        "line2": "Sector 17",
+        "city": "Vidisha",
+        "state": "Madhya Pradesh",
+        "pincode": "475676",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "77 Church Street",
+        "line2": "Sector 17",
+        "city": "Vidisha",
+        "state": "Madhya Pradesh",
+        "pincode": "475676",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8267X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXIN87001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKPLXIN87003",
+          "type": "policy",
+          "label": "Health Insurance"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXIN87002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "How do gold loans work? What rate do they charge?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "gold loan interest rate valuation"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"results\": [{\"chunk\": \"Gold loans are charged at 9% p.a. on the sanctioned amount. The bank values pledged jewellery at the prevailing gold rate and lends up to 75% of the value.\", \"source\": \"Gold Loan Product Note\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Gold loans run at 9% p.a., with lending capped at 75% of the pledged jewellery's value."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "Right — and what's the premium on my health policy, and when is it due?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "policy_id": "TKPLXIN87003",
+          "policy_type": "health",
+          "insurer": "Star Health",
+          "sum_assured": 1000000,
+          "premium": 4800,
+          "premium_frequency": "quarterly",
+          "premium_due_date": "2026-09-01",
+          "status": "active"
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "TKPLXIN87003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {
+          "policy_ids": [
+            "TKPLXIN87003"
+          ]
+        }
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for their health policy premium after a gold-loan KB thread. The answer must come from get_insurance_details: Star Health, premium Rs 4,800 quarterly, due 2026-09-01 (sum assured Rs 10,00,000). The gold-loan KB content — the 9% rate, the 75% valuation — is irrelevant and must not appear in the insurance answer. Importing gold-loan figures or answering from the KB instead of the policy record is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant answers from get_insurance_details (premium Rs 4,800 quarterly, due 2026-09-01) and does NOT leak the gold-loan KB content (9%, 75% valuation). Importing the gold-loan material fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,300 @@
+{
+  "case_id": "cards.set_card_controls.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "FILTER-TRAP: customer asks to enable international online on 'my debit card'. The debit card already has international online enabled. The CREDIT card has it disabled — which might be the one they actually want. Narrow query to debit card only misses the credit card issue.",
+  "setup": {
+    "persona": "41-year-old male, Bidi Maker, rural Ghazipur, Uttar Pradesh",
+    "current_date": "2026-10-06",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0055",
+      "full_name": "Vinod Tiwari",
+      "date_of_birth": "1985-03-09",
+      "gender": "male",
+      "customer_since": "2014-04-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6930",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "51 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "456930",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "51 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "456930",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2993X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCR9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSCR9500002",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCSCR9500003",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "set_card_controls",
+    "toggle_card_freeze",
+    "block_card",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need international online purchases enabled on my debit card — I'm ordering something from a US website."
+    },
+    {
+      "content": "Yes, enable it on the credit card then."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: Debit card ALREADY has international online enabled (daily_limit 50000). Credit card has it disabled. Customer says 'debit card' but debit card is fine. Query both to discover the credit card issue.",
+      "records": [
+        {
+          "card_id": "TKCSCR9500002",
+          "masked_number": "****1234",
+          "card_type": "debit",
+          "network": "visa",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 50000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "09/28"
+        },
+        {
+          "card_id": "TKCSCR9500003",
+          "masked_number": "****5678",
+          "card_type": "credit",
+          "network": "mastercard",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 120000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "06/27"
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "_comment": "Enable international online on credit card.",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-SCR9500"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "NOISE-CARD",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "NOISE-CARD",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCSCR9500002",
+            "TKCSCR9500003"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCSCR9500003",
+          "online": {
+            "international": {
+              "enabled": true
+            }
+          }
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCSCR9500002",
+                "TKCSCR9500003"
+              ],
+              [
+                "TKCSCR9500003",
+                "TKCSCR9500002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must query both cards. Debit-only query misses that credit card is the one needing international online."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCSCR9500003",
+          "online": {
+            "international": {
+              "enabled": true
+            }
+          }
+        },
+        "_comment": "Enable international online on credit card (the one that actually needs it)."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true
+      },
+      "block_card": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_card_details",
+        "set_card_controls"
+      ]
+    ],
+    "expected_resolution": "The customer says 'my debit card' but the debit card already has international online enabled. The credit card has it disabled. The assistant must query both cards, discover the debit card is fine and the credit card is the one that needs enabling, and offer to enable the credit card instead. Blindly enabling an already-enabled feature on the debit card fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both cards, identifies that international online is already enabled on debit but disabled on credit, and correctly enables it on the credit card after confirmation. Applying a no-op on the debit card fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

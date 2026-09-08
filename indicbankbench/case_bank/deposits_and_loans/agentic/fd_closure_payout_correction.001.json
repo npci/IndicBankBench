@@ -1,0 +1,378 @@
+{
+  "case_id": "depl.agentic.closure_quote_fd_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+get_deposit_closure_quote+close_deposit+get_deposit_loan_rates+calculate_fd_maturity+get_account_balance+create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'close my 5L FD and reinvest the full ₹5,50,000 into a new 3-year FD.' get_deposit_closure_quote shows estimated_payout=₹5,10,000 (not ₹5,50,000). The correction must propagate to create_fd principal_amount=510000. arg_gate pins 510000.",
+  "setup": {
+    "persona": "35-year-old male, No Occupation / Retired / Homemaker, urban Allahabad, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0091",
+      "full_name": "Ram Pandey",
+      "date_of_birth": "1991-08-18",
+      "gender": "male",
+      "customer_since": "2019-04-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8691",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "92 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Allahabad",
+        "state": "Uttar Pradesh",
+        "pincode": "118691",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "92 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Allahabad",
+        "state": "Uttar Pradesh",
+        "pincode": "118691",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7279X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDQ9400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDQ9400501",
+          "type": "fd",
+          "label": "TK Growth FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFDQ9400002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "get_card_details",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "Close my 5 lakh FD and reinvest the full ₹5,50,000 I'm expecting as payout into a fresh 3-year FD. I want to roll it all over."
+    },
+    {
+      "content": "Yes, go ahead — close the FD and reinvest the actual payout into the new FD."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "₹5,00,000 FD at 6.5% for 24 months, started 2025-06-01. About 15 months run.",
+      "records": [
+        {
+          "deposit_id": "TKFDQ9400501",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-06-01",
+          "maturity_date": "2027-06-01",
+          "maturity_amount": 568823,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDQ9400001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "~15 months run. Step-down to 1yr-<3yr at 6.5% (same as contracted). Accrued: 500000*6.5%*15/12=40625. Penalty 1%=5000. Payout: 500000+40625-5000=535625.",
+      "records": [
+        {
+          "deposit_id": "TKFDQ9400501",
+          "principal_amount": 500000,
+          "accrued_interest": 40625,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "effective_rate": 5.7,
+          "estimated_payout": 535625
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely. ₹5,35,625 credited to TKFDQ9400001.",
+        "amount_credited": 535625,
+        "payout_account": "TKFDQ9400001",
+        "reference_id": "REF-CLS-94001"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "3-year tenure falls in 3yr-<5yr slab: FD 6.75%.",
+      "output": {
+        "product_type": "fd",
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹5,35,625 at 6.75% for 36mo quarterly compounded. (1+0.016875)^12=1.2225 => 535625*1.2225=654796. Interest: 119171.",
+      "output": {
+        "maturity_amount": 654796,
+        "interest_earned": 119171,
+        "total_principal_invested": 535625
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Balance reflects the credited payout from close_deposit.",
+      "records": [
+        {
+          "account_id": "TKFDQ9400001",
+          "available_balance": 535625,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDQ9400502",
+        "principal_amount": 535625,
+        "status": "success",
+        "message": "Fixed Deposit booked. ₹5,35,625 debited from TKFDQ9400001.",
+        "interest_rate": 6.75,
+        "maturity_date": "2029-08-24",
+        "maturity_amount": 654796,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-94002"
+      }
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — optional."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — optional."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — optional."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDQ9400501"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDQ9400501"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKFDQ9400501"
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 535625,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFDQ9400001"
+          ]
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 535625,
+          "tenure_months": 36,
+          "source_account": "TKFDQ9400001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ],
+      [
+        "close_deposit",
+        "create_fd"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ],
+      [
+        "calculate_fd_maturity",
+        "create_fd"
+      ],
+      [
+        "get_account_balance",
+        "create_fd"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDQ9400501"
+              ]
+            ]
+          }
+        },
+        "_comment": "Fetch FD details."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDQ9400501"
+          ]
+        },
+        "_comment": "Closure quote reveals payout is only ₹5,35,625 — NOT ₹5,50,000."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKFDQ9400501"
+        },
+        "_comment": "Close the FD."
+      },
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Fetch FD rates for 3yr tenure."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional maturity calculator."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional balance check."
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 535625,
+          "tenure_months": 36
+        },
+        "_comment": "CORRECTED principal_amount=535625 pinned. Customer expected ₹5,50,000 payout but closure quote revealed ₹5,35,625. A weak model may use the customer's wrong figure."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'close my 5L FD and reinvest ₹5,50,000 into a new 3-year FD.' get_fd_details shows TKFDQ9400501 (₹5L at 6.5%, 24mo). get_deposit_closure_quote reveals the actual payout is ₹5,35,625 — NOT the ₹5,50,000 the customer expected. The assistant must disclose the correction, close the FD, and after confirmation reinvest ₹5,35,625 (not ₹5,50,000) into create_fd. arg_gate pins principal_amount=535625."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches FD details, gets the closure quote revealing ₹5,35,625 payout (not ₹5,50,000), communicates the correction, closes the FD, and after confirmation creates a new FD with principal_amount=535625. FAIL if create_fd is called with 550000."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

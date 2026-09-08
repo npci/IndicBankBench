@@ -1,0 +1,169 @@
+{
+  "case_id": "csc.search_knowledge_base.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks 'what are the premature closure rules for my RD'. search_knowledge_base with a narrow RD query may return only RD-specific snippets. But the customer also has an FD — and FD premature closure rules (rate step-down + 1% penalty) differ from RD rules. A broader query surfaces both product rules and the assistant can compare them for a customer holding both products.",
+  "setup": {
+    "persona": "21-year-old male, No Occupation / Retired / Homemaker, urban Ludhiana, Punjab",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0390",
+      "full_name": "Jaswant Nath",
+      "date_of_birth": "2005-07-10",
+      "gender": "male",
+      "customer_since": "2023-11-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4258",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Ludhiana",
+        "state": "Punjab",
+        "pincode": "454258",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Ludhiana",
+        "state": "Punjab",
+        "pincode": "454258",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0804X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R950000101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFTR950000102",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFTR950000103",
+          "type": "rd",
+          "label": "TK eRecurring"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R950000104",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "What happens if I close my Recurring Deposit before maturity?"
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: narrow 'RD premature closure' query returns chunk 1 (RD penalty = no interest for period not run, 1% of installments for premature closure). But chunk 2 covers FD closure (rate step-down + 1% penalty) — relevant because customer has BOTH RD and FD (linked_products_summary shows fd:1, rd:1). Broad query surfaces both.",
+      "records": [
+        {
+          "chunk": "Recurring Deposit premature closure: interest is accrued only for completed months. For the incomplete period, no interest is payable. A penalty of 1% of total installments paid is deducted from the accrued interest before payout.",
+          "source": "RD Product Terms, Section 5.1"
+        },
+        {
+          "chunk": "Fixed Deposit premature closure: interest is recalculated at the slab rate for the period actually run (rate step-down). A separate penalty of 1% of principal is charged. The rate step-down is often the larger financial impact.",
+          "source": "FD Product Terms, Section 7.3"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "RD premature closure rules penalty interest"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "Query broadly. Narrow 'RD penalty' query misses FD closure rules which are also relevant since customer holds both products."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer asks about RD premature closure. RD: interest accrued for completed months only, no interest for incomplete period, 1% penalty on total installments. Assistant should PROACTIVELY note that the customer also has an FD (linked_products_summary) and mention that FD closure follows different rules (rate step-down to lower slab + 1% penalty) — which could be more relevant if the customer is deciding between closing the RD or the FD. Mentioning only RD rules without bridging to the FD fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "explains RD premature closure rules AND proactively notes the customer also has an FD with different closure rules (rate step-down), offering to explain both. Explaining only RD without acknowledging the FD relationship fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

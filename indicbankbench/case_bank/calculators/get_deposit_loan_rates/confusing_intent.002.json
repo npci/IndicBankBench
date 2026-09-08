@@ -1,0 +1,186 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction to an earlier argument (tenure: 2 years -> 3 years) on a single-tool lookup. The mock returns every slab regardless of the tenure filter, so the discrimination is entirely in WHICH slab the assistant quotes in its final answer — the corrected request must be answered with the 36-month slab (6.75 standard / 7.25 senior), not the 24-month one (6.5 / 7.0). Named careless failure mode: quoting the 2-year slab rate after the correction because the model answers from the earlier fetch or answers both slabs instead of the corrected one.",
+  "setup": {
+    "persona": "33-year-old male, No Occupation / Retired / Homemaker, rural Badgam, Jammu & Kashmir",
+    "current_date": "2026-08-12",
+    "current_time": "11:50",
+    "login_context": {
+      "customer_id": "SCN0338",
+      "full_name": "Muh Rashid",
+      "date_of_birth": "1993-03-16",
+      "gender": "male",
+      "customer_since": "2014-04-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9526",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Badgam",
+        "state": "Jammu & Kashmir",
+        "pincode": "419526",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Badgam",
+        "state": "Jammu & Kashmir",
+        "pincode": "419526",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9081X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDLC4704001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCDLC4704002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the FD rate for 2 years?"
+    },
+    {
+      "content": "Sorry — I meant 3 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "slab": "12–24 months",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        },
+        {
+          "slab": "36–60 months",
+          "rate": 6.75,
+          "senior_citizen_rate": 7.25
+        }
+      ],
+      "static_output": {
+        "product_type": "fd",
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "Both slabs are returned regardless of the tenure filter (the mock has no tenure field to filter on), so the discrimination is which slab the assistant quotes."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 36
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "optional_ok": {
+          "tenure_months": {
+            "allowed": [
+              36,
+              24,
+              null
+            ]
+          }
+        },
+        "_comment": "An intermediate 2-year lookup before the correction is permitted, but the final answer must quote the corrected 3-year slab."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the FD rate at 2 years, then corrects to 3 years. The assistant must answer with the CORRECTED tenure's slab: 6.75% standard (7.25% senior citizen) for the 3-year-to-under-5-year slab, sourced from get_deposit_loan_rates. Quoting the 2-year slab (6.5% / 7.0%) as the answer, or answering with both slabs as if the correction had not happened, is the careless failure this case catches."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the answer quotes the 3-year FD slab — 6.75% (7.25% senior citizen) — for the corrected tenure, sourced from the rates tool; FAIL if the 2-year slab (6.5% / 7.0%) is presented as the answer or both slabs are dumped without honouring the correction."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

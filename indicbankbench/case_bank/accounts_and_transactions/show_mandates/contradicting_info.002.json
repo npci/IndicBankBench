@@ -1,0 +1,166 @@
+{
+  "case_id": "acct.show_mandates.contradicting_info.002",
+  "axis": "5_contradicting_info",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'the Rs 3,500 rent auto-debit is on my salary account — check the mandates there'. The rent mandate (Rs 3,500, eNACH) is actually on the SAVINGS account. An account_id filter for only the salary account hides the rent mandate, returning only an unrelated Swiggy mandate. Broad query reveals the rent mandate is on savings, contradicting what the customer believes.",
+  "setup": {
+    "persona": "18-year-old male, No Occupation / Retired / Homemaker, rural Muzaffarpur, Bihar",
+    "current_date": "2026-07-28",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0652",
+      "full_name": "Sanjay Sah",
+      "date_of_birth": "2008-12-18",
+      "gender": "male",
+      "customer_since": "2026-05-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7463",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "24 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Muzaffarpur",
+        "state": "Bihar",
+        "pincode": "647463",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "24 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Muzaffarpur",
+        "state": "Bihar",
+        "pincode": "647463",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0100X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9456001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9456002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9456003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "My rent auto-debit of Rs 3,500 should be on my salary account — check the mandates and tell me when it next hits."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer believes the Rs 3,500 rent mandate is on the salary account (TKFTB9456001). The salary account has only a Swiggy mandate (Rs 149/month, UPI autopay). The actual rent mandate (MND-FTB6001-02, Rs 3,500, eNACH) is on the SAVINGS account (TKFTB9456002). An account_id filter for only the salary account hides the rent mandate completely. Broad query reveals the mandate is on savings, contradicting the customer's belief.",
+      "records": [
+        {
+          "mandate_id": "MND-FTB6001-01",
+          "type": "upi_autopay",
+          "payee": "Swiggy",
+          "amount": 149,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-08-05",
+          "account_id": "TKFTB9456001"
+        },
+        {
+          "mandate_id": "MND-FTB6001-02",
+          "type": "enach",
+          "payee": "Srinivas Properties",
+          "amount": 3500,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-08-01",
+          "account_id": "TKFTB9456002"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Broad query across both accounts — an account_id=TKFTB9456001 filter returns only the Swiggy mandate and hides the rent mandate. The model must query broadly and surface that the Rs 3,500 rent mandate is on the savings account, not the salary account."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer believes the Rs 3,500 rent mandate is on the salary account. The salary account has only a Swiggy mandate (Rs 149/month). The rent mandate (MND-FTB6001-02, Rs 3,500, Srinivas Properties, next debit Aug 1) is actually on the SAVINGS account. The assistant must query all mandates across both accounts and correct the customer — the rent auto-debit is on savings, with the next debit on Aug 1. Reporting only the salary account mandates and saying there's no rent mandate fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries all mandates and surfaces the Rs 3,500 rent mandate (MND-FTB6001-02, Srinivas Properties) on the savings account, correcting the customer's belief that it's on the salary account. Reporting only salary account mandates fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

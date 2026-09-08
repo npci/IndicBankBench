@@ -1,0 +1,224 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.irrelevant_rag.002",
+  "axis": "9_irrelevant_rag",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 poison rate from the KB on the RATE tool itself (the siblings covered NRI-rule noise and the stale-card trap). A prior knowledge-base thread surfaced a marketing snippet 'personal loans now from 9.99% p.a.'. The customer asks the actual personal-loan rate. The authoritative answer comes from get_deposit_loan_rates: 10.5% — and the tool's own description names it the sole authoritative rate source. The careless failure: quoting the KB's teaser 9.99% as the rate. The KB snippet matches the request keywords and looks quotable; the tool says otherwise.",
+  "setup": {
+    "persona": "48-year-old male, Building Construction Labourers, rural Kapurthala, Punjab",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0215",
+      "full_name": "Gurpreet Singh",
+      "date_of_birth": "1978-04-20",
+      "gender": "male",
+      "customer_since": "2015-01-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1863",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "64 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Kapurthala",
+        "state": "Punjab",
+        "pincode": "341863",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "64 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Kapurthala",
+        "state": "Punjab",
+        "pincode": "341863",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8606X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXLR85001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXLR85002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What are personal loans going for these days?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "personal loan interest rate"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"results\": [{\"chunk\": \"Festive season special: personal loans now from 9.99% p.a. for salaried customers with good credit.\", \"source\": \"Marketing bulletin Oct 2026\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "The marketing bulletin shows personal loans from 9.99% p.a. — I'd recommend checking the bank's current rate card for the exact figure."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_cheque_book",
+    "update_deposit_renewal",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "So what's the actual personal loan rate right now?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "The AUTHORITATIVE personal-loan rate is 10.5% — higher than the KB's teaser 'from 9.99%'. The gap makes parroting the teaser detectable.",
+      "output": {
+        "rates": [
+          {
+            "slab": "personal loan",
+            "rate": 10.5,
+            "senior_citizen_rate": 10.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "personal_loan"
+        },
+        "_comment": "The rate must come from the rate card (the disclosed sole authoritative source), not the KB's teaser 'from 9.99%'."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — re-checking the KB is fine; the answer must still come from the rate card."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks the actual personal-loan rate after a KB thread that surfaced 'from 9.99% p.a.'. The assistant must source the rate from get_deposit_loan_rates — the disclosed sole authoritative source — and give 10.5%, noting the 9.99% was a marketing teaser. Quoting the KB's 9.99% as the rate the customer would pay is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant sources the personal-loan rate from get_deposit_loan_rates and gives 10.5%, not the KB's teaser 'from 9.99%'. Quoting 9.99% as the rate fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

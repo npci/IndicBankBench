@@ -1,0 +1,267 @@
+{
+  "case_id": "acct.get_transaction_history.long_context.001",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 summarization/pagination — the natural home for get_transaction_history. The tool returns 10 rows but total_count=45: only a SUBSET of the period's transactions is visible. The model must (a) summarize the returned rows faithfully (grounded numbers, correct debit/credit split) AND (b) recognise it is only seeing 10 of 45 and NOT present its subtotal as the complete spend — it should caveat that this is a partial view and offer to pull the rest. This tests summary fidelity + pagination/total_count honesty at once.",
+  "setup": {
+    "persona": "33-year-old male, Points Man, Railway, urban Dhaulpur, Rajasthan",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0079",
+      "full_name": "Abdul Mujahid",
+      "date_of_birth": "1993-09-04",
+      "gender": "male",
+      "customer_since": "2020-07-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6204",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Dhaulpur",
+        "state": "Rajasthan",
+        "pincode": "276204",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Dhaulpur",
+        "state": "Rajasthan",
+        "pincode": "276204",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7756X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMRR5188001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKMRR5188002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMRR5188003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_rd_details",
+    "toggle_card_freeze"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you give me a rundown of my spending on my salary account over the last month?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "10 rows returned but total_count=45 (via static_output) — the model is seeing a SUBSET. The 35 unseen rows are the whole point of the case. All entries `status: success` — settled historical transactions. `status` is promised in get_transaction_history's description but is newer than every fixture, and S3 cannot enforce it (transactions.items has no `required` list), so it is mandatory by convention and test only (CONVENTIONS.md §13).",
+      "static_output": {
+        "total_count": 45
+      },
+      "records": [
+        {
+          "date": "2026-02-27T18:40:00",
+          "amount": 3200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI610027",
+          "transaction_note": "BIGBASKET GROCERIES",
+          "status": "success",
+          "running_balance": 51000
+        },
+        {
+          "date": "2026-02-25T12:15:00",
+          "amount": 1499,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI609925",
+          "transaction_note": "AMAZON.IN ORDER",
+          "status": "success",
+          "running_balance": 54200
+        },
+        {
+          "date": "2026-02-22T09:00:00",
+          "amount": 12000,
+          "type": "debit",
+          "channel": "imps",
+          "reference_id": "IMPS60920",
+          "transaction_note": "RENT FEB TRANSFER",
+          "status": "success",
+          "running_balance": 55699
+        },
+        {
+          "date": "2026-02-20T20:05:00",
+          "amount": 899,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI609820",
+          "transaction_note": "SPOTIFY PREMIUM",
+          "status": "success",
+          "running_balance": 67699
+        },
+        {
+          "date": "2026-02-18T17:30:00",
+          "amount": 2450,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS609818",
+          "transaction_note": "SHELL FUEL",
+          "status": "success",
+          "running_balance": 68598
+        },
+        {
+          "date": "2026-02-15T11:20:00",
+          "amount": 5000,
+          "type": "credit",
+          "channel": "upi",
+          "reference_id": "UPI609715",
+          "transaction_note": "REFUND FLIPKART",
+          "status": "success",
+          "running_balance": 71048
+        },
+        {
+          "date": "2026-02-12T08:00:00",
+          "amount": 649,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI609612",
+          "transaction_note": "NETFLIX SUBSCRIPTION",
+          "status": "success",
+          "running_balance": 66048
+        },
+        {
+          "date": "2026-02-10T21:10:00",
+          "amount": 4300,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI609510",
+          "transaction_note": "SWIGGY ORDERS",
+          "status": "success",
+          "running_balance": 66697
+        },
+        {
+          "date": "2026-02-08T07:45:00",
+          "amount": 1800,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI609408",
+          "transaction_note": "ELECTRICITY BESCOM",
+          "status": "success",
+          "running_balance": 70997
+        },
+        {
+          "date": "2026-02-05T10:30:00",
+          "amount": 7500,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "NEFT60905",
+          "transaction_note": "CREDIT CARD BILL PAYMENT",
+          "status": "success",
+          "running_balance": 72797
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKMRR5188001",
+          "from_date": "2026-02-15"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKMRR5188001"
+        },
+        "forbidden_ids": [
+          "TKMRR5188002"
+        ],
+        "date_resolution": {
+          "from_date": {
+            "anchor": "current_date",
+            "approx": "2026-02-15",
+            "tolerance_days": 5,
+            "_comment": "'last month' -> roughly the previous month; judge-assessed, not brittly pinned. type=debit or all both fine."
+          }
+        },
+        "_comment": "Account resolves to TKMRR5188001. from_date around a month back is reasonable but not hard-pinned. The graded behaviour is the summary + subset-honesty, not the exact date/filter."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for a rundown of their spending over the last month. get_transaction_history returns 10 transactions but total_count=45 — the assistant is only seeing a subset. A good answer summarizes the visible transactions faithfully (e.g. notable debits like INR 12,000 rent, INR 7,500 credit-card bill, INR 3,200 groceries; the INR 5,000 Flipkart refund credit) with grounded figures, AND crucially acknowledges that this is only part of the month's activity — there are 45 transactions in total and only ~10 are shown — so any subtotal it gives is partial, offering to pull the full list or a complete total. The key failure is presenting a computed subtotal (e.g. 'you spent INR 34,297 last month') as the COMPLETE spend when it has only seen 10 of 45 transactions. Inventing transactions or misreporting figures/direction are also failures."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "summarizes the visible transactions faithfully AND acknowledges it is seeing only a subset (10 of 45), NOT presenting a subtotal of the visible rows as the complete monthly spend; offers to pull the full list. Inventing transactions or misstating figures/direction fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

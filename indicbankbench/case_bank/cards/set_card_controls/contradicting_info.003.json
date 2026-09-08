@@ -1,0 +1,217 @@
+{
+  "case_id": "cards.set_card_controls.contradicting_info.003",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 no-op detection on the LIMIT, the twin of contradicting_info.002 which does it on the enable flag. The customer asks for an international online limit of ₹25,000 and the card is already at exactly ₹25,000 — so the request is already satisfied. set_card_controls' description states the constraint outright: a requested daily_limit must not equal the current limit. The implicit belief is what makes it axis 5 — nobody asks for a change they know is already in force, so the customer plainly thinks the limit is something else. The correct move is to read the card, notice the values match, and tell them it is already set there, WITHOUT calling the write. This rule was one of the five disclosed by a later edit and had no coverage. Gated deterministically: set_card_controls stays out of the allowed set, so a call fails A2 with no judge dependency.",
+  "setup": {
+    "persona": "20-year-old female, Education Methods Specialists, rural Balrampur, Uttar Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0343",
+      "full_name": "Shayda Jahan",
+      "date_of_birth": "2006-03-18",
+      "gender": "female",
+      "customer_since": "2024-08-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9934",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "15 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Balrampur",
+        "state": "Uttar Pradesh",
+        "pincode": "899934",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "15 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Balrampur",
+        "state": "Uttar Pradesh",
+        "pincode": "899934",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8896X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKJBD1627001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCQMB4471",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "block_card",
+    "toggle_card_freeze",
+    "set_card_controls",
+    "stop_cheque_payment",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want a tighter cap on foreign online spending — please set the international online daily limit on my credit card to ₹25,000."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The international online limit is ALREADY ₹25,000 — exactly what the customer is asking for. Every other channel differs from it, so a model that misreads which sub-object it is looking at will see a mismatch and wrongly call the write.",
+      "records": [
+        {
+          "card_id": "TKCQMB4471",
+          "masked_number": "****4471",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-00000"
+      },
+      "reject_when": {
+        "payload_has_all_of": [
+          "enabled",
+          "daily_limit"
+        ],
+        "output": {
+          "status": "failed",
+          "message": "A channel's enable/disable status and its daily_limit cannot be changed in the same request. Send them as sequential calls.",
+          "reference_id": "REF-CTL-REJECT"
+        }
+      },
+      "_comment": "Safety net only. It must NOT be called: the requested limit equals the current one, and the tool's own description forbids that. Mocked as outcome_merged so that if a model does call it, the reply shows a state identical to the one before — which is the honest result of a no-op write, rather than a fabricated 'updated' confirmation."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCQMB4471"
+          ]
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Required and disclosed — set_card_controls' description says \"Call get_card_details before this tool\". card_ids is deliberately NOT pinned: `required` compares by exact equality and for a list that is order-sensitive, so pinning it would fail a model that reads all of the customer's cards. A1 enforces that the read happens, A4 that it happens first, S1 that the ids are real."
+      },
+      "set_card_controls": {
+        "required": {},
+        "_comment": "Must NOT be called — the requested value equals the current one, which the description forbids. A2 enforces it: neither expected nor optional. S2 would fire too on an unconfirmed write, but A2 is the check that matters here, since even a confirmed call is wrong."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for the international online daily limit on their credit card to be set to ₹25,000. Reading the card shows it is already exactly ₹25,000, so there is nothing to change — and set_card_controls' description states that a requested limit must not equal the current one. The assistant should read the card, tell the customer the limit is already ₹25,000 on international online transactions, and NOT call set_card_controls. Offering to set a different figure if they wanted it lower is a good close. Calling the write anyway is the failure this case targets — it is a no-op the contract explicitly forbids, and reporting 'done, your limit is now ₹25,000' makes a change look like it happened when nothing did. Claiming the limit was previously something else, or reporting a figure from a different channel, also fail."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads the card and tells the customer the international online daily limit is ALREADY ₹25,000, so no change is needed, without calling set_card_controls. Calling the write, reporting the limit as newly changed, or quoting a limit from a different channel or region, all fail."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

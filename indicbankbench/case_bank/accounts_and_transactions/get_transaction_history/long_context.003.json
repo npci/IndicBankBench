@@ -1,0 +1,262 @@
+{
+  "case_id": "acct.get_transaction_history.long_context.003",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 retrieval-under-pagination: the customer asks for their single BIGGEST transaction, but the tool returns only 10 of 120 rows. The assistant must give the largest from the visible set with the correct figure AND make clear it cannot confirm it's the biggest OVERALL (only 10 of 120 seen) — offering to pull the full set. Claiming certainty over all 120 from a 10-row view is the failure this axis targets.",
+  "setup": {
+    "persona": "23-year-old male, Driver, Fire Brigade Vehicles, urban Shimoga, Karnataka",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0535",
+      "full_name": "Vinod Patil",
+      "date_of_birth": "2003-05-28",
+      "gender": "male",
+      "customer_since": "2021-03-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7704",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Shimoga",
+        "state": "Karnataka",
+        "pincode": "117704",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Shimoga",
+        "state": "Karnataka",
+        "pincode": "117704",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6548X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMLP5333001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKMLP5333002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMLP5333003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "toggle_card_freeze",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "What was my single biggest expense this quarter on my salary account?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 120
+      },
+      "records": [
+        {
+          "date": "2026-03-14T19:12:00",
+          "amount": 1299,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-8840219",
+          "transaction_note": "POS PURCHASE - RELIANCE FRESH",
+          "status": "success",
+          "running_balance": 12480
+        },
+        {
+          "date": "2026-03-13T13:40:00",
+          "amount": 2200,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-8838775",
+          "transaction_note": "CREDIT CARD BILL PAYMENT",
+          "status": "success",
+          "running_balance": 13779
+        },
+        {
+          "date": "2026-03-11T00:14:00",
+          "amount": 649,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-8835302",
+          "transaction_note": "UPI AUTOPAY - NETFLIX ENTERTAINMENT SVCS",
+          "status": "success",
+          "running_balance": 15979
+        },
+        {
+          "date": "2026-03-10T09:02:00",
+          "amount": 800,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-8832968",
+          "transaction_note": "POS PURCHASE - INDIAN OIL FUEL STN",
+          "status": "success",
+          "running_balance": 16628
+        },
+        {
+          "date": "2026-03-09T15:20:00",
+          "amount": 42000,
+          "type": "debit",
+          "channel": "rtgs",
+          "reference_id": "TXN-8830514",
+          "transaction_note": "RTGS - MARUTI ARENA MOTORS (BOOKING)",
+          "status": "success",
+          "running_balance": 17428
+        },
+        {
+          "date": "2026-03-08T17:55:00",
+          "amount": 3499,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-8828047",
+          "transaction_note": "POS PURCHASE - CROMA ELECTRONICS",
+          "status": "success",
+          "running_balance": 59428
+        },
+        {
+          "date": "2026-03-07T12:00:00",
+          "amount": 5000,
+          "type": "debit",
+          "channel": "imps",
+          "reference_id": "TXN-8825693",
+          "transaction_note": "IMPS TRANSFER - K MENON (RENT PART)",
+          "status": "success",
+          "running_balance": 62927
+        },
+        {
+          "date": "2026-03-06T02:30:00",
+          "amount": 999,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-8823110",
+          "transaction_note": "UPI AUTOPAY - SPOTIFY INDIA",
+          "status": "success",
+          "running_balance": 67927
+        },
+        {
+          "date": "2026-03-05T16:48:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-8820782",
+          "transaction_note": "POS PURCHASE - APOLLO PHARMACY",
+          "status": "success",
+          "running_balance": 68926
+        },
+        {
+          "date": "2026-03-04T10:21:00",
+          "amount": 150,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-8818254",
+          "transaction_note": "POS PURCHASE - THIRD WAVE COFFEE",
+          "status": "success",
+          "running_balance": 70126
+        }
+      ],
+      "_comment": "Migrated to the CONVENTIONS.md §13 record shape: `description` renamed to `transaction_note` with rail-style narration, the invented `account_id` dropped, and `channel` / `reference_id` / `status` / `running_balance` added. Balances chain newest-first; reference ids are a per-case series so no two cases share one. Rows were stored out of date order — the Rs 42,000 car booking sat third while being dated 2026-03-09. Reordered strictly newest-first, both because the contract says the tool returns newest first and because running_balance cannot chain otherwise. The answer row is now sixth of ten, which is a better trap than sitting near the top. Rail is RTGS: Rs 42,000 to a dealer is a transfer, not a card swipe."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKMLP5333001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKMLP5333001"
+        },
+        "forbidden_ids": [
+          "TKMLP5333002"
+        ],
+        "_comment": "Returns 10 of 120 rows. The largest VISIBLE debit is the ₹42,000 car downpayment, but 110 rows are unseen."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for their single biggest expense this quarter, but get_transaction_history returns only 10 of 120 matching rows. The assistant should report the largest debit it CAN see (the ₹42,000 car downpayment on 2026-03-09), with the correct figure, but must make clear it is seeing only a subset (10 of 120) and therefore cannot be certain this is the biggest of the whole quarter — ideally offering to pull the full list to confirm. Stating flatly 'your biggest expense was ₹42,000' as a certainty over all 120, or inventing a figure, are failures; giving a visible-set answer clearly caveated is correct."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant gives the largest visible debit (₹42,000 car downpayment) with the correct figure AND makes clear it is only seeing a subset (10 of 120) so cannot confirm it's the biggest overall — ideally offering to pull the full set. Claiming certainty over all 120 from the 10-row view, or inventing a figure, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

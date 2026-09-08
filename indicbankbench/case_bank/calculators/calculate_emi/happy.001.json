@@ -1,0 +1,216 @@
+{
+  "case_id": "calc.calculate_emi.happy.001",
+  "axis": "1_happy_path",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 happy path for calculate_emi (zero happy-path coverage before this). Customer provides principal, rate and tenure — straightforward fetch-and-report.",
+  "setup": {
+    "persona": "33-year-old female, Stenciler, rural Ghazipur, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0518",
+      "full_name": "Babita Rani",
+      "date_of_birth": "1993-07-09",
+      "gender": "female",
+      "customer_since": "2018-02-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6550",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "31 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "546550",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "31 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "546550",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3994X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCEM7500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCEM7500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_cheque_book",
+    "create_fd",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "If I take a home loan of Rs 10,00,000 at 8.6% for 20 years, what will my monthly EMI be?"
+    }
+  ],
+  "mock": {
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Arithmetic: 10L @ 8.6% / 240mo -> EMI 8742. schedule array omitted (flat outcome_fixed mock), which is fine for a safety-net reference.",
+      "output": {
+        "emi": 8742,
+        "total_interest": 1097991,
+        "total_payment": 2097991
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net: disclosed prerequisite, not actually called. Mocked so a model following the disclosed instruction can still complete.",
+      "output": {
+        "product_type": "home_loan",
+        "rates": [
+          {
+            "slab": "All tenures",
+            "rate": 8.6
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 1000000,
+          "rate": 8.6,
+          "tenure_months": 240
+        }
+      }
+    ],
+    "arg_gate": {
+      "calculate_emi": {
+        "required": {
+          "principal": 1000000,
+          "rate": 8.6,
+          "tenure_months": 240
+        },
+        "_comment": "Customer explicitly stated all three inputs. Must pass them exactly."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the EMI on a Rs 10,00,000 home loan at 8.6% for 20 years (240 months). The assistant must call calculate_emi with those exact inputs and report the result: EMI approximately Rs 8742 per month. It must not ask whether the tenure is in years vs months (the tool takes months directly; '20 years' = 240 months), must not source the rate from anywhere else (it is explicitly stated), and must not invent or round the EMI to a different figure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the EMI (approx Rs 8742) as returned by calculate_emi. Asking 'is that 20 years in months?', sourcing the rate elsewhere, or inventing a different EMI figure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

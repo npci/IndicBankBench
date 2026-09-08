@@ -1,0 +1,269 @@
+{
+  "case_id": "depl.create_rd.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "Prior showed RD rate 8.0% from old card. Current shows 6.75%. Model must source fresh rate.",
+  "setup": {
+    "persona": "20-year-old female, Traffic Regulator, Tram, urban Alappuzha, Kerala",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0107",
+      "full_name": "Jyotsna Nair",
+      "date_of_birth": "2006-09-04",
+      "gender": "female",
+      "customer_since": "2024-07-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5052",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Alappuzha",
+        "state": "Kerala",
+        "pincode": "725052",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Alappuzha",
+        "state": "Kerala",
+        "pincode": "725052",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0558X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRD9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRD9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "rd",
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"rates\":[{\"slab\":\"1 year to < 3 years\",\"rate\":6.5,\"senior_citizen_rate\":-1}],\"effective_date\":\"2026-01-01\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The 2-year RD rate is 6.75% (FD+25bp based on earlier card)."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "create_rd",
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "close_deposit",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Start a 2-year RD of Rs 4,000 per month from my savings. Use whatever the current rate is."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 103009,
+        "interest_earned": 7009,
+        "total_principal_invested": 96000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKCRD9700001",
+          "available_balance": 100000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD9700003",
+        "status": "success",
+        "message": "Recurring Deposit booked.",
+        "interest_rate": 6.75,
+        "maturity_date": "2028-08-17",
+        "maturity_amount": 103009,
+        "monthly_debit_date": 17,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-99900"
+      }
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T10:00:00",
+          "amount": 100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-NOISE",
+          "transaction_note": "Noise entry",
+          "status": "success",
+          "running_balance": 100
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 4000,
+          "tenure_months": 24,
+          "source_account": "TKCRD9700001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 4000,
+          "tenure_months": 24,
+          "source_account": "TKCRD9700001"
+        },
+        "_comment": "S2 must precede."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior conversation mentioned earlier rate card. The assistant must source current rate (6.75% RD = FD 6.5% + 25bp) and book at correct rate after confirmation. Not relying on stale prior data."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources fresh rate, books at correct rate after confirmation. Using stale prior data to skip the rate check fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

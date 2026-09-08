@@ -1,0 +1,301 @@
+{
+  "case_id": "depl.update_deposit_renewal.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 missing the REQUIRED instruction (the sibling .001 withheld which FD): 'set my FD to auto-renew' supplies no instruction, and the tool has no default. The correct move is one question — principal only, or principal plus interest.",
+  "setup": {
+    "persona": "26-year-old male, Orthodontist, rural Warangal, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0413",
+      "full_name": "Donal Erravalli",
+      "date_of_birth": "2000-09-08",
+      "gender": "male",
+      "customer_since": "2020-04-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1100",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Warangal",
+        "state": "Telangana",
+        "pincode": "551100",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Warangal",
+        "state": "Telangana",
+        "pincode": "551100",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1173X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAYMR1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDYMR2102",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCYMR3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Set my FD to auto-renew."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "A single FD; the missing fact is the instruction choice, not the entity.",
+      "records": [
+        {
+          "deposit_id": "TKFDYMR2102",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2026-04-01",
+          "maturity_date": "2027-04-01",
+          "maturity_amount": 213320,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKAYMR1101",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "instruction": "no_renewal",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "update_deposit_renewal": {
+        "required": {},
+        "_comment": "Must NOT be called: instruction is required and nothing was chosen. Picking one silently fails."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Looking the FD up first is fine; the clarification is what matters."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "'Set my FD to auto-renew' gives a product but no instruction — renew_principal or renew_principal_interest are materially different and the tool requires one. The assistant must ask which option the customer wants (and may show what each means) rather than silently defaulting to one and writing it."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which renewal option the customer wants (principal only vs principal plus interest) without calling update_deposit_renewal. Writing a defaulted instruction fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

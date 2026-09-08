@@ -1,0 +1,295 @@
+{
+  "case_id": "calc.calculate_emi.long_context.001",
+  "axis": "8_long_context",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-extraction among competing loan numbers. The history contains two tool-backed EMI computations: home loan at 8.6% for Rs 42,00,000 over 15 years, and a personal loan at 10.5% for Rs 4,00,000 over 3 years. The live turn revises the HOME loan amount to Rs 38,00,000 (still 15 years). The trap is reusing the old Rs 42,00,000 principal, the personal-loan 10.5% rate, or the 36-month tenure. Gold stays tight: one calculate_emi call with all three inputs pinned.",
+  "setup": {
+    "persona": "20-year-old female, Upholsterer, Furniture, urban Bangalore, Karnataka",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0678",
+      "full_name": "Saavakka Vastrada",
+      "date_of_birth": "2006-06-18",
+      "gender": "female",
+      "customer_since": "2024-02-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0081",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "42 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "960081",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "42 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "960081",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0961X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKEMI8220",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKEMI8221",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "We're planning a home loan with your bank. What rate applies these days?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "home_loan"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"product_type\":\"home_loan\",\"rates\":[{\"slab\":\"home loan\",\"rate\":8.6}],\"effective_date\":\"2026-03-01\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The current home loan rate is 8.6% per annum."
+      },
+      {
+        "role": "user",
+        "content": "Good. Run the EMI for Rs 42,00,000 over 15 years."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p2",
+            "type": "function",
+            "function": {
+              "name": "calculate_emi",
+              "arguments": {
+                "principal": 4200000,
+                "rate": 8.6,
+                "tenure_months": 180
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p2",
+        "content": "{\"emi\":41605.62,\"total_interest\":3289011.6,\"total_payment\":7489011.6,\"schedule\":[]}"
+      },
+      {
+        "role": "assistant",
+        "content": "For Rs 42,00,000 at 8.6% over 15 years the fixed EMI is about Rs 41,606 per month."
+      },
+      {
+        "role": "user",
+        "content": "Hmm. Before that — I also promised my brother-in-law I'd check what a personal loan EMI looks like. Rs 4,00,000, three years."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p3",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "personal_loan"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p3",
+        "content": "{\"product_type\":\"personal_loan\",\"rates\":[{\"slab\":\"personal loan\",\"rate\":10.5}],\"effective_date\":\"2026-03-01\"}"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p4",
+            "type": "function",
+            "function": {
+              "name": "calculate_emi",
+              "arguments": {
+                "principal": 400000,
+                "rate": 10.5,
+                "tenure_months": 36
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p4",
+        "content": "{\"emi\":13000.98,\"total_interest\":68035.28,\"total_payment\":468035.28,\"schedule\":[]}"
+      },
+      {
+        "role": "assistant",
+        "content": "That comes to about Rs 13,001 per month for the personal loan."
+      },
+      {
+        "role": "user",
+        "content": "Ok, I'll pass that along. Give me a minute."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_transaction_history",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Let's get back to the home loan. The builder revised the price — run the EMI again, now for Rs 38,00,000, still 15 years."
+    }
+  ],
+  "mock": {
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Gold inputs: 38,00,000 at 8.6% for 180 months. The mock is fixed, so wrong inputs (42L / 10.5% / 36m) would also return this payload — but the pinned gate catches them deterministically.",
+      "output": {
+        "emi": 37643.18,
+        "total_interest": 2975772.4,
+        "total_payment": 6775772.4,
+        "schedule": []
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "home loan",
+            "rate": 8.6
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "Noise prerequisite — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 3800000,
+          "rate": 8.6,
+          "tenure_months": 180
+        }
+      }
+    ],
+    "arg_gate": {
+      "calculate_emi": {
+        "required": {
+          "principal": 3800000,
+          "rate": 8.6,
+          "tenure_months": 180
+        },
+        "_comment": "All three inputs pinned against the buried history: 42L principal, the personal-loan 10.5% rate and the 36-month tenure are each wrong. Reusing any of them fails deterministically."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The history holds two tool-backed EMI runs: the home loan at 8.6% on Rs 42,00,000 over 180 months (EMI ~41,606) and a personal loan at 10.5% on Rs 4,00,000 over 36 months (EMI ~13,001). The customer now revises ONLY the home-loan amount to Rs 38,00,000, keeping 15 years. The assistant must call calculate_emi with principal 38,00,000, rate 8.6 and tenure 180 months and report the fresh EMI of about Rs 37,643. Reusing the old Rs 42,00,000 principal, the personal-loan 10.5% rate, or the 36-month tenure fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "recomputes the EMI with the REVISED home loan inputs — principal 38,00,000, rate 8.6%, 180 months — and reports the fresh EMI (~Rs 37,643). Using the old 42,00,000 principal, the 10.5% personal-loan rate, or the 36-month tenure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

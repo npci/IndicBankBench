@@ -1,0 +1,178 @@
+{
+  "case_id": "depl.get_gold_rate.out_of_scope.001",
+  "axis": "11_out_of_scope_refuse",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "decline",
+  "_variant_note": "Axis-11: customer asks for gold rate in USD. Global conventions declare INR only.",
+  "setup": {
+    "persona": "37-year-old female, Hand Embroiderer, Kamdani, urban Alwar, Rajasthan",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0182",
+      "full_name": "Tahira Bano",
+      "date_of_birth": "1989-11-13",
+      "gender": "female",
+      "customer_since": "2022-02-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4218",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "59 Mill Road",
+        "line2": "Bandra East",
+        "city": "Alwar",
+        "state": "Rajasthan",
+        "pincode": "744218",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "59 Mill Road",
+        "line2": "Bandra East",
+        "city": "Alwar",
+        "state": "Rajasthan",
+        "pincode": "744218",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4038X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDL740500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDL740500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "search_knowledge_base",
+    "block_card",
+    "get_request_status",
+    "get_deposit_closure_quote",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you give me the gold rate in US dollars?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only.",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {},
+        "_comment": "Not required: correct move is decline."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the gold rate in US dollars. The assistant must decline the foreign-currency request with a brief reason — all amounts are quoted in INR — and, where sensible, offer the INR rate as the alternative. It must not invent or look up a USD conversion, must not call the tool and present the INR figure as if it were dollars. Stating a dollar figure is a failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "decline",
+      "axis_gate_rule": "declines the USD rate request for the right reason (rates are INR-only) and does not state a dollar figure. Providing an INR rate is acceptable if clearly labelled INR."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_refusal",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,214 @@
+{
+  "case_id": "acct.get_transaction_history.happy.001",
+  "axis": "1_happy_path",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Happy path for get_transaction_history, exercising DATE RESOLUTION: 'last week' relative to current_date 2026-03-15 must resolve to a from_date around 2026-03-08 (YYYY-MM-DD). Single-account arg (not an array). Reports the returned rows accurately.",
+  "setup": {
+    "persona": "27-year-old female, No Occupation / Retired / Homemaker, urban Khordha, Odisha",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0611",
+      "full_name": "Sujyamani Maharath",
+      "date_of_birth": "1999-01-12",
+      "gender": "female",
+      "customer_since": "2017-04-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0980",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Khordha",
+        "state": "Odisha",
+        "pincode": "140980",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Khordha",
+        "state": "Odisha",
+        "pincode": "140980",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3210X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKQEV2072001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKQEV2072002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCQEV2072003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "create_fd",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me the transactions on my salary account from the last week."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "The executor ignores date-range args (from_date/to_date don't map to a record field) and returns this authored set — these ARE the last-week transactions. type/channel DO filter if passed. total_count defaults to the returned count (4). All entries `status: success` — settled historical transactions. `status` is promised in get_transaction_history's description but is newer than every fixture, and S3 cannot enforce it (transactions.items has no `required` list), so it is mandatory by convention and test only (CONVENTIONS.md §13).",
+      "records": [
+        {
+          "date": "2026-03-14T19:20:00",
+          "amount": 1240,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI884210",
+          "transaction_note": "SWIGGY ORDER 8842",
+          "status": "success",
+          "running_balance": 88612
+        },
+        {
+          "date": "2026-03-12T10:05:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT770021",
+          "transaction_note": "SALARY MAR26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 89852
+        },
+        {
+          "date": "2026-03-11T08:30:00",
+          "amount": 2499,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI773310",
+          "transaction_note": "AIRTEL POSTPAID BILL",
+          "status": "success",
+          "running_balance": 4852
+        },
+        {
+          "date": "2026-03-09T14:10:00",
+          "amount": 649,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI770099",
+          "transaction_note": "NETFLIX SUBSCRIPTION",
+          "status": "success",
+          "running_balance": 7351
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKQEV2072001",
+          "from_date": "2026-03-08"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKQEV2072001"
+        },
+        "forbidden_ids": [
+          "TKQEV2072002"
+        ],
+        "date_resolution": {
+          "from_date": {
+            "anchor": "current_date",
+            "approx": "2026-03-08",
+            "tolerance_days": 2,
+            "_comment": "'last week' -> roughly 2026-03-08 (current_date minus ~7d). Judge assesses reasonableness; a from_date within a couple of days is fine. Omitting from_date entirely is a weaker answer (advisory) but the returned set is already the last-week window."
+          }
+        },
+        "_comment": "Account resolves to TKQEV2072001. A reasonable from_date near 2026-03-08 is expected but not brittly pinned; to_date optional. type/channel should NOT filter (user wants all transactions)."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for their salary account transactions from the last week. The assistant resolves 'salary account' to TKQEV2072001 and calls get_transaction_history with a from_date around 2026-03-08 (a week before the current date 2026-03-15). It should report the four returned transactions accurately — dates, amounts, and direction (debit/credit) — e.g. the INR 85,000 salary credit on 2026-03-12, the INR 1,240 Swiggy debit on 2026-03-14, the INR 2,499 Airtel debit (03-11) and the INR 649 Netflix debit (03-09). Amounts and dates must match the tool output exactly; it must not invent transactions or misstate a debit as a credit. It must not query the Business Current account."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the four returned transactions with correct dates, amounts and direction (esp. the INR 85,000 as a CREDIT and the debits as debits); numbers grounded, nothing invented."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

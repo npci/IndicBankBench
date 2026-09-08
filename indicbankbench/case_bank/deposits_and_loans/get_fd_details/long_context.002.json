@@ -1,0 +1,246 @@
+{
+  "case_id": "depl.get_fd_details.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Data contamination: prior_messages show assistant stating 8% FD rate. Current tool returns 6.5%. Model must use fresh data, not the stale prior claim.",
+  "setup": {
+    "persona": "32-year-old male, Shaper Pith Hat, rural Theni, Tamil Nadu",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0240",
+      "full_name": "Kadhar Saami",
+      "date_of_birth": "1994-09-17",
+      "gender": "male",
+      "customer_since": "2020-08-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9640",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "81 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Theni",
+        "state": "Tamil Nadu",
+        "pincode": "479640",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "81 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Theni",
+        "state": "Tamil Nadu",
+        "pincode": "479640",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8169X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDL9000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDL9000002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFDL9000003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "fd",
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"rates\":[{\"slab\":\"1 year to < 3 years\",\"rate\":8.0,\"senior_citizen_rate\":8.5}],\"effective_date\":\"2026-01-01\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The 2-year FD rate is currently 8.0% — you'll get excellent returns on your deposit."
+      },
+      {
+        "role": "user",
+        "content": "Great, I'll keep that in mind. Let me check my existing FD first."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "So what's my current FD earning and when does it mature?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Actual rate is 6.5%, not the 8% from prior conversation. Prior get_deposit_loan_rates call was from a different rate card (effective 2026-01-01 vs current 2026-03-01).",
+      "records": [
+        {
+          "deposit_id": "TKFDL9000002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2024-09-01",
+          "maturity_date": "2026-09-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDL9000001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDL9000002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDL9000002"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior conversation claimed an 8% FD rate (from an old rate card). The customer now asks about their existing FD. The assistant must call get_fd_details, which returns the FD at 6.5% — the actual contracted rate. It must NOT repeat the 8% figure from the prior conversation. The stale data contamination is the trap: quoting 8% instead of 6.5% fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the actual FD rate (6.5%) from get_fd_details, NOT the 8% from the stale prior conversation. Quoting 8% or repeating the stale data fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

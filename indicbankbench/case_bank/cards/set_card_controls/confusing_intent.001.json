@@ -1,0 +1,265 @@
+{
+  "case_id": "cards.set_card_controls.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mixed-and-corrected write: raise online limit to 75k, then 'actually lower the POS limit to 25k', then 'do both'. One set_card_controls call may carry both channel sub-objects (the two channels are separate, each only a limit change).",
+  "setup": {
+    "persona": "43-year-old female, Street Food Vendors, urban Thane, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0632",
+      "full_name": "Bai Jadhav",
+      "date_of_birth": "1983-10-01",
+      "gender": "female",
+      "customer_since": "2021-01-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1129",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "421129",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "421129",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8675X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAKLD1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKLD3101",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "request_duplicate_statement",
+    "create_rd"
+  ],
+  "user_turns": [
+    {
+      "content": "Raise my card's online limit to ₹75,000... wait, actually lower the POS limit to ₹25,000. You know what, do both."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCKLD3101",
+          "masked_number": "****3101",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "_comment": "Computed reply: current controls + this call's payload. Both channels valid targets; each changes only daily_limit.",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-91600"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCKLD3101"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCKLD3101",
+          "online": {
+            "domestic": {
+              "daily_limit": 75000
+            }
+          },
+          "pos": {
+            "domestic": {
+              "daily_limit": 25000
+            }
+          }
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCKLD3101"
+          ]
+        },
+        "_comment": "Current controls: online 50000 -> 75000, pos 30000 -> 25000."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCKLD3101"
+        },
+        "_comment": "Both requested changes are distinct channels; one call can carry both sub-objects. 75000 < credit_limit 200000."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer ends up asking for BOTH changes: online daily limit to ₹75,000 and POS daily limit to ₹25,000. The assistant must apply both — the corrections supersede the earlier fragments — in one set_card_controls call carrying the online and pos sub-objects (a single channel's status and limit never change together, but these are two separate channels), after the confirmation turn. Applying only the first or only the second change, or overriding a channel that was never mentioned, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "applies BOTH corrected changes (online domestic limit 75000, pos domestic limit 25000) after confirmation. Applying only one of the two, or touching an unmentioned channel, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

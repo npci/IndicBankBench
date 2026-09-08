@@ -1,0 +1,300 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for a closure quote on 'my FD' thinking there's just one. Two FDs exist — one small (Rs 1,00,000) and one large (Rs 5,00,000). A model that queries get_fd_details with only one deposit_id sees only one FD, quotes it, and the customer makes a decision on incomplete information. Broad query (both IDs) reveals the second FD, letting the model present both options.",
+  "setup": {
+    "persona": "55-year-old male, Driver, Cycle Richshaw, rural Goalpara, Assam",
+    "current_date": "2026-08-01",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0718",
+      "full_name": "Kasim Ali",
+      "date_of_birth": "1971-04-17",
+      "gender": "male",
+      "customer_since": "2015-07-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8659",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "100 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Goalpara",
+        "state": "Assam",
+        "pincode": "818659",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "100 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Goalpara",
+        "state": "Assam",
+        "pincode": "818659",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7239X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDCF9413001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDC9413002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDC9413003",
+          "type": "fd",
+          "label": "TK TaxSaver FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCDCF9413004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm thinking of closing my FD — how much would I get if I break it now?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the customer has TWO FDs with different labels ('TK SmartFD' and 'TK TaxSaver FD'). A model that only queries ONE deposit_id gets only that FD's details and quotes based on it — but the customer needs to know about both to make a decision. FD-413002: Rs 1,00,000 at 6.5% for 12 months, started 2026-03-01 (5 months run). FD-413003: Rs 5,00,000 at 6.75% for 24 months, started 2026-04-15 (3.5 months run).",
+      "records": [
+        {
+          "deposit_id": "TKFDC9413002",
+          "principal_amount": 100000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2026-03-01",
+          "maturity_date": "2027-03-01",
+          "maturity_amount": 106638,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDCF9413001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDC9413003",
+          "principal_amount": 500000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2026-04-15",
+          "maturity_date": "2028-04-15",
+          "maturity_amount": 571567,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDCF9413001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "FD-413002: 5 months at 6.0% simple (completed < 6 months, 6% slab for 6mo-<12mo wait no — the period run is 5 months which falls in the <6 month slab at 5%. Accrued: 100000 x 5% x 5/12 = 2083. Penalty 1% = 1000. Payout: 100000+2083-1000 = 101083. FD-413003: 3.5 months (Apr 15 to Aug 1 = 3.5 months). Completed < 6 months, 5% slab. Accrued: 500000 x 5% x 3.5/12 = 7292. Penalty 1% = 5000. Payout: 500000+7292-5000 = 502292.",
+      "records": [
+        {
+          "deposit_id": "TKFDC9413002",
+          "principal_amount": 100000,
+          "accrued_interest": 2083,
+          "penalty_rate": 1.0,
+          "penalty_amount": 1000,
+          "effective_rate": 2.6,
+          "estimated_payout": 101083
+        },
+        {
+          "deposit_id": "TKFDC9413003",
+          "principal_amount": 500000,
+          "accrued_interest": 7292,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "effective_rate": 1.57,
+          "estimated_payout": 502292
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDC9413002",
+            "TKFDC9413003"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDC9413002",
+            "TKFDC9413003"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDC9413002",
+                "TKFDC9413003"
+              ],
+              [
+                "TKFDC9413002"
+              ],
+              [
+                "TKFDC9413003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying both FDs is the correct approach to surface both options for the customer. Querying only one FD hides the second entirely — the customer asked about 'my FD' singular, but linked_products_summary says fd:2."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDC9413002",
+                "TKFDC9413003"
+              ],
+              [
+                "TKFDC9413002"
+              ],
+              [
+                "TKFDC9413003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Getting quotes for both FDs is ideal. Quoting only one without asking which the customer means is a miss — there are two FDs and the customer needs to choose."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to close 'my FD' assuming there's just one. There are TWO FDs: TK SmartFD (Rs 1,00,000, payout Rs 1,01,083 if broken now) and TK TaxSaver FD (Rs 5,00,000, payout Rs 5,02,292 if broken now). The assistant must query both FDs, get closure quotes for both, and present both options so the customer can decide. Quoting only one FD as if it were the only one fails — the customer needs to know about both."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both FDs and presents both closure quotes (Rs 1,01,083 for SmartFD, Rs 5,02,292 for TaxSaver FD), allowing the customer to choose which to close. Quoting only one FD without surfacing the second fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

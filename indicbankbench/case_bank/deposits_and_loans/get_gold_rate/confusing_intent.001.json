@@ -1,0 +1,185 @@
+{
+  "case_id": "depl.get_gold_rate.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: the customer wants a gold rate for a jewellery loan but never says the word 'gold' or names a karat. 'Pledging jewellery for a loan' implies 22K (standard for jewellery loans).",
+  "setup": {
+    "persona": "35-year-old female, Undertaker, rural Kabeerdham, Chhattisgarh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0474",
+      "full_name": "Shayra Bai",
+      "date_of_birth": "1991-10-01",
+      "gender": "female",
+      "customer_since": "2021-10-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1433",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "34 College Road",
+        "line2": "T Nagar",
+        "city": "Kabeerdham",
+        "state": "Chhattisgarh",
+        "pincode": "261433",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "34 College Road",
+        "line2": "T Nagar",
+        "city": "Kabeerdham",
+        "state": "Chhattisgarh",
+        "pincode": "261433",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5323X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDL7403001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDL7403002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "search_knowledge_base",
+    "calculate_fd_maturity",
+    "get_account_balance",
+    "get_deposit_closure_quote",
+    "create_rd"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm thinking of pledging some jewellery for a loan. What rate will the bank use to value it?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "22K is the standard purity for jewellery pledged against a gold loan.",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Jewellery-loan context implies 22K; asking 'which karat?' is the over-clarification this case targets."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks what rate will be used to value jewellery for a loan, without naming the purity or even saying 'gold' explicitly. The assistant should infer the intent — this is a gold-loan rate question — and call get_gold_rate for 22K (the standard purity for jewellery), then report the rate (INR 6,271.50/g) and note that 18K and 24K rates are also available if the jewellery differs. It must not stall by asking 'which karat?' when 22K is the natural default. Asking for the karat rather than answering is the failure this case targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "infers the gold-loan rate intent and reports the 22K rate (INR 6,271.50/g) without asking which purity to use. Asking 'which karat?' instead of acting fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

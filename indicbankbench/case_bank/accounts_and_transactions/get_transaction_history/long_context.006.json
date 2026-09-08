@@ -1,0 +1,270 @@
+{
+  "case_id": "acct.get_transaction_history.long_context.006",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Buried-in-noise: 12 transaction records returned. The key record (Flipkart refund, Rs 2,099 credit at position 11) is buried deep. A similar-looking bait record (Amazon refund, Rs 1,999 credit at position 2) sits near the top. A weak model stops scanning at position 2-3 and picks the first refund. A strong model scans all 12 and finds the correct Flipkart refund. Differs from filter-trap (no filter issue) and over-specific (the bait is positional, not heuristic).",
+  "setup": {
+    "persona": "46-year-old male, Salesman, Wholesale Trade, rural Puri, Odisha",
+    "current_date": "2026-08-22",
+    "current_time": "10:30",
+    "login_context": {
+      "customer_id": "SCN0546",
+      "full_name": "Sanjay Kandi",
+      "date_of_birth": "1980-09-21",
+      "gender": "male",
+      "customer_since": "2020-11-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9048",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Puri",
+        "state": "Odisha",
+        "pincode": "519048",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Puri",
+        "state": "Odisha",
+        "pincode": "519048",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2496X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGTX65001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGTX65002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_rd_details",
+    "toggle_card_freeze"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you check the refund from Flipkart, around Rs 2,000? Has it come through yet?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 12
+      },
+      "_comment": "12 records. Bait = position 2 (Amazon refund Rs 1,999 credit). Key = position 11 (Flipkart refund Rs 2,099 credit). A weak model that stops scanning at position 2-3 picks the Amazon refund. A strong model scans all 12 and finds the Flipkart one.",
+      "records": [
+        {
+          "date": "2026-08-20T09:15:00",
+          "amount": 450,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI610120",
+          "transaction_note": "CHAI POINT",
+          "status": "success",
+          "running_balance": 58000
+        },
+        {
+          "date": "2026-08-19T16:40:00",
+          "amount": 2099,
+          "type": "credit",
+          "channel": "upi",
+          "reference_id": "UPI610119",
+          "transaction_note": "REFUND FLIPKART",
+          "status": "success",
+          "running_balance": 58450
+        },
+        {
+          "date": "2026-08-19T13:10:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI610118",
+          "transaction_note": "SWIGGY LUNCH",
+          "status": "success",
+          "running_balance": 56351
+        },
+        {
+          "date": "2026-08-18T08:00:00",
+          "amount": 35000,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "NEFT610117",
+          "transaction_note": "RENT AUG TRANSFER",
+          "status": "success",
+          "running_balance": 57551
+        },
+        {
+          "date": "2026-08-17T23:45:00",
+          "amount": 890,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI610116",
+          "transaction_note": "AMAZON PRIME RENEWAL",
+          "status": "success",
+          "running_balance": 92551
+        },
+        {
+          "date": "2026-08-16T18:30:00",
+          "amount": 2500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS610115",
+          "transaction_note": "INDIAN OIL FUEL",
+          "status": "success",
+          "running_balance": 93441
+        },
+        {
+          "date": "2026-08-15T10:00:00",
+          "amount": 1800,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI610114",
+          "transaction_note": "BESCOM ELECTRICITY",
+          "status": "success",
+          "running_balance": 95941
+        },
+        {
+          "date": "2026-08-14T14:20:00",
+          "amount": 9400,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI610113",
+          "transaction_note": "CREDIT CARD BILL",
+          "status": "success",
+          "running_balance": 97741
+        },
+        {
+          "date": "2026-08-13T09:55:00",
+          "amount": 750,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI610112",
+          "transaction_note": "NETFLIX SUBSCRIPTION",
+          "status": "success",
+          "running_balance": 107141
+        },
+        {
+          "date": "2026-08-12T06:30:00",
+          "amount": 62000,
+          "type": "credit",
+          "channel": "imps",
+          "reference_id": "IMPS610111",
+          "transaction_note": "SALARY AUG 2026",
+          "status": "success",
+          "running_balance": 107891
+        },
+        {
+          "date": "2026-08-11T14:05:00",
+          "amount": 1999,
+          "type": "credit",
+          "channel": "upi",
+          "reference_id": "UPI610110",
+          "transaction_note": "REFUND AMAZON.IN",
+          "status": "success",
+          "running_balance": 45891
+        },
+        {
+          "date": "2026-08-10T11:00:00",
+          "amount": 3200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI610109",
+          "transaction_note": "BIGBASKET GROCERIES",
+          "status": "success",
+          "running_balance": 43892
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool not intended.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKGTX65001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKGTX65001"
+        },
+        "_comment": "Must fetch transaction history and find the Flipkart refund (Rs 2,099 credit, position 11). The trap is the Amazon refund (Rs 1,999 credit, position 2) which matches 'refund, around Rs 2,000' but is the WRONG merchant. The model must scan deep enough to reach position 11."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      }
+    },
+    "expected_resolution": "The customer asks about a Flipkart refund around Rs 2,000. get_transaction_history returns 12 records. The bait is at position 2: an Amazon refund of Rs 1,999 (credit) near the top which matches 'refund, around Rs 2,000' in amount and type. The correct record is at position 11: a Flipkart refund of Rs 2,099 (credit on 2026-08-19). A weak model that stops scanning early picks the Amazon refund and reports it as the Flipkart one failing on the WRONG merchant. A strong model scans all 12 records and correctly identifies the Flipkart refund of Rs 2,099 has come through on 19 Aug. Reporting the Amazon Rs 1,999 refund as the Flipkart one, or saying no Flipkart refund was found, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies the Flipkart refund of Rs 2,099 (credited 2026-08-19) NOT the Amazon Rs 1,999 refund at position 2. Reporting the wrong refund or saying none found fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

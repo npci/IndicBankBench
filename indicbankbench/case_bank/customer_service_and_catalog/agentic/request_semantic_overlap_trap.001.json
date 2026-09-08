@@ -1,0 +1,210 @@
+{
+  "case_id": "csc.agentic.request_semantic_overlap_trap.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests+get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 Goldilocks derive-args chain: get_all_requests → get_request_status. Customer asks about 'my card application from last month.' NOISE (REQ-SO-95001, listed FIRST, raised 2026-07-25) has description 'New card issuance processed via branch' — semantic overlap ('card issuance' ≈ 'card application') without literal keyword match — and category = 'cheque_book'. CORRECT (REQ-SO-95002, listed SECOND, raised 2026-07-08) has description 'Debit card replacement — dispatch pending', category = 'other'. The noise has card semantics but wrong category — a small model should map 'card issuance' to 'card application' and pick the noise. a strong model should notice the category mismatch and pick the correct one.",
+  "setup": {
+    "persona": "34-year-old female, Preservative Filler, Machine (Can & Preservation), rural Visakhapatnam, Andhra Pradesh",
+    "current_date": "2026-08-18",
+    "current_time": "14:30",
+    "login_context": {
+      "customer_id": "SCN0800",
+      "full_name": "Gangadevi Karnati",
+      "date_of_birth": "1992-09-04",
+      "gender": "female",
+      "customer_since": "2020-04-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0940",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "pincode": "110940",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "pincode": "110940",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0272X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSMO95001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TCKSMO95002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Check the status of my card application — the one I raised last month."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "SEMANTIC OVERLAP TRAP: NOISE (REQ-SO-95001, listed FIRST) description says 'New card issuance processed via branch' — semantic overlap with customer's 'card application' (both about obtaining a card) but NO literal keyword 'application'. Category = cheque_book (mismatched). CORRECT (REQ-SO-95002, listed SECOND) has description 'Debit card replacement — dispatch pending', category = other. The noise is more recent and semantically close — a small model should map 'card issuance' ≈ 'card application'. a strong model should notice the category mismatch.",
+      "records": [
+        {
+          "request_id": "REQ-SO-95001",
+          "category": "cheque_book",
+          "status": "in_progress",
+          "raised_date": "2026-07-25",
+          "last_updated_date": "2026-07-28",
+          "description": "New card issuance processed via branch"
+        },
+        {
+          "request_id": "REQ-SO-95002",
+          "category": "other",
+          "status": "in_progress",
+          "raised_date": "2026-07-08",
+          "last_updated_date": "2026-08-10",
+          "description": "Debit card replacement — dispatch pending"
+        },
+        {
+          "request_id": "REQ-SO-95003",
+          "category": "service_quality",
+          "status": "resolved",
+          "raised_date": "2026-06-10",
+          "last_updated_date": "2026-06-18",
+          "description": "Branch wait time feedback"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-SO-95002",
+        "status": "in_progress",
+        "raised_date": "2026-07-08T14:30:00",
+        "last_update": "2026-08-10T09:30:00",
+        "remarks": "Replacement card dispatched via courier. Expected delivery in 3-5 business days."
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "Noise tool safety net.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      },
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-SO-95002"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_all_requests",
+        "get_request_status"
+      ]
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must list all requests. Two July requests: noise REQ-SO-95001 (cheque_book, 'New card issuance processed via branch' — semantic overlap with 'card application') and correct REQ-SO-95002 (other, 'Debit card replacement — dispatch pending'). Noise has 'card' semantics but wrong category."
+      },
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-SO-95002"
+        },
+        "_comment": "Must check status of the CORRECT request (REQ-SO-95002, debit card replacement), NOT the noise (REQ-SO-95001, cheque_book category despite 'card issuance' description). The noise's description semantically overlaps with 'card application' but its category is wrong — a small model should fall for the semantic overlap, a strong model should discriminate on category."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer asks about the status of 'a card application from last month.' get_all_requests shows REQ-SO-95001 (cheque_book, raised 2026-07-25, 'New card issuance processed via branch') and REQ-SO-95002 (other, raised 2026-07-08, 'Debit card replacement — dispatch pending'). The noise (REQ-SO-95001) semantically overlaps with 'card application' ('card issuance' ≈ 'card application') without containing the exact keyword — a weak model would map them. However the REAL request is REQ-SO-95002 (debit card replacement). The noise category (cheque_book) is mismatched. The assistant must identify REQ-SO-95002 and report its status: in progress, card dispatched via courier, expected delivery in 3-5 business days. Checking REQ-SO-95001 fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "correctly identifies REQ-SO-95002 (debit card replacement, in_progress) as the relevant request and reports its status: replacement card dispatched via courier, expected delivery in 3-5 business days. Picking REQ-SO-95001 (cheque_book category, 'New card issuance') despite its semantic overlap with the customer's phrasing fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

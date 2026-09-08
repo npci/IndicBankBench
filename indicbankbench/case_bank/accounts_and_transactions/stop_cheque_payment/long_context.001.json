@@ -1,0 +1,359 @@
+{
+  "case_id": "acct.stop_cheque_payment.long_context.001",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-extraction with a write. Earlier in the history the customer stopped two cheques (100321, 100322) drawn on the CURRENT account — that tool round is in prior context. The live ask is a different, fresh task: stop cheque 228780 on the SAVINGS account. The trap is carrying the old current-account context forward (wrong account_id) or merging the old cheque numbers into the new call. Gold stays tight: one stop_cheque_payment call pinned to savings + cheque 228780, followed by the customer's own confirmation turn.",
+  "setup": {
+    "persona": "58-year-old male, Labourer, urban Jabalpur, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0741",
+      "full_name": "Kismat Chouhan",
+      "date_of_birth": "1968-02-22",
+      "gender": "male",
+      "customer_since": "2013-01-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1277",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "38 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Jabalpur",
+        "state": "Madhya Pradesh",
+        "pincode": "421277",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "38 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Jabalpur",
+        "state": "Madhya Pradesh",
+        "pincode": "421277",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7815X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKSCP8210",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKKSCP8211",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKSCP8212",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I've lost track of two cheques from my current account — please stop cheque numbers 100321 and 100322."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "stop_cheque_payment",
+              "arguments": {
+                "account_id": "TKKSCP8211",
+                "cheque_numbers": [
+                  "100321",
+                  "100322"
+                ],
+                "reason": "lost"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"account_id\":\"TKKSCP8211\",\"results\":[{\"cheque_number\":\"100321\",\"status\":\"stopped\"},{\"cheque_number\":\"100322\",\"status\":\"stopped\"}],\"status\":\"success\",\"message\":\"Stop-payment applied on both cheques.\",\"reference_id\":\"REF-SCP-82190\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Done — cheques 100321 and 100322 drawn on your current account now carry stop-payments, reference REF-SCP-82190."
+      },
+      {
+        "role": "user",
+        "content": "Good, one less worry. The shop might still try to cash one today."
+      },
+      {
+        "role": "assistant",
+        "content": "The instructions are already on record, so either of those two cheques would be returned unpaid if presented. Is there anything else I should stop?"
+      },
+      {
+        "role": "user",
+        "content": "Nothing else for now, but let me rummage through my drawers first."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_card_details",
+    "calculate_gold_loan_ltv"
+  ],
+  "user_turns": [
+    {
+      "content": "Now a different problem — I've misplaced a fresh cheque from my SAVINGS account. Please stop cheque number 228780 on my savings account."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "The gold call targets cheque 228780 on the savings account. A model dragging in the old current-account cheque numbers (100321/100322) or the current account id fails the pinned gate.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "228780",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment applied on cheque 228780.",
+        "reference_id": "REF-SCP-82191"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKKSCP8210",
+          "available_balance": 152340.5,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKKSCP8211",
+          "available_balance": 88750,
+          "hold_amount": 12000
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKKSCP8210",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Kismat Chouhan",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-16"
+        },
+        {
+          "account_id": "TKKSCP8211",
+          "account_type": "current",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Kismat Chouhan",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2022-03-11"
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-12T10:05:00",
+          "amount": 3200,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POSKSCP821001",
+          "transaction_note": "COFFEE DAY CAFE",
+          "status": "success",
+          "running_balance": 152340.5
+        },
+        {
+          "date": "2026-08-10T15:30:00",
+          "amount": 4500,
+          "type": "credit",
+          "channel": "upi",
+          "reference_id": "UPIKSCP821002",
+          "transaction_note": "REFUND BOOKMYSHOW",
+          "status": "success",
+          "running_balance": 155540.5
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCKSCP8212",
+          "masked_number": "****8212",
+          "card_type": "debit",
+          "network": "visa",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKKSCP8210",
+          "cheque_numbers": [
+            "228780"
+          ],
+          "reason": "lost"
+        }
+      }
+    ],
+    "arg_gate": {
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKKSCP8210",
+          "cheque_numbers": [
+            "228780"
+          ]
+        },
+        "_comment": "Pinned: savings account + fresh cheque 228780 only. The old current-account cheques (100321/100322) belong to history and must not be re-stopped or mixed in."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Earlier in the conversation the customer stopped cheques 100321/100322 drawn on the CURRENT account. Now he asks for a completely separate action: stop cheque 228780 on his SAVINGS account. The assistant must target the savings account (TKKSCP8210) with the single cheque number 228780 — not the current account, not the old cheque numbers — confirm the action first (stop_cheque_payment is a write, the second user turn is the confirmation), then report the stop reference. Using the old account id or re-stopping the old cheques, or firing the write without confirmation, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "stops cheque 228780 on the SAVINGS account after the customer's explicit confirmation, and reports the new stop-payment reference. Applying the stop to the current account or carrying forward cheques 100321/100322 from the earlier conversation fails; firing the write without the confirmation turn also fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

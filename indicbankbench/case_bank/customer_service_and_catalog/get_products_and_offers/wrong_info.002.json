@@ -1,0 +1,165 @@
+{
+  "case_id": "csc.get_products_and_offers.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'deposit products only' looking for a high-interest FD. The catalogue has a time-sensitive offer (OFF-FD-9405) that is type=offer, NOT type=deposit. A type=deposit filter hides the offer which has a higher promotional rate. Broad query (type=all or no filter) surfaces both.",
+  "setup": {
+    "persona": "38-year-old female, Building Construction Labourers, rural Bangalore Rural, Karnataka",
+    "current_date": "2026-09-01",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0221",
+      "full_name": "Mallamma Gaayakavada",
+      "date_of_birth": "1988-10-02",
+      "gender": "female",
+      "customer_since": "2021-03-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8757",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "118 College Road",
+        "line2": "Model Town",
+        "city": "Bangalore Rural",
+        "state": "Karnataka",
+        "pincode": "978757",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "118 College Road",
+        "line2": "Model Town",
+        "city": "Bangalore Rural",
+        "state": "Karnataka",
+        "pincode": "978757",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1765X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKPOF9405001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCPOF9405002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to open a fixed deposit. Show me your deposit products — not loans or cards, just the FD and RD options."
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the customer wants deposits only (type=deposit), but the catalogue ALSO has a promotional offer (OFF-FD-9405, type=offer) — a 'Diwali Special FD' with a 7.25% bonus rate valid till Sept 30. A type=deposit filter returns only PRD-FD-2001 and PRD-RD-2002, hiding the promotional FD offer entirely. Broad query (no type filter) reveals the time-sensitive offer the customer would want.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years. Standard rates apply."
+        },
+        {
+          "id": "PRD-RD-2002",
+          "title": "TK StepUp Recurring Deposit",
+          "type": "deposit",
+          "description": "Recurring deposit with monthly contributions, tenure up to 120 months."
+        },
+        {
+          "id": "OFF-FD-9405",
+          "title": "Diwali Special FD",
+          "type": "offer",
+          "description": "Festive season FD — additional 0.50% bonus rate on tenures 1-3 years. Subject to eligibility. Offer valid till 2026-09-30.",
+          "valid_till": "2026-09-30"
+        },
+        {
+          "id": "PRD-PL-2003",
+          "title": "TK Personal Loan",
+          "type": "loan",
+          "description": "Unsecured personal loan, tenure up to 60 months."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Broad query — a type=deposit filter hides the Diwali Special FD offer (OFF-FD-9405, type=offer, valid till Sept 30) which is exactly the kind of time-sensitive FD promotion the customer should know about. The model must query without a type filter and surface the promotional FD offer alongside the standard deposits."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for deposit products. The catalogue has two standard deposit products (TK SmartFD, TK StepUp RD) AND a time-sensitive Diwali Special FD offer (OFF-FD-9405, 0.50% bonus rate, valid till Sept 30). The assistant must query broadly and surface all relevant FDs including the promotional offer, as the customer is specifically looking to open an FD. Reporting only the standard deposit products without the Diwali Special FD offer fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces the Diwali Special FD promotional offer (OFF-FD-9405, bonus rate, valid till Sept 30) alongside the standard deposit products, grounded in the catalogue results. Showing only standard deposit products without the promotional FD offer fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

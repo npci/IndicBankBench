@@ -1,0 +1,337 @@
+{
+  "case_id": "cards.agentic.card_block_wrong_txn.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+get_transaction_history+block_card",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'block card 3322 — someone bought crypto with it.' get_transaction_history shows the ₹1,85,000 crypto exchange purchase was on card 4455 (credit), not 3322 (debit). Correction: block_card on TKCBW4455.",
+  "setup": {
+    "persona": "35-year-old female, Commission Agent, urban Vadodara, Gujarat",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0292",
+      "full_name": "Rashida Lokhandwala",
+      "date_of_birth": "1991-11-12",
+      "gender": "female",
+      "customer_since": "2022-11-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9646",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Vadodara",
+        "state": "Gujarat",
+        "pincode": "139646",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Vadodara",
+        "state": "Gujarat",
+        "pincode": "139646",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5079X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCB9500201",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW3322",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCBW4455",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "block_card",
+    "get_account_balance",
+    "get_card_details",
+    "get_transaction_history",
+    "set_card_controls",
+    "toggle_card_freeze"
+  ],
+  "user_turns": [
+    {
+      "content": "Someone did a fraud crypto purchase on my card ending 3322 — I just saw a ₹1,85,000 charge. Block it immediately!"
+    },
+    {
+      "content": "Yes, block the credit card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCBW3322",
+          "masked_number": "****3322",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCBW4455",
+          "masked_number": "****4455",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 500000,
+          "available_limit": 315000,
+          "expiry": "10/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 250000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 100000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 50000
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "Customer named 3322 (debit, domestic-only, max online ₹25,000). The ₹1,85,000 crypto purchase must be on 4455 (credit, international enabled, ₹2.5L online limit)."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-24T08:30:00",
+          "amount": 185000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-4455-C01",
+          "transaction_note": "COINBASEX CRYPTO PURCHASE — Card 4455",
+          "status": "success",
+          "running_balance": 315000
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "The ₹1,85,000 crypto charge on card 4455."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card permanently blocked and hotlisted across all payment networks.",
+        "reference_id": "REF-BLK-95042"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW3322",
+            "TKCBW4455"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKSCB9500201"
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCBW4455",
+          "reason": "fraud"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ],
+      [
+        "get_transaction_history",
+        "block_card"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCBW3322",
+                "TKCBW4455"
+              ],
+              [
+                "TKCBW4455"
+              ],
+              [
+                "TKCBW3322"
+              ]
+            ]
+          }
+        },
+        "_comment": "Customer named 3322 (debit, max online ₹25,000)."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKSCB9500201"
+            ]
+          }
+        },
+        "_comment": "Reveals the ₹1,85,000 crypto charge on card 4455."
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCBW4455"
+        },
+        "forbidden_ids": [
+          "TKCBW3322"
+        ],
+        "_comment": "CORRECTED card_id=TKCBW4455. ₹1,85,000 crypto txn on 4455, not 3322."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'block card 3322 — someone bought ₹1,85,000 crypto with it.' The assistant looks up cards: 3322 is a debit card (domestic-only, max online ₹25,000 — cannot make a ₹1,85,000 crypto purchase). 4455 is a credit card (international enabled, online limit ₹2,50,000 — perfectly capable of the ₹1,85,000 crypto charge). get_transaction_history reveals the charge is on card 4455 (COINBASEX CRYPTO PURCHASE). Customer named the wrong card. The assistant must correct: 'Your debit card 3322 has a ₹25,000 online limit and can't process ₹1,85,000. The crypto charge is on your credit card 4455. I'll block that one.' After confirmation, calls block_card on TKCBW4455. arg_gate pins card_id=TKCBW4455 and forbidden_ids=[TKCBW3322]."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads both card details and transaction history, identifies the high-value crypto charge is on credit card 4455, communicates the correction, and after confirmation blocks TKCBW4455. FAIL if block_card is called on TKCBW3322."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

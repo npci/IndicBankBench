@@ -1,0 +1,177 @@
+{
+  "case_id": "csc.get_request_status.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks 'what's the status of my cheque book request'. The customer names the cheque book request (REQ-CB-94851). But there's ALSO a charges dispute request (REQ-DIS-94852) that was resolved with a refund — the customer might not know about this resolution. A get_all_requests query filtered by category=cheque_book hides the resolved dispute. Broad query reveals both requests — and the resolved dispute with the Rs 500 refund the customer should know about.",
+  "setup": {
+    "persona": "20-year-old male, No Occupation / Retired / Homemaker, urban Kota, Rajasthan",
+    "current_date": "2026-08-18",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0070",
+      "full_name": "Bhanwar Mali",
+      "date_of_birth": "2006-10-26",
+      "gender": "male",
+      "customer_since": "2024-11-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2501",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "22 College Road",
+        "line2": "Koregaon Park",
+        "city": "Kota",
+        "state": "Rajasthan",
+        "pincode": "772501",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "22 College Road",
+        "line2": "Koregaon Park",
+        "city": "Kota",
+        "state": "Rajasthan",
+        "pincode": "772501",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9526X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9485001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9485002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I ordered a cheque book last month — what's the status? My request reference should be REQ-CB-94851."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about cheque book request (REQ-CB-94851) and supplies the request_id. But there's ALSO a charges dispute (REQ-DIS-94852) that was RESOLVED with a Rs 500 refund on Aug 10 — the customer may not know about this resolution. A category=cheque_book filter hides the resolved dispute. Broad query (or also calling get_all_requests) reveals both requests. The model should query all requests AND check the specific request status.",
+      "records": [
+        {
+          "request_id": "REQ-CB-94851",
+          "category": "cheque_book",
+          "status": "in_progress",
+          "raised_date": "2026-07-25",
+          "last_updated_date": "2026-08-15",
+          "description": "Cheque book 50 leaves for savings account"
+        },
+        {
+          "request_id": "REQ-DIS-94852",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-07-10",
+          "last_updated_date": "2026-08-10",
+          "description": "Disputed non-maintenance charge of Rs 500 — refunded"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CB-94851",
+        "status": "in_progress",
+        "raised_date": "2026-07-25T10:30:00",
+        "last_update": "2026-08-15T09:00:00",
+        "remarks": "Cheque book dispatched via Speed Post. Tracking number: SP94851234IN."
+      },
+      "_comment": "Cheque book request status — in progress, dispatched."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-CB-94851"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-CB-94851"
+        },
+        "_comment": "Must check the cheque book request. The request is in_progress — dispatched on Aug 15 with tracking SP94851234IN."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — querying all requests would surface the resolved charges dispute (REQ-DIS-94852, Rs 500 refunded) which the customer should know about."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about cheque book request REQ-CB-94851. Status: in_progress, dispatched via Speed Post on Aug 15 (tracking SP94851234IN). The assistant should check this AND proactively mention the resolved charges dispute (REQ-DIS-94852, Rs 500 refunded on Aug 10) that the customer may not have noticed. Reporting only the cheque book status without surfacing the resolved dispute fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports cheque book status (in_progress, dispatched Aug 15, tracking available) AND surfaces the resolved charges dispute (REQ-DIS-94852, Rs 500 refund). Reporting only the cheque book without the resolved dispute fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

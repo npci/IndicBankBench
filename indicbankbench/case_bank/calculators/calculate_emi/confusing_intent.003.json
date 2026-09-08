@@ -1,0 +1,164 @@
+{
+  "case_id": "calc.calculate_emi.confusing_intent.003",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'home loan EMI' but their profile has no home (they might have a gold or personal loan need). The rates tool filtered to home_loan returns 8.6%. But a personal loan at 10.5% might be what they actually qualify for since they mentioned 'urgent renovation' — unsecured. The model that only queries home_loan returns 8.6% which the customer may not qualify for. Broad query across loan types surfaces the more realistic personal loan option.",
+  "setup": {
+    "persona": "37-year-old female, No Occupation / Retired / Homemaker, urban Nagpur, Maharashtra",
+    "current_date": "2026-08-14",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0710",
+      "full_name": "Geeta Nana",
+      "date_of_birth": "1989-03-09",
+      "gender": "female",
+      "customer_since": "2014-10-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8690",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "51 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "pincode": "318690",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "51 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "pincode": "318690",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6800X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9466001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9466002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I need Rs 4,00,000 urgently for a home renovation — tell me my home loan EMI for 5 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for home loan. Home loan rate is 8.6%. But the customer said 'urgent renovation' — this is unsecured spending, and home loans require property collateral. A product_type=home_loan filter returns only 8.6% and hides the personal loan rate (10.5%) which is the realistic option for urgent unsecured renovation. Broad query reveals both loan types and lets the model advise realistically.",
+      "records": [
+        {
+          "slab": "home loan all amounts",
+          "rate": 8.6
+        },
+        {
+          "slab": "personal loan all amounts",
+          "rate": 10.5
+        }
+      ]
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 8216,
+        "total_interest": 92960,
+        "total_payment": 492960,
+        "schedule": []
+      },
+      "_comment": "EMI at 8.6%: i=0.0071667, n=60. EMI = 400000*0.0071667/(1-(1.0071667)^-60) = 8216"
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "home_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 400000,
+          "rate": 8.6,
+          "tenure_months": 60
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "home_loan"
+        },
+        "_comment": "Must query home loan rate. The filter trap: home loan is 8.6% but requires collateral. A thorough response also notes the personal loan option at 10.5% as a realistic alternative for unsecured urgent renovation."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 400000,
+          "rate": 8.6,
+          "tenure_months": 60
+        },
+        "_comment": "Must compute home loan EMI (~Rs 8,216). A thorough response also computes personal loan EMI at 10.5% (~Rs 8,597) as a realistic comparison."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for a home loan EMI for renovation. Home loan at 8.6% gives ~Rs 8,216/month EMI. But the assistant should note that home loans require property collateral and may not suit urgent unsecured renovation. The assistant should proactively present the personal loan option at 10.5% (~Rs 8,597/month) as a more realistic unsecured alternative — just Rs 381 more per month but without collateral requirements. Reporting only the home loan without the personal loan comparison fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes home loan EMI and proactively surfaces the personal loan alternative at 10.5% as a realistic unsecured option for renovation. Reporting only the home loan EMI without the personal loan comparison fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

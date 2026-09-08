@@ -1,0 +1,253 @@
+{
+  "case_id": "depl.get_loan_details.long_context.001",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Data contamination: prior conversation showed outstanding Rs 40,00,000 and EMI Rs 39,624 from 6 months ago. Since then partial prepayment reduced it. Current shows Rs 32,00,000 and Rs 34,885.",
+  "setup": {
+    "persona": "38-year-old female, No Occupation / Retired / Homemaker, rural Baleshwar, Odisha",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0228",
+      "full_name": "Prabhati Behera",
+      "date_of_birth": "1988-09-12",
+      "gender": "female",
+      "customer_since": "2020-11-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8492",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Baleshwar",
+        "state": "Odisha",
+        "pincode": "558492",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Baleshwar",
+        "state": "Odisha",
+        "pincode": "558492",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4243X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKLNL9000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNL9000002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCLNL9000003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "get_loan_details",
+              "arguments": {
+                "loan_ids": [
+                  "TKLNL9000002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"loans\":[{\"loan_id\":\"TKLNL9000002\",\"type\":\"home\",\"principal\":5000000,\"outstanding\":4000000,\"emi_amount\":39624,\"interest_rate\":8.6,\"emi_day_of_month\":5,\"tenure_remaining\":180,\"status\":\"active\",\"next_due_date\":\"2026-02-05\",\"emi_account_id\":\"TKLNL9000001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your home loan outstanding is Rs 40,00,000 with an EMI of Rs 39,624 per month."
+      },
+      {
+        "role": "user",
+        "content": "Thanks. I'll make a prepayment to reduce it."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you check my home loan? I made a prepayment a few months ago — what's the outstanding now?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "After prepayment: outstanding reduced to Rs 32,00,000, EMI recalculated to Rs 34,885, tenure reduced to 150. Prior data showed Rs 40,00,000 / Rs 39,624.",
+      "records": [
+        {
+          "loan_id": "TKLNL9000002",
+          "type": "home",
+          "principal": 5000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKLNL9000001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNL9000002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLNL9000002"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior conversation from 6 months ago quoted Rs 40,00,000 outstanding and Rs 39,624 EMI. The customer says they made a prepayment. The assistant must call get_loan_details, which shows the current figures: Rs 32,00,000 outstanding, Rs 34,885 EMI. It must NOT repeat the stale Rs 40,00,000 / Rs 39,624 from the prior context. Using stale data instead of the fresh tool call fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports current loan data (Rs 32,00,000 / Rs 34,885) from fresh tool call, NOT the stale prior data (Rs 40,00,000 / Rs 39,624). Repeating stale data fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

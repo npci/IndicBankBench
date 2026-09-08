@@ -1,0 +1,346 @@
+{
+  "case_id": "depl.get_loan_foreclosure_quote.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 debt-side recency: home-loan payoff figure first, an RD installments detour, then 'so the loan payoff figure?'. The return answer must be the loan's total payoff — not the RD's progress numbers fetched in the detour.",
+  "setup": {
+    "persona": "38-year-old male, Traffic Hand, Gliding, rural Chikmagalur, Karnataka",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0027",
+      "full_name": "Ramagowda Kamati",
+      "date_of_birth": "1988-05-18",
+      "gender": "male",
+      "customer_since": "2016-08-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7696",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "17 Church Street",
+        "line2": "Sector 17",
+        "city": "Chikmagalur",
+        "state": "Karnataka",
+        "pincode": "347696",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "17 Church Street",
+        "line2": "Sector 17",
+        "city": "Chikmagalur",
+        "state": "Karnataka",
+        "pincode": "347696",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0144X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAQBNP1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRQBNP2102",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        },
+        {
+          "product_id": "TKLOQBNP2103",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCQBNP3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the total payoff if I close my home loan today?"
+    },
+    {
+      "content": "While I'm here — how many installments have I paid on my RD?"
+    },
+    {
+      "content": "So the loan payoff figure?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRQBNP2102",
+          "monthly_installment": 5000,
+          "installments_paid": 12,
+          "total_deposited": 60000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2025-08-05",
+          "next_debit_date": "2026-09-05",
+          "maturity_date": "2027-08-05",
+          "maturity_amount": 128762,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKAQBNP1101",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "instruction": "no_renewal",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "3200000 outstanding; last EMI 2026-07-05 -> 43 days: 32421 accrued; charges 64000; total 3296421.",
+      "records": [
+        {
+          "loan_id": "TKLOQBNP2103",
+          "outstanding_principal": 3200000,
+          "accrued_interest": 32421,
+          "foreclosure_charges": 64000,
+          "total_payoff": 3296421
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "TKLOQBNP2103"
+          ]
+        }
+      },
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRQBNP2102"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_foreclosure_quote": {
+        "required": {
+          "loan_ids": [
+            "TKLOQBNP2103"
+          ]
+        },
+        "_comment": "Total payoff 3296421 — the figure the customer returns to."
+      },
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKRQBNP2102"
+          ]
+        },
+        "_comment": "The detour: 12 of 24 installments paid."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks the home-loan payoff (₹32,96,421 — ₹32,00,000 outstanding, ₹32,421 accrued, ₹64,000 charges), detours to their RD (12 of 24 installments paid, ₹60,000 deposited), then asks for the loan payoff figure again. The assistant must restate the LOAN payoff — not the RD counts, not the RD maturity, and not a mix of the two products."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the RD detour (12/24 installments) and, on return, restates the home-loan total payoff ₹32,96,421. Answering with RD figures fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

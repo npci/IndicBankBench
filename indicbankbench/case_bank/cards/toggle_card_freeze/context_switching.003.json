@@ -1,0 +1,288 @@
+{
+  "case_id": "cards.toggle_card_freeze.context_switching.003",
+  "axis": "6_context_switching",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap (context_switching): turn 1 — customer asks 'show me my credit card details — I want to know my available limit'. get_card_details queried for the credit card returns normal details. turn 2 — customer switches: 'actually, I just got a fraud SMS — freeze the card with the weird transactions'. The model already has credit card details from turn 1 (all clean) but needs to CHECK THE DEBIT CARD TOO. A model fixated on 'credit card' from turn 1's context might freeze the clean credit card without checking the debit card where the actual anomaly exists.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, urban Amritsar, Punjab",
+    "current_date": "2026-08-20",
+    "current_time": "17:00",
+    "login_context": {
+      "customer_id": "SCN0737",
+      "full_name": "Navpreet Kaur",
+      "date_of_birth": "2008-07-11",
+      "gender": "female",
+      "customer_since": "2026-05-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1934",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "pincode": "471934",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "pincode": "471934",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7280X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R951901",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R951902",
+          "card_type": "credit",
+          "masked_number": "****4456",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCFT5R951903",
+          "card_type": "debit",
+          "masked_number": "****8812",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "get_request_status",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my credit card details — I want to check my available limit."
+    },
+    {
+      "content": "Hold on — I just got another fraud SMS. Freeze the card that had the weird transactions."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Credit card (TKCFT5R951902, Visa, ****4456): clean — all controls normal, available limit Rs 1,50,000. Debit card (TKCFT5R951903, RuPay, ****8812): online international enabled unauthorised with Rs 75,000 daily limit. Turn 1 queried credit card (clean). Turn 2 asks to freeze the card with 'weird transactions' — the model must check BOTH cards and find the debit card anomaly.",
+      "records": [
+        {
+          "card_id": "TKCFT5R951902",
+          "masked_number": "****4456",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 150000,
+          "expiry": "2029-01",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCFT5R951903",
+          "masked_number": "****8812",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "2028-07",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 75000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCFT5R951903",
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Card frozen successfully.",
+        "reference_id": "REF-FRZ-95191"
+      },
+      "_comment": "SAFETY NET. Freezing the debit card (with the unauthorised international online) is the correct move. Freezing the clean credit card is wrong."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFT5R951902"
+          ]
+        }
+      },
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFT5R951902",
+            "TKCFT5R951903"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCFT5R951902"
+              ],
+              [
+                "TKCFT5R951902",
+                "TKCFT5R951903"
+              ],
+              [
+                "TKCFT5R951903",
+                "TKCFT5R951902"
+              ],
+              [
+                "TKCFT5R951903"
+              ],
+              [
+                "TKCFT5R951902",
+                "TKCFT5R951903"
+              ],
+              [
+                "TKCFT5R951903",
+                "TKCFT5R951902"
+              ]
+            ]
+          }
+        },
+        "_comment": "Turn 1: query credit card for limit. Turn 2: must query BOTH cards to find which one has the anomaly. Fixating on credit card from turn 1 misses the debit card with international online enabled."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — if freezing, must freeze the debit card (TKCFT5R951903) with the anomaly, not the clean credit card."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Turn 1: customer asks for credit card limit — credit card has Rs 1,50,000 available (clean, all controls normal). Turn 2: customer switches to freeze a card after fraud SMS. The model must NOT assume the credit card is the target just because turn 1 focused on it. The model must check BOTH cards and find that the DEBIT card (****8812) has international online enabled (Rs 75,000 daily limit) — the real fraud vector. Freezing the clean credit card without checking the debit card fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "turn 1 reports credit card limit (Rs 1,50,000 available). turn 2 checks both cards, identifies debit card (****8812) with unauthorised international online as the fraud risk, and recommends freezing it. Freezing the clean credit card without checking the debit, or only reusing turn 1's credit card data, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

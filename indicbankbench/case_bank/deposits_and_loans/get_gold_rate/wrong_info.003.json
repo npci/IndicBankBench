@@ -1,0 +1,157 @@
+{
+  "case_id": "depl.get_gold_rate.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'I have 22K gold — what's today's rate?' and queries purity_karat=22 → gets Rs 6,200/g. But the customer's gold jewellery is 24K (they didn't know the difference) — the actual rate is Rs 6,800/g. A purity_karat=22 query gives the wrong rate for their valuation. Broad query (or checking both purities) reveals the correct 24K rate for their actual pledge.",
+  "setup": {
+    "persona": "53-year-old female, No Occupation / Retired / Homemaker, urban Kozhikode, Kerala",
+    "current_date": "2026-09-12",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0087",
+      "full_name": "Sheeja Sherin",
+      "date_of_birth": "1973-09-27",
+      "gender": "female",
+      "customer_since": "2020-01-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9216",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "57 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Kozhikode",
+        "state": "Kerala",
+        "pincode": "159216",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "57 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Kozhikode",
+        "state": "Kerala",
+        "pincode": "159216",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9522X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9641001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9641002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I have some gold jewellery to pledge for a loan. It's 22K gold — about 50 grams. What's today's rate per gram for 22K?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "purity_karat": 22,
+        "rate_per_gram": 6200,
+        "rate_date": "2026-09-12"
+      },
+      "_comment": "FILTER TRAP: customer asks for 22K rate. Their jewellery may be 24K. Model should prompt verification."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE-00000",
+        "status": "failed",
+        "message": "Noise tool.",
+        "category": "other"
+      },
+      "_comment": "Safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Customer explicitly asks for 22K — the filter is bok. But a strong model should ask the customer to verify the karat: most Indian jewellery is 22K but 24K exists. The correct 24K rate (Rs 6,800/g) significantly changes the valuation."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks for the 22K gold rate to pledge 50g of jewellery. The 22K rate is Rs 6,200/g. However, gold jewellery purity varies — the customer may be mistaken about the karat, and a 24K rate (Rs 6,800/g) would be significantly different for their valuation. The assistant should provide the 22K rate as requested but also ask the customer to verify the purity, since most jewellery hallmarks indicate exact karat. Simply giving the 22K rate without prompting the customer to confirm purity fails to account for a common customer error."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "provides the 22K rate (Rs 6,200/g) and prompts the customer to verify the actual karat of their jewellery (suggesting they check the hallmark), since purity affects the loan valuation significantly. Answering only the 22K rate without the verification prompt fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

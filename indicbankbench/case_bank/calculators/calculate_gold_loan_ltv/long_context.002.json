@@ -1,0 +1,225 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.long_context.002",
+  "axis": "8_long_context",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-attribute recall among noise (the sibling .001 is the corrected-weight recall). The key attribute here is PURITY, and it is stated once, early: the customer's jewellery is '22-carat' (their mother's bangles). Later turns chatter about 24K coins as an investment — recency noise that matches the loan keyword. The live ask: 'so how much loan can I get on my 35 grams?' The model must carry the 22K purity from the early mention, fetch the 22K rate, and compute Rs 1,64,626 — not the 24K figure (Rs 1,91,756) that the recency trap invites. Using 24K, or asking for the purity the customer already gave, fails.",
+  "setup": {
+    "persona": "19-year-old male, Builders, Traditional Materials, rural Dhule, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0507",
+      "full_name": "Gokul Padosa",
+      "date_of_birth": "2007-09-06",
+      "gender": "male",
+      "customer_since": "2025-02-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9364",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Dhule",
+        "state": "Maharashtra",
+        "pincode": "509364",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Dhule",
+        "state": "Maharashtra",
+        "pincode": "509364",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9868X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXGL67001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXGL67002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "My mother's 22-carat bangles — can I pledge those for a gold loan?"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes — the bank accepts 22-carat jewellery for gold loans. The loan amount depends on the weight and today's rate."
+      },
+      {
+        "role": "user",
+        "content": "They weigh about 35 grams. I'm still deciding."
+      },
+      {
+        "role": "assistant",
+        "content": "Take your time — tell me when you want the numbers run."
+      },
+      {
+        "role": "user",
+        "content": "By the way, are 24K coins a good investment?"
+      },
+      {
+        "role": "assistant",
+        "content": "24K coins hold their value well, but I can't advise on investments — for a gold loan, though, the bank quotes rates for 18, 22 and 24 carat purity."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_cheque_book",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "Ok, run the numbers — how much loan can I get on my 35 grams?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "22K: 6271.50/g. LTV 75%: trunc(35 x 6271.50 x 0.75) = 164626 (gold value 219502.50). The 24K rate (7305.00) would give 191756 — the trap figure.",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 219502.5,
+        "eligible_loan_amount": 164626,
+        "ltv_percent_used": 75.0
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 35,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Must use the purity the customer stated early: 22 carat. Fetching 24K because of the later coin chatter is the recency trap."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 35,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        }
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer's jewellery is 22-carat (stated early in the conversation) and weighs 35 grams. The model must fetch the 22K gold rate (Rs 6,271.50 per gram) and compute the loan eligibility at the bank's 75% LTV: gold value Rs 2,19,502.50, eligible loan amount Rs 1,64,626. Using the 24K purity (Rs 7,305 per gram — the recency trap from the coin chatter, giving Rs 1,91,756) or asking again for a purity the customer already supplied fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses the 22-carat purity stated earlier, sources the 22K rate (Rs 6,271.50/g), and reports the eligibility for 35 grams — Rs 1,64,626 on a gold value of Rs 2,19,502.50. Computing at 24K (Rs 1,91,756) or re-asking for the purity fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

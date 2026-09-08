@@ -1,0 +1,242 @@
+{
+  "case_id": "calc.calculate_rd_maturity.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 two-thread calculator: the RD projection is computed first, an EMI detour intervenes, and the customer returns to 'my RD figure'. The final answer must be the RD maturity (Rs 2,00,686) — the EMI (Rs 6,500) is the most recently computed and the likely bleed. Calculator arguments are pinned, so mixing inputs fails A3. Careless failure mode: answering the final ask with the EMI.",
+  "setup": {
+    "persona": "22-year-old female, No Occupation / Retired / Homemaker, urban Hyderabad, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0576",
+      "full_name": "Inti Vaaral",
+      "date_of_birth": "2004-02-17",
+      "gender": "female",
+      "customer_since": "2022-07-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9505",
+      "registered_email": "i*****@gmail.com",
+      "communication_address": {
+        "line1": "26 Station Road",
+        "line2": "Civil Lines",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "pincode": "649505",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "26 Station Road",
+        "line2": "Civil Lines",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "pincode": "649505",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9690X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [],
+      "linked_products": [],
+      "linked_cards": []
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "show_mandates",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "My RD — Rs 5,000 a month for 3 years. What's the maturity?"
+    },
+    {
+      "content": "Hang on — and the EMI on a Rs 2,00,000 personal loan over 3 years?"
+    },
+    {
+      "content": "Now my RD figure — what was it?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Both rows visible at once: RD 3y-5y 7.0 and personal loan 10.5.",
+      "output": {
+        "rates": [
+          {
+            "slab": "rd 3 years to < 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          },
+          {
+            "slab": "personal loan",
+            "rate": 10.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "5,000/mo @ 7.0% / 36mo -> 200,686.",
+      "output": {
+        "maturity_amount": 200686,
+        "interest_earned": 20686,
+        "total_principal_invested": 180000
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "2L @ 10.5% / 36mo -> EMI 6500; interest 34,000.",
+      "output": {
+        "emi": 6500,
+        "total_interest": 34000,
+        "total_payment": 234000
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 200000,
+          "rate": 10.5,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Both threads pull rates; the model must pick the right row per thread — judged at R."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 200000,
+          "rate": 10.5,
+          "tenure_months": 36
+        }
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for the maturity of a Rs 5,000/month 3-year RD, detours to a personal loan EMI, then returns to the RD figure. The assistant must answer the final ask with the RD maturity: Rs 2,00,686 at 7.0% (the EMI detour is Rs 6,500 a month at 10.5%). Answering the final ask with the EMI, or mixing the threads' inputs, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the final ask with the RD maturity (Rs 2,00,686 at 7.0%), not the EMI. Mixing the two threads' figures or inputs fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

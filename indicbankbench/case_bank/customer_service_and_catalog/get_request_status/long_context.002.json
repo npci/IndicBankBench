@@ -1,0 +1,159 @@
+{
+  "case_id": "csc.get_request_status.long_context.002",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Long context: request remarks contain a lengthy agent update. Model must extract key info without copying verbatim.",
+  "setup": {
+    "persona": "34-year-old female, Char-Dust Cleaner and Salvager (Sugar & Confectionery), urban Thane, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0388",
+      "full_name": "Ujwala Rajan",
+      "date_of_birth": "1992-08-10",
+      "gender": "female",
+      "customer_since": "2019-02-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8019",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "20 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "808019",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "20 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "808019",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2123X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQS9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQS9800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "set_card_controls",
+    "block_card"
+  ],
+  "user_turns": [
+    {
+      "content": "What's happening with my request REQ-456? Can you give me a brief status update?"
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Long remarks — model should extract key info not dump verbatim.",
+      "output": {
+        "request_id": "REQ-456",
+        "status": "in_progress",
+        "raised_date": "2026-08-10T09:30:00",
+        "last_update": "2026-08-16T16:45:00",
+        "remarks": "Initial review completed on 2026-08-12 by the charges team. Transaction TXN-6620403 for Rs 500 dated 2026-03-11 was identified as a legitimate non-maintenance charge applied when the account balance fell below the required minimum of Rs 5,000 during February 2026. The account's average monthly balance for February was Rs 3,120 which is below the Rs 5,000 threshold. The charges team has partially accepted the dispute — they are processing a 50% waiver (Rs 250 refund) as a goodwill gesture since this is the customer's first such charge. Provisional decision expected by 2026-08-22. The customer will receive an SMS and email notification once the waiver is processed. No further action is required from the customer at this stage."
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-456"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-456"
+        }
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The assistant must call get_request_status. The remarks contain a lengthy agent update. Rather than copying the entire paragraph verbatim, the assistant should summarize the key points: the charge was legitimate (below min balance in Feb), the team is processing a 50% waiver (Rs 250 refund) as a goodwill gesture, and the decision is expected by Aug 22. Dumping the entire remarks verbatim is acceptable but undesirable; fabricating different details fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "summarizes key points from long remarks: 50% waiver (Rs 250), decision by Aug 22. Fabricating different details fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

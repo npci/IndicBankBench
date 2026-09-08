@@ -1,0 +1,188 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.happy.001",
+  "axis": "1_happy_path",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 gold-loan chain with the PURITY-MATCH requirement as the correctness bar: the rate must come from get_gold_rate at the SAME purity used in the calculation (schema: 'gold_rate_per_gram must come from a fresh call at the same purity — never assumed or customer-supplied'). So the flow is get_gold_rate(22) -> calculate_gold_loan_ltv(gold_grams=50, purity_karat=22, gold_rate_per_gram=<sourced 6000>). This exercises A4 ordering AND catches a subtle error deterministically: if the model sources the rate at 22K but passes purity_karat=24 (or a made-up rate), arg_gate flags it. The LTV cap (75%) is applied internally by the tool — the model must report the returned eligible_loan_amount, not invent its own cap.",
+  "setup": {
+    "persona": "23-year-old male, No Occupation / Retired / Homemaker, urban Pune, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0263",
+      "full_name": "Arjun Sonawane",
+      "date_of_birth": "2003-07-02",
+      "gender": "male",
+      "customer_since": "2021-10-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1554",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "191554",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "191554",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6885X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKHVF9113001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCHVF9113002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_duplicate_statement",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I have 50 grams of 22-carat gold. How much of a gold loan can I get against it?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Today's 22K rate. purity_karat is echoed from the call.",
+      "output": {
+        "rate_per_gram": 6000,
+        "rate_date": "2026-03-15"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 300000,
+        "eligible_loan_amount": 225000,
+        "ltv_percent_used": 75
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6000
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        }
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6000
+        },
+        "_comment": "purity_karat MUST be 22 (matching the get_gold_rate call) and gold_rate_per_gram MUST be the sourced 6000 — a mismatched purity or an assumed/customer rate fails A3 deterministically."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants the gold-loan eligibility on 50g of 22-carat gold. The assistant must source today's 22K gold rate from get_gold_rate (₹6,000/g) — at the same purity — then call calculate_gold_loan_ltv with gold_grams 50, purity_karat 22, and the sourced rate, and report the returned figures: gold value ₹3,00,000 and eligible loan ₹2,25,000 at the bank's 75% LTV cap. It must not assume a gold rate, must not use a rate sourced at a different purity, and must not invent its own LTV cap — the cap is applied by the tool and returned as ltv_percent_used."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant sources the 22K gold rate and reports the eligible loan amount (₹2,25,000) and gold value (₹3,00,000) as returned, at the tool's 75% LTV. Assuming a rate, using a mismatched purity, or inventing an LTV cap/eligibility figure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

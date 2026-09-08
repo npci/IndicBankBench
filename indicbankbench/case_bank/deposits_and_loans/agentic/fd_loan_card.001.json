@@ -1,0 +1,306 @@
+{
+  "case_id": "depl.agentic.fd_loan_card.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "_variant_note": "Compound: FD maturity, loan outstanding, card status. Cross-domain: depl + cards.",
+  "setup": {
+    "persona": "38-year-old female, Cleaner Hospital, urban Saharanpur, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0484",
+      "full_name": "Baubi Devi",
+      "date_of_birth": "1988-10-03",
+      "gender": "female",
+      "customer_since": "2021-09-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1617",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "58 College Road",
+        "line2": "Model Town",
+        "city": "Saharanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "251617",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "58 College Road",
+        "line2": "Model Town",
+        "city": "Saharanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "251617",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8787X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFLK9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDFK9600002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKLNFK9600003",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFLK9600004",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Give me a quick check: when does my FD mature, how much do I still owe on my loan, and is my credit card active?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDFK9600002",
+          "principal_amount": 400000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-12-01",
+          "maturity_date": "2026-12-01",
+          "maturity_amount": 426641,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFLK9600001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKLNFK9600003",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKFLK9600001"
+        }
+      ]
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCFLK9600004",
+          "masked_number": "****9876",
+          "card_type": "credit",
+          "network": "Visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 215000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2027-11"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDFK9600002"
+          ]
+        }
+      },
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNFK9600003"
+          ]
+        }
+      },
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFLK9600004"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "_comment": "FD matures 2026-12-01, Rs 4,26,641."
+      },
+      "get_loan_details": {
+        "required": {},
+        "_comment": "Loan Rs 32L outstanding, EMI Rs 34,885."
+      },
+      "get_card_details": {
+        "required": {},
+        "_comment": "Credit card active, Rs 2,15,000 available."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "FD: matures 2026-12-01, Rs 4,26,641. Loan: Rs 32L outstanding, EMI Rs 34,885. Card: active, Rs 2,15,000 available. Missing any one fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports FD maturity, loan outstanding, AND card status. Missing any one fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

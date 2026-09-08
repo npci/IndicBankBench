@@ -1,0 +1,220 @@
+{
+  "case_id": "csc.get_products_and_offers.long_context.003",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale offer (expired overnight). Prior round: get_products_and_offers returned a pre-approved personal loan offer valid_till 2026-08-19. The customer noted it but didn't act. Since then the offer expired (today is 2026-08-20). The live call no longer includes that offer. The customer now asks 'I want to take that pre-approved loan offer you mentioned' — a model that trusts stale prior and says 'yes, here are the details' without re-fetching fails A1. A model that re-fetches discovers the offer is gone and reports it expired → PASS.",
+  "setup": {
+    "persona": "19-year-old male, Wood Products Machine Operators, rural Valsad, Gujarat",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0765",
+      "full_name": "Jashvantbhai Rambhai",
+      "date_of_birth": "2007-10-26",
+      "gender": "male",
+      "customer_since": "2025-05-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5269",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Valsad",
+        "state": "Gujarat",
+        "pincode": "125269",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Valsad",
+        "state": "Gujarat",
+        "pincode": "125269",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9331X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD73990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD73990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Show me any special offers I have on my profile."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "po1",
+            "type": "function",
+            "function": {
+              "name": "get_products_and_offers",
+              "arguments": {
+                "type": "offer"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "po1",
+        "content": "{\"items\":[{\"id\":\"OFF-73990001\",\"title\":\"Pre-approved Personal Loan\",\"type\":\"offer\",\"description\":\"Get Rs 2,00,000 at a special rate of 9.9% — pre-approved, no documents needed.\",\"valid_till\":\"2026-08-19\"},{\"id\":\"OFF-73990002\",\"title\":\"Upgrade to Premium Banking\",\"type\":\"offer\",\"description\":\"Zero-fee premium account upgrade for 12 months.\",\"valid_till\":\"2026-09-30\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "You have two offers: a pre-approved personal loan of Rs 2,00,000 at 9.9% (valid until 19 August) and a premium banking upgrade with zero fees for 12 months (valid until 30 September). Would you like to explore either?"
+      },
+      {
+        "role": "user",
+        "content": "The loan offer is interesting. Let me check with my family first — I'll get back to you before the deadline."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_products_and_offers",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_account_balance",
+    "get_loan_details",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm ready to take that pre-approved personal loan you showed me earlier — the one at the special rate."
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "The pre-approved personal loan offer expired yesterday (valid_till 2026-08-19). Today is 2026-08-20. The live call no longer returns that offer — only the premium banking upgrade remains. A model that trusts stale prior and talks about the pre-approved loan without re-fetching fails A1.",
+      "records": [
+        {
+          "id": "OFF-73990002",
+          "title": "Upgrade to Premium Banking",
+          "type": "offer",
+          "description": "Zero-fee premium account upgrade for 12 months.",
+          "valid_till": "2026-09-30"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0,
+        "schedule": []
+      },
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_loan_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "offer"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "THE GATE. The model MUST re-fetch offers live. Prior showed the pre-approved personal loan offer but it expired yesterday — the live call no longer returns it. Offering the expired loan or quoting its terms without re-fetching fails A1."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — model may check current rates for a fresh personal loan application."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed a pre-approved personal loan offer of Rs 2,00,000 at 9.9%, valid until 19 August 2026. The customer paused and now returns to accept the offer — but the offer expired yesterday. The current date is 20 August 2026, and the live get_products_and_offers call no longer includes the loan offer (only the premium banking upgrade remains).\n\nThe correct move is to re-fetch get_products_and_offers live, discover the pre-approved loan offer has expired, and report this to the customer. Quoting the old offer terms, saying 'yes, let me book that loan for you', or proceeding to calculate EMI based on the expired offer without re-fetching is the stale-context failure. The assistant may suggest applying for a fresh personal loan at current rates via get_deposit_loan_rates."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_products_and_offers live, discovers the personal loan offer has expired (no longer present in the live data), and reports this to the customer. Quoting the old offer or acting on it without re-fetching fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "case_id": "csc.get_insurance_details.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap prototype: customer asks about their life insurance premium, but the mock has a life policy (no issue) AND a health policy that has an upcoming premium due. A policy_type=life filter hides the health policy — so the model never warns about the health premium. Broad query shows both. Weak model applies the filter and only talks about the life policy. Strong model queries broadly and notes both policies including the health premium due.",
+  "setup": {
+    "persona": "32-year-old male, Middle School Teacher Language Teacher, Middle School, rural Sirsa, Haryana",
+    "current_date": "2026-07-15",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0380",
+      "full_name": "Ramesh Kumar",
+      "date_of_birth": "1994-02-13",
+      "gender": "male",
+      "customer_since": "2013-09-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7937",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Sirsa",
+        "state": "Haryana",
+        "pincode": "937937",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Sirsa",
+        "state": "Haryana",
+        "pincode": "937937",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3068X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 2
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKPTF9304001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "POL930402",
+          "type": "policy",
+          "label": "TK TermShield Life"
+        },
+        {
+          "product_id": "POL930403",
+          "type": "policy",
+          "label": "TK HealthGuard Family"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCPTF9304004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to check on my life insurance policy — what's the status and when is the next premium?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the customer has a life policy (POL930402, premium due in November — far out) AND a health policy (POL930403, premium due in TWO DAYS on 2026-07-17). A policy_type=life filter returns only the life policy, hiding the critically urgent health premium. A broad query returns both, allowing the model to warn about the upcoming health premium.",
+      "records": [
+        {
+          "policy_id": "POL930402",
+          "policy_type": "life",
+          "insurer": "HDFC Life",
+          "sum_assured": 3000000,
+          "premium": 18000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-11-10",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL930403",
+          "policy_type": "health",
+          "insurer": "Star Health",
+          "sum_assured": 1000000,
+          "premium": 24000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-07-17",
+          "status": "active"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — noise tool.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "POL930402",
+            "POL930403"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "optional_ok": {
+          "policy_ids": {
+            "allowed": [
+              [
+                "POL930402",
+                "POL930403"
+              ],
+              [
+                "POL930402"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying both policies is ideal — the health policy premium is due in two days. A policy_type=life filter on the call would still return only the life policy (the executor matches policy_type=life against records). But policy_type isn't even a tool arg for get_insurance_details (it's an output field), so this case tests the MODEL-side filtering: if it only reports the life policy it got, it misses the health urgency. The gold allows querying both or just the life ID."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about their life insurance. The life policy (POL930402, HDFC Life, Rs 30L sum assured, Rs 18,000 yearly premium due 2026-11-10) is active with no urgency. But they ALSO have a health policy (POL930403, Star Health, Rs 10L sum assured) whose yearly premium of Rs 24,000 is due in just TWO DAYS — on 2026-07-17. A thorough assistant should query both policies and warn that the health premium is due imminently, not just answer the life-policy question. Answering only the life question without surfacing the health premium urgency fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the life policy status (active, premium Rs 18,000 due 2026-11-10) AND surfaces the health policy's imminent premium of Rs 24,000 due 2026-07-17. Answering only the life-policy question without flagging the health premium urgency fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,314 @@
+{
+  "case_id": "calc.calculate_rd_maturity.long_context.001",
+  "axis": "8_long_context",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 stale-input ghost: the prior thread computed an RD projection for ₹3,000 x 12 months (₹37,336). The live ask is ₹9,000 x 36 months. The new projection must use the new inputs and the 3-5y slab; the old 3000/12 figures are noise.",
+  "setup": {
+    "persona": "35-year-old male, Domestic Servant, rural Mahrajganj, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0290",
+      "full_name": "Sanjeev Pal",
+      "date_of_birth": "1991-03-27",
+      "gender": "male",
+      "customer_since": "2014-02-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7962",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "3 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Mahrajganj",
+        "state": "Uttar Pradesh",
+        "pincode": "757962",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "3 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Mahrajganj",
+        "state": "Uttar Pradesh",
+        "pincode": "757962",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6545X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAVLC1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCVLC3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "lc1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "rd",
+                "tenure_months": 12
+              }
+            }
+          },
+          {
+            "id": "lc2",
+            "type": "function",
+            "function": {
+              "name": "calculate_rd_maturity",
+              "arguments": {
+                "monthly_installment": 3000,
+                "rate": 6.75,
+                "tenure_months": 12
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "lc1",
+        "content": "{\"rates\":[{\"slab\":\"1 year to < 3 years\",\"rate\":6.75,\"senior_citizen_rate\":7.25}],\"effective_date\":\"2026-03-01\"}"
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "lc2",
+        "content": "{\"maturity_amount\":37336,\"interest_earned\":1336,\"total_principal_invested\":36000}"
+      },
+      {
+        "role": "assistant",
+        "content": "At Rs 3,000 a month for one year, the RD matures to about Rs 37,336."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "raise_request",
+    "request_duplicate_statement",
+    "create_rd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Now tell me for ₹9,000 a month over 3 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "9000 x 36 @ 7.0 quarterly = 361236 (the NEW inputs; the prior 3000/12 line is noise).",
+      "output": {
+        "maturity_amount": 361236,
+        "interest_earned": 37236,
+        "total_principal_invested": 324000
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 9000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "3-year RD slab = 7.0% — fresh lookup, not the prior 6.75 context."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 9000,
+          "rate": 7.0,
+          "tenure_months": 36
+        },
+        "_comment": "New inputs; maturity 361236."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior thread computed Rs 3,000 x 12 months at 6.75% -> ₹37,336. The live ask is ₹9,000 x 36 months: 3-year RD slab 7.0%, maturity ₹3,61,236 on ₹3,24,000 deposited. The assistant must re-run with the new inputs and the 3-5y slab — not restate the old ₹37,336 figure, and not compute at the prior thread's 6.75% slab."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes the new projection: 9000 x 36 at 7.0% -> ₹3,61,236. Reusing the prior thread's 3000/12 inputs or its 6.75% slab fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

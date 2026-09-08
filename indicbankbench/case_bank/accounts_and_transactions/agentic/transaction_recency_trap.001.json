@@ -1,0 +1,245 @@
+{
+  "case_id": "acct.agentic.transaction_recency_trap.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 derive-args chain with TIGHTER noise. Customer reports an unauthorized Rs 4,200 debit at an electronics store from yesterday. Mock returns TWO pos debits: the NOISE (TXN-RTT2001, Rs 4,200 exactly, 'DIGITAL ELECTRONICS') listed FIRST, and the CORRECT unauthorized one (TXN-RTT2002, Rs 4,199, 'CIRCUIT ZONE') listed SECOND. The noise matches the customer's stated amount exactly AND has 'ELECTRONICS' in the merchant name AND is listed first (recency). The correct one is Rs 4,199 with 'CIRCUIT ZONE' — less obvious match. A model that picks the noise (first + exact amount + keyword match) fails A3. A model that reads carefully picks TXN-RTT2002.",
+  "setup": {
+    "persona": "42-year-old female, Closer, Shoe Upper, rural Murshidabad, West Bengal",
+    "current_date": "2026-08-23",
+    "current_time": "11:15",
+    "login_context": {
+      "customer_id": "SCN0773",
+      "full_name": "Basanti Das",
+      "date_of_birth": "1984-11-23",
+      "gender": "female",
+      "customer_since": "2022-06-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3170",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "11 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Murshidabad",
+        "state": "West Bengal",
+        "pincode": "603170",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "11 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Murshidabad",
+        "state": "West Bengal",
+        "pincode": "603170",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2818X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRT20001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRT20002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "I see an unauthorized debit for Rs 4,200 at an electronics store from yesterday — I never went to any electronics store. Please check and dispute it."
+    },
+    {
+      "content": "Yes, please raise the dispute."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "NOISE TRAP: TXN-RTT2001 (Rs 4,200.00, 'DIGITAL ELECTRONICS') is listed FIRST and matches the customer's stated amount exactly + the merchant name contains 'ELECTRONICS'. TXN-RTT2002 (Rs 4,199, 'CIRCUIT ZONE') is the actual unauthorized one, listed SECOND. Recency bias + exact amount match + keyword overlap make the noise superficially more attractive. running_balance chain: opening 54000; +45000 credit = 99000; -4200 debit (14:30) = 94800; -4199 debit (16:15) = 90601.",
+      "records": [
+        {
+          "date": "2026-08-22T16:15:00",
+          "amount": 4199,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-RTT2002",
+          "transaction_note": "POS PURCHASE - CIRCUIT ZONE",
+          "status": "success",
+          "running_balance": 90601
+        },
+        {
+          "date": "2026-08-22T14:30:00",
+          "amount": 4200,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-RTT2001",
+          "transaction_note": "POS PURCHASE - DIGITAL ELECTRONICS",
+          "status": "success",
+          "running_balance": 94800
+        },
+        {
+          "date": "2026-08-20T09:00:00",
+          "amount": 45000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-RTT2003",
+          "transaction_note": "NEFT - SALARY AUG26",
+          "status": "success",
+          "running_balance": 99000
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-RT-20021",
+        "category": "unauthorized_debit",
+        "status": "open",
+        "message": "Unauthorized debit dispute logged for TXN-RTT2002 (Rs 4,199, Circuit Zone) and flagged urgent for investigation."
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKRT20001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-RTT2002",
+          "description": "Customer disputes unauthorized Rs 4,199 debit at Circuit Zone on 2026-08-22 (TXN-RTT2002).",
+          "account_id": "TKRT20001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKRT20001"
+        },
+        "_comment": "Must fetch history to find the unauthorized transaction. Two pos debits exist — the noise (Rs 4,200, DIGITAL ELECTRONICS, listed FIRST) and the unauthorized one (Rs 4,199, CIRCUIT ZONE, listed SECOND). The model must identify the correct transaction despite the noise matching the customer's description more closely."
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-RTT2002"
+        },
+        "_comment": "related_transaction_id MUST be the Circuit Zone debit (TXN-RTT2002), NOT the Digital Electronics one (TXN-RTT2001). Picking the noise fails A3."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer reports an unauthorized ~Rs 4,200 electronics store debit from yesterday. The history shows two pos debits: TXN-RTT2001 (Rs 4,200.00, DIGITAL ELECTRONICS, 2026-08-22 14:30 — listed FIRST) and TXN-RTT2002 (Rs 4,199, CIRCUIT ZONE, 2026-08-22 16:15 — listed SECOND). The noise (TXN-RTT2001) matches the stated amount EXACTLY and has 'ELECTRONICS' in the merchant name, making it superficially the obvious candidate — but it is NOT the unauthorized one. The assistant must identify TXN-RTT2002 (Circuit Zone) as the unauthorized debit, confirm, and raise an unauthorized_debit dispute referencing it. Picking the noise (TXN-RTT2001) fails A3."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "correctly identifies the Rs 4,199 Circuit Zone debit (TXN-RTT2002, 2026-08-22 16:15) as the unauthorized one, confirms, and raises an unauthorized_debit dispute referencing it. Picking the noise transaction (TXN-RTT2001, Rs 4,200, Digital Electronics) fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

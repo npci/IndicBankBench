@@ -1,0 +1,180 @@
+{
+  "case_id": "calc.calculate_rd_maturity.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks 'calculate RD maturity for Rs 5,000 monthly for 24 months'. get_deposit_loan_rates returns rates for all slabs. A tenure_months=24 filter returns 6.75%. But 36 months at 7.00% would yield significantly more. Broad query reveals the higher-tier rate option.",
+  "setup": {
+    "persona": "28-year-old female, No Occupation / Retired / Homemaker, rural Rohtas, Bihar",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0686",
+      "full_name": "Surati Devi",
+      "date_of_birth": "1998-12-07",
+      "gender": "female",
+      "customer_since": "2023-10-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5539",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "60 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Rohtas",
+        "state": "Bihar",
+        "pincode": "385539",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "60 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Rohtas",
+        "state": "Bihar",
+        "pincode": "385539",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8304X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT6R9506001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT6R9506002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to start a monthly RD of Rs 5,000 for 2 years. What will I get at maturity?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "product_type": "rd",
+        "rates": [
+          {
+            "slab": "1 year to less than 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          },
+          {
+            "slab": "3 years to less than 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "FILTER TRAP: tenure_months=24 gets 6.75% (1-3yr slab). But 36 months at 7.0% (3-5yr slab) earns more. Model should compute 24 months AND mention the 36-month alternative."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 128736,
+        "interest_earned": 8736,
+        "total_principal_invested": 120000
+      },
+      "_comment": "RD 24mo/5000 at 6.75% quarterly comp. Sigma 5000*(1+6.75/400)^(4*(24-k)/12) = 128736. interest_earned=8736."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd"
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "tenure_months": 24,
+          "rate": 6.75
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional_ok": {
+          "product_type": {
+            "allowed": [
+              "rd",
+              null
+            ]
+          }
+        },
+        "_comment": "Must query RD rates broadly. A tenure_months=24 filter returns only the 6.75% slab, hiding the 7.00% slab for 36 months."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        },
+        "_comment": "Must compute at 6.75% for 24 months. A thorough model also notes 36 months at 7.00% yields more."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants 24-month RD at Rs 5,000/month. At 6.75%, maturity = ~Rs 1,28,736 (invested Rs 1,20,000, interest Rs 8,736). Assistant should also mention that extending to 36 months at 7.00% would yield higher returns. Reporting only the 24-month figure without the 36-month alternative fails.",
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes 24-month RD maturity correctly and proactively mentions the 36-month option at 7.00% rate for better returns. Reporting only the 24-month figure without the longer-tenure alternative fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

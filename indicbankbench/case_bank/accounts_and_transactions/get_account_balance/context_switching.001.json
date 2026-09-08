@@ -1,0 +1,194 @@
+{
+  "case_id": "acct.get_account_balance.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 READ/READ entity bleed (pure tracking, no write). The customer has two linked accounts — salary and current — with clearly different balances. They ask about the salary account, then the current account, then re-refer back to the salary one ('sorry, I meant the salary account — what was it?'). The trap is recency bleed: the immediately-preceding exchange was about the current account, so a model that fails to re-retrieve (or answer from stale memory after two turns) reports ₹8,50,000 (current) instead of the correct ₹42,350.75 (salary). All four existing axis-6 cases are write+detour; this is the first pure-read context-switch — tracking identity across turns where the only penalty for losing it is swapping one number for another. The two balances are deliberately disproportionate so a swap is easy for a judge to detect.",
+  "setup": {
+    "persona": "48-year-old male, Labourer, Plantation, urban Baleshwar, Odisha",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0020",
+      "full_name": "Ashok Yena",
+      "date_of_birth": "1978-02-16",
+      "gender": "male",
+      "customer_since": "2013-04-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6341",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "62 Station Road",
+        "line2": "Sector 17",
+        "city": "Baleshwar",
+        "state": "Odisha",
+        "pincode": "246341",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "62 Station Road",
+        "line2": "Sector 17",
+        "city": "Baleshwar",
+        "state": "Odisha",
+        "pincode": "246341",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3974X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACB9100001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKACB9100002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKACB9100003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "close_deposit",
+    "calculate_emi"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the balance in my salary account?"
+    },
+    {
+      "content": "And my current account?"
+    },
+    {
+      "content": "Sorry, I got confused — I meant the salary account. Can you confirm its balance again?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Two accounts with deliberately disproportionate balances so a swap is detectable. Salary: ₹42,350.75 (ordinary). Current: ₹8,50,000 (much larger — the business account). The re-reference trap is recency bleed: the last discussed account was the current account, so a model that skims answers with ₹8,50,000 instead of ₹42,350.75.",
+      "records": [
+        {
+          "account_id": "TKACB9100001",
+          "available_balance": 42350.75,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKACB9100002",
+          "available_balance": 850000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKACB9100001",
+            "TKACB9100002"
+          ]
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKACB9100001",
+                "TKACB9100002"
+              ],
+              [
+                "TKACB9100002",
+                "TKACB9100001"
+              ],
+              [
+                "TKACB9100001"
+              ],
+              [
+                "TKACB9100002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Either a single call fetching both accounts or two separate calls is acceptable — the test is about tracking which balance is which across turns, not the fetch strategy."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Axis 6 — a read/read entity-bleed trap. The customer asks for their salary account balance (₹42,350.75), then their current account balance (₹8,50,000), then re-refers back to the salary account: 'sorry, I meant the salary account — confirm again?'\n\nThe assistant must CORRECTLY re-report the salary balance (₹42,350.75) in the final answer, not the current account balance (₹8,50,000). The trap is recency bleed: the immediately-preceding exchange was about the current account, so a model that loses track answers with the last number it discussed rather than the one the customer is actually re-asking about.\n\nBoth sub-tasks must be correct: the salary balance reported at the start, the current balance reported in the detour, and the salary balance RE-confirmed at the end. Swapping the two balances in the final answer, or reporting the wrong account type in any answer, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "PASS requires the assistant to report the correct balance for EACH account every time it is asked: salary ₹42,350.75, current ₹8,50,000. In the final turn, reporting the current balance (₹8,50,000) when the customer re-asked about the salary account, or confusing the two accounts at any point, fails. Both sub-tasks — salary and current queries — must complete correctly and stay distinct."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

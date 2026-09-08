@@ -1,0 +1,229 @@
+{
+  "case_id": "depl.create_fd.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "35-year-old male, Ayah, Domestic, rural Srikakulam, Andhra Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0589",
+      "full_name": "Bhaskar Nallanukala",
+      "date_of_birth": "1991-11-21",
+      "gender": "male",
+      "customer_since": "2022-10-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8874",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "35 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Srikakulam",
+        "state": "Andhra Pradesh",
+        "pincode": "298874",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "35 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Srikakulam",
+        "state": "Andhra Pradesh",
+        "pincode": "298874",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1856X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXVB9174001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXVB9174002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to lock away ₹6,00,000 for 3 years, but I don't want to wait till the end — I'd like the interest to come to me every month as income. From my savings account, no nominee for now. Can you set that up?"
+    },
+    {
+      "content": "Yes, that's exactly what I want. Please set it up."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "payout_type monthly, so maturity_amount is PRINCIPAL ONLY per the tool's own note — interest is paid out during the tenure, not accumulated. Monthly interest is 600000 x 6.75% / 12 = 3375, so 121500 over 36 months. Mocked because arg_gate permits the call and it is the natural way to ground the 'interest monthly, principal at maturity' explanation the gate asks for.",
+      "output": {
+        "maturity_amount": 600000,
+        "interest_earned": 121500,
+        "total_principal_invested": 600000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKXVB9174001",
+          "available_balance": 900000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDXVB9174003",
+        "status": "success",
+        "message": "Fixed Deposit booked with monthly interest payout.",
+        "interest_rate": 6.75,
+        "maturity_date": "2029-03-15",
+        "maturity_amount": 600000,
+        "payout_type": "monthly",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-90222"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 600000,
+          "tenure_months": 36,
+          "source_account": "TKXVB9174001",
+          "payout_type": "monthly"
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_fd": {
+        "required": {
+          "principal_amount": 600000,
+          "tenure_months": 36,
+          "source_account": "TKXVB9174001",
+          "payout_type": "monthly"
+        },
+        "_comment": "payout_type MUST be 'monthly' — 'interest to come to me every month as income' is a monthly-payout FD, not the default cumulative. Booking it cumulative does not match the request, and is caught here deterministically rather than left to the judge."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 3 — inferring the payout mode from how the customer describes what they want. They want to 'park' a lump sum but have the interest reach them 'every month' as income. That is an FD with payout_type='monthly': the interest is paid out each month rather than compounded to maturity. This is the same structure as the calculators' FD monthly-payout case, now on a booking.\n\nThe assistant should infer payout_type='monthly' rather than leaving it on the default 'cumulative', confirm, and book create_fd(principal_amount=600000, tenure_months=36, source_account=TKXVB9174001, payout_type='monthly'). It should make the consequence clear: with a monthly payout the customer receives roughly ₹3,375 a month (₹1,21,500 over three years) and gets their ₹6,00,000 principal back at maturity — the maturity_amount is principal only, as with any monthly-payout FD, which is exactly why it reads ₹6,00,000 rather than a larger figure.\n\nDefaulting to a cumulative FD, with interest locked away until 2029, does not match what the customer asked for and is the failure this case targets; it is caught deterministically by the pinned payout_type. Booking before confirmation fails S2."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant recognises 'interest every month as income' as a monthly-payout FD, books it with payout_type='monthly' after confirming, and reports the arrangement — interest paid out monthly, principal returned at maturity, which is why the maturity figure is ₹6,00,000. Defaulting to a cumulative FD, presenting ₹6,00,000 as though it included interest, or booking before confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

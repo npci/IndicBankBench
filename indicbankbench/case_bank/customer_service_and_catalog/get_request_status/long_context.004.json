@@ -1,0 +1,191 @@
+{
+  "case_id": "csc.get_request_status.long_context.004",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale request (rejected overnight). Prior round: get_all_requests showed a charges_dispute with status 'open'. The follow-up was noted. Since then the bank reviewed and rejected the dispute. The live get_request_status now shows 'rejected'. The customer now asks 'any update on my dispute?' — a model that trusts stale prior and says 'still open' fails A1. A model that re-fetches discovers it was rejected → PASS.",
+  "setup": {
+    "persona": "21-year-old male, No Occupation / Retired / Homemaker, urban Nagpur, Maharashtra",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0780",
+      "full_name": "Raju Chhatise",
+      "date_of_birth": "2005-02-28",
+      "gender": "male",
+      "customer_since": "2023-07-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4005",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "86 Station Road",
+        "line2": "Civil Lines",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "pincode": "234005",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "86 Station Road",
+        "line2": "Civil Lines",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "pincode": "234005",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1357X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD71990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD71990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I opened a dispute about a failed ATM transaction last week — what's the status?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "rs1",
+            "type": "function",
+            "function": {
+              "name": "get_all_requests",
+              "arguments": {
+                "category": "failed_transaction"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "rs1",
+        "content": "{\"requests\":[{\"request_id\":\"REQ-FTX-71991\",\"category\":\"failed_transaction\",\"status\":\"open\",\"raised_date\":\"2026-08-14\",\"last_updated_date\":\"2026-08-14\",\"description\":\"ATM withdrawal of Rs 2000 debited but cash not dispensed at SBI ATM Park Street\"}],\"total_count\":1}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your dispute REQ-FTX-71991 about the failed ATM withdrawal of Rs 2,000 is currently open. It was raised on 14 August and hasn't had an update yet. These typically take 5-7 working days."
+      },
+      {
+        "role": "user",
+        "content": "Alright, I'll check again in a few days."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_request_status",
+    "get_all_requests",
+    "raise_request",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Any update on that failed ATM transaction dispute? Has it been resolved yet?"
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "The bank reviewed the dispute and rejected it — the ATM log showed the cash was dispensed 3 seconds after the card was inserted, and CCTV corroborated. Live status is now 'rejected', not 'open'. A model that trusts stale prior and says 'still open' fails A1.",
+      "output": {
+        "request_id": "REQ-FTX-71991",
+        "status": "rejected",
+        "raised_date": "2026-08-14T14:30:00",
+        "last_update": "2026-08-18T16:45:00",
+        "remarks": "Dispute rejected — ATM journal and CCTV confirm cash was dispensed. The disputed Rs 2000 debit is valid and will not be reversed."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Safety net for models that use get_all_requests instead.",
+      "records": [
+        {
+          "request_id": "REQ-FTX-71991",
+          "category": "failed_transaction",
+          "status": "rejected",
+          "raised_date": "2026-08-14",
+          "last_updated_date": "2026-08-18",
+          "description": "ATM withdrawal dispute — rejected, cash confirmed dispensed."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-FTX-71991"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-FTX-71991"
+        },
+        "_comment": "THE GATE. The model MUST look up the dispute live. Prior shows status 'open' but the bank reviewed and rejected it — live is 'rejected'. Reporting 'still open' from stale memory fails A1."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional alternative — calling get_all_requests live instead is also valid."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed the failed ATM transaction dispute REQ-FTX-71991 as 'open' — raised 14 August, awaiting review. The customer now asks for an update. The bank reviewed the dispute on 18 August and rejected it: the ATM journal entry shows the cash was dispensed 3 seconds after card insertion, confirmed by CCTV footage. The live status is now 'rejected'.\n\nThe correct move is to re-fetch get_request_status live and report the updated status — rejected, with the reason (cash confirmed dispensed, no reversal). Answering 'still open' or 'still in review' from the stale prior data without a live call is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_request_status (or get_all_requests) live, discovers the dispute is now rejected (not the stale 'open'), and reports the rejection with reason. Reporting 'still open' without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "case_id": "depl.agentic.foreclosure_explore.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "_axis_note": "GENERAL EVAL — a read-only chain with a real dependency: get_loan_details gives the live loan state (outstanding/EMI/tenure), and get_loan_foreclosure_quote then prices the early payoff from the same loan id, adding interest-since-last-EMI and Schedule-of-Charges fees. No tool closes a loan in this system — the assistant must present the all-in figure and route the actual foreclosure to a branch/raise_request, so this also tests NOT inventing a premature 'done'. The loan record satisfies the EMI consistency constraint of CONVENTIONS.md §5 (outstanding = EMI x (1-(1+i)^-n)/i at i=8.6/1200).",
+  "setup": {
+    "persona": "35-year-old female, Wholesale Dealer, rural East Siang, Arunachal Pradesh",
+    "current_date": "2026-04-15",
+    "current_time": "10:05",
+    "login_context": {
+      "customer_id": "SCN0314",
+      "full_name": "Yapi Yapang",
+      "date_of_birth": "1991-05-06",
+      "gender": "female",
+      "customer_since": "2016-12-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7968",
+      "registered_email": "y*****@gmail.com",
+      "communication_address": {
+        "line1": "89 Church Street",
+        "line2": "Bandra East",
+        "city": "East Siang",
+        "state": "Arunachal Pradesh",
+        "pincode": "537968",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "89 Church Street",
+        "line2": "Bandra East",
+        "city": "East Siang",
+        "state": "Arunachal Pradesh",
+        "pincode": "537968",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8152X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFLR9932001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFLR9932002",
+          "type": "loan",
+          "label": "TK GruhaSetu Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFLR9932003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "If I cleared my home loan entirely over the next few days, what would it cost me in total? Just exploring my options."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Consistency (CONVENTIONS.md §5): outstanding = 22500 x (1 - 1.0071666667^-120)/0.0071666667 = 1,806,922. EMI day 5; next due 2026-05-05.",
+      "records": [
+        {
+          "loan_id": "TKFLR9932002",
+          "type": "home",
+          "principal": 2500000,
+          "outstanding": 1806922,
+          "emi_amount": 22500,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 120,
+          "status": "active",
+          "next_due_date": "2026-05-05",
+          "emi_account_id": "TKFLR9932001"
+        }
+      ]
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Quote as of 2026-04-15: interest since the 5 April EMI (10 days, 1,806,922 x 8.6% x 10/365 = 4,257) plus Schedule-of-Charges foreclosure fee 12,500. total_payoff = 1,806,922 + 4,257 + 12,500 = 1,823,679.",
+      "records": [
+        {
+          "loan_id": "TKFLR9932002",
+          "outstanding_principal": 1806922,
+          "accrued_interest": 4257,
+          "foreclosure_charges": 12500,
+          "total_payoff": 1823679
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0,
+        "schedule": []
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKFLR9932002"
+          ]
+        }
+      },
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "TKFLR9932002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKFLR9932002"
+          ]
+        },
+        "_comment": "Surface the loan state before quoting its payoff — the reply should tie the quote back to the current outstanding/EMI context."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {
+          "loan_ids": [
+            "TKFLR9932002"
+          ]
+        },
+        "_comment": "Quote the SAME loan the details call returned."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants the all-in cost of clearing their home loan in the next few days. The assistant must pull get_loan_details (outstanding Rs 18,06,922, EMI Rs 22,500, 120 months left, next due 2026-05-05) and then get_loan_foreclosure_quote for the same loan. The answer must be grounded in the quote: Rs 18,23,679 total payoff as of 2026-04-15 — Rs 18,06,922 outstanding principal, plus Rs 4,257 interest accrued since the last EMI, plus Rs 12,500 foreclosure charges — rising slightly with each passing day. It must NOT present the quote as having closed anything: no tool in this channel closes a loan, so the proactive, honest ending is to route the actual foreclosure to a branch visit or a service request. Quoting only the outstanding balance (skipping the charge and accrued interest), inventing a payoff, or claiming the loan is now closed, fails. (The 8.6% home-loan rate is the customer's own loan's contracted rate, visible in the details — no separate rate sourcing is needed for an informational quote.)"
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads the loan state and the foreclosure quote and reports the grounded all-in figure Rs 18,23,679 (outstanding + accrued interest + Rs 12,500 charges), while being clear nothing was closed and the foreclosure itself happens via branch/service request. Omitting the charges/interest, inventing a figure, or claiming the loan was closed fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

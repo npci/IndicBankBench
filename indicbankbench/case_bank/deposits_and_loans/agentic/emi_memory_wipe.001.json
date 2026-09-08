@@ -1,0 +1,283 @@
+{
+  "case_id": "depl.agentic.emi_memory_wipe.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details+get_deposit_loan_rates+calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — MULTI-TURN MEMORY-WIPE trap. Turn 1 asks for personal-loan EMI; the model fetches loans, rates (10.5%), and computes EMI (₹23,188). Turn 2 reveals the assumption was wrong — the customer was looking at the HOME loan details, the personal loan is the other one. A weak model carries forward turn-1's 10.5% rate and feeds it into a home-loan EMI calc (wildly wrong). A strong model re-queries get_deposit_loan_rates with product_type=home_loan, gets 8.6%, and produces ₹34,885. Gap-widening: a small model re-queries; another model reuses the stale rate. The arg_gate is permissive per gotcha #8; the R bar discriminates.",
+  "setup": {
+    "persona": "40-year-old male, Labourer, rural Jalpaiguri, West Bengal",
+    "current_date": "2026-08-15",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0356",
+      "full_name": "Pintu Karmakar",
+      "date_of_birth": "1986-12-19",
+      "gender": "male",
+      "customer_since": "2023-01-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6275",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Jalpaiguri",
+        "state": "West Bengal",
+        "pincode": "916275",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Jalpaiguri",
+        "state": "West Bengal",
+        "pincode": "916275",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6900X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKEMW7300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNEMW7300002",
+          "type": "loan",
+          "label": "TK GruhaSetu Home Loan"
+        },
+        {
+          "product_id": "TKLNEMW7300004",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCEMW7300003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_fd_details",
+    "get_account_balance",
+    "get_loan_foreclosure_quote",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "What's my EMI on my personal loan? Give me the monthly figure."
+    },
+    {
+      "content": "Wait, sorry — I was confused. The details I was looking at are for my HOME loan. The personal loan is the other one. What's the home loan EMI?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two loans. Home: 32L outstanding, 8.6%, 150 months remaining, EMI ₹34,885. Personal: 5L outstanding, 10.5%, 24 months remaining. Arithmetic per CONVENTIONS.md §5: 3200000 x 8.6/1200 x (1+8.6/1200)^150 / ((1+8.6/1200)^150 - 1) = 34,885; 500000 x 10.5/1200 x (1+10.5/1200)^24 / ((1+10.5/1200)^24 - 1) = 23,188.",
+      "records": [
+        {
+          "loan_id": "TKLNEMW7300002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKEMW7300001"
+        },
+        {
+          "loan_id": "TKLNEMW7300004",
+          "type": "personal",
+          "principal": 500000,
+          "outstanding": 500000,
+          "emi_amount": 23188,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 15,
+          "tenure_remaining": 24,
+          "status": "active",
+          "next_due_date": "2026-09-15",
+          "emi_account_id": "TKEMW7300001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Rates for personal loan (10.5%) and home loan (8.6%). A weak model reuses the personal-loan rate from turn 1 for the home-loan EMI in turn 2.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 10.5,
+            "senior_citizen_rate": 11.0
+          },
+          {
+            "slab": "5 years to < 10 years",
+            "rate": 8.6,
+            "senior_citizen_rate": 9.1
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 34885,
+        "total_interest": 2032750,
+        "total_payment": 5232750
+      },
+      "_comment": "Fixed output for the home-loan EMI (₹34,885). The personal-loan EMI (₹23,188) is also valid and would be computed differently. The R bar checks that the FINAL answer after re-querying uses the home-loan rate (8.6%)."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNEMW7300002",
+            "TKLNEMW7300004"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "home_loan",
+          "tenure_months": 150
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 3200000,
+          "rate": 8.6,
+          "tenure_months": 150
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_emi"
+      ]
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "TKLNEMW7300002",
+                "TKLNEMW7300004"
+              ],
+              [
+                "TKLNEMW7300002"
+              ],
+              [
+                "TKLNEMW7300004"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must surface both loans. The set of loan_ids is permissive per existing agentic patterns."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional_ok": {
+          "product_type": {
+            "allowed": [
+              "personal_loan",
+              "home_loan"
+            ]
+          }
+        },
+        "_comment": "Gotcha #8 — do NOT pin product_type in required; the model calls twice (personal_loan then home_loan). The R bar verifies the re-query for home_loan happened."
+      },
+      "calculate_emi": {
+        "required": {},
+        "_comment": "Do NOT pin rate or principal in required — the model computes once for personal (turn 1) and once for home (turn 2). The R bar verifies the final answer uses the home-loan rate."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Multi-turn memory-wipe trap. Turn 1: customer asks for personal-loan EMI. The assistant fetches both loans via get_loan_details, calls get_deposit_loan_rates for the personal loan (10.5%), and computes the EMI (₹23,188). Turn 2: the customer corrects — that was actually the HOME loan they were looking at, the personal loan is the other one. The assistant must NOW RE-QUERY get_deposit_loan_rates for the HOME loan (8.6%) and compute the home-loan EMI (₹34,885). A weak model reuses the 10.5% rate from turn 1, producing a wildly inflated home-loan EMI. A strong model re-queries the rates tool and arrives at ₹34,885. The arg_gate is deliberately permissive (gotcha #8) — product_type and rate are not pinned in required — so the discrimination is through the R bar: the FINAL answer must use the home-loan rate 8.6% sourced from a fresh rates fetch. Using the personal-loan rate from memory fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "in turn 1 the assistant reports the personal-loan EMI (₹23,188, sourced from the 10.5% rate). After the customer corrects in turn 2, the assistant RE-QUERIES the rate for the HOME loan (8.6%) and reports its EMI (₹34,885). FAIL if the home-loan EMI is computed using the personal-loan rate (10.5%) carried forward from turn 1, or if the assistant fails to answer the home-loan EMI question."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

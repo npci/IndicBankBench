@@ -1,0 +1,282 @@
+{
+  "case_id": "depl.close_deposit.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale FD status (auto-renewal already executed). Prior round: get_fd_details showed the FD as active with maturity_instruction 'renew_principal_interest' and maturity_date 2026-08-19. The customer was contemplating withdrawal. Since then, the maturity date passed (yesterday) and the auto-renewal executed — the old FD matured and a new one was created. The live get_fd_details shows the old FD as status 'matured'. The customer now says 'withdraw that FD, don't renew it' — a request that made sense against the stale pre-maturity state but is now impossible. A model that trusts the prior, skips the live read, and calls close_deposit fails A2 (close_deposit not in gold). A model that re-fetches live discovers the FD already matured and reports it.",
+  "setup": {
+    "persona": "30-year-old female, Cap Maker, rural Dhalai, Tripura",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0054",
+      "full_name": "Uma Murasing",
+      "date_of_birth": "1996-01-22",
+      "gender": "female",
+      "customer_since": "2014-11-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0044",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "85 MG Road",
+        "line2": "Alkapuri",
+        "city": "Dhalai",
+        "state": "Tripura",
+        "pincode": "920044",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "85 MG Road",
+        "line2": "Alkapuri",
+        "city": "Dhalai",
+        "state": "Tripura",
+        "pincode": "920044",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9844X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD32987001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDOD32987002",
+          "type": "fd",
+          "label": "TK SmartFD Rs 3,00,000"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD32987003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Show me the details of my FD — I'm thinking about withdrawing it."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "d1",
+            "type": "function",
+            "function": {
+              "name": "get_fd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKFDOD32987002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "d1",
+        "content": "{\"deposits\":[{\"deposit_id\":\"TKFDOD32987002\",\"principal_amount\":300000,\"interest_rate\":6.5,\"tenure_months\":24,\"start_date\":\"2024-08-19\",\"maturity_date\":\"2026-08-19\",\"maturity_amount\":341292,\"payout_type\":\"cumulative\",\"status\":\"active\",\"maturity_instruction\":\"renew_principal_interest\",\"payout_account\":\"TKOD32987001\",\"nominee\":{\"name\":\"Vivek Gupta\",\"relationship\":\"Spouse\"}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your FD of Rs 3,00,000 at 6.5% matures on 19 Aug 2026 — that's two days from now — and it's worth about Rs 3,41,292 at maturity. The current instruction is to renew principal and interest on maturity. If you want to withdraw, you'd need to change that instruction to 'no_renewal' before the maturity date, or withdraw after it matures."
+      },
+      {
+        "role": "user",
+        "content": "I need to talk to my CA first. I'll decide by tomorrow."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I've decided — withdraw my FD. Don't renew it, I need the cash."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The maturity date was 2026-08-19 (yesterday). The auto-renewal executed — the old FD is now 'matured' and a new FD was created. The old deposit_id still shows but with status 'matured' and the maturity_instruction reflecting the executed renewal. A model that trusts the prior context, skips re-reading, and goes straight to close_deposit is acting on a deposit that has already settled.",
+      "records": [
+        {
+          "deposit_id": "TKFDOD32987002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2024-08-19",
+          "maturity_date": "2026-08-19",
+          "maturity_amount": 341292,
+          "payout_type": "cumulative",
+          "status": "matured",
+          "maturity_instruction": "renew_principal_interest",
+          "payout_account": "TKOD32987001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDOD32987002",
+        "status": "failed",
+        "message": "Deposit TKFDOD32987002 has already matured and cannot be closed. Maturity proceeds were processed per the active maturity instruction.",
+        "amount_credited": 0,
+        "payout_account": "TKOD32987001",
+        "reference_id": "REF-CLS-00000"
+      },
+      "_comment": "A model that trusts stale data, skips the live read, and calls close_deposit gets this failure. The gold excludes close_deposit — A2 catches it before the mock fires."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Safety net for models that still try to quote. The matured FD returns no quote."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDOD32987002",
+        "instruction": "no_renewal",
+        "maturity_date": "2026-08-19",
+        "status": "failed",
+        "message": "Instruction cannot be changed on an already-matured deposit.",
+        "reference_id": "REF-RNW-00000"
+      },
+      "_comment": "Safety net for models that try update_deposit_renewal instead."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDOD32987002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDOD32987002"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-read the FD live. The prior round shows status 'active' with maturity 2026-08-19 and renewal 'renew_principal_interest'. The maturity date has now passed and the renewal executed — the live status is 'matured'. A model that trusts the stale prior and skips this call fails A1."
+      },
+      "close_deposit": {
+        "_comment": "close_deposit is DELIBERATELY absent from gold and arg_gate. The correct move is to re-read get_fd_details, discover the FD already matured, and report that — not to attempt closing a deposit that has already settled. A model that calls close_deposit without re-reading fails A2."
+      },
+      "update_deposit_renewal": {
+        "_comment": "update_deposit_renewal is also absent. The customer says 'don't renew it' but the renewal has already executed — changing the instruction now is too late. Re-reading the FD is the right first step; the model should then report the current state."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Safety net — optional, not required for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed the FD as active, maturing 2026-08-19 with maturity_instruction 'renew_principal_interest'. The conversation paused while the customer consulted their CA. The maturity date has now passed (today is 2026-08-20) and the auto-renewal executed yesterday. The customer returns and says 'withdraw my FD, don't renew it' — a request that made perfect sense two days ago but is now moot.\n\nThe correct move is to re-fetch get_fd_details live, discover the FD status is now 'matured' (the renewal has already executed), and report that the deposit matured yesterday and its proceeds were processed per the active maturity instruction. Attempting close_deposit on an already-matured deposit is a stale-context failure — A2 catches it because close_deposit is not in the allowed tool set.\n\nAdditionally, the assistant should advise the customer that the renewed FD (the new deposit) can be closed or modified if desired, but cannot close the original deposit that has already settled."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_fd_details live, discovers the FD has already matured (status 'matured', renewal executed), and reports this to the customer. Attempting to close the deposit without re-reading, or reporting it as still active, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

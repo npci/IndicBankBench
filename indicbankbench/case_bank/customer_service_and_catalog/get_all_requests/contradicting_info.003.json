@@ -1,0 +1,235 @@
+{
+  "case_id": "csc.get_all_requests.contradicting_info.003",
+  "axis": "5_contradicting_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 MULTI-TURN FILTER TRAP on status dimension: turn 1 the customer asks for open requests (status=open bait). A resolved failed-transaction request (ATM cash not dispensed) is the hidden evidence — filtered out by status=open. The only open request is a trivial duplicate_statement. Turn 2 the customer contradicts by saying the failed-transaction request might be resolved already, hinting to re-query broadly. Strong model re-queries without status filter, finds the resolved failed-transaction. Weak model sticks with open, reports only the duplicate_statement request.",
+  "setup": {
+    "persona": "37-year-old male, Labourer, Agriculture, rural Sivasagar, Assam",
+    "current_date": "2026-08-17",
+    "current_time": "14:15",
+    "login_context": {
+      "customer_id": "SCN0692",
+      "full_name": "Baloram Ping",
+      "date_of_birth": "1989-04-18",
+      "gender": "male",
+      "customer_since": "2015-01-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6543",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "64 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Sivasagar",
+        "state": "Assam",
+        "pincode": "406543",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "64 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Sivasagar",
+        "state": "Assam",
+        "pincode": "406543",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5206X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGARF03001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCARF03001",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "I raised a few requests recently — can you show me the ones that are still open?"
+    },
+    {
+      "content": "The one I really care about was a failed ATM transaction — I think it might have been closed by now. Please check all my requests, not just the open ones."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the failed_transaction request (REQ-ARF030-02) is RESOLVED. A status=open filter returns only the duplicate_statement noise request (REQ-ARF030-01).",
+      "records": [
+        {
+          "request_id": "REQ-ARF030-01",
+          "category": "duplicate_statement",
+          "status": "open",
+          "raised_date": "2026-08-10",
+          "last_updated_date": "2026-08-10",
+          "description": "Duplicate statement for March to June 2026"
+        },
+        {
+          "request_id": "REQ-ARF030-02",
+          "category": "failed_transaction",
+          "status": "resolved",
+          "raised_date": "2026-07-28",
+          "last_updated_date": "2026-08-14",
+          "description": "ATM withdrawal Rs 10,000 debited but cash not dispensed at SBI ATM T Nagar"
+        },
+        {
+          "request_id": "REQ-ARF030-03",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-07-15",
+          "last_updated_date": "2026-07-22",
+          "description": "Dispute for SMS alert charges of Rs 60"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Pinning nothing — the status=open filter is the trap. Turn 1 may include status=open. Turn 2 the model must drop it to find the resolved failed_transaction. The judge verifies the re-query surfaced the failed ATM request."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Turn 1: the customer asks for open requests. The assistant may query with status=open and find one open request — a duplicate_statement from 2026-08-10. That alone is incomplete. Turn 2: the customer says the request they care about was for a failed ATM transaction, likely resolved by now. The assistant must re-query broadly (no status filter) and surface the resolved failed_transaction request (REQ-ARF030-02 — Rs 10,000 ATM cash not dispensed, resolved on 2026-08-14) alongside any other requests. Reporting only the duplicate_statement request or failing to find the failed ATM request after the customer's correction fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the customer mentions the failed ATM transaction, the assistant surfaces the resolved failed_transaction request (REQ-ARF030-02) with its status (resolved) and closure date (2026-08-14). If the assistant still only reports open requests or never surfaces the failed ATM transaction request, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,152 @@
+{
+  "case_id": "csc.search_knowledge_base.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer asks about FD premature closure penalty, detours to ask about credit card offers, then returns to FD penalty question. Model must keep the two topic contexts separate.",
+  "setup": {
+    "persona": "25-year-old male, No Occupation / Retired / Homemaker, rural Siddharthnagar, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0295",
+      "full_name": "Anis Asfaq",
+      "date_of_birth": "2001-05-23",
+      "gender": "male",
+      "customer_since": "2019-06-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0588",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Siddharthnagar",
+        "state": "Uttar Pradesh",
+        "pincode": "860588",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Siddharthnagar",
+        "state": "Uttar Pradesh",
+        "pincode": "860588",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6859X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSKB8600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSKB8600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the penalty if I break my fixed deposit before maturity?"
+    },
+    {
+      "content": "Actually, forget the FD for a moment — does your bank have any lifetime-free credit cards?"
+    },
+    {
+      "content": "Ok so coming back to the FD — what percentage penalty do I pay if I break it early?"
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "_comment": "FD penalty rules (first call) and credit card info (second call). Records use chunk/source per current contract.",
+      "records": [
+        {
+          "chunk": "FD premature closure penalty: 1% of the principal if closed within the first year, 0.5% between 1-3 years. No penalty after 3 years or within 15 days of booking. For senior citizens, the penalty is reduced by 0.25%.",
+          "source": "FD Premature Closure Rules (Bank Policy)"
+        },
+        {
+          "chunk": "TK Rewards Credit Card: No annual fee on annual spends above Rs 1,20,000. TK Platinum Credit Card: annual fee of Rs 999 with complimentary lounge access and 2x reward points. No lifetime-free credit card is currently offered.",
+          "source": "Credit Card Offerings (Bank Catalogue 2026)"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "FD premature closure penalty break before maturity percentage charges"
+        }
+      },
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "lifetime free credit card no annual fee zero fee forever"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "Must be called for each topic — first for FD penalty, then for credit cards. The model should ground each answer in its respective search results."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about FD premature closure penalties. The assistant searches and reports: 1% penalty within first year, 0.5% between 1-3 years, none after 3 years. The customer then detours to ask about lifetime-free credit cards — the assistant searches again and reports that the bank currently offers no lifetime-free cards (only the Rewards and Platinum cards with conditional/annual fees). The customer returns to ask for the FD penalty percentage specifically — the assistant must recall the correct penalty tiers (1%, 0.5%, 0%) from the earlier search rather than confusing them with credit card fees. Confusing FD penalty percentages with credit card annual fees, or forgetting the first search result, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the credit card detour, correctly recalls FD premature closure penalty tiers (1%, 0.5%, 0%). Confusing penalty percentages with credit card fees, or forgetting the FD search results, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

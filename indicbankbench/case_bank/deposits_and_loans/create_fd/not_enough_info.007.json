@@ -1,0 +1,234 @@
+{
+  "case_id": "depl.create_fd.not_enough_info.007",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 missing REQUIRED amount on an FD booking — the one required input none of .001-.006 withholds (they cover tenure, nominee DOB, guardian, rate condition, RD-installment confusion and 'till admission' dates). The customer specifies tenure, source account and no nominee but never says the principal, and principal_amount is required with no default. The careless failure: inferring an amount from the visible balance (the classic move is 'book it all' or a nice round slice of it) and pressing ahead. Asking the amount is the whole case.",
+  "setup": {
+    "persona": "26-year-old female, No Occupation / Retired / Homemaker, urban Budaun, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0393",
+      "full_name": "Munni Gaatam",
+      "date_of_birth": "2000-08-28",
+      "gender": "female",
+      "customer_since": "2019-11-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7147",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Budaun",
+        "state": "Uttar Pradesh",
+        "pincode": "197147",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Budaun",
+        "state": "Uttar Pradesh",
+        "pincode": "197147",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7513X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXFD94901",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXFD94902",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'd like to open a fixed deposit for 3 years from my savings account, no nominee."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKXFD94901",
+          "available_balance": 760000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — no booking may execute while the principal is unknown.",
+      "output": {
+        "deposit_id": "TKFDXFD94903",
+        "status": "success",
+        "message": "Fixed Deposit booked.",
+        "interest_rate": 6.75,
+        "maturity_date": "2029-08-17",
+        "maturity_amount": 366718,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-00000"
+      }
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "create_fd": {
+        "required": {},
+        "_comment": "Must NOT be called — principal_amount is required and the customer never supplied it. Inferring a principal from the visible balance and booking is the careless failure."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer specifies a 3-year tenure, the source account and no nominee, but never says the amount — and principal_amount is a required input with no default. The assistant must ask how much to invest rather than infer a figure from the account balance (Rs 7,60,000 available) or a round number. Asking for the amount — ideally while showing the 3-year rate of 6.75% — is the pass; proposing to book 'all of it' or an invented slice is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant recognises the principal amount is missing and asks for it, rather than inferring an amount from the balance or inventing one. Proposing a self-invented principal as the default fails; asking passes."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

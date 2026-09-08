@@ -1,0 +1,226 @@
+{
+  "case_id": "acct.agentic.mandates_and_loan.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "_variant_note": "Compound: one message asks for mandates summary AND loan EMI. Cross-domain.",
+  "setup": {
+    "persona": "28-year-old male, Digger (Mine & Quarry), rural Deoria, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0795",
+      "full_name": "Kuldeep Kumar",
+      "date_of_birth": "1998-09-11",
+      "gender": "male",
+      "customer_since": "2020-10-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9808",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Deoria",
+        "state": "Uttar Pradesh",
+        "pincode": "929808",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Deoria",
+        "state": "Uttar Pradesh",
+        "pincode": "929808",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3562X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMAL9400001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNAL9400002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCMAL9400003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "get_loan_details",
+    "get_account_balance",
+    "get_transaction_history",
+    "update_deposit_renewal",
+    "get_insurance_details",
+    "get_account_details",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "What auto-debits do I have on my salary account, and what's my home loan EMI right now?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "mandate_id": "MNDMAL940001",
+          "type": "upi",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKMAL9400001"
+        },
+        {
+          "mandate_id": "MNDMAL940002",
+          "type": "nach",
+          "payee": "HDFC SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKMAL9400001"
+        }
+      ]
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKLNAL9400002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKMAL9400001"
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKMAL9400001"
+        }
+      },
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNAL9400002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Netflix Rs 649 + HDFC SIP Rs 5,000."
+      },
+      "get_loan_details": {
+        "required": {},
+        "_comment": "Home loan EMI Rs 34,885."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Mandates: Netflix Rs 649 + HDFC SIP Rs 5,000, both active. Loan: home loan EMI Rs 34,885 per month. Missing either answer fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports mandates AND loan EMI. Missing either answer fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

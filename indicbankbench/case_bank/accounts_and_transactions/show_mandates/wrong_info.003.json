@@ -1,0 +1,161 @@
+{
+  "case_id": "acct.show_mandates.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks 'show my active mandates — I want to cancel the Amazon Prime one'. The Amazon Prime mandate (Rs 1,499/year) is actually PAUSED — not active — so a status filter hides it completely. Meanwhile an active Crescendo Music mandate looks like it could be the target. Broad query finds the paused Amazon Prime mandate the customer wants to cancel.",
+  "setup": {
+    "persona": "34-year-old female, No Occupation / Retired / Homemaker, urban Jaunpur, Uttar Pradesh",
+    "current_date": "2026-08-01",
+    "current_time": "16:00",
+    "login_context": {
+      "customer_id": "SCN0594",
+      "full_name": "Akhtari Nisha",
+      "date_of_birth": "1992-11-03",
+      "gender": "female",
+      "customer_since": "2022-04-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3410",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "11 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Jaunpur",
+        "state": "Uttar Pradesh",
+        "pincode": "963410",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "11 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Jaunpur",
+        "state": "Uttar Pradesh",
+        "pincode": "963410",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0794X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9455001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9455002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to cancel my Amazon Prime auto-payment. Show me my active mandates so I can find the reference."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the Amazon Prime mandate (MND-FTB5001-01, Rs 1,499/year) is PAUSED, not active. A status=active filter hides it completely, returning only the Crescendo Music mandate. The customer won't find their Amazon Prime mandate and may conclude it doesn't exist. Broad query (all statuses) reveals the paused Amazon mandate.",
+      "records": [
+        {
+          "mandate_id": "MND-FTB5001-01",
+          "type": "enach",
+          "payee": "Amazon Prime",
+          "amount": 1499,
+          "frequency": "yearly",
+          "status": "paused",
+          "next_debit_date": "2026-11-15",
+          "account_id": "TKFTB9455001"
+        },
+        {
+          "mandate_id": "MND-FTB5001-02",
+          "type": "upi_autopay",
+          "payee": "Crescendo Music",
+          "amount": 299,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKFTB9455001"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Broad query without status filter — a status=active filter hides the paused Amazon Prime mandate the customer is looking for. The model must query all statuses and surface the paused Amazon Prime mandate."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to see active mandates to find Amazon Prime. The Amazon Prime mandate (MND-FTB5001-01, Rs 1,499/year) is PAUSED — it won't show in an active-only query. The assistant must query all mandates, surface the paused Amazon Prime mandate, and explain its paused status. Reporting only the active Crescendo Music mandate and saying there's no Amazon Prime fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries all mandates and surfaces the paused Amazon Prime mandate (MND-FTB5001-01, Rs 1,499/year), explaining that it exists but is paused. Reporting only active mandates without surfacing the paused Amazon Prime fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

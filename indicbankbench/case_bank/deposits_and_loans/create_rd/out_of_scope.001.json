@@ -1,0 +1,199 @@
+{
+  "case_id": "depl.create_rd.out_of_scope.001",
+  "axis": "11_out_of_scope_refuse",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "decline",
+  "_variant_note": "Axis-11: customer asks for a joint RD with spouse. create_rd books a SINGLE-holder recurring deposit; joint accounts are not supported by this tool.",
+  "setup": {
+    "persona": "35-year-old male, Roof Bolter, Mining, urban Junagadh, Gujarat",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0056",
+      "full_name": "Bhil Paramar",
+      "date_of_birth": "1991-06-09",
+      "gender": "male",
+      "customer_since": "2017-07-19",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2453",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Junagadh",
+        "state": "Gujarat",
+        "pincode": "552453",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Junagadh",
+        "state": "Gujarat",
+        "pincode": "552453",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3394X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRD8200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRD8200002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "create_rd",
+    "get_rd_details",
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "get_account_details",
+    "request_duplicate_statement",
+    "update_deposit_renewal",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to start a recurring deposit of Rs 5,000 per month for 2 years, in joint names with my husband. Can you set that up?"
+    }
+  ],
+  "mock": {
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only.",
+      "output": {
+        "deposit_id": "TKRD8200003",
+        "status": "failed",
+        "message": "Joint RD is not supported by this platform. Please visit a branch.",
+        "reference_id": "REF-RD-00000"
+      }
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "create_rd": {
+        "required": {},
+        "_comment": "Not required: joint RD not supported. Must decline."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to open a joint RD with their husband. The assistant must decline — this platform only supports single-holder recurring deposits. It should explain the limitation and suggest visiting a branch for joint accounts. Calling create_rd and claiming it was set up jointly fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "decline",
+      "axis_gate_rule": "declines because joint RD is not supported through this platform. Calling create_rd and claiming joint setup fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_refusal",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

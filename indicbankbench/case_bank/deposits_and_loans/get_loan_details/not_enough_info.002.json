@@ -1,0 +1,284 @@
+{
+  "case_id": "depl.get_loan_details.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 call-then-clarify, the complement of the sibling .001 which is pure 'ask which' (calling the tool fails there). The customer asks 'what's my EMI?' while holding a home loan (Rs 34,885) and a personal loan (Rs 12,900) — one query returns both, so the blessed path fetches both records, presents the two EMIs with their names, and asks which loan they meant. The careless failure: answering with only the first record in the response (the home loan), silently assuming the referent. Grounding the question in real fetched figures is what separates this from a bare 'which loan?'.",
+  "setup": {
+    "persona": "39-year-old female, No Occupation / Retired / Homemaker, urban Pune, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0748",
+      "full_name": "Afreen Sheikh",
+      "date_of_birth": "1987-04-26",
+      "gender": "female",
+      "customer_since": "2015-09-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0031",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "112 Nehru Street",
+        "line2": "Koregaon Park",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "750031",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "112 Nehru Street",
+        "line2": "Koregaon Park",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "750031",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7709X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXLD95101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNXLD95103",
+          "type": "loan",
+          "label": "Home Loan"
+        },
+        {
+          "product_id": "TKLNXLD95104",
+          "type": "loan",
+          "label": "Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXLD95102",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's my EMI these days?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Both loans reconcile per CONVENTIONS §5: 32,00,000 @8.6% over 150 EMIs -> 34,885; 4,33,791 @10.5% over 40 EMIs -> 12,900.",
+      "records": [
+        {
+          "loan_id": "TKLNXLD95103",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKXLD95101"
+        },
+        {
+          "loan_id": "TKLNXLD95104",
+          "type": "personal",
+          "principal": 500000,
+          "outstanding": 433791,
+          "emi_amount": 12900,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 12,
+          "tenure_remaining": 40,
+          "status": "active",
+          "next_due_date": "2026-09-12",
+          "emi_account_id": "TKXLD95101"
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNXLD95103",
+            "TKLNXLD95104"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "TKLNXLD95103",
+                "TKLNXLD95104"
+              ],
+              [
+                "TKLNXLD95104",
+                "TKLNXLD95103"
+              ]
+            ]
+          }
+        },
+        "_comment": "The blessed call pulls BOTH loans so the two EMIs can be presented. Answering for one loan only (usually the first record) is the careless failure — a model that queried a single loan has already guessed."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks 'what's my EMI?' while holding two active loans — a home loan at Rs 34,885/month and a personal loan at Rs 12,900/month. The assistant should fetch both loan records and, instead of guessing which one the customer means, present both EMIs with their names and ask which loan they are asking about. Answering with just one loan's EMI (typically the home loan, the first record) as if that answered the question is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant fetches the loan details and asks which loan the customer means, presenting both EMIs (Rs 34,885 home, Rs 12,900 personal) — rather than answering with one loan's EMI as if it were the answer. A one-loan answer to the unqualified question fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

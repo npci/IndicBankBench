@@ -1,0 +1,287 @@
+{
+  "case_id": "depl.agentic.fd_close_identical_trap.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+get_deposit_closure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 derive-args chain with TIGHTER noise — SAME AMOUNT, SAME CATEGORY. Customer asks for a closure quote on 'my Rs 3,00,000 FD from a few months ago.' Both FDs have identical principal (Rs 3,00,000), identical rate (6.5%), identical label ('TK Regular FD'). Only discriminated by start_date: TKFDCI4002 started 2026-02-15 (6 months ago — correct) vs TKFDCI4003 started 2026-05-15 (3 months ago — noise). Both qualify as 'a few months ago.' The noise FD is more recent, making it superficially the one 'from a few months back'. A model that picks the wrong FD fails A3 on the deposit_ids in get_deposit_closure_quote. A4: details-before-quote. No write tools — no S2.",
+  "setup": {
+    "persona": "35-year-old male, Building Insulator, Hand, urban Balangir, Odisha",
+    "current_date": "2026-08-15",
+    "current_time": "09:45",
+    "login_context": {
+      "customer_id": "SCN0357",
+      "full_name": "Gaur Mari",
+      "date_of_birth": "1991-06-21",
+      "gender": "male",
+      "customer_since": "2017-11-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5781",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Balangir",
+        "state": "Odisha",
+        "pincode": "635781",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Balangir",
+        "state": "Odisha",
+        "pincode": "635781",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1337X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCI40001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDCI4002",
+          "type": "fd",
+          "label": "TK Regular FD"
+        },
+        {
+          "product_id": "TKFDCI4003",
+          "type": "fd",
+          "label": "TK Regular FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCI4004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to see a closure quote for my Rs 3,00,000 FD — the one I opened a few months ago. Just the quote for now."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two FDs with IDENTICAL principal (Rs 3,00,000), rate (6.5%), and label ('TK Regular FD'). Only discriminated by start_date: TKFDCI4002 started 2026-02-15 (6 months, correct — 'a few months ago') vs TKFDCI4003 started 2026-05-15 (3 months, noise — also 'a few months', more recent = superficially the one described). TKFDCI4002 maturity: 300000 x (1+6.5/400)^48 = 300000 x 1.01625^48 = 300000 x 2.1858 = 655740 for 12yrs? Wait, tenure_months=36: 300000 x (1+6.5/400)^12 = 300000 x 1.01625^12 = 300000 x 1.2137 = 364110.",
+      "records": [
+        {
+          "deposit_id": "TKFDCI4002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 36,
+          "start_date": "2026-02-15",
+          "maturity_date": "2029-02-15",
+          "maturity_amount": 364110,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCI40001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDCI4003",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2026-05-15",
+          "maturity_date": "2028-05-15",
+          "maturity_amount": 341421,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCI40001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "CORRECT FD (TKFDCI4002, Feb 15 start, 6 months run): step-down to 6mo-<1yr slab at 6.0%. Accrued: 300000 x 6.0% x 6/12 = 9000. Penalty 1% = 3000. Payout: 300000+9000-3000 = 306000. NOISE FD (TKFDCI4003, May 15 start, 3 months run): step-down to <6mo slab at 5.0%. Accrued: 300000 x 5.0% x 3/12 = 3750. Penalty 1% = 3000. Payout: 300000+3750-3000 = 300750.",
+      "records": [
+        {
+          "deposit_id": "TKFDCI4002",
+          "principal_amount": 300000,
+          "accrued_interest": 9000,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3000,
+          "effective_rate": 4.0,
+          "estimated_payout": 306000
+        },
+        {
+          "deposit_id": "TKFDCI4003",
+          "principal_amount": 300000,
+          "accrued_interest": 3750,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3000,
+          "effective_rate": 1.0,
+          "estimated_payout": 300750
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCI4002",
+            "TKFDCI4003"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCI4002"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDCI4002",
+                "TKFDCI4003"
+              ],
+              [
+                "TKFDCI4002"
+              ],
+              [
+                "TKFDCI4003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must fetch FD details to identify which Rs 3,00,000 FD the customer means. Both FDs have identical principal, rate, and label — only start_date distinguishes them."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDCI4002"
+          ]
+        },
+        "_comment": "Must quote the February FD (TKFDCI4002, Rs 3,00,000, 6 months run), NOT the May FD (TKFDCI4003, 3 months run). Both have same principal and label — only the start_date discriminates. The noise FD is more recent, making it superficially 'from a few months ago'."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for a closure quote on their Rs 3,00,000 FD opened 'a few months ago.' get_fd_details returns two FDs — both Rs 3,00,000 at 6.5% with label 'TK Regular FD': TKFDCI4002 (started 2026-02-15, 6 months run) and TKFDCI4003 (started 2026-05-15, 3 months run). Both qualify as 'a few months ago' — the noise (TKFDCI4003) is more recent, making it superficially the more natural match. The assistant must identify TKFDCI4002 (February FD, 6 months) as the correct one and surface its closure quote: accrued interest Rs 9,000, penalty Rs 3,000 (1%), net payout Rs 3,06,000. Quoting the wrong FD (TKFDCI4003) or skipping the quote entirely fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies the correct FD (TKFDCI4002, started 2026-02-15, Rs 3,00,000 at 6.5%) and shows its closure quote: Rs 9,000 accrued interest, Rs 3,000 penalty (1%), net payout Rs 3,06,000. Picking the noise FD (TKFDCI4003, started 2026-05-15) or providing no quote fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,215 @@
+{
+  "case_id": "cards.block_card.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 poison-number distractor on an urgent write: a marketing knowledge-base snippet about a credit-card rewards promotion ('₹5,000 cashback', 'lifetime free') sits in prior context. The customer reports fraud and wants the card blocked. The assistant must ignore the promo entirely and act — the retrieved figures are irrelevant, and pitching the offer while the customer reports fraud is both a distraction and a tone failure. The ₹5,000 is the poison number: it must not surface anywhere in the reply.\n\nPOISON MOVED TO THE USER. The promotional blurb arrives in the customer's own message — not as assistant-fabricated 'knowledge-base' content, since no knowledge-base tool is exposed — matching the deposits irrelevant_rag pattern: the clutter is genuinely present and genuinely irrelevant, and the assistant must ignore it and act on the fraud. Turn 1 rules out lost/stolen explicitly (the card is in hand) and names the reason, because \"someone's using it\" is ambiguous between `stolen` and `fraud` — and block_card.reason is REQUIRED, so an ambiguous turn strands the write (the model asks \"stolen or used fraudulently?\" and the scripted turn cannot answer). Reason-inference is still tested, deliberately and successfully, by block_card/confusing_intent.001. The promo distraction is untouched — it is the axis — and so are the gate and arg_gate.",
+  "setup": {
+    "persona": "35-year-old male, Advertising Sales Agent, urban Kamrup Metropolitan, Assam",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0779",
+      "full_name": "Shyamal Nath",
+      "date_of_birth": "1991-01-12",
+      "gender": "male",
+      "customer_since": "2012-10-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9748",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Kamrup Metropolitan",
+        "state": "Assam",
+        "pincode": "699748",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Kamrup Metropolitan",
+        "state": "Assam",
+        "pincode": "699748",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7693X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TK5URG7001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKC5URG78044",
+          "card_type": "credit",
+          "masked_number": "****8044",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_products_and_offers"
+  ],
+  "user_turns": [
+    {
+      "content": "The app keeps pushing some Festive Rewards thing at me — up to ₹5,000 cashback on spends over ₹50,000 in the first 90 days, lifetime-free for the first year, whatever. Forget that. There are three transactions on my credit card I never made — and I've still got the card right here in my hand, so someone has got hold of the number. This is fraud. Block it right now."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card blocked permanently and hotlisted across all payment networks.",
+        "reference_id": "REF-BLK-55090"
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Active card. The disputed transactions are not visible here — no cards tool returns transactions — so the assistant must not claim to have verified them.",
+      "records": [
+        {
+          "card_id": "TKC5URG78044",
+          "masked_number": "****8044",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKC5URG78044"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKC5URG78044",
+          "reason": "fraud"
+        }
+      }
+    ],
+    "arg_gate": {
+      "block_card": {
+        "required": {
+          "card_id": "TKC5URG78044",
+          "reason": "fraud"
+        },
+        "_comment": "Unauthorised transactions the customer never made = 'fraud', not 'lost' or 'stolen' (the card itself is not reported missing)."
+      },
+      "get_card_details": {
+        "required": {},
+        "_comment": "Required, and disclosed: this tool's description says \"Call get_card_details before this tool\". Without the read the assistant can only act on the customer's stated premise, and in cards that premise is wrong often enough to cause unnecessary or doomed state changes — a freeze on an already-frozen card, an unfreeze on a blocked one, a block on a card that has already expired. card_ids is deliberately NOT pinned: `required` compares by exact equality (grader.py:216) and for a list that is order-sensitive, so pinning it would fail a model that reads all of the customer's cards — a natural and correct move, especially where more than one card is in play. A1 enforces that the read happens, A4 that it happens first, and S1 that the ids are real."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer reports unauthorised transactions and asks for an immediate block. The correct reason is 'fraud' — the card is not missing, it is being misused. The assistant must confirm (conveying that the block is permanent), then call block_card(card_id=TKC5URG78044, reason='fraud') and report the outcome with the reference. The cashback/lifetime-free promotion in the earlier turns is entirely irrelevant: none of its figures (notably ₹5,000 or ₹50,000) may appear in the reply, and the offer must not be pitched to a customer reporting fraud. Advising the customer to report unauthorised transactions to the bank / cybercrime helpline and to request a replacement is ideal. Using reason='lost' or 'stolen' misclassifies the situation.",
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant ignores the promotional content entirely — no cashback/offer figures (₹5,000, ₹50,000) and no pitching the offer — and blocks the card with reason='fraud' after a confirmation conveying permanence, reporting the outcome accurately. Surfacing the promo numbers, or marketing the offer to a customer reporting fraud, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_tone",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,153 @@
+{
+  "case_id": "csc.request_duplicate_statement.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer asks for a statement but has 2 linked accounts. Must ask which one.",
+  "setup": {
+    "persona": "37-year-old male, Mechanical Engineer, Aeronautical, urban Thiruvallur, Tamil Nadu",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0363",
+      "full_name": "Muthuramalinkam Than",
+      "date_of_birth": "1989-11-17",
+      "gender": "male",
+      "customer_since": "2022-12-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5530",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "11 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Thiruvallur",
+        "state": "Tamil Nadu",
+        "pincode": "735530",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "11 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Thiruvallur",
+        "state": "Tamil Nadu",
+        "pincode": "735530",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0967X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDS8000001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKRDS8000002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDS8000003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "block_card",
+    "calculate_gold_loan_ltv"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a bank statement for the last 3 months emailed to me. Can you send it?"
+    }
+  ],
+  "mock": {
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only.",
+      "output": {
+        "request_id": "REQ-DS-75200",
+        "status": "success",
+        "message": "Statement request placed and will be emailed."
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "request_duplicate_statement": {
+        "required": {},
+        "_comment": "Must NOT be called: ambiguous which account."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer has two accounts (salary and savings) and asks for a bank statement without specifying which account. The assistant must ask ONE focused question to identify which account and must NOT call request_duplicate_statement yet."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which account rather than guessing or calling request_duplicate_statement. Calling the tool without knowing the account fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

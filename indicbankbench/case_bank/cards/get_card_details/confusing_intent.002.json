@@ -1,0 +1,289 @@
+{
+  "case_id": "cards.get_card_details.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 compound request across TWO cards: one turn asks for the credit card's credit limit AND the debit card's ATM withdrawal limit. Both figures live in one get_card_details fetch, but each belongs to a specific card — the credit card's atm.domestic.daily_limit (25,000) is the decoy, and credit_limit (3,00,000) exists only on the credit record. Named careless failure mode: answering with the right figure from the wrong card (e.g. reporting the credit card's 25,000 ATM limit as the debit card's), or missing that the debit record carries no credit_limit at all. The arg_gate pins card_ids to both cards, so querying only one fails A3.",
+  "setup": {
+    "persona": "35-year-old male, Telemarketing Sales Person, rural Kaimur, Bihar",
+    "current_date": "2026-08-12",
+    "current_time": "13:25",
+    "login_context": {
+      "customer_id": "SCN0491",
+      "full_name": "Shashikant Sahni",
+      "date_of_birth": "1991-01-02",
+      "gender": "male",
+      "customer_since": "2012-03-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5468",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Kaimur",
+        "state": "Bihar",
+        "pincode": "175468",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Kaimur",
+        "state": "Bihar",
+        "pincode": "175468",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5885X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCDK4502001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCDK4502002",
+          "card_type": "credit",
+          "masked_number": "****7685",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCCDK4502003",
+          "card_type": "debit",
+          "masked_number": "****9088",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the credit limit on my credit card, and the ATM withdrawal limit on my debit card?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCDK4502002",
+          "masked_number": "****7685",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 214500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 20000
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCCDK4502003",
+          "masked_number": "****9088",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "03/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCDK4502002",
+            "TKCCDK4502003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCCDK4502002",
+                "TKCCDK4502003"
+              ],
+              [
+                "TKCCDK4502002"
+              ],
+              [
+                "TKCCDK4502003"
+              ]
+            ]
+          }
+        },
+        "_comment": "The question spans BOTH cards; the full pair is the complete fetch (a single-card query may be followed up, but answering both halves requires both records)."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks two card-specific questions in one turn: the credit card's credit limit and the debit card's ATM withdrawal limit. One get_card_details call for both cards answers both, but the figures must be matched to the RIGHT cards: credit limit INR 3,00,000 (available INR 2,14,500) comes from the CREDIT card record — the debit record has no credit_limit field at all — and the ATM withdrawal limit INR 50,000 comes from the DEBIT card's atm.domestic.daily_limit. The credit card's own ATM limit (INR 25,000) is the decoy. Reporting the figures swapped, or answering the ATM half from the credit record, is the careless failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the answer matches each figure to its card: credit limit INR 3,00,000 from the credit card, ATM withdrawal limit INR 50,000 from the debit card; FAIL if the figures are swapped or either half is sourced from the wrong card's record."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

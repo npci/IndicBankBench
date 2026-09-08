@@ -1,0 +1,226 @@
+{
+  "case_id": "acct.get_account_balance.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 dropped referent: two balances are fetched (savings then current), and the customer asks for 'the balance of the first one again'. The final answer must re-attach to the SAVINGS balance (Rs 84,220) — recency bias pulls careless models to quote the current account's Rs 1,52,300 (the most recently shown figure). Careless failure mode: answering with the last-fetched (current) balance.",
+  "setup": {
+    "persona": "51-year-old female, No Occupation / Retired / Homemaker, rural Amritsar, Punjab",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0140",
+      "full_name": "Gurmel Kaur",
+      "date_of_birth": "1975-03-15",
+      "gender": "female",
+      "customer_since": "2014-10-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3978",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "pincode": "363978",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "pincode": "363978",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4672X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCABB2000001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKCABB2000002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCABB2000003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "toggle_card_freeze",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "What's my savings account balance?"
+    },
+    {
+      "content": "And the current account too."
+    },
+    {
+      "content": "Actually, just give me the balance of the first one again."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "000000",
+            "status": "failed"
+          }
+        ],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "savings 84,220; current 152,300 with 5,000 hold.",
+      "records": [
+        {
+          "account_id": "TKCABB2000001",
+          "available_balance": 84220,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKCABB2000002",
+          "available_balance": 152300,
+          "hold_amount": 5000
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKCABB2000001"
+          ]
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKCABB2000002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "_comment": "Both accounts fetched across the turns; the final attribution is judged at R."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for the savings balance, then the current balance, then 'the balance of the first one again'. The assistant must fetch both and, on the final ask, re-attach to the SAVINGS account: Rs 84,220 (the current account holds Rs 1,52,300 with Rs 5,000 on hold). Answering the final ask with the current account's figure — the most recently shown one — fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "keeps the two balances separate across the detour and, on 'the first one again', reports the SAVINGS balance (Rs 84,220). Quoting the current account's Rs 1,52,300 as the answer to the final ask fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,325 @@
+{
+  "case_id": "depl.get_loan_details.long_context.003",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 key evidence buried in history among distractor products, with a stale-figure trap. The customer holds a home loan and a personal loan. Early in a long history the customer identified the personal loan as the 'shop renovation' loan, and a tool-backed fixture shows its old outstanding (Rs 5,03,840). Later noise discusses the home loan. The live ask is 'how much is left on the shop loan?' The model must recall that the shop loan is the PERSONAL loan, fetch it fresh, and report Rs 4,33,791 — not the home loan figure and not the stale Rs 5,03,840 from the history.",
+  "setup": {
+    "persona": "25-year-old female, No Occupation / Retired / Homemaker, rural Vellore, Tamil Nadu",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0493",
+      "full_name": "Kima Mary",
+      "date_of_birth": "2001-01-19",
+      "gender": "female",
+      "customer_since": "2019-06-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3992",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "73 MG Road",
+        "line2": "Model Town",
+        "city": "Vellore",
+        "state": "Tamil Nadu",
+        "pincode": "713992",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "73 MG Road",
+        "line2": "Model Town",
+        "city": "Vellore",
+        "state": "Tamil Nadu",
+        "pincode": "713992",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8139X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXLL64001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNXLL64003",
+          "type": "loan",
+          "label": "Home Loan"
+        },
+        {
+          "product_id": "TKLNXLL64004",
+          "type": "loan",
+          "label": "Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXLL64002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "The personal loan — that was for the shop renovation, right? How much do I still owe on it?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_loan_details",
+              "arguments": {
+                "loan_ids": [
+                  "TKLNXLL64004"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"loans\": [{\"loan_id\": \"TKLNXLL64004\", \"type\": \"personal\", \"principal\": 500000, \"outstanding\": 503840, \"emi_amount\": 12900, \"interest_rate\": 10.5, \"emi_day_of_month\": 12, \"tenure_remaining\": 48, \"status\": \"active\", \"next_due_date\": \"2026-03-12\", \"emi_account_id\": \"TKXLL64001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes — the personal loan is the shop renovation loan. Outstanding is Rs 5,03,840 with 48 EMIs left."
+      },
+      {
+        "role": "user",
+        "content": "And the home loan EMI went up, did it? I saw the papers."
+      },
+      {
+        "role": "assistant",
+        "content": "Your home loan stays at Rs 34,885/month — the rate on it is fixed at 8.6%."
+      },
+      {
+        "role": "user",
+        "content": "Good. Did the painting bill clear this month?"
+      },
+      {
+        "role": "assistant",
+        "content": "I can check the savings account statement for that if you'd like."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "So how much is left on the shop loan now?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Fresh state: the personal loan is down to Rs 4,33,791 (40 EMIs left, reconciles per §5). The home loan remains Rs 32,00,000 / Rs 34,885.",
+      "records": [
+        {
+          "loan_id": "TKLNXLL64003",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKXLL64001"
+        },
+        {
+          "loan_id": "TKLNXLL64004",
+          "type": "personal",
+          "principal": 500000,
+          "outstanding": 433791,
+          "emi_amount": 12900,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 12,
+          "tenure_remaining": 40,
+          "status": "active",
+          "next_due_date": "2026-09-12",
+          "emi_account_id": "TKXLL64001"
+        }
+      ]
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNXLL64004"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLNXLL64004"
+          ]
+        },
+        "_comment": "The shop loan is the PERSONAL loan. Fetching the home loan or repeating the stale Rs 5,03,840 from the history is the careless failure."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks how much is left on the shop loan. From the history, the shop loan is the PERSONAL loan (TKLNXLL64004) — the home loan is a separate, larger loan discussed later. The assistant must fetch the personal loan fresh and report the current outstanding Rs 4,33,791 (Rs 12,900/month, 40 EMIs left). Reporting the home loan's Rs 32,00,000, or repeating the stale Rs 5,03,840 from the earlier conversation, is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant recalls the shop loan is the personal loan, fetches it fresh, and reports Rs 4,33,791 outstanding — not the home loan figure and not the stale Rs 5,03,840 from the history. Wrong loan or stale figure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

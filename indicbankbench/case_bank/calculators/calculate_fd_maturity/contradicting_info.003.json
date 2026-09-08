@@ -1,0 +1,165 @@
+{
+  "case_id": "calc.calculate_fd_maturity.contradicting_info.003",
+  "axis": "5_contradicting_info",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'I want the 3-year FD rate at 6.75% — calculate maturity on Rs 1,50,000'. The 3-year slab IS 6.75%. But the 2-year rate at 6.5% gives BETTER effective annualized return for someone who may not need the money locked for 3 full years. A tenure-narrow model computes only the 3-year figure. A broad model notes the 2-year flexibility option.",
+  "setup": {
+    "persona": "33-year-old male, Teleprinter Mechanic, rural Narmada, Gujarat",
+    "current_date": "2026-08-05",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0433",
+      "full_name": "Paramar Premjibhai",
+      "date_of_birth": "1993-05-08",
+      "gender": "male",
+      "customer_since": "2016-06-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5656",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "17 Church Street",
+        "line2": "Sector 17",
+        "city": "Narmada",
+        "state": "Gujarat",
+        "pincode": "735656",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "17 Church Street",
+        "line2": "Sector 17",
+        "city": "Narmada",
+        "state": "Gujarat",
+        "pincode": "735656",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5312X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9468001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9468002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm locking Rs 1,50,000 in an FD for 3 years at 6.75% — tell me the final maturity amount."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer quotes 3-year rate and asks for 3-year maturity. The 3-year slab is 6.75% — maturity: 150000 x (1+6.75/400)^12 = 150000 x 1.22196 = 183294. But the 2-year slab at 6.5% — maturity: 150000 x (1+6.5/400)^8 = 150000 x 1.13760 = 170639 — is only 1 year shorter with Rs 12,655 less. The model should note the flexibility trade-off.",
+      "records": [
+        {
+          "slab": "1 year to < 3 years",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        },
+        {
+          "slab": "3 years to < 5 years",
+          "rate": 6.75,
+          "senior_citizen_rate": 7.25
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 183294,
+        "interest_earned": 33294,
+        "total_principal_invested": 150000
+      },
+      "_comment": "3-year maturity at 6.75%: 150000 x (1+6.75/400)^12 = 183294"
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd"
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 150000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Must query FD rates. The filter trap: the model should verify the 3-year rate and compute. A thorough response also mentions the 2-year flexibility option at 6.5%."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 150000,
+          "rate": 6.75,
+          "tenure_months": 36
+        },
+        "_comment": "3-year maturity ~Rs 1,83,294. A thorough response notes 2-year alternative ~Rs 1,70,639."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for 3-year FD maturity at 6.75%. Maturity is approximately Rs 1,83,294 (interest Rs 33,294). The assistant should compute this AND note that a 2-year FD at 6.5% would mature at ~Rs 1,70,639 — offering earlier liquidity at only Rs 12,655 less in returns. This helps the customer weigh lock-in vs returns. Reporting only 3-year figures fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes 3-year maturity correctly (~Rs 1,83,294) AND proactively surfaces the 2-year alternative for flexibility comparison. Reporting only the 3-year figure fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

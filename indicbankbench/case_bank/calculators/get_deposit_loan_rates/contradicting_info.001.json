@@ -1,0 +1,175 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.contradicting_info.001",
+  "axis": "5_contradicting_info",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5: customer says FD rate is 8% but rate card shows 6.5%. Model must check and correct.",
+  "setup": {
+    "persona": "33-year-old female, Checker, urban West, Delhi",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0728",
+      "full_name": "Anjum Hasan",
+      "date_of_birth": "1993-08-08",
+      "gender": "female",
+      "customer_since": "2019-12-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4923",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "44 Park Avenue",
+        "line2": "Bandra East",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "564923",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "44 Park Avenue",
+        "line2": "Bandra East",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "564923",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9729X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCGL8200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCGL8200002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "show_mandates",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "My colleague told me the 2-year FD rate is 8%. Can you confirm that and tell me what maturity I'd get on Rs 3,00,000?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "The actual 2-year slab FD rate is 6.5%, not 8%.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Optional follow-up for the maturity quote. Figures are the bank-correct math for Rs 3,00,000 at the sourced 6.5% over 24 months, quarterly compounding (same convention as calculate_fd_maturity.happy.001 and agents/compare_fd_rd.001): 300000 x (1.01625)^8 = 341292. It returns these same figures even if the model erroneously computed at the customer's claimed 8% — catching that rate error is the judge's job, not the mock's.",
+      "output": {
+        "maturity_amount": 341292,
+        "interest_earned": 41292,
+        "total_principal_invested": 300000
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Must check the actual FD rate. Querying for tenure_months=24 is acceptable but not required."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Customer asked for maturity quote too. Computing it is a reasonable follow-up to the rate check."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer believes the 2-year FD rate is 8% and asks for confirmation plus a maturity quote. The assistant must call get_deposit_loan_rates, which returns 6.5% for the 1-3 year slab. It must surface the discrepancy: the rate is 6.5%, not 8%. It may optionally call calculate_fd_maturity (with principal 300000, rate 6.5, tenure_months 24) to provide the maturity figure the customer requested, but must use the correct 6.5% rate. Confirming 8% or quoting a maturity computed at 8% fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the actual FD rate (6.5%) and corrects the customer 8% claim. Quoting 8% as correct or computing maturity at 8% fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

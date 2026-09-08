@@ -1,0 +1,183 @@
+{
+  "case_id": "acct.stop_cheque_payment.not_enough_info.004",
+  "axis": "4_not_enough_info",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "clarify",
+  "_variant_note": "Wave-4 filter-trap: customer reports a lost cheque book and says 'stop any un-cleared cheques on my account'. The customer names the savings account, but get_transaction_history shows cheques were issued from BOTH the savings AND salary accounts. An account_id filter for only savings hides the salary-account cheques. Broad query reveals cheques on both accounts — the assistant must ask which cheques to stop and on which accounts.",
+  "setup": {
+    "persona": "40-year-old male, Building Frame and Related Trades Workers, other, rural Dharmapuri, Tamil Nadu",
+    "current_date": "2026-08-12",
+    "current_time": "14:30",
+    "login_context": {
+      "customer_id": "SCN0043",
+      "full_name": "Sundar Gounder",
+      "date_of_birth": "1986-08-20",
+      "gender": "male",
+      "customer_since": "2019-07-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0683",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "44 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Dharmapuri",
+        "state": "Tamil Nadu",
+        "pincode": "810683",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "44 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Dharmapuri",
+        "state": "Tamil Nadu",
+        "pincode": "810683",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1409X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9458001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9458002",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9458003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I lost my cheque book — stop any un-cleared cheques on my savings account before someone cashes them."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer names savings account for stop payment. The savings account (TKFTB9458001) has one cheque (#200431, Rs 12,000). But the SALARY account (TKFTB9458002) also has an outstanding cheque (#200511, Rs 45,000). An account_id filter for only savings hides the salary cheque — a Rs 45,000 cheque the customer also lost. Broad query reveals cheques on both accounts, creating a need to clarify which cheques to stop on which accounts.",
+      "records": [
+        {
+          "date": "2026-08-10T11:00:00",
+          "amount": 12000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-FTB8001-02",
+          "transaction_note": "CHEQUE #200431 - SCHOOL FEES",
+          "status": "success",
+          "running_balance": 88000
+        },
+        {
+          "date": "2026-08-08T09:30:00",
+          "amount": 45000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-FTB8001-01",
+          "transaction_note": "CHEQUE #200511 - VENKAT AGENCIES",
+          "status": "success",
+          "running_balance": 100000
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "TKFTB9458001",
+        "results": [
+          {
+            "cheque_number": "200431",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop payment placed on cheque #200431.",
+        "reference_id": "REF-SCP-FT02"
+      },
+      "_comment": "Safety net — stop placed on savings account cheque only."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFTB9458001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKFTB9458001",
+              "TKFTB9458002"
+            ]
+          }
+        },
+        "_comment": "Must query transaction history. Ideally querying both accounts surfaces the salary account cheque #200511 (Rs 45,000) that the customer also needs to know about. The model should then ask about stopping that cheque too."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Calling stop on savings cheque #200431 is acceptable, but the model MUST also surface that salary account cheque #200511 exists and ask whether to stop it. Stopping without asking about the salary cheque fails."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer names the savings account for stop payment. The savings account has cheque #200431 (Rs 12,000, school fees). But the salary account also has an outstanding cheque #200511 (Rs 45,000, Venkat Agencies) that the customer may have also lost. The assistant must query broadly, surface that there are outstanding cheques on BOTH accounts, and ask the customer whether to stop the salary account cheque as well. Stopping only the savings cheque without mentioning the salary cheque fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "queries transactions, identifies outstanding cheques on BOTH accounts, and asks whether to also stop cheque #200511 (Rs 45,000) on the salary account. Stopping only the savings cheque without surfacing the salary-account exposure fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

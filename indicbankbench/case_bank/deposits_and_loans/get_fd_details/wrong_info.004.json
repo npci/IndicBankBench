@@ -1,0 +1,239 @@
+{
+  "case_id": "depl.get_fd_details.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-6 filter-trap: customer says 'show me details on my active FDs — I'm reviewing my investments'. Two FDs: one active (Rs 2,00,000 at 6.5%, maturing Dec 2027) and one matured (Rs 1,00,000 at 6.75%, matured Aug 15, 2026 — 9 days ago). The matured FD has Rs 1,22,266 sitting idle with maturity_instruction: no_renewal. A status=active filter hides the matured FD whose funds are uninvested. Broad query reveals both, and the assistant can advise the customer to reinvest the matured proceeds.",
+  "setup": {
+    "persona": "34-year-old female, No Occupation / Retired / Homemaker, urban Jaipur, Rajasthan",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0210",
+      "full_name": "Rasala Kaur",
+      "date_of_birth": "1992-04-16",
+      "gender": "female",
+      "customer_since": "2015-04-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7079",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "717079",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "717079",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6963X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFFD9608001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDDF9608002",
+          "type": "fd",
+          "label": "Growth FD"
+        },
+        {
+          "product_id": "TKFDDF9608003",
+          "type": "fd",
+          "label": "Smart FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCDF9608004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm reviewing my investments — show me details on my active FDs."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer says 'active' FDs. Growth FD (TKFDDF9608002, Rs 2,00,000, 6.5%, 36mo, started Jan 2026, maturing Dec 2028, active) is the only active one. Smart FD (TKFDDF9608003, Rs 1,00,000, 6.75%, 36mo, started Aug 2023, matured Aug 15 2026) is MATURED — Rs 1,22,266 sitting idle since maturity 9 days ago. A status=active filter hides the matured FD. Broad query reveals the uninvested matured proceeds. Maturity: 100000*(1+6.75/400)^12 = 122266.",
+      "records": [
+        {
+          "deposit_id": "TKFDDF9608002",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 36,
+          "start_date": "2026-01-10",
+          "maturity_date": "2029-01-10",
+          "maturity_amount": 243678,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFFD9608001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDF9608003",
+          "principal_amount": 100000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2023-08-15",
+          "maturity_date": "2026-08-15",
+          "maturity_amount": 122266,
+          "payout_type": "cumulative",
+          "status": "matured",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFFD9608001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDDF9608002",
+            "TKFDDF9608003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDDF9608002",
+                "TKFDDF9608003"
+              ],
+              [
+                "TKFDDF9608003",
+                "TKFDDF9608002"
+              ]
+            ]
+          }
+        },
+        "_comment": "FILTER TRAP: customer says 'active' FDs. Broad query across both FDs reveals the matured Smart FD with Rs 1,22,266 idle. Filtering to only the active one hides the uninvested proceeds."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer asks about 'active' FDs. The Growth FD (Rs 2,00,000, 6.5%, maturing Jan 2029) is active. But the Smart FD (Rs 1,00,000, 6.75%) matured on Aug 15, 2026 — Rs 1,22,266 sitting idle for 9 days. The assistant must query both FDs, report the active Growth FD, AND flag the matured Smart FD with uninvested proceeds that need attention. Reporting only the active FD without surfacing the matured FD's idle funds fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the active Growth FD and surfaces the matured Smart FD (Rs 1,22,266 matured Aug 15, 2026) with its uninvested proceeds. Reporting only the active FD without flagging the matured one fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

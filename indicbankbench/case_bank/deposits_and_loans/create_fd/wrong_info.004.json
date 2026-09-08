@@ -1,0 +1,224 @@
+{
+  "case_id": "depl.create_fd.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-6 filter-trap: customer says 'book an FD with Rs 1,00,000 for 1 year'. get_deposit_loan_rates filtered to tenure_months=12 returns the 1-3yr slab at 6.5%. But the customer qualifies for the 3-5yr slab at 6.75% which would give significantly higher returns — by fixing on exactly 12 months they miss the 36-month rate bump. A product_type=fd filter with a 12-month mental cap hides the 6.75% rate. Broad rate query or cross-slab comparison surfaces the better option.",
+  "setup": {
+    "persona": "18-year-old male, No Occupation / Retired / Homemaker, urban Kheri, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0714",
+      "full_name": "Gulam Ahmed",
+      "date_of_birth": "2008-09-14",
+      "gender": "male",
+      "customer_since": "2026-05-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0084",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Kheri",
+        "state": "Uttar Pradesh",
+        "pincode": "780084",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Kheri",
+        "state": "Uttar Pradesh",
+        "pincode": "780084",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3964X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFCR9603001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCR9603002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I have Rs 1,00,000 to invest — book a 1-year FD for me at whatever the going rate is."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer fixes on 12 months. FD rates: 1-3yr at 6.5%, 3-5yr at 6.75%. A 1-year mental filter stops at 6.5%. But 6.75% at 36 months earns substantially more. FD at 12mo/6.5%: 100000*(1+6.5/400)^4 = 106664. FD at 36mo/6.75%: 100000*(1+6.75/400)^12 = 122266.",
+      "records": [
+        {
+          "slab": "1 year to less than 3 years",
+          "rate": 6.5
+        },
+        {
+          "slab": "3 years to less than 5 years",
+          "rate": 6.75
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 106664,
+        "interest_earned": 6664,
+        "total_principal_invested": 100000
+      },
+      "_comment": "FD at 12mo/6.5%: 100000*(1+6.5/400)^4 = 106664."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDR9603003",
+        "principal_amount": 100000,
+        "status": "success",
+        "message": "FD booked for 12 months at 6.5%.",
+        "interest_rate": 6.5,
+        "maturity_date": "2027-08-24",
+        "maturity_amount": 106664,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-96031"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd"
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 100000,
+          "rate": 6.5,
+          "tenure_months": 12
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Query FD rates. Filter trap: 12-month fixation at 6.5% vs the 3-5yr slab at 6.75%. Model should mention the higher rate for longer tenure."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 100000,
+          "rate": 6.5,
+          "tenure_months": 12
+        },
+        "_comment": "Compute 12-month FD at 6.5%: ~Rs 1,06,664."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — booking needs confirmation."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants 12-month FD at Rs 1,00,000. At 6.5%, maturity is ~Rs 1,06,664. But the 3-5 year slab offers 6.75% — if the customer can lock the money longer, they would earn Rs 1,22,266. The assistant must compute the 12-month maturity AND proactively mention the longer-tenure option at 6.75%. Reporting only the 12-month FD without the longer-tenure comparison fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes 12-month FD maturity (~Rs 1,06,664) AND proactively mentions the 3-5yr slab at 6.75% as a higher-yield option. Reporting only the 12-month outcome without the longer-tenure comparison fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

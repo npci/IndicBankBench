@@ -1,0 +1,245 @@
+{
+  "case_id": "depl.get_rd_details.long_context.001",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_rd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Prior conversation from 6 months ago showed 12 installments paid. 6 months later it's 18. Model must use fresh data.",
+  "setup": {
+    "persona": "36-year-old male, Driver, Railway Engine (Electrical), rural Medak, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0783",
+      "full_name": "Gugulothu Billa",
+      "date_of_birth": "1990-09-23",
+      "gender": "male",
+      "customer_since": "2020-12-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8144",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Medak",
+        "state": "Telangana",
+        "pincode": "678144",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Medak",
+        "state": "Telangana",
+        "pincode": "678144",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8507X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDRD9900011",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDD9900012",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCRD9900013",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_rd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKRDD9900012"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"deposits\":[{\"deposit_id\":\"TKRDD9900012\",\"monthly_installment\":5000,\"installments_paid\":12,\"total_deposited\":60000,\"interest_rate\":6.75,\"tenure_months\":24,\"start_date\":\"2025-02-01\",\"next_debit_date\":\"2026-03-01\",\"maturity_date\":\"2027-02-01\",\"maturity_amount\":128762,\"status\":\"active\",\"maturity_instruction\":\"no_renewal\",\"payout_account\":\"TKDRD9900011\",\"nominee\":{\"name\":\"Vivek Gupta\",\"relationship\":\"Spouse\"}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "You've paid 12 of 24 installments so far — Rs 60,000 deposited, exactly halfway."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Let me check my RD again — how many installments have I paid now and what's my progress?"
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Now 18 paid, not 12 as in prior.",
+      "records": [
+        {
+          "deposit_id": "TKRDD9900012",
+          "monthly_installment": 5000,
+          "installments_paid": 18,
+          "total_deposited": 90000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2025-02-01",
+          "next_debit_date": "2026-09-01",
+          "maturity_date": "2027-02-01",
+          "maturity_amount": 128762,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDRD9900011",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDD9900012"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKRDD9900012"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Prior conversation from 6 months ago said 12/24 installments (Rs 60,000). Now it's 18/24 (Rs 90,000). The assistant must call get_rd_details and report the CURRENT figures — NOT the stale 12/24 from prior context. Repeating the old count fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports current 18/24 installments (Rs 90,000) from fresh call, NOT stale 12/24. Repeating stale data fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

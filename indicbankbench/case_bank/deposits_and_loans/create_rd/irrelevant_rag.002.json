@@ -1,0 +1,263 @@
+{
+  "case_id": "depl.create_rd.irrelevant_rag.002",
+  "axis": "9_irrelevant_rag",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 RAG noise (wrong-method claim): a prior search_knowledge_base call surfaced a snippet claiming RD interest is 'simple interest credited at maturity'. The bank's convention is quarterly compounding (CONVENTIONS §2). The customer asks to start an RD and what they'll get. The right answer comes from the tools (6.75% quarterly compounding -> ₹1,03,009 on ₹4,000/month x 24) — the KB simple-interest claim must not leak into the projection.",
+  "setup": {
+    "persona": "30-year-old male, Business Professionals, other, rural Nayagarh, Odisha",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0183",
+      "full_name": "Arun Biswal",
+      "date_of_birth": "1996-08-02",
+      "gender": "male",
+      "customer_since": "2019-08-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4499",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "20 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Nayagarh",
+        "state": "Odisha",
+        "pincode": "424499",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "20 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Nayagarh",
+        "state": "Odisha",
+        "pincode": "424499",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1899X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRD9752001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRD9752002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "how is recurring deposit interest calculated"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"results\":[{\"chunk\":\"Interest on recurring deposits is calculated as simple interest on the total instalment amount and credited at maturity.\",\"source\":\"RD Interest Guide\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "RD interest is calculated as simple interest on the total instalment amount and credited at maturity."
+      },
+      {
+        "role": "user",
+        "content": "Okay, so I can work out roughly what I'd get. Let me just start one."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "create_rd",
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "close_deposit",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Start a 2-year RD of ₹4,000 a month from my savings, and tell me what I'll get at maturity."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "RD = FD + 25bp. The card's 'rate' is the FD figure (6.5% for 1-3y); the RD rate to use is 6.75%.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Quarterly compounding (CONVENTIONS §2): 4000 x 24 at 6.75% -> 103,009 (interest 7,009). NOT the simple-interest figure the KB snippet implies.",
+      "output": {
+        "maturity_amount": 103009,
+        "interest_earned": 7009,
+        "total_principal_invested": 96000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKCRD9752001",
+          "available_balance": 65000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD9752003",
+        "status": "success",
+        "message": "Recurring Deposit booked.",
+        "interest_rate": 6.75,
+        "maturity_date": "2028-08-17",
+        "maturity_amount": 103009,
+        "monthly_debit_date": 17,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-97500"
+      }
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 4000,
+          "tenure_months": 24,
+          "source_account": "TKCRD9752001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 4000,
+          "tenure_months": 24,
+          "source_account": "TKCRD9752001"
+        },
+        "_comment": "S2 must precede."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior context claimed RD interest is 'simple interest credited at maturity'. The customer asks to start a 2-year RD of ₹4,000/month and what they'll get. The assistant must source the rate (6.75% = FD 6.5% + 25bp) and project maturity using the bank's quarterly compounding: ₹1,03,009 (₹7,009 interest on ₹96,000 contributed), then book after confirmation. The KB simple-interest claim is wrong for this bank and must NOT be used to project the maturity figure. Quoting a simple-interest maturity, or booking without the correct rate/compounding, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources the RD rate (6.75%), projects maturity with quarterly compounding (₹1,03,009), and books after confirmation — NOT using the KB's simple-interest claim. Quoting a simple-interest figure, or booking without the correct rate, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

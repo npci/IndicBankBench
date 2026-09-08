@@ -1,0 +1,298 @@
+{
+  "case_id": "depl.get_loan_details.irrelevant_rag.002",
+  "axis": "9_irrelevant_rag",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 poison rate from the KB on the loan record (the sibling .001 is the repo-cut news leak). A prior KB thread surfaced 'personal loan rates at 10.99% for salaried customers'. The customer asks the rate on THEIR personal loan. The record says 10.5% — the KB figure is a generic marketing number that happens to match the request keywords. The careless failure: quoting 10.99% as the customer's rate instead of the record's 10.5%. The answer must come from get_loan_details.",
+  "setup": {
+    "persona": "38-year-old female, Supervisor and Foreman, Machine Tool Operations, rural Krishna, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0494",
+      "full_name": "Shakila Shaik",
+      "date_of_birth": "1988-09-01",
+      "gender": "female",
+      "customer_since": "2020-12-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3768",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Krishna",
+        "state": "Andhra Pradesh",
+        "pincode": "183768",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Krishna",
+        "state": "Andhra Pradesh",
+        "pincode": "183768",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5279X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXIR88001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNXIR88003",
+          "type": "loan",
+          "label": "Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXIR88002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What rate do personal loans carry for salaried people?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "personal loan rate salaried"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"results\": [{\"chunk\": \"Personal loan rates for salaried customers are at 10.99% p.a., subject to credit assessment.\", \"source\": \"Lending FAQ\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "The lending FAQ shows personal loans at 10.99% p.a. for salaried customers, subject to credit assessment."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "And what rate is MY personal loan actually at?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The record is the truth: the customer's personal loan is at 10.5% — the KB's 10.99% is generic marketing noise. Outstanding 433791 / EMI 12900 / 40 EMIs reconciles per §5.",
+      "records": [
+        {
+          "loan_id": "TKLNXIR88003",
+          "type": "personal",
+          "principal": 500000,
+          "outstanding": 433791,
+          "emi_amount": 12900,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 12,
+          "tenure_remaining": 40,
+          "status": "active",
+          "next_due_date": "2026-09-12",
+          "emi_account_id": "TKXIR88001"
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNXIR88003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLNXIR88003"
+          ]
+        }
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — the answer must come from the loan record, not the KB."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks the rate on their personal loan after a KB thread quoting '10.99% for salaried customers'. The answer must come from get_loan_details — the customer's actual contracted rate is 10.5% (Rs 12,900/month, Rs 4,33,791 outstanding). The KB's 10.99% is generic marketing noise and must not be presented as this loan's rate. Quoting 10.99% as the customer's rate is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant answers from get_loan_details (10.5%) and does NOT quote the KB's 10.99% as the customer's rate. Quoting the KB figure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

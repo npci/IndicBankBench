@@ -1,0 +1,253 @@
+{
+  "case_id": "csc.agentic.statement_wrong_date_range.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_transaction_history+request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'send duplicate statement from 2026-01-01 to 2026-06-30.' Model calls get_transaction_history for the date range, but the account was opened 2026-03-01 — no transactions exist before March 2026. The earliest available date is 2026-03-01. Model must correct the customer in prose AND propagate the corrected from_date (2026-03-01) into request_duplicate_statement. arg_gate pins from_date=2026-03-01.",
+  "setup": {
+    "persona": "20-year-old male, Supervisors and Foremen and Related Trades Workers in Painting, Building Structure, rural Baran, Rajasthan",
+    "current_date": "2026-08-21",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0495",
+      "full_name": "Tiku Singh",
+      "date_of_birth": "2006-04-07",
+      "gender": "male",
+      "customer_since": "2024-03-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6635",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Baran",
+        "state": "Rajasthan",
+        "pincode": "986635",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Baran",
+        "state": "Rajasthan",
+        "pincode": "986635",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7614X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSC9400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSC9400002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "request_duplicate_statement",
+    "get_account_details",
+    "get_account_balance",
+    "get_request_status",
+    "get_products_and_offers",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "Email me a duplicate account statement for the period January to June 2026 — I need it for my tax filing."
+    },
+    {
+      "content": "Ok, send it for March to June then."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Account opened 2026-03-01. No records before March 2026. The earliest transaction is from 2026-03-05. Customer asked Jan-Jun 2026 but Jan+Feb are outside the coverage window. Correction: from_date should be 2026-03-01.",
+      "records": [
+        {
+          "date": "2026-06-15T10:30:00",
+          "amount": 12000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-940034",
+          "transaction_note": "Electronics Mart purchase",
+          "status": "success",
+          "running_balance": 48000
+        },
+        {
+          "date": "2026-05-01T09:00:00",
+          "amount": 40000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-940021",
+          "transaction_note": "Salary credit",
+          "status": "success",
+          "running_balance": 60000
+        },
+        {
+          "date": "2026-03-05T14:00:00",
+          "amount": 20000,
+          "type": "credit",
+          "channel": "internal",
+          "reference_id": "TXN-940010",
+          "transaction_note": "Initial deposit",
+          "status": "success",
+          "running_balance": 20000
+        }
+      ],
+      "static_output": {
+        "total_count": 3
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-DS-94001",
+        "status": "success",
+        "message": "Duplicate statement request logged for TKCSC9400001 (2026-03-01 to 2026-06-30). Will be emailed to your registered email."
+      }
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Account opened 2026-03-01 — this provides the earliest date context.",
+      "records": [
+        {
+          "account_id": "TKCSC9400001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Tiku Singh",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2026-03-01"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCSC9400001"
+        }
+      },
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKCSC9400001",
+          "from_date": "2026-03-01",
+          "to_date": "2026-06-30"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "request_duplicate_statement"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKCSC9400001"
+        },
+        "_comment": "Must fetch transaction history — reveals the earliest transaction is from March 2026, not January."
+      },
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKCSC9400001",
+          "from_date": "2026-03-01",
+          "to_date": "2026-06-30"
+        },
+        "_comment": "CORRECTED from_date=2026-03-01. Customer said January 2026 but the account was opened March 2026 — no data before then. from_date pinned to the earliest available date. to_date=2026-06-30 stays as requested."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional (open_date context helpful but not required)."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'statement from January to June 2026.' get_transaction_history shows the earliest transaction is from March 2026 (the account was opened March 1). January and February 2026 have no data. The assistant must correct: 'Your account was opened in March 2026, so there are no records before then. I'll send the statement for March to June 2026 instead.' After confirmation, calls request_duplicate_statement with from_date=2026-03-01. A weak model may acknowledge the date issue in prose but still pass the original from_date. arg_gate pins from_date=2026-03-01; passing 2026-01-01 fails A3 via required exact-match."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches transaction history, identifies the account was opened March 2026 so January to February has no data, communicates the date-range correction to the customer, and after confirmation calls request_duplicate_statement with from_date=2026-03-01 and to_date=2026-06-30. FAIL if from_date is passed as 2026-01-01."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

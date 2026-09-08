@@ -1,0 +1,219 @@
+{
+  "case_id": "csc.agentic.dispute_unauthorized.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Agentic dispute chain: the customer reports an unauthorized debit but does NOT have the details ('around ₹8,000 last week, I didn't make it'), so the assistant must LOCATE the specific transaction via get_transaction_history, then raise an unauthorized_debit dispute referencing it. The related_transaction_id field is described (sent) as 'reference_id of the disputed transaction from get_transaction_history', so identifying and referencing the actual debit is the grounded, correct behaviour — a vague dispute with no reference is weaker. Exercises A4 (find the transaction before raising the dispute), correct categorisation (unauthorized_debit, treated as urgent), and the don't-promise bar (the dispute is logged for investigation, the money is not guaranteed back). Fabricating a transaction, or promising a refund, fails.",
+  "setup": {
+    "persona": "30-year-old male, Police Constable, rural Arwal, Bihar",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0335",
+      "full_name": "Suraj Singh",
+      "date_of_birth": "1996-08-05",
+      "gender": "male",
+      "customer_since": "2019-01-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8711",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "32 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Arwal",
+        "state": "Bihar",
+        "pincode": "698711",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "32 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Arwal",
+        "state": "Bihar",
+        "pincode": "698711",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1299X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGJP8393001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGJP8393002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "There's a debit on my account from last week I definitely did not make — around ₹8,000 to some online merchant. I don't have the exact details. Please dispute it for me."
+    },
+    {
+      "content": "Yes, please raise the dispute."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-03-09T02:14:00",
+          "amount": 7999,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-556677",
+          "transaction_note": "ONLINE PURCHASE - QUICKMART.IO",
+          "status": "success",
+          "running_balance": 79240
+        },
+        {
+          "date": "2026-03-08T19:42:00",
+          "amount": 1500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-556012",
+          "transaction_note": "Groceries",
+          "status": "success",
+          "running_balance": 87239
+        },
+        {
+          "date": "2026-03-07T06:30:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-555901",
+          "transaction_note": "Salary",
+          "status": "success",
+          "running_balance": 88739
+        }
+      ],
+      "_comment": "Migrated to the CONVENTIONS.md §13 record shape: `description` renamed to `transaction_note`, the invented `account_id` dropped, `status` and `running_balance` added. Off-enum channels normalised — `online` -> `pos` (a card rail; the enum has no card-not-present value), `upi_autopay` -> `upi`, and `system` -> `internal`, the value added to the enum for bank-levied charges, which have no payment rail. Balances chain newest-first from the anchor."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-UD-99010",
+        "category": "unauthorized_debit",
+        "status": "open",
+        "message": "Unauthorized debit dispute logged (REQ-UD-99010) for TXN-556677 (₹7,999) and flagged urgent for investigation."
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — get_products_and_offers stays A2-forbidden here (the conflict was resolved by keeping it forbidden). The mock does NOT permit the call: it is absent from gold.tool_calls and arg_gate, so A2 still fails it. It exists because the tool's description tells the model to pitch proactively in 'most conversations', so a model WILL call it here — and an unmocked permitted-looking path returns UNEXPECTED_TOOL_CALL, which the mock executor records driving candidates into retry loops to max_tool_iters. A looped case writes no score.json and vanishes from the denominator instead of failing visibly. With the mock the model fails cleanly on A2. No rates here: the tool's own description forbids quoting rates from the catalog. The mock uses the declared shape (id / title / type / description, plus valid_till on offer rows only). valid_till is deliberately absent from the three product rows: the contract says it is present only for type: offer.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        },
+        {
+          "id": "PRD-PL-2002",
+          "title": "TK Personal Loan",
+          "type": "loan",
+          "description": "Unsecured personal loan, tenure up to 60 months."
+        },
+        {
+          "id": "PRD-CC-2003",
+          "title": "TK Rewards Credit Card",
+          "type": "card",
+          "description": "Rewards on everyday spends; annual fee waiver on qualifying usage."
+        },
+        {
+          "id": "OFF-PL-3021",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to ₹10,00,000, minimal documentation. Indicative only.",
+          "valid_till": "2026-06-30"
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKGJP8393001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-556677",
+          "description": "Customer disputes an unauthorized ₹7,999 online debit (TXN-556677, QUICKMART.IO, 2026-03-09) they did not make.",
+          "account_id": "TKGJP8393001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKGJP8393001"
+        },
+        "_comment": "Must locate the disputed transaction first — the customer doesn't have the details, so the assistant has to find the ~₹8,000 online debit (TXN-556677, ₹7,999)."
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-556677"
+        },
+        "_comment": "category MUST be unauthorized_debit (treated as urgent). related_transaction_id is now pinned as required. The contract makes it conditionally mandatory for unauthorized_debit, and says so twice in the model-facing description — in the call_before chain and again in the notes — so gating on it is fair under the disclosure doctrine. S3 cannot enforce it because the field is schema-optional, which is exactly why the check has to live here: without the pin a dispute raised with no transaction reference passed A1-A4 and S3, leaving only the judge to catch it. The value is knowable, unlike the deposits minor-nominee precedent: get_transaction_history returns exactly one ~Rs 8,000 online debit and TXN-556677 is its reference_id. Confirmation precedes the write (S2)."
+      }
+    },
+    "expected_resolution": "The customer reports an unauthorized ~₹8,000 debit from last week without the details. The assistant must first locate it via get_transaction_history — the ₹7,999 online debit to QUICKMART.IO on 2026-03-09 (TXN-556677) is the clear match (the other debit is a ₹1,500 grocery POS, and there's a salary credit) — then, after confirming, raise an unauthorized_debit dispute referencing that transaction (TXN-556677), which is flagged urgent. It should report the dispute logged (REQ-UD-99010) for investigation, WITHOUT promising the ₹7,999 will be refunded. Failing to locate the transaction (raising a vague dispute), disputing the wrong debit (the ₹1,500 grocery), fabricating a transaction, mis-categorising it, promising a refund, or raising before confirmation are the failures this case targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant locates the unauthorized ₹7,999 online debit (TXN-556677) via get_transaction_history, then raises an unauthorized_debit dispute referencing that transaction after confirming — reporting it as logged/urgent for investigation, WITHOUT promising a refund. Not locating the transaction, disputing the wrong (₹1,500) debit, fabricating one, mis-categorising, promising the money back, or raising before confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

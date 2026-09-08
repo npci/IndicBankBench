@@ -1,0 +1,206 @@
+{
+  "case_id": "csc.get_insurance_details.long_context.001",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "Prior showed premium Rs 45,000. Policy was renewed at new premium Rs 42,000. Model must use fresh data.",
+  "setup": {
+    "persona": "22-year-old male, No Occupation / Retired / Homemaker, rural Mahbubnagar, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0276",
+      "full_name": "Veerayya Patnam",
+      "date_of_birth": "2004-03-25",
+      "gender": "male",
+      "customer_since": "2022-09-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1954",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "75 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Mahbubnagar",
+        "state": "Telangana",
+        "pincode": "201954",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "75 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Mahbubnagar",
+        "state": "Telangana",
+        "pincode": "201954",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7919X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCIN9900011",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKPLCIN9900012",
+          "type": "policy",
+          "label": "TK Life Insurance"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCIN9900013",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_insurance_details",
+              "arguments": {
+                "policy_ids": [
+                  "TKPLCIN9900012"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"policies\":[{\"policy_id\":\"TKPLCIN9900012\",\"policy_type\":\"life\",\"insurer\":\"LIC\",\"sum_assured\":2500000,\"premium\":45000,\"premium_frequency\":\"yearly\",\"premium_due_date\":\"2025-11-10\",\"status\":\"active\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your LIC life insurance premium is Rs 45,000 yearly, due November 2025."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "I just renewed my life insurance. Can you confirm the updated premium and next due date?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Renewed at Rs 42,000, not Rs 45,000. Due 2026-11-10.",
+      "records": [
+        {
+          "policy_id": "TKPLCIN9900012",
+          "policy_type": "life",
+          "insurer": "LIC",
+          "sum_assured": 2500000,
+          "premium": 42000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-11-10",
+          "status": "active"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T10:00:00",
+          "amount": 100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-NOISE",
+          "transaction_note": "Noise entry",
+          "status": "success",
+          "running_balance": 100
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "TKPLCIN9900012"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {
+          "policy_ids": [
+            "TKPLCIN9900012"
+          ]
+        }
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior conversation said Rs 45,000 premium. Policy was renewed at Rs 42,000. The assistant must call get_insurance_details and report Rs 42,000 — NOT the stale Rs 45,000 from prior context. Repeating the old premium fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports current premium (Rs 42,000, due 2026-11-10) from fresh call, NOT stale Rs 45,000. Repeating stale data fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

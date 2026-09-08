@@ -1,0 +1,230 @@
+{
+  "case_id": "cards.set_card_controls.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'set online daily limit to Rs 2,50,000'. Lookup (get_card_details) reveals card credit_limit is only Rs 2,00,000. Bank rule says daily_limit must be below credit_limit. Correction: set to Rs 1,50,000. arg_gate pins corrected limit.",
+  "setup": {
+    "persona": "18-year-old female, Loader and Unloader, rural Koraput, Odisha",
+    "current_date": "2026-10-12",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0025",
+      "full_name": "Jhuna Muni",
+      "date_of_birth": "2008-12-22",
+      "gender": "female",
+      "customer_since": "2026-10-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5319",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Koraput",
+        "state": "Odisha",
+        "pincode": "155319",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Koraput",
+        "state": "Odisha",
+        "pincode": "155319",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7029X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98001T1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9801T02",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "set_card_controls",
+    "toggle_card_freeze",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to set my credit card online daily limit to Rs 2,50,000 — I'm buying a laptop and some accessories."
+    },
+    {
+      "content": "Ok, set it to Rs 1,50,000 then."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRITE-AFTER-CORRECTION: credit_limit is Rs 2,00,000. daily_limit must be below this. Customer asked for Rs 2,50,000 — too high. Corrected: Rs 1,50,000.",
+      "records": [
+        {
+          "card_id": "TKCWAC9801T02",
+          "masked_number": "****8901",
+          "card_type": "credit",
+          "network": "mastercard",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 175000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "12/27"
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "_comment": "Set corrected online limit to Rs 1,50,000.",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-WAC9801"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "NOISE",
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCWAC9801T02"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCWAC9801T02",
+          "online": {
+            "domestic": {
+              "daily_limit": 150000
+            }
+          }
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCWAC9801T02"
+          ]
+        },
+        "_comment": "Must check credit_limit before setting daily_limit."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCWAC9801T02",
+          "online": {
+            "domestic": {
+              "daily_limit": 150000
+            }
+          }
+        },
+        "_comment": "CORRECTED: limit capped at Rs 1,50,000 because credit_limit is Rs 2,00,000. Rs 2,50,000 exceeds credit_limit."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_card_details",
+        "set_card_controls"
+      ]
+    ],
+    "expected_resolution": "Customer wants Rs 2,50,000 daily limit but credit card's credit_limit is only Rs 2,00,000 — daily_limit must be below credit_limit. The assistant must check get_card_details first, discover the credit limit constraint, inform the customer the requested limit exceeds the credit limit, and suggest a lower limit (Rs 1,50,000). Setting Rs 2,50,000 without checking fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks credit limit, corrects daily limit to below credit_limit, confirms with customer, sets Rs 1,50,000. Setting Rs 2,50,000 without checking fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

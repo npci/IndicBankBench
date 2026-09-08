@@ -1,0 +1,171 @@
+{
+  "case_id": "calc.calculate_rd_maturity.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'calculate RD maturity for Rs 5,000/month for 3 years at 6.75%'. The actual 3-year RD rate is 7.0% (not 6.75% — that's FD). A model that uses the customer's stated rate without verifying against get_deposit_loan_rates computes wrong maturity. A product_type=fd filter on the rate tool would return only FD rates (6.75%), reinforcing the error. Broad query (product_type=rd) gets the correct 7.0% rate.",
+  "setup": {
+    "persona": "33-year-old female, Cardboard Box Maker, rural Barwani, Madhya Pradesh",
+    "current_date": "2026-08-01",
+    "current_time": "10:30",
+    "login_context": {
+      "customer_id": "SCN0127",
+      "full_name": "Kamli Yadav",
+      "date_of_birth": "1993-12-09",
+      "gender": "female",
+      "customer_since": "2023-03-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3051",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "12 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Barwani",
+        "state": "Madhya Pradesh",
+        "pincode": "243051",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "12 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Barwani",
+        "state": "Madhya Pradesh",
+        "pincode": "243051",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7154X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9469001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9469002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm starting an RD of Rs 5,000 per month for 3 years — the rate should be 6.75%, right? Calculate my maturity."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer says 6.75% for RD. But the actual 3-year RD rate is 7.0% (RD is +25bp over FD). get_deposit_loan_rates queried with product_type=fd returns 6.75% for the 3-year slab (FD rate), hiding the real RD rate of 7.0%. A product_type=rd query gets the correct 7.0%. A model that uses the customer-quoted rate without verifying or queries the wrong product_type computes wrong maturity.",
+      "records": [
+        {
+          "slab": "3 years to < 5 years",
+          "rate": 6.75,
+          "senior_citizen_rate": 7.25
+        },
+        {
+          "slab": "3 years to < 5 years",
+          "rate": 7.0,
+          "senior_citizen_rate": 7.5
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 242554,
+        "interest_earned": 62554,
+        "total_principal_invested": 180000
+      },
+      "_comment": "RD at 7.0%: each Rs 5000 installment compounded quarterly. Sum over 36 months = ~Rs 2,42,554. At 6.75% it would be ~Rs 2,39,700 — Rs 2,854 less."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd"
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "Must query RD rate (not FD). The customer says 6.75% which is the FD rate — the actual RD rate is 7.0%. Querying product_type=fd would return 6.75%, reinforcing the wrong rate. The model MUST verify via the correct product_type and correct the customer."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "rate": 7.0,
+          "tenure_months": 36
+        },
+        "_comment": "Must use the correct 7.0% rate from the rate card, NOT the customer-supplied 6.75%. Using 6.75% computes wrong maturity — the customer loses ~Rs 2,854."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "expected_resolution": "The customer says the RD rate is 6.75%. The actual 3-year RD rate is 7.0% (not 6.75% — that's the FD rate). The assistant must call get_deposit_loan_rates with product_type=rd, get the correct 7.0%, correct the customer, and compute maturity at 7.0%: approximately Rs 2,42,554 (total deposits Rs 1,80,000, interest Rs 62,554). Computing at the customer's wrong 6.75% and not verifying the rate fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "verifies the RD rate via get_deposit_loan_rates with product_type=rd, corrects the customer (actual rate is 7.0%, not 6.75%), and computes maturity at 7.0%. Using the customer's wrong rate of 6.75% fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.long_context.002",
+  "axis": "8_long_context",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale rate. Prior round: get_deposit_loan_rates returned 6.5% for the 1-3 year FD slab (effective 2026-03-01). The customer noted the rate but didn't book. Since then the bank revised rates — the live rate for the same slab is now 6.75% (effective 2026-08-01). The customer now says 'book my FD at the current rate' — a request that implicitly relies on the rate being current. A model that trusts the stale prior context and quotes 6.5% without re-fetching fails A1 (get_deposit_loan_rates never called live). A model that re-fetches live gets 6.75% → PASS.",
+  "setup": {
+    "persona": "48-year-old female, Poultry Farm Worker, General, rural Chatra, Jharkhand",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0763",
+      "full_name": "Gauri Kispotra",
+      "date_of_birth": "1978-05-18",
+      "gender": "female",
+      "customer_since": "2016-11-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7424",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Chatra",
+        "state": "Jharkhand",
+        "pincode": "697424",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Chatra",
+        "state": "Jharkhand",
+        "pincode": "697424",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2645X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD52989001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD52989002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's the current fixed deposit rate for 2 years?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "g1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "fd",
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "g1",
+        "content": "{\"rates\":[{\"slab\":\"1 year to < 3 years\",\"rate\":6.5,\"senior_citizen_rate\":7.0}],\"effective_date\":\"2026-03-01\",\"product_type\":\"fd\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The current FD rate for a 2-year term is 6.5% per annum, effective since 1 March 2026. The senior citizen rate is 7.0%."
+      },
+      {
+        "role": "user",
+        "content": "Good to know. I need to free up some funds — I'll get back to this."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "set_card_controls",
+    "request_cheque_book"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm ready now — what's the current 2-year FD rate? I want to book today."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "RATE CHANGE. Since the prior round the bank revised the 1-3 year FD slab from 6.5% to 6.75% (effective 2026-08-01). The live mock returns the NEW rate. A model that trusts the stale prior context and quotes 6.5% without re-fetching reports an outdated rate — and fails A1 (get_deposit_loan_rates never called live).",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-08-01"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "THE GATE. The model MUST re-fetch rates live. The prior round shows 6.5% (effective 2026-03-01) but the bank revised rates to 6.75% (effective 2026-08-01) for the same slab. product_type is pinned to 'fd' — a model that fetches the RD or loan card is answering the wrong question. tenure_months is NOT pinned — it's optional per the tool schema, and a model that omits it gets all slabs and must still identify the correct one."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior round shows the FD rate as 6.5% for the 1-3 year slab, effective 2026-03-01. The customer paused the conversation and now returns to book at the 'current' rate. Since the prior round, the bank revised FD rates — the 1-3 year slab is now 6.75% (effective 2026-08-01), not the 6.5% the prior context carries.\n\nThe correct move is to call get_deposit_loan_rates live and report the updated rate of 6.75%. Quoting the stale 6.5% from the prior round without making a live call is the failure — the assistant is handing the customer an out-of-date rate that does not match what the bank currently offers. A model that skips the re-fetch fails A1 because get_deposit_loan_rates was never called in the live portion of the transcript.\n\nThe model should also note that the senior citizen rate increased to 7.25% under the new card, and that the effective date of the current rate is 2026-08-01."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_deposit_loan_rates live and reports the current 2-year FD rate as 6.75% (not the stale 6.5% from the prior conversation). Quoting the old rate without a live call, or quoting a rate the tool did not return, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

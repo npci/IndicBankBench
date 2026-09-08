@@ -1,0 +1,216 @@
+{
+  "case_id": "depl.get_rd_details.happy.001",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "get_rd_details",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "35-year-old female, Legal Professionals, rural Godda, Jharkhand",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0775",
+      "full_name": "Meena Tudu",
+      "date_of_birth": "1991-10-21",
+      "gender": "female",
+      "customer_since": "2021-11-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6793",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "34 College Road",
+        "line2": "T Nagar",
+        "city": "Godda",
+        "state": "Jharkhand",
+        "pincode": "906793",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "34 College Road",
+        "line2": "T Nagar",
+        "city": "Godda",
+        "state": "Jharkhand",
+        "pincode": "906793",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6686X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDRD9003001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKDRD9003002",
+          "type": "rd",
+          "label": "TK StepUp Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKDRD9003003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "When does my recurring deposit mature, and how much will I get?"
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "A CLEAN RD record — the happy-path mirror of bad_response.001, where total_deposited is null. Here every field is intact and coherent: ₹3,000/month over 36 months at 7.0% (the 3–5 year RD slab, CONVENTIONS §3), started 2025-04-01, 12 of 36 installments paid as of today, maturing 2028-04-01. maturity_amount 120412 is exact quarterly compounding of ₹3,000/month at 7.0% per CONVENTIONS §2 (M = Σ(k=0..35) 3000 × (1 + 7.0/400)^(4×(36-k)/12)); total_deposited 36000 = 3000 × 12. The trap is confusing total_deposited (what has been paid IN so far) with maturity_amount (the projected value at maturity) — the customer asked for the latter.",
+      "records": [
+        {
+          "deposit_id": "TKDRD9003002",
+          "monthly_installment": 3000,
+          "installments_paid": 12,
+          "total_deposited": 36000,
+          "interest_rate": 7.0,
+          "tenure_months": 36,
+          "start_date": "2025-04-01",
+          "next_debit_date": "2026-04-01",
+          "maturity_date": "2028-04-01",
+          "maturity_amount": 120412,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDRD9003001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKDRD9003002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKDRD9003002"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 1 — a straight read. The customer asks when their RD matures and what it will be worth. The assistant should call get_rd_details for the linked deposit and report that it matures on 2028-04-01 with a maturity value of ₹1,20,412, on a ₹3,000/month plan at 7.0% compounded quarterly. The trap is conflating total_deposited (₹36,000 — what has been paid in over 12 installments so far) with maturity_amount (₹1,20,412 — the projected value at maturity). Reporting the ₹36,000 paid-in figure as what the customer will receive at maturity, misstating the date, or inventing figures, are the failures this case targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the RD's maturity date (2028-04-01) and maturity amount (₹1,20,412) as returned. Quoting the ₹36,000 total-deposited figure as the maturity value, misstating the date, or inventing figures, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

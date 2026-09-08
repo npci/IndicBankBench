@@ -1,0 +1,184 @@
+{
+  "case_id": "cards.get_card_details.bad_response.001",
+  "axis": "2_bad_tool_response",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 null-field anomaly: the customer asks for the available limit and the tool returns available_limit = null (credit_limit is intact). The assistant must flag that the available limit isn't currently retrievable rather than inventing one, treating null as zero ('you have ₹0 left' — alarming and wrong), or silently reporting the total credit limit as if it were the remaining balance. S4 independently blocks echoing the raw 'null' token into the reply.",
+  "setup": {
+    "persona": "43-year-old male, Sales Supervisor, Retail Trade, urban Kolkata, West Bengal",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0421",
+      "full_name": "Ati Sahani",
+      "date_of_birth": "1983-05-12",
+      "gender": "male",
+      "customer_since": "2016-12-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2104",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "222104",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "222104",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3102X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TK3DTBS001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKC3DTBS7261",
+          "card_type": "credit",
+          "masked_number": "****7261",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_insurance_details",
+    "get_deposit_closure_quote"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the available limit on my credit card right now?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "available_limit is null — the exact field the customer asked about. credit_limit is intact, which is the trap: reporting ₹2,00,000 as 'available' would be wrong.",
+      "records": [
+        {
+          "card_id": "TKC3DTBS7261",
+          "masked_number": "****7261",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": null,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKC3DTBS7261"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "One card on file — the id is inferable. The axis is about how the null available_limit is handled, not about the call."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks specifically for the available limit, and the tool returns available_limit = null while credit_limit = 200000. The assistant must tell the customer the available limit could not be retrieved right now, and offer a next step (retry / check later / contact the bank). It must NOT invent a figure, must NOT present the ₹2,00,000 total credit limit as the available limit, must NOT treat null as ₹0, and must not echo a raw 'null' into the reply. Mentioning that the total credit limit is ₹2,00,000 while being clear the AVAILABLE figure is unavailable is acceptable and helpful."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant recognises the available limit is missing from the tool output and says so plainly, without inventing a figure, without passing off the ₹2,00,000 credit limit as the available limit, and without treating the missing value as zero. Offering a next step is ideal."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

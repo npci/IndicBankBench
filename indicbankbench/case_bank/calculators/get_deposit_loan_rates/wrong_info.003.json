@@ -1,0 +1,140 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'FD rates for a 2-year deposit'. A product_type=fd query returns only FD slabs. But the RD rates at the same tenure are +25bp higher — 6.75% vs 6.5%. A narrow product_type=fd filter hides the RD option entirely. Broader disclosure (mentioning RD as alternative) reveals the better rate.",
+  "setup": {
+    "persona": "19-year-old male, No Occupation / Retired / Homemaker, rural Kheda, Gujarat",
+    "current_date": "2026-08-01",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0053",
+      "full_name": "Thakorbhai Vasava",
+      "date_of_birth": "2007-02-21",
+      "gender": "male",
+      "customer_since": "2025-08-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0657",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Kheda",
+        "state": "Gujarat",
+        "pincode": "470657",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Kheda",
+        "state": "Gujarat",
+        "pincode": "470657",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6237X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9475001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9475002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to invest Rs 2,00,000 for 2 years — show me the FD rates available."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for FD rates. 2-year FD rate is 6.5%. But RD at 2 years is 6.75% (+25bp). A product_type=fd filter returns only FD slabs and hides the RD rate. Broad disclosure of the RD alternative reveals a better rate.",
+      "records": [
+        {
+          "slab": "1 year to < 3 years",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        },
+        {
+          "slab": "1 year to < 3 years",
+          "rate": 6.75,
+          "senior_citizen_rate": 7.25
+        }
+      ]
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Must query FD rates. The 2-year FD slab is 6.5%. A product_type=fd filter returns only FD and hides the RD option at 6.75%. The model should mention the RD alternative with its +25bp advantage."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for 2-year FD rates. The FD rate for 1-3 years is 6.5%. The assistant should report this AND proactively mention that an RD for the same tenure offers 6.75% (+25bp) — a better rate for systematic monthly savings. Reporting only the FD rate without the RD alternative fails the proactive comparison standard."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the 2-year FD rate (6.5%) from the 1-3 year slab AND proactively surfaces the RD alternative at 6.75% as a higher-yield option for monthly savers. Reporting only FD without RD comparison fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

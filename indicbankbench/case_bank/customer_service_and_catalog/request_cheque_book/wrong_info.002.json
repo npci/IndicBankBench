@@ -1,0 +1,220 @@
+{
+  "case_id": "csc.request_cheque_book.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'order a cheque book for my savings account'. get_account_details filtered to the savings account shows the IFSC and branch. But the CURRENT account (not queried) is also eligible and the customer might need cheques there too. An account_ids filter for only savings hides the current account. Broad query surfaces both — letting the model ask if the customer also needs a cheque book for the current account.",
+  "setup": {
+    "persona": "24-year-old male, Boot Polisher, urban Ahmadabad, Gujarat",
+    "current_date": "2026-08-10",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0508",
+      "full_name": "Kantilal Balghiya",
+      "date_of_birth": "2002-01-17",
+      "gender": "male",
+      "customer_since": "2020-09-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5824",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "25 MG Road",
+        "line2": "Alkapuri",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "125824",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "25 MG Road",
+        "line2": "Alkapuri",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "125824",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5073X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9482001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9482002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9482003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_account_details",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a new cheque book — order one for my savings account, 50 leaves."
+    },
+    {
+      "content": "Ok, go ahead and order it."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer names savings account for cheque book. The savings account (TKFTB9482001) is active — fine. But the CURRENT account (TKFTB9482002) is also active and the customer likely uses cheques there too. An account_ids filter for only savings hides the current account. Broad query reveals both, and the model should ask if the customer also wants a cheque book for the current account.",
+      "records": [
+        {
+          "account_id": "TKFTB9482001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "Alkapuri",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Kantilal Balghiya",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2019-06-15"
+        },
+        {
+          "account_id": "TKFTB9482002",
+          "account_type": "current",
+          "status": "active",
+          "branch_name": "Alkapuri",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Kantilal Balghiya",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-03-10"
+        }
+      ]
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CB-94821",
+        "status": "success",
+        "message": "Cheque book of 50 leaves ordered for TKFTB9482001. Delivery to communication address within 7 working days.",
+        "delivery_address": "25 MG Road, Alkapuri, Ahmadabad, Gujarat, 125824"
+      },
+      "_comment": "Success — cheque book ordered for savings account."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKFTB9482001",
+            "TKFTB9482002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFTB9482001",
+                "TKFTB9482002"
+              ],
+              [
+                "TKFTB9482002",
+                "TKFTB9482001"
+              ],
+              [
+                "TKFTB9482001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying both accounts surfaces the current account — the model should ask if the customer also wants a cheque book for the current account. Querying only savings is acceptable but misses an opportunity to serve."
+      },
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKFTB9482001"
+        },
+        "_comment": "Must order for savings account. The filter trap is on the prerequisite: querying only savings hides the current account which also uses cheques."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for a cheque book for the savings account. The assistant should query account details, confirm the savings account (TKFTB9482001, Alkapuri branch), order the 50-leaf cheque book, and also note that the customer has a current account (TKFTB9482002) — asking whether they need a cheque book for that account as well. Ordering only for savings without mentioning the current account fails the proactive service standard."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "orders cheque book for savings account AND proactively asks whether the current account also needs a cheque book. Ordering only for savings without flagging the current account fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

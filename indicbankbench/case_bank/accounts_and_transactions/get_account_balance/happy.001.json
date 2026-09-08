@@ -1,0 +1,184 @@
+{
+  "case_id": "acct.get_account_balance.happy.001",
+  "axis": "1_happy_path",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Happy path for get_account_balance. The customer asks for their balance without naming an account; with two linked accounts and an ARRAY-valued account_ids input, the natural answer is to show BOTH (not to ask which) — account_ids is always inferable from login_context, so this is an answer, not a clarify. Exercises the array input and the available_balance/hold_amount distinction.",
+  "setup": {
+    "persona": "34-year-old female, Mixed Crop Growers, rural Sabar Kantha, Gujarat",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0333",
+      "full_name": "Narmadaben Patel",
+      "date_of_birth": "1992-08-04",
+      "gender": "female",
+      "customer_since": "2019-11-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0219",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "20 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Sabar Kantha",
+        "state": "Gujarat",
+        "pincode": "260219",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "20 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Sabar Kantha",
+        "state": "Gujarat",
+        "pincode": "260219",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7513X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKYS7398001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKKYS7398002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKYS7398003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "create_fd",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you tell me how much I've got in my accounts?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Executor returns the entries whose account_id is in the call's account_ids (all if the filter resolves to both). TKKYS7398002 has a hold_amount, exercising available vs total.",
+      "records": [
+        {
+          "account_id": "TKKYS7398001",
+          "available_balance": 42350.75,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKKYS7398002",
+          "available_balance": 118420.1,
+          "hold_amount": 5000
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKKYS7398001",
+            "TKKYS7398002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "forbidden_ids": [],
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKKYS7398001",
+                "TKKYS7398002"
+              ],
+              [
+                "TKKYS7398002",
+                "TKKYS7398001"
+              ],
+              [
+                "TKKYS7398001"
+              ],
+              [
+                "TKKYS7398002"
+              ]
+            ]
+          }
+        },
+        "_comment": "The natural answer covers BOTH linked accounts (order-insensitive). A single-account query is a partial answer (advisory, not a hard fail) — but any account_id passed MUST be a real linked account (S1 catches invented ids). No forbidden ids: both accounts are legitimately the customer's."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks how much they have across their accounts, without naming one. The assistant should call get_account_balance for the customer's linked accounts (ideally both TKKYS7398001 and TKKYS7398002 in one call, since account_ids is an array) and report each account's AVAILABLE balance, and — for the Business Current account, which has INR 5,000 on hold — make clear that INR 5,000 is on hold / not spendable (available INR 1,18,420.10 vs. the hold). It must report the figures exactly as returned (Salary INR 42,350.75 available, no hold; Business Current INR 1,18,420.10 available, INR 5,000 on hold), not invent or round away the hold, and must not ask which account (the mapping to 'my accounts' is unambiguous — all linked accounts)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "final answer reports the available balances exactly as returned and does not present the INR 5,000 hold as spendable; numbers are grounded, nothing invented."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

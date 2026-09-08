@@ -1,0 +1,212 @@
+{
+  "case_id": "csc.request_cheque_book.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction on a write's argument: 25 leaves -> 50 leaves. The corrected value must propagate into the final write — the arg_gate pins leaves=50, so a model that transcribes the stale 25 fails A3. Named careless failure mode: ordering the pre-correction 25 leaves because that was the value in the opening request. Trivial to catch by care; easy to get wrong by pattern-matching the first-mentioned number.",
+  "setup": {
+    "persona": "43-year-old female, No Occupation / Retired / Homemaker, urban Moradabad, Uttar Pradesh",
+    "current_date": "2026-08-16",
+    "current_time": "14:20",
+    "login_context": {
+      "customer_id": "SCN0007",
+      "full_name": "Vitan Vati",
+      "date_of_birth": "1983-11-22",
+      "gender": "female",
+      "customer_since": "2022-03-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0582",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "800582",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "800582",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6895X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQB4906001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKRQB4906002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQB4906003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Order a cheque book for my savings account — 25 leaves."
+    },
+    {
+      "content": "No, make it 50 leaves. Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CHQ-49061",
+        "status": "success",
+        "message": "Cheque book with 50 leaves ordered.",
+        "delivery_address": "23 Mill Road, Anna Nagar, Moradabad, Uttar Pradesh 800582, India"
+      },
+      "_comment": "account_id is echoed by the executor (input ∩ output name)."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-16T14:20:00",
+        "last_update": "2026-08-16T14:20:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKRQB4906001",
+          "leaves": 50
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKRQB4906001",
+          "leaves": 50
+        },
+        "forbidden_ids": [
+          "TKRQB4906002"
+        ],
+        "_comment": "The write must carry the CORRECTED 50 leaves on the savings account; the stale 25 (or the current account) fails A3."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer first requests 25 leaves, then corrects it to 50 and confirms. The assistant must order with the CORRECTED value: request_cheque_book(account_id=TKRQB4906001, leaves=50) and report the order (REQ-CHQ-49061, delivery to the registered address). Ordering 25 leaves — the pre-correction figure — is the careless failure the arg_gate pins against."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the order is placed with the CORRECTED 50 leaves for the savings account after confirmation; FAIL if it carries 25 leaves or the wrong account."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

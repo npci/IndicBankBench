@@ -1,0 +1,275 @@
+{
+  "case_id": "depl.agentic.fd_rd_insurance.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "_variant_note": "Compound: FD maturity, RD installments, insurance premium. Cross-domain depl + csc.",
+  "setup": {
+    "persona": "21-year-old female, No Occupation / Retired / Homemaker, urban Bharuch, Gujarat",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0264",
+      "full_name": "Gadiben Chaudhary",
+      "date_of_birth": "2005-06-01",
+      "gender": "female",
+      "customer_since": "2023-03-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2085",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "6 Market Road",
+        "line2": "Salt Lake",
+        "city": "Bharuch",
+        "state": "Gujarat",
+        "pincode": "512085",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "6 Market Road",
+        "line2": "Salt Lake",
+        "city": "Bharuch",
+        "state": "Gujarat",
+        "pincode": "512085",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4964X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFRI9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDFRI9800002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKRDFRI9800003",
+          "type": "rd",
+          "label": "TK RD"
+        },
+        {
+          "product_id": "TKPLFRI9800004",
+          "type": "policy",
+          "label": "TK Term Life"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFRI9800005",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Full check: FD maturity date and amount, RD installments paid, and life insurance premium due date — all at once please."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDFRI9800002",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-12-01",
+          "maturity_date": "2026-12-01",
+          "maturity_amount": 213320,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFRI9800001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDFRI9800003",
+          "monthly_installment": 3000,
+          "installments_paid": 9,
+          "total_deposited": 27000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2025-11-01",
+          "next_debit_date": "2026-09-01",
+          "maturity_date": "2027-11-01",
+          "maturity_amount": 77257,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFRI9800001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "policy_id": "TKPLFRI9800004",
+          "policy_type": "life",
+          "insurer": "LIC",
+          "sum_assured": 1500000,
+          "premium": 25000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-10-15",
+          "status": "active"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDFRI9800002"
+          ]
+        }
+      },
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDFRI9800003"
+          ]
+        }
+      },
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "TKPLFRI9800004"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "_comment": "FD: 2026-12-01, Rs 2,13,320."
+      },
+      "get_rd_details": {
+        "required": {},
+        "_comment": "RD: 9/24 at Rs 3,000/mo."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "_comment": "LIC: Rs 25,000 due 2026-10-15."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "FD matures 2026-12-01 at Rs 2,13,320. RD: 9 of 24 installments (Rs 27,000). Insurance: LIC term life, Rs 25,000 premium due 2026-10-15. Missing any one fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports all three: FD maturity, RD progress, and insurance premium. Missing any one fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

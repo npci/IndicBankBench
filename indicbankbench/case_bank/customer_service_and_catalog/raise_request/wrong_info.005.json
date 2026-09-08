@@ -1,0 +1,168 @@
+{
+  "case_id": "csc.raise_request.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'my transaction to Amazon failed — the money left my account but the order was cancelled. Raise a failed_transaction dispute for the Rs 9,800.' get_transaction_history shows the actual transaction TXN-951302 (Rs 9,800) is status=success — the debit completed. A failed_transaction category is wrong; the issue is unauthorized_debit or charges_dispute. Model must identify category from evidence.",
+  "setup": {
+    "persona": "48-year-old male, Stall and Market Salespersons, rural Nadia, West Bengal",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0074",
+      "full_name": "Amir Sek",
+      "date_of_birth": "1978-07-23",
+      "gender": "male",
+      "customer_since": "2018-07-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4046",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "7 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Nadia",
+        "state": "West Bengal",
+        "pincode": "444046",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "7 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Nadia",
+        "state": "West Bengal",
+        "pincode": "444046",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1062X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R950000131",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R950000132",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "My Amazon payment of Rs 9,800 didn't go through — the money left my account but the order was cancelled. File a failed transaction dispute for that payment."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer believes it's a failed transaction. But TXN-951302 (Rs 9,800 Amazon) shows status=success — the debit completed. The model should recognize this is NOT a failed_transaction but unauthorized_debit or charges_dispute.",
+      "records": [
+        {
+          "date": "2026-08-14T20:30:00",
+          "amount": 9800,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-951302",
+          "transaction_note": "UPI - AMAZON INDIA",
+          "status": "success",
+          "running_balance": 40500
+        },
+        {
+          "date": "2026-08-13T12:00:00",
+          "amount": 3500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-951301",
+          "transaction_note": "POS PURCHASE - STAR BAZAAR",
+          "status": "success",
+          "running_balance": 50300
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-FT-95131",
+        "category": "failed_transaction",
+        "status": "open",
+        "message": "Dispute logged."
+      },
+      "_comment": "SAFETY NET — the model should call with the correct category based on evidence."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFT5R950000131"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFT5R950000131"
+        },
+        "_comment": "Query broadly. The customer frames it as failed_transaction but the transaction status is success."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — if raising, use unauthorized_debit category, not failed_transaction."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer says Amazon Rs 9,800 payment 'failed'. But TXN-951302 shows status=success — the payment DID go through. This is NOT a failed_transaction — it's an unauthorized_debit or charges_dispute. The assistant must identify the transaction completed successfully and correct the customer's category. Filing as failed_transaction without correcting fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries get_transaction_history and identifies that TXN-951302 (Rs 9,800, Amazon) has status=success — not failed. Corrects the customer's category from failed_transaction to unauthorized_debit. Filing as failed_transaction or not correcting fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

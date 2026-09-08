@@ -1,0 +1,237 @@
+{
+  "case_id": "csc.raise_request.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7 wrong DIGITS on a write (wrong_info.001 covered the phantom-transaction case): the customer disputes a real ₹18,500 debit but quotes the WRONG reference (TXN-90901 from their SMS). The actual record's reference_id is UTR-55219001. The model must locate the transaction via get_transaction_history and raise the dispute with the REAL reference_id — the corrected id comes from the tool, not the customer's SMS.",
+  "setup": {
+    "persona": "51-year-old male, Artificial Breeding Technician, rural Ratlam, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0370",
+      "full_name": "Ganesh Kumar",
+      "date_of_birth": "1975-05-24",
+      "gender": "male",
+      "customer_since": "2016-11-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1160",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Ratlam",
+        "state": "Madhya Pradesh",
+        "pincode": "271160",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Ratlam",
+        "state": "Madhya Pradesh",
+        "pincode": "271160",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9343X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQR9812001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQR9812002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "request_cheque_book",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "There's a ₹18,500 debit on 15 Aug I never made — the SMS reference was TXN-90901. Raise an unauthorized debit dispute for it."
+    },
+    {
+      "content": "Yes, go ahead and raise it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "The ₹18,500 debit on 15 Aug is real, but its reference_id is UTR-55219001 — the customer's TXN-90901 is wrong. Chained running_balance: oldest 100,041.55; 08-13 credit 85,000 -> 100,041.55; 08-14 debit 480 -> 99,561.55; 08-15 debit 18,500 -> 81,061.55.",
+      "records": [
+        {
+          "date": "2026-08-15T21:05:00",
+          "amount": 18500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "UTR-55219001",
+          "transaction_note": "MYNTRA.COM purchase",
+          "status": "success",
+          "running_balance": 81061.55
+        },
+        {
+          "date": "2026-08-14T10:12:00",
+          "amount": 480,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-90901",
+          "transaction_note": "BESCOM electricity bill",
+          "status": "success",
+          "running_balance": 99561.55
+        },
+        {
+          "date": "2026-08-13T09:00:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-90877",
+          "transaction_note": "Salary credit",
+          "status": "success",
+          "running_balance": 100041.55
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-UD-98100",
+        "category": "unauthorized_debit",
+        "status": "open",
+        "message": "Unauthorized debit dispute logged (REQ-UD-98100) for UTR-55219001 (₹18,500) and flagged urgent for investigation."
+      }
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKRQR9812001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "UTR-55219001",
+          "description": "Customer disputes an unauthorized ₹18,500 debit (UTR-55219001, MYNTRA.COM, 2026-08-15) they did not make.",
+          "account_id": "TKRQR9812001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKRQR9812001"
+        }
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "UTR-55219001"
+        },
+        "_comment": "The dispute must carry the REAL reference_id from the transaction record (UTR-55219001), not the customer's wrong TXN-90901. category must be unauthorized_debit (urgent)."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer disputes a ₹18,500 debit on 15 Aug but quotes the wrong reference (TXN-90901). The assistant must call get_transaction_history, locate the real ₹18,500 debit (UTR-55219001, MYNTRA.COM, 2026-08-15), and — after confirmation — raise the dispute with the REAL reference_id UTR-55219001 (category unauthorized_debit). The customer's TXN-90901 is actually a different, smaller BESCOM bill; using it as the dispute reference would attach the dispute to the wrong transaction. Raising the dispute with the wrong reference, or skipping the transaction lookup, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "locates the ₹18,500 debit via get_transaction_history and raises the dispute with the REAL reference_id (UTR-55219001), not the customer's wrong TXN-90901, after confirmation. Using the wrong reference or skipping the lookup fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

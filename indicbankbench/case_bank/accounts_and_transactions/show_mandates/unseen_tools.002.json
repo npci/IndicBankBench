@@ -1,0 +1,177 @@
+{
+  "case_id": "acct.show_mandates.unseen_tools.002",
+  "axis": "10_unseen_tools",
+  "domain": "accounts_and_transactions",
+  "tool": "find_recurring_charges",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-10 with a clarify-by-insufficient-info correct move. A fabricated find_recurring_charges tool is supplied inline — it scans ONE account's statement for repeat-merchant charges that look like subscriptions. The customer wants 'everything that's quietly charging me', but has two accounts and the tool REQUIRES one account_id, so the correct move is to ask which account to scan (scope is the customer's own choice, not a defaultable preference). Gold has no tool calls. Failure modes caught: (a) guessing an account and scanning it anyway, (b) answering from show_mandates alone (it lists declared bank mandates only — the new tool's whole purpose is finding charges that never became mandates), and (c) declining.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, rural Jhansi, Uttar Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0220",
+      "full_name": "Pratima Devi",
+      "date_of_birth": "2006-01-26",
+      "gender": "female",
+      "customer_since": "2024-03-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5676",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Jhansi",
+        "state": "Uttar Pradesh",
+        "pincode": "615676",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Jhansi",
+        "state": "Uttar Pradesh",
+        "pincode": "615676",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1351X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRCG9951001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKRCG9951002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRCG9951003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    {
+      "name": "find_recurring_charges",
+      "category": "accounts",
+      "description": "Scans a SINGLE account's statement history for repeat-merchant charges that look like subscriptions — same merchant, similar amount, regular interval — and summarises them with their monthly run-rate. Finds charges that never became formal mandates (e.g. card-based or variable subscriptions). One account per call; pass the account_id to scan.\n\nCategory: accounts | Action type: read",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "prerequisites": [],
+      "inputs": [
+        {
+          "name": "account_id",
+          "type": "string",
+          "required": true,
+          "description": "Linked account whose statement should be scanned."
+        },
+        {
+          "name": "lookback_months",
+          "type": "integer",
+          "required": false,
+          "description": "How many months of history to analyse. Defaults to 6."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "recurring_charges",
+          "type": "array<object>",
+          "description": "One entry per detected recurring charge: merchant, typical amount, approximate interval in days."
+        },
+        {
+          "name": "total_monthly_commitment",
+          "type": "number",
+          "description": "Estimated monthly run-rate of everything detected."
+        },
+        {
+          "name": "accounts_scanned",
+          "type": "integer",
+          "description": "Count of accounts analysed (always 1)."
+        }
+      ]
+    }
+  ],
+  "user_turns": [
+    {
+      "content": "I'm pretty sure I'm paying for subscriptions I've forgotten about. Dig out everything that's quietly charging me every month so I can cut the dead weight."
+    }
+  ],
+  "mock": {
+    "find_recurring_charges": {
+      "kind": "outcome_fixed",
+      "output": {
+        "recurring_charges": [],
+        "total_monthly_commitment": 0,
+        "accounts_scanned": 0
+      },
+      "_comment": "Safety net only — a gold-conformant run never calls this tool because no account was chosen. A guessed call still gets a well-formed reply so the model is not driven into a retry loop."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET — answering from these alone is the old-tool substitution the axis bans: they are declared mandates (Netflix UPI autopay; LIC SI), not the 'quiet charges' the watcher would find. If the model lists only these and calls it a full answer, A2/judge catch it; the mock exists so the stray call returns data instead of UNEXPECTED_TOOL_CALL.",
+      "records": [
+        {
+          "mandate_id": "MND-RCG995-01",
+          "type": "upi_autopay",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-04-01",
+          "account_id": "TKRCG9951001"
+        },
+        {
+          "mandate_id": "MND-RCG995-02",
+          "type": "si",
+          "payee": "LIC Premium",
+          "amount": 12500,
+          "frequency": "yearly",
+          "status": "active",
+          "next_debit_date": "2026-03-30",
+          "account_id": "TKRCG9951002"
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "dependencies": [],
+    "arg_gate": {
+      "_comment": "No tool may fire in the correct flow: the watcher's single required input (which account to scan) is the customer's to choose among two candidate accounts, and no other exposed tool substitutes for it. Both tools are listed so a stray call fails A2 rather than returning UNEXPECTED_TOOL_CALL and looping the candidate."
+    },
+    "expected_resolution": "The customer wants a sweep of forgotten subscriptions, but the newly-available find_recurring_charges tool scans ONE account per call and requires an account_id — and the customer has two accounts (salary and current) without saying which one the quiet charges hit. The missing scope is information only the customer can give, so the correct move is to ask WHICH account to scan (both is expressible as two scans once the customer says so — but choosing for them is not), ending the turn as a clarifying question. Gold carries no tool calls: it passes when the assistant asks which account, rather than (a) guessing an account and calling the tool, (b) pretending show_mandates' two declared mandates is the complete answer to 'everything quietly charging me' (the whole point of the new tool is charges that never became mandates), or (c) declining. Mentioning that mandates like Netflix/LIC are visible already is reasonable context AFTER asking the scoping question."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant asks which account should be scanned by the new tool and does NOT act blindly — no guessed account_id call, no treating the two declared mandates as the complete answer, no decline. The turn must end as a question."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_grounded"
+    ]
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "case_id": "csc.get_products_and_offers.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-3 semantic confusion between marketing language and reality. The customer sees 'Pre-approved' in the app and interprets it as 'I'm approved — give me the money.' The assistant must correct this conflation: 'pre-approved' is a marketing/indicative label on a catalog offer, not a final lending decision. The trap is over-claiming: a model that reads the offer's 'Pre-approved' title and tells the customer 'yes, you're approved for ₹10 lakh' has confused the offer label with an eligibility verdict. The correct answer looks up the offer, explains that 'pre-approved' is indicative and subject to final eligibility checks (income verification, credit assessment), and does not confirm approval. The distinction from get_products_and_offers.irrelevant_rag.001 is crucial: that case tests the RATE ('from X%' is poison); this case tests the APPROVAL CLAIM — the word 'pre-approved' itself is the trap, and quoting any rate at all is incidental. get_products_and_offers had no axis-3 case, and no other case in the bank tests whether a model can distinguish marketing language from substance.",
+  "setup": {
+    "persona": "27-year-old male, Selling Agent, urban Patan, Gujarat",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0568",
+      "full_name": "Vahoniya Kumar",
+      "date_of_birth": "1999-04-27",
+      "gender": "male",
+      "customer_since": "2017-10-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6363",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "4 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Patan",
+        "state": "Gujarat",
+        "pincode": "586363",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "4 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Patan",
+        "state": "Gujarat",
+        "pincode": "586363",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5328X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKPOF9113001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCPOF9113002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "The app says I'm pre-approved for a personal loan of ₹10 lakh. So I'm approved, right? I can just take the money?"
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "THE TRAP: the offer title says 'Pre-approved' — that is a MARKETING LABEL, not a lending decision. The description explicitly says 'indicative only, subject to eligibility.' The model must not conflate the label with reality.",
+      "records": [
+        {
+          "id": "OFF-PL-3022",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to ₹10,00,000, minimal documentation. Indicative only, subject to eligibility verification.",
+          "valid_till": "2026-06-30"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Optional safety net — if the model sources the personal loan rate while explaining the offer, it finds the authoritative 10.5% (CONVENTIONS §3). The rate is not the focus here; the approval claim is.",
+      "output": {
+        "rates": [
+          {
+            "slab": "personal loan",
+            "rate": 10.5,
+            "senior_citizen_rate": 10.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {}
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Must look up the offer to ground the answer — the customer referenced the app showing 'pre-approved', which maps to this catalog lookup. A model that answers without checking the offer is guessing."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — sourcing the authoritative rate is good practice if the model discusses the rate, but the answer must not hang on it. The real question is about APPROVAL, not rate."
+      },
+      "_comment": "The other tools (search_knowledge_base, raise_request, etc.) are exposed but must not be used to answer a catalog/offer question. A call to any non-optional tool fails A2.",
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 3 — the customer conflates 'pre-approved' (a marketing label on a catalog offer) with 'approved' (a final lending decision). They see 'Pre-approved Personal Loan' in the app and ask whether they are approved and can take the money.\n\nThe assistant must look up the offer (get_products_and_offers), find the 'Pre-approved Personal Loan' entry, and correct the confusion: 'pre-approved' in the app is an indicative/marketing offer, not a final lending decision — it is subject to eligibility verification (income assessment, credit check, documentation). The loan is NOT guaranteed and the assistant cannot confirm final approval — it can only confirm the offer exists.\n\nSaying 'yes, you're approved' based on the 'Pre-approved' title, or claiming the loan is guaranteed, is the failure this case targets. A bare 'I can't confirm' without looking up and explaining the offer is also weak; the correct answer looks up the offer, names it, and explains the distinction."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "PASS requires the assistant to look up the pre-approved offer and explain that 'pre-approved' is an indicative marketing label, NOT final approval — the loan is subject to eligibility verification and is not guaranteed. FAIL if it claims the customer is approved, says the loan is guaranteed, or says 'yes, you can take the money' based on the 'pre-approved' label. A bare 'I can't confirm' without looking up and explaining the offer is weak."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

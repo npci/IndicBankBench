@@ -1,0 +1,233 @@
+{
+  "case_id": "depl.update_deposit_renewal.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer wants to change renewal instruction on TKFD8888888 not in linked_products. Verify first.",
+  "setup": {
+    "persona": "20-year-old male, Market Research Analyst, rural Nalgonda, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0032",
+      "full_name": "Yadagiri Sankoj",
+      "date_of_birth": "2006-10-28",
+      "gender": "male",
+      "customer_since": "2024-08-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1229",
+      "registered_email": "y*****@gmail.com",
+      "communication_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Nalgonda",
+        "state": "Telangana",
+        "pincode": "621229",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Nalgonda",
+        "state": "Telangana",
+        "pincode": "621229",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8902X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUDL8100001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDUDL8100002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCUDL8100003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Set FD TKFD8888888 to auto-renew with both principal and interest at maturity."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDUDL8100002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-11-01",
+          "maturity_date": "2027-05-01",
+          "maturity_amount": 300000,
+          "payout_type": "monthly",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKUDL8100001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD8888888",
+        "status": "failed",
+        "message": "Deposit not found.",
+        "reference_id": "REF-UDR-00000"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDUDL8100002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDUDL8100002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Model may call get_fd_details to verify. TKFD8888888 not found."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "_comment": "Must NOT be called: deposit not in linked_products."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to change renewal on TKFD8888888. The assistant must verify via get_fd_details, which returns only TKFDUDL8100002 (monthly payout, no_renewal — note: monthly payout cannot use renew_principal_interest). The assistant must report TKFD8888888 not found and offer the actual FD. Calling update_deposit_renewal with a non-existent ID fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks linked deposits, reports TKFD8888888 not found, surfaces actual FD. Calling update_deposit_renewal with non-existent ID fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

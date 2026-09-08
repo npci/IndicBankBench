@@ -1,0 +1,225 @@
+{
+  "case_id": "depl.update_deposit_renewal.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior conversation showed FD active with renewal instruction 'renew principal and interest'. The FD has since matured and auto-renewed. Customer asks to change renewal instruction — model must re-fetch FD details live to discover FD no longer in a state where renewal instruction can be updated.",
+  "setup": {
+    "persona": "26-year-old male, Market-Oriented Crop and Animal Producers, rural Guna, Madhya Pradesh",
+    "current_date": "2026-10-15",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0123",
+      "full_name": "Pee Charan",
+      "date_of_birth": "2000-05-22",
+      "gender": "male",
+      "customer_since": "2018-05-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0400",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Guna",
+        "state": "Madhya Pradesh",
+        "pincode": "160400",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Guna",
+        "state": "Madhya Pradesh",
+        "pincode": "160400",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4059X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUDR97000K1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "FD-UDR9700001",
+          "type": "fd",
+          "label": "Short Term FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCUDR9700K02",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's the maturity instruction on my Short Term FD?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "d1",
+            "type": "function",
+            "function": {
+              "name": "get_fd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "FD-UDR9700001"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "d1",
+        "content": "{\"deposits\":[{\"deposit_id\":\"FD-UDR9700001\",\"type\":\"fd\",\"label\":\"Short Term FD\",\"principal_amount\":100000,\"interest_rate\":6.5,\"tenure_months\":12,\"start_date\":\"2025-10-01\",\"maturity_date\":\"2026-10-01\",\"maturity_instruction\":\"renew principal and interest\",\"payout_account\":\"TKUDR97000K1\",\"nominee\":{\"name\":\"Rajesh Gupta\",\"relationship\":\"brother\"}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your Short Term FD of Rs 1,00,000 matures on October 1, 2026 and is set to renew principal and interest. You have a couple of weeks left."
+      },
+      {
+        "role": "user",
+        "content": "I'll decide closer to the date whether to change that."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "update_deposit_renewal",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to change my Short Term FD renewal to 'no renewal' — please update it."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FD matured on Oct 1 and auto-renewed. Prior showed active with renewal instruction. Now it's a new active FD with same renewal instruction — the old one was auto-renewed so the instruction change window has passed.",
+      "records": [
+        {
+          "deposit_id": "FD-UDR9700001",
+          "principal_amount": 106500,
+          "interest_rate": 6.5,
+          "tenure_months": 6,
+          "start_date": "2026-10-01",
+          "maturity_date": "2027-04-01",
+          "maturity_instruction": "renew principal and interest",
+          "payout_account": "TKUDR97000K1",
+          "nominee": {
+            "name": "Rajesh Gupta",
+            "relationship": "brother"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "FD-UDR9700001",
+        "status": "success",
+        "message": "Renewal instruction updated to 'no renewal' for FD-UDR9700001.",
+        "reference_id": "REF-RNW-UDR9700"
+      },
+      "_comment": "Allowed as a fallback — but model should ideally detect state change first."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "FD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "amount_credited": 0,
+        "payout_account": "TKUDR97000K1",
+        "reference_id": "REF-CLS-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "FD-UDR9700001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "FD-UDR9700001"
+          ]
+        },
+        "_comment": "Must check FD state live. Prior showed Rs 1,00,000 active FD with 1 year tenure; now matured auto-renewed as Rs 1,06,500 with 6-month tenure. The renewal instruction was already applied."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "_comment": "May still be valid to call (new FD has its own renewal instruction), but model must first re-check state."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The prior conversation showed the Short Term FD as active with Rs 1,00,000 maturing Oct 1. Since then it matured and auto-renewed — it's now a new Rs 1,06,500 FD with a fresh 6-month tenure. The assistant must re-fetch get_fd_details live, discover the FD has already rolled over, and report that state change. Proceeding to update renewal instruction without checking current state is the stale-data failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches FD details live and discovers the FD has matured and auto-renewed (now Rs 1,06,500 with new tenure). Reporting the old state without a live check fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

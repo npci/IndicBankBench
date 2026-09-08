@@ -1,0 +1,395 @@
+{
+  "case_id": "depl.get_fd_details.long_context.001",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "29-year-old male, Scoop Truck Operator, urban Kurnool, Andhra Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0302",
+      "full_name": "David Ndi",
+      "date_of_birth": "1997-08-01",
+      "gender": "male",
+      "customer_since": "2019-01-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0983",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Kurnool",
+        "state": "Andhra Pradesh",
+        "pincode": "600983",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Kurnool",
+        "state": "Andhra Pradesh",
+        "pincode": "600983",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4259X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 9,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKJQW6512001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDJQW6512002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDJQW6512003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDJQW6512004",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDJQW6512005",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDJQW6512006",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDJQW6512007",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDJQW6512008",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDJQW6512009",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDJQW6512010",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCJQW6512011",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I've got a whole ladder of fixed deposits running and I've lost track. Which one matures first, and what will it be worth when it does?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "THE BIG LIST. Nine wide records in one response — the 'find the right detail in bulk' flavour of axis 8, which deposits had no other case for (only the long-conversation flavour, in create_fd/long_context.001). The answer is TKFDJQW6512006: maturity 2026-05-09, worth ₹1,01,327. Three decoys are deliberate. (a) It is the SMALLEST principal at ₹95,000, so a model reaching for a salient large number lands far away. (b) The LARGEST deposit, ₹8,00,000, matures LAST of the nine, on 2028-08-05. (c) The EARLIEST-STARTED deposit, 2024-11-10, matures 2027-11-10, because its 36-month tenure is the longest — start date does not order maturity. The runner-up matures 2026-06-01, only 23 days later, so dates must actually be compared rather than eyeballed. Records are deliberately NOT in maturity order, and the answer sits fifth of nine. Every maturity_amount is exact quarterly compounding per CONVENTIONS.md §2; the 7.0% on the 2024 booking is from the rate card in force then, which is why it exceeds today's 6.75% for the same slab.",
+      "records": [
+        {
+          "deposit_id": "TKFDJQW6512002",
+          "principal_amount": 450000,
+          "interest_rate": 7.0,
+          "tenure_months": 36,
+          "start_date": "2024-11-10",
+          "maturity_date": "2027-11-10",
+          "maturity_amount": 554148,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDJQW6512003",
+          "principal_amount": 800000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2025-08-05",
+          "maturity_date": "2028-08-05",
+          "maturity_amount": 977914,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDJQW6512004",
+          "principal_amount": 275000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-03-22",
+          "maturity_date": "2027-03-22",
+          "maturity_amount": 312851,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDJQW6512005",
+          "principal_amount": 120000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2024-12-01",
+          "maturity_date": "2026-06-01",
+          "maturity_amount": 132186,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDJQW6512006",
+          "principal_amount": 95000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-05-09",
+          "maturity_date": "2026-05-09",
+          "maturity_amount": 101327,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDJQW6512007",
+          "principal_amount": 560000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-01-30",
+          "maturity_date": "2027-01-30",
+          "maturity_amount": 637078,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDJQW6512008",
+          "principal_amount": 225000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-10-12",
+          "maturity_date": "2027-04-12",
+          "maturity_amount": 247848,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDJQW6512009",
+          "principal_amount": 310000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-06-18",
+          "maturity_date": "2026-06-18",
+          "maturity_amount": 330646,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDJQW6512010",
+          "principal_amount": 180000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-09-25",
+          "maturity_date": "2027-09-25",
+          "maturity_amount": 204775,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKJQW6512001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDJQW6512002",
+            "TKFDJQW6512003",
+            "TKFDJQW6512004",
+            "TKFDJQW6512005",
+            "TKFDJQW6512006",
+            "TKFDJQW6512007",
+            "TKFDJQW6512008",
+            "TKFDJQW6512009",
+            "TKFDJQW6512010"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "_comment": "deposit_ids is deliberately NOT pinned. `required` compares by exact equality (grader.py:216), and for a list that is order-sensitive — pinning it would fail a model that fetched all nine in a different order, which is not an error. Provenance is still enforced: every id must come from login_context or S1 fails. Coverage is judge-gated, and it is self-enforcing in practice — a model that queries only a subset cannot know which of the nine matures first, so it lands on the wrong answer and fails R."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 8, the 'big list' mechanism — find the right detail inside a bulky tool response. This is the flavour deposits previously had no case for: create_fd/long_context.001 covers recall across a long CONVERSATION, while this covers retrieval out of a large single RESPONSE.\n\nThe customer holds nine fixed deposits and asks which matures first and what it will be worth. The assistant should pull get_fd_details for the deposits in login_context and compare maturity dates across all nine records.\n\nThe answer is the deposit maturing 2026-05-09, worth ₹1,01,327 on a ₹95,000 principal at 6.5%. Three things are arranged to punish a model that skims rather than reads. It is the SMALLEST of the nine, so reaching for a salient large number lands nowhere near it. The LARGEST deposit, ₹8,00,000, matures LAST of all, on 2028-08-05. And the EARLIEST-STARTED deposit, opened 2024-11-10, matures 2027-11-10 — because it runs 36 months, so start order is not maturity order. The runner-up matures 2026-06-01, just 23 days later, so the dates have to be genuinely compared; and the records are not in maturity order, with the answer sitting fifth of nine.\n\nBoth halves of the question must be right: naming the correct deposit but quoting some other maturity value, or quoting ₹1,01,327 against the wrong deposit, is a fail. Reporting the ₹95,000 principal as what the customer 'will get' is the usual principal-versus-maturity conflation and also fails. Mentioning that a second deposit follows barely three weeks later is a genuinely useful addition for someone laddering deposits, and good practice, but it is not required.\n\nNote how this differs from an axis-4 case on the same tool: nothing here is ambiguous and there is nothing to ask the customer. Every fact needed is present in the response — the difficulty is entirely retrieval under bulk. A case that could be passed by asking a clarifying question would not be an axis-8 case."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant identifies the deposit maturing 2026-05-09 as the first to mature AND states its maturity value of ₹1,01,327. Naming any other deposit fails — in particular the ₹8,00,000 one (largest, but matures last) or the one started 2024-11-10 (earliest start, but matures 2027-11-10). Pairing the right deposit with the wrong figure, or quoting its ₹95,000 principal as what the customer will receive, also fails. Noting that another deposit matures 23 days later is ideal but not required."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

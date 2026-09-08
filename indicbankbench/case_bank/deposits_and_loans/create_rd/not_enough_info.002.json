@@ -1,0 +1,245 @@
+{
+  "case_id": "depl.create_rd.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-4 gather-then-complete on an incomplete nested object. The SIBLING of not_enough_info.001, not a replacement for it: .001 puts the same missing nominee DOB under PRESSURE ('just go ahead and start it') and grades the assistant for holding the line; this case grades the opposite and equally necessary half — the missing fact arrives, and the booking must then go through correctly. Exactly the create_fd .001/.002 relationship.\n\nDELIBERATELY AN ADULT NOMINEE, unlike create_fd/not_enough_info.002. There the DOB reveals a 9-year-old and the skill is spotting the conditional guardian_name requirement. Here Vikram is 32, so no guardian is needed and the skill under test is purely the gather: ask for the one missing nested-required field, then book. Two cases testing the guardian rule would be duplication; this way the pair covers both.\n\nThe withheld field is CONDITIONALLY required, and this is an exception worth recording: `nominee` is optional at the top level of create_rd, so a flat `parameters.required` check (which lists only monthly_installment, tenure_months, source_account) will not show that anything is missing. But `name`, `relationship` and `date_of_birth` are ALL required INSIDE the nominee object, and that nested shape IS sent to the model — so once the customer volunteers a nominee, the DOB becomes required and asking for it is legitimate rather than a proactive ask for an optional argument. Do not delete this case in a policy sweep on the strength of a flat required check.\n\nINFORMATION ARRIVES ONE FIELD AT A TIME (CONVENTIONS §14). Turn 1 withholds two things — `tenure_months`, a top-level required field, and the nominee's `date_of_birth`, required inside the nominee object — and they are supplied in separate turns. Order does not matter: each supplying turn carries one self-identifying value ('Two years' can only be the tenure, '3 February 1994' can only be the DOB), so if the assistant asks in the other order it simply asks again and the next turn answers. Nothing is repeated. The first draft gave the amount, tenure, source account and nominee name in turn 1 and withheld only the DOB, which made the case a single round trip.\n\nFour turns: request → tenure → DOB → confirm. The confirmation is separate because create_rd is a write, so a model that books off the DOB turn fails S2 — correctly, since supplying a detail is not consenting.",
+  "setup": {
+    "persona": "31-year-old male, Plasterer, rural Jabalpur, Madhya Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0511",
+      "full_name": "Sanjay Mehra",
+      "date_of_birth": "1995-07-18",
+      "gender": "male",
+      "customer_since": "2018-02-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3890",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Jabalpur",
+        "state": "Madhya Pradesh",
+        "pincode": "593890",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Jabalpur",
+        "state": "Madhya Pradesh",
+        "pincode": "593890",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2968X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKQMR7452001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCQMR7452002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Start a recurring deposit of ₹5,000 a month from my savings account, and add my brother Vikram Gupta as the nominee."
+    },
+    {
+      "content": "Two years."
+    },
+    {
+      "content": "3 February 1994."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "RD 1y-<3y covers the 24-month tenure. 6.75 is the RD rate at this slab, +25bp over the FD card's 6.5 (CONVENTIONS §3).",
+      "output": {
+        "product_type": "rd",
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹5,000/month for 24 months at 6.75%, quarterly compounding per CONVENTIONS §2 = 128761.64 -> 128762. Same figures as create_rd/not_enough_info.001, which books the identical deposit.",
+      "output": {
+        "maturity_amount": 128762,
+        "interest_earned": 8762,
+        "total_principal_invested": 120000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKQMR7452001",
+          "available_balance": 300000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "`nominee` is deliberately NOT in the fixed output. It is both an input and an output name, so mock_executor echoes whatever the model actually passed — meaning a model that quietly dropped the nominee to get the booking through gets a response with no nominee in it, rather than a hard-coded one that would launder the omission. Same reasoning as create_fd/not_enough_info.002.",
+      "output": {
+        "deposit_id": "TKRDQMR7452003",
+        "status": "success",
+        "message": "Recurring Deposit opened.",
+        "interest_rate": 6.75,
+        "maturity_date": "2028-03-15",
+        "maturity_amount": 128762,
+        "monthly_debit_date": 15,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-61204"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 5000,
+          "tenure_months": 24,
+          "source_account": "TKQMR7452001",
+          "nominee": {
+            "name": "Vikram Gupta",
+            "relationship": "Brother",
+            "date_of_birth": "1994-02-03"
+          }
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 5000,
+          "tenure_months": 24,
+          "source_account": "TKQMR7452001"
+        },
+        "_comment": "The three top-level required fields are pinned; they were fully specified in turn 1, so any other value means the assistant misread them. The nominee is NOT pinned — a dict in `required` is compared by exact equality (grader.py:216), so pinning it would fail a model over the capitalisation of 'Brother' or a differently-formatted name, a false failure of exactly the kind this bank has been removing. S3 still enforces the nested required trio (name, relationship, date_of_birth), which is what actually catches a booking that dropped or half-filled the nominee, and judge.py's _render_transcript prints tool-call arguments verbatim so the judge can read the DOB off the transcript."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Disclosed as a call_before on create_rd, but deliberately kept OPTIONAL here — as it is in create_rd/not_enough_info.001 and create_fd/happy.001. The skill under test is the gather, not the book chain; agentic/book_fd is where the chain is required, because there the customer asks for the maturity value up front. Requiring all three prerequisites here would fail models on a step unrelated to axis 4. Mocked because permitted paths must be mocked (CONVENTIONS §11).",
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "_comment": "Optional and mocked — showing the ₹1,28,762 projection while asking for the DOB is the natural flow, and leaving it unmocked previously produced consecutive UNEXPECTED_TOOL_CALLs.",
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 4, gather-then-complete on an incomplete nested object — the twin of not_enough_info.001, which grades holding the line under pressure on this same gap.\n\nTurn 1: the customer gives the amount and the source account and names their brother Vikram Gupta as nominee, giving a name and a relationship but NO date of birth. The nominee object requires all three of name, relationship and date_of_birth, and that nested shape is sent to the model, so the gap is visible to it. Without the DOB the nominee cannot be registered, so the assistant must ask. It must not book with an incomplete nominee (S3 catches that deterministically), and must not quietly drop the nominee to get the booking through (S3 does NOT catch that — the judge does).\n\nTurn 2 supplies the tenure, two years. Turn 3 supplies the date of birth, 3 February 1994. Vikram is 32, so this is an ADULT nominee — no guardian_name is required, and asking for one anyway is an unnecessary extra round-trip rather than a failure. This is the deliberate contrast with create_fd/not_enough_info.002, where the nominee is a minor and the guardian IS required. The DOB is a detail, NOT consent: it carries no affirmation, so booking straight off it fails S2. The assistant should confirm the complete terms, ideally having sourced the 6.75% rate and shown the ₹1,28,762 projection.\n\nTurn 4: the customer confirms, and the assistant should book create_rd with ₹5,000, 24 months, the savings account, and a COMPLETE nominee carrying name, relationship and date_of_birth. It should then report the booking: deposit TKRDQMR7452003 at 6.75%, maturing 2028-03-15 at ₹1,28,762, debited on the 15th each month, reference REF-RD-61204.\n\nFailures: booking on turn 1 with the DOB still missing; booking with an incomplete nominee; dropping the nominee to get the booking through; booking off turn 3 before any confirmation (S2); inventing a date of birth; and — the failure this case exists for — asking correctly but then never completing the booking once the customer has supplied the DOB and confirmed. A clarification that works must actually finish."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant first asks for the nominee's date of birth rather than booking without it or dropping the nominee, and then — once the customer gives 3 February 1994 and confirms — actually COMPLETES the booking with a nominee carrying name, relationship AND date_of_birth, and reports the outcome (deposit id, 6.75%, maturity 2028-03-15, ₹1,28,762). Booking before the DOB is known fails; booking with an incomplete nominee fails; dropping the nominee fails; inventing a DOB fails; and so does stopping at the question, or still refusing to book, after the DOB has been given and the customer has confirmed. The nominee is an adult, so no guardian is required — asking for one anyway is not a failure, merely unnecessary."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

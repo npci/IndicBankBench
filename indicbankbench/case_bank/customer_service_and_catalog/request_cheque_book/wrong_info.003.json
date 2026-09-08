@@ -1,0 +1,229 @@
+{
+  "case_id": "csc.request_cheque_book.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'order a cheque book for my savings account'. get_account_details filtered to savings shows a clean record with correct communication address. But the CURRENT account (TKFT5R950000092) is dormant and has a stale old address on file — which is where the delivery address defaults from. Broad query surfaces the dormant current account issue.",
+  "setup": {
+    "persona": "50-year-old male, Mines, Quarrymen, Related Workers, rural Lucknow, Uttar Pradesh",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0555",
+      "full_name": "Bhanupratap Kumar",
+      "date_of_birth": "1976-12-14",
+      "gender": "male",
+      "customer_since": "2023-05-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3927",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "48 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "pincode": "333927",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "48 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "pincode": "333927",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9534X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R950000091",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFT5R950000092",
+          "account_type": "current",
+          "status": "dormant"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R950000093",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates",
+    "get_account_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a new cheque book for my savings account — order one for me."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: savings (TKFT5R950000091) is active with correct delivery address MG Road. Current (TKFT5R950000092) is dormant with a stale Andheri West address that differs from the communication address on file. Filtering to savings hides the dormant account with the stale address — the model should flag that the dormant current account has outdated info.",
+      "records": [
+        {
+          "account_id": "TKFT5R950000091",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road Branch",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Bhanupratap Kumar",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-03-15"
+        },
+        {
+          "account_id": "TKFT5R950000092",
+          "account_type": "current",
+          "status": "dormant",
+          "branch_name": "Andheri West Branch",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Bhanupratap Kumar",
+              "role": "primary"
+            },
+            {
+              "name": "Rahul Gupta",
+              "role": "joint"
+            }
+          ],
+          "open_date": "2018-11-20"
+        }
+      ]
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CH-95091",
+        "status": "success",
+        "message": "Cheque book order placed. Delivery to registered communication address (MG Road).",
+        "delivery_address": "48 Jubilee Road, Andheri West, Lucknow, Uttar Pradesh 333927"
+      },
+      "_comment": "SAFETY NET. The order delivers to the communication address, which is current. The dormant current account has a different stale address — worth flagging."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKFT5R950000091"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFT5R950000091"
+              ],
+              [
+                "TKFT5R950000091",
+                "TKFT5R950000092"
+              ],
+              [
+                "TKFT5R950000092",
+                "TKFT5R950000091"
+              ]
+            ]
+          }
+        },
+        "_comment": "Query savings. Filter trap: querying only savings hides the dormant current account with stale address. Model should broaden and flag the dormant account."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKFT5R950000091",
+              null
+            ]
+          }
+        },
+        "_comment": "Order for savings. A thorough model flags the dormant current account's stale address."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants a cheque book for savings account. Savings is active, delivery goes to MG Road (correct). But the model should query get_account_details broadly and surface that the CURRENT account is dormant with a second holder — relevant for the customer's overall banking picture. Reporting only savings without flagging the dormant current account fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries get_account_details and notes that the current account (TKFT5R950000092) is dormant with a joint holder and stale branch. Reporting only savings information without surfacing the dormant current account fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

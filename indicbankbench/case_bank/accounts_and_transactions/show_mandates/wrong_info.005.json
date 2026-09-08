@@ -1,0 +1,188 @@
+{
+  "case_id": "acct.show_mandates.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'show me my eNACH mandates — I want to cancel all automated debits'. The eNACH mandate (LIC premium) is active and legitimate. But there's a standing_instruction mandate (a gym membership at Rs 2,500/month that the customer wasn't aware of) that they also need to see. The customer's request is about automated debits broadly, but naming 'eNACH' might lead the model to only discuss eNACH-type mandates, missing the SI mandate. A broad (no type filter) query surfaces both.",
+  "setup": {
+    "persona": "39-year-old female, No Occupation / Retired / Homemaker, urban Amritsar, Punjab",
+    "current_date": "2026-09-15",
+    "current_time": "08:00",
+    "login_context": {
+      "customer_id": "SCN0279",
+      "full_name": "Kanr Rani",
+      "date_of_birth": "1987-02-04",
+      "gender": "female",
+      "customer_since": "2013-08-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2837",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "38 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "pincode": "392837",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "38 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "pincode": "392837",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7931X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9521001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9521002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "raise_request",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to cancel all my automated debits. First, show me my eNACH mandates — those are the bank-to-bank ones, right?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about 'eNACH mandates'. The eNACH mandate (LIC premium, Rs 3,200/quarterly) is legitimate. But there's also a standing_instruction mandate (Gym membership, Rs 2,500/month) the customer didn't know about. The model must surface both — the customer's intent ('cancel ALL automated debits') requires seeing the SI mandate too. Focusing only on eNACH type misses the SI.",
+      "records": [
+        {
+          "mandate_id": "MND-C002-05",
+          "type": "enach",
+          "payee": "LIC India",
+          "amount": 3200,
+          "frequency": "quarterly",
+          "status": "active",
+          "next_debit_date": "2026-10-01",
+          "account_id": "TKFTB9521001"
+        },
+        {
+          "mandate_id": "MND-C002-06",
+          "type": "si",
+          "payee": "FitLife Gym",
+          "amount": 2500,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-20",
+          "account_id": "TKFTB9521001"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE-00000",
+        "status": "failed",
+        "message": "Noise tool.",
+        "category": "other"
+      },
+      "_comment": "Safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Broad query returns both mandate types. The eNACH (LIC) and the SI (Gym) are both automated debits — the SI mandate is exactly what the customer wants to cancel but might miss if the model focuses only on eNACH."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks to see their 'eNACH mandates' wanting to cancel all automated debits. The eNACH mandate is the LIC premium (Rs 3,200/quarterly). But there's also a standing_instruction mandate — FitLife Gym at Rs 2,500/month, next debit Sep 20 — that the customer may not know about. The assistant must query all mandates and surface BOTH types, since the customer's actual intent is to cancel all automated debits. Showing only the eNACH mandate (LIC) and not flagging the SI mandate (Gym) fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries all mandates and surfaces both the eNACH (LIC, Rs 3,200/quarterly) and the standing_instruction (FitLife Gym, Rs 2,500/month), noting that both are automated debits the customer may want to address. Reporting only the eNACH mandate and missing the SI Gym mandate fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

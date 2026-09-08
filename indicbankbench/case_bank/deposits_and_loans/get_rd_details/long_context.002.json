@@ -1,0 +1,349 @@
+{
+  "case_id": "depl.get_rd_details.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_rd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 key evidence buried in history among distractor products. The customer holds two RDs: the 'school fees' RD (Rs 6,000/month, 24 months, started 2026-02-05) and the 'car fund' RD (Rs 4,000/month). Early in the conversation the customer named the school RD; later noise mentions the car RD. The live ask is 'how's the school RD coming along?' The model must recall which RD was the school one (Rs 6,000/month) and report its stats — 6 installments paid, Rs 36,000 saved, next debit 5 September, maturity 2028-02-05 at Rs 1,54,514. The careless failure: reporting the car RD (the one mentioned most recently) or a stale figure from the prior conversation.",
+  "setup": {
+    "persona": "33-year-old female, Police Constable, rural Siddharthnagar, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0505",
+      "full_name": "Naurin Khan",
+      "date_of_birth": "1993-12-25",
+      "gender": "female",
+      "customer_since": "2023-06-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5323",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "84 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Siddharthnagar",
+        "state": "Uttar Pradesh",
+        "pincode": "205323",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "84 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Siddharthnagar",
+        "state": "Uttar Pradesh",
+        "pincode": "205323",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2385X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 2,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDL06001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDRDL06003",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        },
+        {
+          "product_id": "TKRDRDL06004",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDL06002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I started an RD for Aarav's school fees — Rs 6,000 a month."
+      },
+      {
+        "role": "assistant",
+        "content": "Your RD (TKRDRDL06003) is set up for Rs 6,000/month over 24 months. The next debit is on 5 August."
+      },
+      {
+        "role": "user",
+        "content": "And I also have one for the car fund, Rs 4,000 a month. How many installments are left on that?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_rd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKRDRDL06004"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"deposits\": [{\"deposit_id\": \"TKRDRDL06004\", \"monthly_installment\": 4000, \"installments_paid\": 7, \"total_deposited\": 28000, \"interest_rate\": 6.75, \"tenure_months\": 24, \"start_date\": \"2026-01-15\", \"next_debit_date\": \"2026-09-15\", \"maturity_date\": \"2028-01-15\", \"maturity_amount\": 103009, \"status\": \"active\", \"maturity_instruction\": \"no_renewal\", \"payout_account\": \"TKRDL06001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "The car-fund RD has 17 of 24 installments left (Rs 4,000 each), maturing January 2028 at Rs 1,03,009."
+      },
+      {
+        "role": "user",
+        "content": "Ok, the car RD is on track. What about the FD rates these days?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p2",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "fd"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p2",
+        "content": "{\"rates\": [{\"slab\": \"1 year to < 3 years\", \"rate\": 6.5, \"senior_citizen_rate\": 7.0}], \"effective_date\": \"2026-03-01\", \"product_type\": \"fd\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The current FD rate for 1–3 years is 6.5%, 7.0% for senior citizens."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "How's the school fees RD coming along?"
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDRDL06003",
+          "monthly_installment": 6000,
+          "installments_paid": 6,
+          "total_deposited": 36000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2026-02-05",
+          "next_debit_date": "2026-09-05",
+          "maturity_date": "2028-02-05",
+          "maturity_amount": 154514,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKRDL06001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKRDRDL06004",
+          "monthly_installment": 4000,
+          "installments_paid": 7,
+          "total_deposited": 28000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2026-01-15",
+          "next_debit_date": "2026-09-15",
+          "maturity_date": "2028-01-15",
+          "maturity_amount": 103009,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKRDL06001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDRDL06003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKRDRDL06003"
+          ]
+        },
+        "_comment": "Must fetch the school-fees RD (Rs 6,000/month). Reporting the car RD (the most recently discussed) or omitting the school RD is the careless failure."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks about the school fees RD, which per the history is the Rs 6,000/month one (TKRDRDL06003, 24 months, started 2026-02-05). The assistant must fetch that RD and report: 6 of 24 installments paid (Rs 36,000 saved), next debit 5 September 2026, maturing February 2028 at Rs 1,54,514. Reporting the car-fund RD (Rs 4,000/month, TKRDRDL06004) — the most recently discussed — or a stale figure from the prior conversation is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant recalls that the school RD is the Rs 6,000/month one from the history, fetches it, and reports its stats (6/24 installments, Rs 36,000 so far, next debit Sept 5, maturity Rs 1,54,514). Reporting the car RD or a stale figure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

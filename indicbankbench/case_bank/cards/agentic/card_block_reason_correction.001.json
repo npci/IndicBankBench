@@ -1,0 +1,254 @@
+{
+  "case_id": "cards.agentic.card_block_reason_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+block_card",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'block my card 6677 — I lost it.' get_card_details shows credit card with ALL international channels enabled, ₹5L credit_limit — this is strictly a fraud risk, not just lost. Correction: reason should be fraud for a card with international access at risk.",
+  "setup": {
+    "persona": "38-year-old male, Computer Programmers, urban Rangareddy, Telangana",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0179",
+      "full_name": "Appayya Gummadidala",
+      "date_of_birth": "1988-06-03",
+      "gender": "male",
+      "customer_since": "2017-08-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3965",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "6 Market Road",
+        "line2": "Salt Lake",
+        "city": "Rangareddy",
+        "state": "Telangana",
+        "pincode": "463965",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "6 Market Road",
+        "line2": "Salt Lake",
+        "city": "Rangareddy",
+        "state": "Telangana",
+        "pincode": "463965",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1956X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCB9500101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW6677",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "block_card",
+    "get_account_balance",
+    "get_card_details",
+    "get_transaction_history",
+    "set_card_controls",
+    "toggle_card_freeze"
+  ],
+  "user_turns": [
+    {
+      "content": "My card ending 6677 — it slipped out of my bag at the metro station. I realized only 2 hours later. This could be fraud — block it immediately."
+    },
+    {
+      "content": "Yes, block it — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCBW6677",
+          "masked_number": "****6677",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 500000,
+          "available_limit": 380000,
+          "expiry": "01/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 250000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 80000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 60000
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "Credit card, all international channels enabled, ₹5L limit — high fraud risk if lost. Customer says 'lost' but the risk profile demands fraud reason."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card permanently blocked and hotlisted across all payment networks.",
+        "reference_id": "REF-BLK-95041"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW6677"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCBW6677",
+          "reason": "fraud"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCBW6677"
+          ]
+        },
+        "_comment": "Must fetch card details — reveals international-enabled credit card at high fraud risk."
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCBW6677"
+        },
+        "optional_ok": {
+          "reason": {
+            "allowed": [
+              "fraud",
+              "lost"
+            ]
+          }
+        },
+        "_comment": "Customer says lost but international-enabled credit card demands fraud classification. R judge verifies appropriate reason choice."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'block my card 6677 — I lost it at metro.' The assistant looks up card details — credit card, ₹5L credit_limit, ALL international channels enabled (ATM/online/POS with ₹80,000 international online daily_limit). This is NOT a simple lost-card situation — it's a high-value fraud risk with full international access. The assistant should recognize and potentially flag the appropriate blocking classification. After confirmation, calls block_card with TKCBW6677. R judge verifies the model handles the risk classification appropriately."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads card details, identifies the international-enabled high-limit credit card profile, and after confirmation calls block_card on TKCBW6677. FAIL if the assistant suggests freeze instead of permanent block."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

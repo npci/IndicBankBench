@@ -1,0 +1,185 @@
+{
+  "case_id": "calc.calculate_fd_maturity.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'calculate FD for 3 years at the 1-3 year slab rate of 6.5%'. But a 3-year (36-month) tenure FALLS in the 3-5 year slab at 6.75%, NOT the 1-3 year slab. get_deposit_loan_rates returns both slabs. A model that accepts the customer's slab assumption (6.5%) uses the wrong rate. Broad rate query or checking both slabs reveals the correct 6.75% rate.",
+  "setup": {
+    "persona": "25-year-old female, No Occupation / Retired / Homemaker, rural Sheikhpura, Bihar",
+    "current_date": "2026-09-01",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0134",
+      "full_name": "Sushila Singh",
+      "date_of_birth": "2001-06-25",
+      "gender": "female",
+      "customer_since": "2019-02-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0581",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Sheikhpura",
+        "state": "Bihar",
+        "pincode": "160581",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Sheikhpura",
+        "state": "Bihar",
+        "pincode": "160581",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2984X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9651001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9651002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "get_deposit_loan_rates",
+    "create_fd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to start a Fixed Deposit. Calculate the maturity for Rs 2,00,000 deposited for 3 years — the 1-to-3 year slab rate for fd is 6.5%, right? Use that."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer assumes 3 years = 1-3 year slab (6.5%). But tenure 36 months falls in the '3 years to < 5 years' slab at 6.75%, NOT 1-3 years. A model that accepts the customer's rate assumption misses the correct slab. The rate card returns both slabs — the model must select the right one.",
+      "records": [
+        {
+          "slab": "1 year to < 3 years",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        },
+        {
+          "slab": "3 years to < 5 years",
+          "rate": 6.75,
+          "senior_citizen_rate": 7.25
+        }
+      ],
+      "static_output": {
+        "product_type": "fd",
+        "effective_date": "2026-03-01"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 244629,
+        "interest_earned": 44629,
+        "total_principal_invested": 200000
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "optional_ok": {
+          "tenure_months": {
+            "allowed": [
+              36
+            ]
+          }
+        },
+        "_comment": "Query for 36-month tenure reveals the correct 3-5yr slab at 6.75%. The customer said 6.5% (1-3yr slab) which is wrong for 36 months."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 200000,
+          "tenure_months": 36
+        },
+        "optional_ok": {
+          "rate": {
+            "allowed": [
+              6.75
+            ]
+          }
+        },
+        "_comment": "Correct rate is 6.75% from the 3-5yr slab. Using 6.5% (customer's assumption) produces incorrect maturity."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks for an FD maturity calculation for 3 years at 6.5%, assuming the 1-3 year slab. But 36 months falls in the '3 years to < 5 years' slab at 6.75%. The correct maturity at 6.75% is Rs 2,44,629 (200000 × (1+6.75/400)^12). Using the customer's assumed 6.5% gives Rs 2,42,785 — a difference of Rs 1,844. The assistant must fetch rates, identify the correct slab (6.75%), and use it in the calculation, correcting the customer's slab assumption. Using 6.5% without correction fails.",
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches the rate card, identifies that 36 months falls in the 3-5yr slab at 6.75% (not the 1-3yr slab at 6.5%), and uses 6.75% in the calculation. Using the customer's assumed 6.5% without correction fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,307 @@
+{
+  "case_id": "depl.agentic.fd_close_loan_linked.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details+get_fd_details+get_deposit_closure_quote+close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'close FD-7741 — the one linked to my home loan.' get_loan_details shows linked EMI account, get_fd_details shows TKFDCL7742 (the only FD). Customer got the ID wrong by one digit. Correction: close_deposit on TKFDCL7742.",
+  "setup": {
+    "persona": "44-year-old female, Fruit & Vegetable Preservers, urban Nizamabad, Telangana",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0085",
+      "full_name": "Venkataamma Nembaru",
+      "date_of_birth": "1982-05-01",
+      "gender": "female",
+      "customer_since": "2016-10-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9108",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Nizamabad",
+        "state": "Telangana",
+        "pincode": "779108",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Nizamabad",
+        "state": "Telangana",
+        "pincode": "779108",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6679X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDL9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDCL7742",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKLNW9600001",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TCFDL9600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "close_deposit",
+    "get_account_balance",
+    "get_card_details",
+    "get_deposit_closure_quote",
+    "get_deposit_loan_rates",
+    "get_fd_details",
+    "get_loan_details",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to close my FD — FD-7741 — the one connected to my home loan. Please close it and credit the proceeds to my savings."
+    },
+    {
+      "content": "Yes, close it — go ahead."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKLNW9600001",
+          "type": "home_loan",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34230,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 7,
+          "tenure_remaining": 120,
+          "status": "active",
+          "next_due_date": "2026-09-07",
+          "emi_account_id": "TKFDL9600001"
+        }
+      ],
+      "_comment": "Loan context — linked EMI account is TKFDL9600001."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDCL7742",
+          "principal_amount": 400000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-04-15",
+          "maturity_date": "2027-04-15",
+          "maturity_amount": 455056,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDL9600001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ],
+      "_comment": "Only FD exists: TKFDCL7742 — customer said 7741 (wrong)."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDCL7742",
+          "principal_amount": 400000,
+          "accrued_interest": 34667,
+          "penalty_rate": 1.0,
+          "penalty_amount": 4000,
+          "effective_rate": 5.75,
+          "estimated_payout": 430667
+        }
+      ],
+      "_comment": "16 months run, step-down to 1yr slab at 6.5%. Accrued: 400000*6.5%*16/12=₹34,667. Penalty 1%=₹4,000. Payout: ₹4,30,667."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely. ₹4,30,667 credited to TKFDL9600001.",
+        "amount_credited": 430667,
+        "payout_account": "TKFDL9600001",
+        "reference_id": "REF-CLS-96001"
+      }
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — no RDs."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNW9600001"
+          ]
+        }
+      },
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCL7742"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCL7742"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKFDCL7742"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — provides loan context to help identify the right FD."
+      },
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDCL7742"
+          ]
+        },
+        "_comment": "Must fetch FD — only TKFDCL7742 exists."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDCL7742"
+          ]
+        },
+        "_comment": "Must quote for closure."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKFDCL7742"
+        },
+        "forbidden_ids": [
+          "TKFDCL7741"
+        ],
+        "_comment": "CORRECTED deposit_id=TKFDCL7742. Customer said 7741 — the real FD is 7742."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'close my home-loan linked FD — FD-7741.' get_fd_details shows only TKFDCL7742 exists (not 7741). The customer got the ID wrong by one digit. The assistant must correct: 'You said FD-7741 but your FD is actually FD-7742 — ₹4,00,000 at 6.5%, currently earning accrued interest. The closure payout would be ₹4,30,667 after penalty.' After confirmation, calls close_deposit with TKFDCL7742. arg_gate pins deposit_id=TKFDCL7742 and forbidden_ids=['TKFDCL7741']."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant looks up the FD, identifies the wrong ID, communicates the correction with full closure details, and after confirmation calls close_deposit with TKFDCL7742. FAIL if close_deposit is called with TKFDCL7741."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

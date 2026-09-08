@@ -1,0 +1,233 @@
+{
+  "case_id": "csc.raise_request.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7 wrong AMOUNT on a dispute (the siblings covered the phantom transaction and the wrong reference digits). The customer disputes 'a Rs 2,499 ShopFast debit on 12 Aug' — the merchant and date match a real record, but the actual amount is Rs 2,549. The correction must reach the write's ARGS: related_transaction_id must be the real record's reference (UTR-88122001) and the description must carry the corrected Rs 2,549 figure — a prose-only 'your amount looks wrong' with no corrected write is the demoted pattern. The careless failure: raising the dispute with the customer's wrong amount or with no related_transaction_id.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, urban Jamnagar, Gujarat",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0392",
+      "full_name": "Revaben Patel",
+      "date_of_birth": "2006-03-01",
+      "gender": "female",
+      "customer_since": "2024-05-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9746",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Jamnagar",
+        "state": "Gujarat",
+        "pincode": "589746",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Jamnagar",
+        "state": "Gujarat",
+        "pincode": "589746",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5569X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXRR81001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXRR81002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "request_cheque_book",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "There's a Rs 2,499 debit from ShopFast on 12 Aug I never made — raise an unauthorized debit dispute for it."
+    },
+    {
+      "content": "Yes, go ahead and raise it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "The ShopFast debit on 12 Aug is real but for Rs 2,549, not Rs 2,499. Chain: 08-09 credit 85000 -> 111450; 08-10 debit 1180 -> 110270; 08-12 debit 2549 -> 107721.",
+      "records": [
+        {
+          "date": "2026-08-12T19:22:00",
+          "amount": 2549,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "UTR-88122001",
+          "transaction_note": "SHOPFAST ONLINE",
+          "status": "success",
+          "running_balance": 107721
+        },
+        {
+          "date": "2026-08-10T11:05:00",
+          "amount": 1180,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI88100",
+          "transaction_note": "BESCOM ELECTRICITY",
+          "status": "success",
+          "running_balance": 110270
+        },
+        {
+          "date": "2026-08-09T09:00:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT88090",
+          "transaction_note": "SALARY CREDIT",
+          "status": "success",
+          "running_balance": 111450
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-UD-81220",
+        "category": "unauthorized_debit",
+        "status": "open",
+        "message": "Unauthorized debit dispute logged (REQ-UD-81220) for UTR-88122001 (Rs 2,549) and flagged urgent for investigation."
+      }
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKXRR81001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "UTR-88122001",
+          "description": "Customer disputes an unauthorized Rs 2,549 debit (UTR-88122001, SHOPFAST ONLINE, 2026-08-12) they did not make.",
+          "account_id": "TKXRR81001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKXRR81001"
+        }
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "UTR-88122001"
+        },
+        "_comment": "THE GATE: the dispute must carry the real record's reference and the correction must reach the write — related_transaction_id pinned; the description should state the corrected Rs 2,549 (judge-gated, description is free text)."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer disputes a 'Rs 2,499 ShopFast debit on 12 Aug'. The transaction history shows the ShopFast debit on 12 Aug is actually Rs 2,549 (reference UTR-88122001) — the customer misremembered the amount. The assistant must locate the real transaction, surface the correction, and after confirmation raise the dispute with the REAL reference (UTR-88122001) and the corrected Rs 2,549 figure in the description. Raising the dispute with the wrong amount (or without the related_transaction_id), or correcting in prose but writing the wrong details, is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant locates the real ShopFast debit (Rs 2,549, UTR-88122001) via get_transaction_history, corrects the customer's Rs 2,499 belief, and after confirmation raises the dispute with the real reference and the corrected amount. Raising with the wrong amount or wrong/missing reference fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

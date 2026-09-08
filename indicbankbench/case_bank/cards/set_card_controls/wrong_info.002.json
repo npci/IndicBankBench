@@ -1,0 +1,258 @@
+{
+  "case_id": "cards.set_card_controls.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'my credit card got declined at a restaurant — disable the POS domestic limit on my credit card'. The declined transaction was on the DEBIT card, not the credit card. get_card_details filtered to the credit card shows no issue. A broad query (both cards) reveals the debit card has POS domestic disabled. The fix should be on the debit card's controls.",
+  "setup": {
+    "persona": "24-year-old male, Supervisor and Foreman, Sheet and Structural Metal Working, rural Vadodara, Gujarat",
+    "current_date": "2026-08-05",
+    "current_time": "20:15",
+    "login_context": {
+      "customer_id": "SCN0429",
+      "full_name": "Girish Rathod",
+      "date_of_birth": "2002-07-13",
+      "gender": "male",
+      "customer_since": "2020-03-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5974",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Vadodara",
+        "state": "Gujarat",
+        "pincode": "935974",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Vadodara",
+        "state": "Gujarat",
+        "pincode": "935974",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4091X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9461001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9461002",
+          "card_type": "credit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCFTB9461003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_transaction_history",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "My credit card got declined at a restaurant just now. Can you enable POS domestic on it? The limit should be fine — just check what's currently set."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer blames the credit card. The credit card (TKCFTB9461002) has POS domestic ENABLED with a Rs 2,00,000 daily_limit — no issue there. But the DEBIT card (TKCFTB9461003) has POS domestic DISABLED (daily_limit 0) — THAT is the card that got declined. A card_ids filter for only the credit card hides the debit card's disabled POS. Broad query reveals the actual problem.",
+      "records": [
+        {
+          "card_id": "TKCFTB9461002",
+          "masked_number": "****8765",
+          "card_type": "credit",
+          "network": "mastercard",
+          "status": "active",
+          "credit_limit": 500000,
+          "available_limit": 385000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 100000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "09/28"
+        },
+        {
+          "card_id": "TKCFTB9461003",
+          "masked_number": "****4321",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "03/27"
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-FT01"
+      },
+      "_comment": "outcome_merged so that setting POS on the debit card correctly reflects state."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFTB9461002",
+            "TKCFTB9461003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCFTB9461002",
+                "TKCFTB9461003"
+              ],
+              [
+                "TKCFTB9461003",
+                "TKCFTB9461002"
+              ],
+              [
+                "TKCFTB9461002"
+              ],
+              [
+                "TKCFTB9461003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both cards — querying only the credit card shows POS domestic enabled (no issue) and hides the debit card where POS domestic is actually disabled. The model must surface the debit card as the actual problem."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "After discovering the debit card has POS domestic disabled, setting it on the debit card is encouraged but must wait for confirmation."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer blames the credit card for the decline. The credit card has POS domestic ENABLED with Rs 2,00,000 daily_limit — not the problem. The DEBIT card has POS domestic DISABLED — that's the card that got declined. The assistant must query both cards, surface that the credit card is fine, and identify the debit card as the actual source of the decline. Reporting only credit card controls and saying everything looks fine fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both cards, confirms credit card POS is enabled, and surfaces that the DEBIT card has POS domestic disabled — the actual problem. Blaming the credit card or reporting only credit card controls fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "case_id": "csc.get_all_requests.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap (contradicting_info flavor): customer asks for 'my requests from last month' about a disputed ATM transaction. The ATM dispute (REQ-ATM-9408) was raised in JUNE, not July. A date_range for 'last month' (July) would miss the June request and return only an unrelated cheque book request. Broad query (no date filter) surfaces the ATM dispute.",
+  "setup": {
+    "persona": "27-year-old female, No Occupation / Retired / Homemaker, rural Bhilwara, Rajasthan",
+    "current_date": "2026-08-05",
+    "current_time": "11:30",
+    "login_context": {
+      "customer_id": "SCN0138",
+      "full_name": "Mahak Devi",
+      "date_of_birth": "1999-01-14",
+      "gender": "female",
+      "customer_since": "2017-09-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8780",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Bhilwara",
+        "state": "Rajasthan",
+        "pincode": "928780",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Bhilwara",
+        "state": "Rajasthan",
+        "pincode": "928780",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2363X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAR9408001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAR9408002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "I raised a request about a failed ATM withdrawal last month — can you pull up my requests from last month? I need the reference number for the dispute."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the ATM dispute (REQ-ATM-9408) was raised on 2026-06-20 — TWO months ago, not last month (which would be July). A date_range for July returns only REQ-CHQ-9409 (cheque book). Broad query returns both, revealing the actual ATM dispute is from June.",
+      "records": [
+        {
+          "request_id": "REQ-CHQ-9409",
+          "category": "cheque_book",
+          "status": "resolved",
+          "raised_date": "2026-07-10",
+          "last_updated_date": "2026-07-15",
+          "description": "50-leaf cheque book — delivered"
+        },
+        {
+          "request_id": "REQ-ATM-9408",
+          "category": "failed_transaction",
+          "status": "in_progress",
+          "raised_date": "2026-06-20",
+          "last_updated_date": "2026-07-05",
+          "description": "ATM withdrawal of Rs 10,000 debited but cash not dispensed — under investigation"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Broad query without date_range — a date_range for 'last month' (July) misses the ATM dispute (REQ-ATM-9408) that was raised in June. The model must query all requests without a date filter and correctly identify the ATM dispute despite it being raised earlier than the customer believes."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer believes they raised an ATM dispute 'last month' (July). The ATM dispute (REQ-ATM-9408, Rs 10,000, failed_transaction) was actually raised on 2026-06-20 — two months ago. The only July request is an unrelated cheque book request. The assistant must query all requests without a date filter, surface the June ATM dispute, and correct the timeline — the dispute IS on file, but it's from June, not July. Reporting only a cheque book request and claiming no ATM dispute exists fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces the ATM dispute (REQ-ATM-9408, Rs 10,000, failed_transaction, raised 2026-06-20, in_progress), correcting that it was raised in June not July, and provides the reference number. Reporting only the July cheque book request without surfacing the ATM dispute fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

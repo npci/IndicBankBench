@@ -1,0 +1,227 @@
+{
+  "case_id": "depl.get_loan_details.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer has two loans (home+personal) and says 'my loan' singular. Must ask which.",
+  "setup": {
+    "persona": "50-year-old female, No Occupation / Retired / Homemaker, urban Junagadh, Gujarat",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0115",
+      "full_name": "Bibi Patel",
+      "date_of_birth": "1976-04-16",
+      "gender": "female",
+      "customer_since": "2015-09-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7031",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "112 Nehru Street",
+        "line2": "Koregaon Park",
+        "city": "Junagadh",
+        "state": "Gujarat",
+        "pincode": "687031",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "112 Nehru Street",
+        "line2": "Koregaon Park",
+        "city": "Junagadh",
+        "state": "Gujarat",
+        "pincode": "687031",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6786X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "loan": 2,
+        "rd": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDL740700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNLED7407002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        },
+        {
+          "product_id": "TKLNLED7407003",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDL740700004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "How much do I still owe on my loan?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only. Home: 32L@8.6%/150->34885. Personal: 5L@10.5%/48->12802.",
+      "records": [
+        {
+          "loan_id": "TKLNLED7407002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKGDL740700001"
+        },
+        {
+          "loan_id": "TKLNLED7407003",
+          "type": "personal",
+          "principal": 600000,
+          "outstanding": 500000,
+          "emi_amount": 12802,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 15,
+          "tenure_remaining": 48,
+          "status": "active",
+          "next_due_date": "2026-09-15",
+          "emi_account_id": "TKGDL740700001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "_comment": "Must NOT be called: 'my loan' ambiguous."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer has two loans (home and personal) and asks how much they still owe without specifying which. The assistant must ask ONE focused question to disambiguate and must NOT call get_loan_details, guess, or fetch both."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which loan (home vs personal) rather than calling get_loan_details or guessing. Calling the tool fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

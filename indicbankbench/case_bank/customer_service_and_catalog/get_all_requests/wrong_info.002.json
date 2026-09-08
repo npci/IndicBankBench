@@ -1,0 +1,184 @@
+{
+  "case_id": "csc.get_all_requests.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap prototype: customer asks 'show me my open requests' expecting to find their disputed fee case. The mock has one open request (app issue) and one resolved request (charges dispute with the REF the customer needs). A status=open filter hides the resolved request — and the reference_id the customer wants. Broad query returns both. Weak model applies the status filter, can't find the dispute, reports nothing relevant. Strong model queries broadly and identifies the resolved dispute.",
+  "setup": {
+    "persona": "44-year-old female, No Occupation / Retired / Homemaker, rural Garhwal, Uttarakhand",
+    "current_date": "2026-06-10",
+    "current_time": "10:30",
+    "login_context": {
+      "customer_id": "SCN0323",
+      "full_name": "Godambri Devi",
+      "date_of_birth": "1982-11-26",
+      "gender": "female",
+      "customer_since": "2022-03-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9366",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Garhwal",
+        "state": "Uttarakhand",
+        "pincode": "509366",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Garhwal",
+        "state": "Uttarakhand",
+        "pincode": "509366",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1260X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRFP9282001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRFP9282002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I raised a charges dispute last month about a Rs 500 maintenance fee — it's still open, right? Show me my open requests."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the charges dispute (REQ-DIS-92821) is RESOLVED (not open), while the app issue (REQ-APP-92822) is OPEN. A status=open filter hides the resolved dispute — the very request the customer is asking about. Total count is 2 when unfiltered.",
+      "records": [
+        {
+          "request_id": "REQ-APP-92822",
+          "category": "app_issue",
+          "status": "open",
+          "raised_date": "2026-06-08",
+          "last_updated_date": "2026-06-09",
+          "description": "App crash on fund transfer screen"
+        },
+        {
+          "request_id": "REQ-DIS-92821",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-05-15",
+          "last_updated_date": "2026-05-28",
+          "description": "Disputed non-maintenance charge of Rs 500 — reversed"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — noise tool.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Broad query — a status=open filter hides the resolved charges dispute, leaving only the unrelated app issue. The model must query broadly and surface the resolved dispute as the relevant request."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer believes their Rs 500 charges dispute is still open. The truth: REQ-DIS-92821 is resolved (reversed on 2026-05-28). The only open request is an unrelated app crash issue (REQ-APP-92822). The assistant must query all requests, find the charges dispute, and correct the customer — the dispute was resolved last month and the charge was reversed. Failing to surface the resolved dispute (because a status=open filter hid it) and reporting just the app issue fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces the charges dispute (REQ-DIS-92821) as resolved/reversed on 2026-05-28, correcting the customer's belief that it's still open. Reporting only the app issue without identifying the dispute, or claiming no relevant request exists, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

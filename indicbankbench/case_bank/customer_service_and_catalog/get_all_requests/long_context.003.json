@@ -1,0 +1,259 @@
+{
+  "case_id": "csc.get_all_requests.long_context.003",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 big-list extraction with a same-category twin (the siblings covered summarize-8 and staleness). The request list holds 9 records of noise plus TWO cheque_book requests: an old one (raised 2026-01-10, resolved, delivered) and the current one (raised 2026-07-20, in progress). The live ask is 'when did I raise the cheque book request and where does it stand?' The model must pick the CURRENT one by raised_date, not the first cheque_book record it happens to read or the resolved one. The careless failure: answering from the old resolved request (its description mentions a delivery, which superficially 'answers' the question) or reporting a random date from the noise rows.",
+  "setup": {
+    "persona": "52-year-old male, Well Digger Helper, rural Tehri Garhwal, Uttarakhand",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0628",
+      "full_name": "Pratap Pargai",
+      "date_of_birth": "1974-12-05",
+      "gender": "male",
+      "customer_since": "2023-04-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7467",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "108 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Tehri Garhwal",
+        "state": "Uttarakhand",
+        "pincode": "847467",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "108 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Tehri Garhwal",
+        "state": "Uttarakhand",
+        "pincode": "847467",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7312X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXAR62001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXAR62002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_all_requests",
+    "get_request_status",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "search_knowledge_base",
+    "get_products_and_offers"
+  ],
+  "user_turns": [
+    {
+      "content": "When did I raise the cheque book request, and where does it stand now?"
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-62031",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-08-02",
+          "last_updated_date": "2026-08-10",
+          "description": "Disputed Rs 500 maintenance charge"
+        },
+        {
+          "request_id": "REQ-62032",
+          "category": "service_quality",
+          "status": "in_progress",
+          "raised_date": "2026-07-30",
+          "last_updated_date": "2026-08-12",
+          "description": "Branch wait-time complaint"
+        },
+        {
+          "request_id": "REQ-62033",
+          "category": "cheque_book",
+          "status": "in_progress",
+          "raised_date": "2026-07-20",
+          "last_updated_date": "2026-08-14",
+          "description": "50-leaf cheque book for savings account"
+        },
+        {
+          "request_id": "REQ-62034",
+          "category": "duplicate_statement",
+          "status": "resolved",
+          "raised_date": "2026-07-12",
+          "last_updated_date": "2026-07-14",
+          "description": "Statement Apr–Jun 2026"
+        },
+        {
+          "request_id": "REQ-62035",
+          "category": "app_issue",
+          "status": "resolved",
+          "raised_date": "2026-07-05",
+          "last_updated_date": "2026-07-08",
+          "description": "UPI app login error"
+        },
+        {
+          "request_id": "REQ-62036",
+          "category": "unauthorized_debit",
+          "status": "resolved",
+          "raised_date": "2026-06-18",
+          "last_updated_date": "2026-07-02",
+          "description": "Rs 2,499 debit reversal completed"
+        },
+        {
+          "request_id": "REQ-62037",
+          "category": "failed_transaction",
+          "status": "open",
+          "raised_date": "2026-06-05",
+          "last_updated_date": "2026-06-05",
+          "description": "ATM cash not dispensed"
+        },
+        {
+          "request_id": "REQ-62038",
+          "category": "cheque_book",
+          "status": "resolved",
+          "raised_date": "2026-01-10",
+          "last_updated_date": "2026-01-15",
+          "description": "25-leaf cheque book delivered"
+        },
+        {
+          "request_id": "REQ-62039",
+          "category": "service_quality",
+          "status": "resolved",
+          "raised_date": "2026-01-05",
+          "last_updated_date": "2026-01-09",
+          "description": "Old branch complaint"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "The model must inspect the list and answer from the CURRENT cheque_book request (REQ-62033, raised 2026-07-20, in progress) — not the old resolved one (REQ-62038). Extraction is judge-gated; no filter is pinned."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — fetching the current request's status detail is fine."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The request list contains two cheque_book entries: an old one (raised 2026-01-10, resolved, delivered) and the current one (REQ-62033, raised 2026-07-20, in progress, 50 leaves for the savings account). The assistant must answer about the current request: raised 20 July 2026, currently in progress, last updated 14 August. Answering from the old resolved request (delivered in January) or picking a date from an unrelated row is the careless failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant answers from the CURRENT cheque book request (raised 2026-07-20, in progress) rather than the old resolved one or an unrelated row. Reporting the January request or a wrong date fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,413 @@
+{
+  "case_id": "cards.get_card_details.long_context.003",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 big-list extraction with a STATUS-vs-DATE trap (the sibling .001 asked which card has international use; .002 was staleness). Five cards. The customer asks which card expires the SOONEST. The trap: one card (****1056, debit) has status 'expired' but its expiry date 11/28 is far away, while the Visa ****4646 expires 08/27 — the soonest by date. A model that reads the status field instead of the expiry dates names the wrong card; a model that reads expiry as 'expired card' makes the same slip. The careless failure: reporting the status-expired card or the last-expiring card.",
+  "setup": {
+    "persona": "45-year-old male, Domestic and Related Helpers, Cleaners and Launderers, rural Medak, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0671",
+      "full_name": "Otaru Krishnayya",
+      "date_of_birth": "1981-12-18",
+      "gender": "male",
+      "customer_since": "2023-12-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7463",
+      "registered_email": "o*****@gmail.com",
+      "communication_address": {
+        "line1": "24 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Medak",
+        "state": "Telangana",
+        "pincode": "377463",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "24 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Medak",
+        "state": "Telangana",
+        "pincode": "377463",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2943X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXCD63001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXCD63002",
+          "card_type": "credit",
+          "masked_number": "****4646",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCXCD63003",
+          "card_type": "debit",
+          "masked_number": "****1056",
+          "status": "expired"
+        },
+        {
+          "card_id": "TKCXCD63004",
+          "card_type": "debit",
+          "masked_number": "****7712",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCXCD63005",
+          "card_type": "credit",
+          "masked_number": "****8893",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCXCD63006",
+          "card_type": "prepaid",
+          "masked_number": "****3345",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "set_card_controls",
+    "toggle_card_freeze",
+    "block_card",
+    "request_cheque_book",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "Which of my cards expires the soonest? I want to know which one needs replacing first."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCXCD63002",
+          "masked_number": "****4646",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 500000,
+          "available_limit": 312400,
+          "expiry": "08/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCXCD63003",
+          "masked_number": "****1056",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "expired",
+          "expiry": "11/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCXCD63004",
+          "masked_number": "****7712",
+          "card_type": "debit",
+          "network": "mastercard",
+          "status": "active",
+          "expiry": "03/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCXCD63005",
+          "masked_number": "****8893",
+          "card_type": "credit",
+          "network": "amex",
+          "status": "active",
+          "credit_limit": 800000,
+          "available_limit": 651200,
+          "expiry": "12/30",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCXCD63006",
+          "masked_number": "****3345",
+          "card_type": "prepaid",
+          "network": "visa",
+          "status": "active",
+          "expiry": "06/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 10000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 15000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCXCD63002",
+            "TKCXCD63003",
+            "TKCXCD63004",
+            "TKCXCD63005",
+            "TKCXCD63006"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Extraction is judge-gated: the model must compare EXPIRY DATES, not the status field. The status-expired card (****1056, expiry 11/28) is the trap."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks which card expires soonest. Comparing the EXPIRY dates: Visa credit ****4646 expires 08/27 (soonest), prepaid ****3345 06/28, debit ****7712 03/29, Amex ****8893 12/30, and the RuPay debit ****1056 shows 11/28. The trap: the ****1056 card's STATUS is 'expired' (a lifecycle status), while its expiry date is actually far away — a model that reads the status instead of the dates answers with the wrong card. The correct answer names the Visa credit card ****4646 (expiry 08/27)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant compares expiry dates and names the Visa credit card ****4646 (expiry 08/27) as expiring soonest — not the status-expired ****1056 card and not the last-expiring Amex. Naming the wrong card fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

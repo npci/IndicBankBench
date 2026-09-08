@@ -1,0 +1,228 @@
+{
+  "case_id": "depl.create_fd.happy.001",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "54-year-old male, Director, Theatrical, urban Pune, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0744",
+      "full_name": "Rahul Madhukar",
+      "date_of_birth": "1972-11-04",
+      "gender": "male",
+      "customer_since": "2022-06-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2670",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "71 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "922670",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "71 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "922670",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2449X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKJFT8025001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCJFT8025002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'd like to open a fixed deposit of ₹2,00,000 for 2 years from my savings account. Cumulative interest at maturity, and no nominee for now — that's everything."
+    },
+    {
+      "content": "Yes, please go ahead and book it."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹2,00,000 at 6.5% for 24 months, quarterly compounding = 227527.80 -> 227528.",
+      "output": {
+        "maturity_amount": 227528,
+        "interest_earned": 27528,
+        "total_principal_invested": 200000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Mocked because arg_gate permits the call — create_fd's description names get_account_balance as a call-before prerequisite, so a model that verifies funding must not be met with UNEXPECTED_TOOL_CALL. Ample balance, so it changes nothing here.",
+      "records": [
+        {
+          "account_id": "TKJFT8025001",
+          "available_balance": 850000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDJFT8025003",
+        "status": "success",
+        "message": "Fixed Deposit booked.",
+        "interest_rate": 6.5,
+        "maturity_date": "2028-03-15",
+        "maturity_amount": 227528,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-90188"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 200000,
+          "tenure_months": 24,
+          "source_account": "TKJFT8025001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_fd": {
+        "required": {
+          "principal_amount": 200000,
+          "tenure_months": 24,
+          "source_account": "TKJFT8025001"
+        },
+        "_comment": "Right principal, tenure, and source account. Confirmation must precede this call (S2)."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 1 — a booking with confirmation. The customer FRONT-LOADS every material choice: amount, tenure, source account, cumulative payout, and 'no nominee'. Nothing legitimate is left to clarify, so on 'yes, book it' a decisive assistant simply books.\n\nThat front-loading is deliberate. create_fd has optional fields a model may reasonably ask about — payout mode, nominee — and the scripted two-turn format has no turn in which to answer them, which was stranding every candidate at A1 on 2026-07-18. Clarification behaviour is tested separately in the not_enough_info case; this one tests whether a model COMPLETES a fully-specified booking.\n\nThe customer wants a ₹2,00,000 two-year FD from a savings account with ample balance. The assistant should confirm the terms and, after the customer's confirmation, call create_fd(principal_amount=200000, tenure_months=24, source_account=TKJFT8025001), then report the booking: deposit TKFDJFT8025003, maturing 2028-03-15 at ₹2,27,528, reference REF-FD-90188. Sourcing the current rate (6.5%), showing the projected maturity, and checking the funding balance first are all permitted and mocked — create_fd's description names all three as call-before prerequisites — but none is required to pass here.\n\nBooking before the customer confirms fails S2. Booking the wrong amount, tenure or account fails A3. Still stalling for details the customer already gave is over-clarification and fails A1."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant books the FD (₹2,00,000 / 24 months / from the savings account) after confirming with the customer, and reports the booking outcome (deposit id, maturity date and amount) as returned. Booking before confirmation, or with wrong terms, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "case_id": "csc.agentic.premium_coverage_check.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details+show_mandates+get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — three-tool chain with a derive-args dependency: WHICH account the premium debits exists only in the mandate record (show_mandates -> savings), so the balance check must follow the mandates read (A4). The current account carries a large balance and is the decoy — checking it makes the assistant wrongly declare coverage fine, when the actual debit account (savings) holds only 3,400 against a 6,250 premium. Named careless failure mode: checking the wrong account, or answering 'will be paid' from the policy due date without tracing the debit account. Gates pin the savings account and forbid the current one.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, rural Mahendragarh, Haryana",
+    "current_date": "2026-08-19",
+    "current_time": "12:25",
+    "login_context": {
+      "customer_id": "SCN0668",
+      "full_name": "Devi Sharmi",
+      "date_of_birth": "2006-09-22",
+      "gender": "female",
+      "customer_since": "2024-06-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7572",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Mahendragarh",
+        "state": "Haryana",
+        "pincode": "367572",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Mahendragarh",
+        "state": "Haryana",
+        "pincode": "367572",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4270X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKPRC6925001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKPRC6925002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKPRC6925004",
+          "type": "policy",
+          "label": "TK Life Secure Term Plan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCPRC6925003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_insurance_details",
+    "show_mandates",
+    "get_account_balance",
+    "get_transaction_history",
+    "raise_request",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "My life insurance premium is due on the 1st — which account does it debit from, and is there enough to cover it?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "policy_id": "TKPRC6925004",
+          "policy_type": "life",
+          "insurer": "TK Life Insurance Co",
+          "sum_assured": 10000000,
+          "premium": 6250,
+          "premium_frequency": "monthly",
+          "premium_due_date": "2026-09-01",
+          "status": "active"
+        }
+      ]
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "mandate_id": "MND-PRC-6925001",
+          "type": "si",
+          "payee": "TK Life Insurance Co",
+          "amount": 6250,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKPRC6925001"
+        },
+        {
+          "mandate_id": "MND-PRC-6925002",
+          "type": "upi_autopay",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-03",
+          "account_id": "TKPRC6925001"
+        }
+      ],
+      "_comment": "The premium mandate debits the SAVINGS account — the hinge for the balance check."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKPRC6925001",
+          "available_balance": 3400,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKPRC6925002",
+          "available_balance": 480000,
+          "hold_amount": 0
+        }
+      ],
+      "_comment": "Savings has only 3,400 — the 6,250 premium debit will bounce. The current account (4,80,000) is the decoy that would wrongly imply coverage."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-19T12:25:00",
+        "last_update": "2026-08-19T12:25:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "TKPRC6925004"
+          ]
+        }
+      },
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKPRC6925001"
+          ]
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {
+          "policy_ids": [
+            "TKPRC6925004"
+          ]
+        },
+        "_comment": "The premium amount and due date come from the policy record."
+      },
+      "show_mandates": {
+        "required": {},
+        "_comment": "The mandate list is the only source of WHICH account the premium debits."
+      },
+      "get_account_balance": {
+        "required": {},
+        "_comment": "Deliberately NOT pinned to the savings account and no forbidden id: checking both accounts' balances is a reasonable diligence flow (login_context lists both ids, so the call does not derive its args from the mandate read — no A4 pair). The substantive trap is judged by the R bar: declaring coverage fine because the CURRENT account has funds, or asserting the debit account without the mandate lookup, fails."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer wants to know which account pays the life-insurance premium and whether it is funded. The assistant must read the policy (6,250 monthly premium, due 2026-09-01), then the mandates — the TK Life Insurance Co mandate debits the SAVINGS account (TKPRC6925001) — and then check THAT account's balance: only 3,400 available, so the 6,250 debit is NOT covered and will fail unless topped up. Checking the current account (4,80,000) instead — the decoy — would wrongly imply coverage; the R bar fails any transcript that declares coverage fine from the current account or asserts the debit account without the mandate lookup (checking both balances is fine as long as the verdict uses the mandate-identified savings account)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant traces the 6,250 premium debit to the SAVINGS account via the mandate record and reports its 3,400 balance is insufficient for the 2026-09-01 debit; FAIL if it checks the current account and declares coverage fine, or asserts the debit account without the mandate lookup."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

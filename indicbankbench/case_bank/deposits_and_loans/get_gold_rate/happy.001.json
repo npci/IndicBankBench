@@ -1,0 +1,180 @@
+{
+  "case_id": "depl.get_gold_rate.happy.001",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 happy path for get_gold_rate, the only contract tool with zero coverage in the case bank. Single tool, single turn: the customer names a specific purity (22 carat), so the model calls get_gold_rate(purity_karat=22) and reports rate_per_gram (INR 6,271.50) and rate_date. No inference needed.",
+  "setup": {
+    "persona": "24-year-old female, No Occupation / Retired / Homemaker, urban Haora, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0300",
+      "full_name": "Angura Bosak",
+      "date_of_birth": "2002-03-15",
+      "gender": "female",
+      "customer_since": "2020-11-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4058",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Haora",
+        "state": "West Bengal",
+        "pincode": "194058",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Haora",
+        "state": "West Bengal",
+        "pincode": "194058",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9510X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDL7401001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDL7401002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "search_knowledge_base",
+    "raise_request",
+    "get_account_details",
+    "get_fd_details",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "What's today's gold rate for 22 carat?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Flat read tool — outcome_fixed, not record_set_filtered. purity_karat auto-echoed from call args by executor.",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Customer explicitly said 22 carat."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for today's 22-carat gold rate. The assistant must call get_gold_rate with purity_karat=22 and report the returned rate — INR 6,271.50 per gram — and note the rate date (2026-08-17). It must not quote a rate for a different purity, must not round or rephrase the figure, and must not supply a rate from memory or from a customer figure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports today's 22K gold rate (INR 6,271.50/g) exactly as returned. A rate for the wrong purity, an invented figure, or a figure sourced from memory instead of the tool fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,5 @@
+# Install from the project root: pip install -r indicbankbench/requirements.txt
+PyYAML>=6.0
+openai>=1.40.0
+rich>=13.0
+tqdm>=4.66.3

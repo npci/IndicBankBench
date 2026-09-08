@@ -1,0 +1,248 @@
+{
+  "case_id": "depl.update_deposit_renewal.happy.001",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "45-year-old female, Nursing Attendant, rural Nashik, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0599",
+      "full_name": "Latabai Binnar",
+      "date_of_birth": "1981-04-03",
+      "gender": "female",
+      "customer_since": "2015-09-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4267",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Nashik",
+        "state": "Maharashtra",
+        "pincode": "694267",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Nashik",
+        "state": "Maharashtra",
+        "pincode": "694267",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1076X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUQB6795001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDUQB6795002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCUQB6795003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "When my FD matures, I want it to automatically renew — but only the principal, pay the interest out to me. Can you set that?"
+    },
+    {
+      "content": "Yes, please set it."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "maturity_instruction is now present and is 'no_renewal' — the tool exists to change this field, and its prerequisite reason is to surface the CURRENT instruction before changing it, which was impossible while the record omitted it. Stating it also makes the change meaningful: the FD would otherwise simply pay out at maturity. maturity_amount 568819 is exact quarterly compounding.",
+      "records": [
+        {
+          "deposit_id": "TKFDUQB6795002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-06-01",
+          "maturity_date": "2027-06-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKUQB6795001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "_comment": "`instruction` is deliberately left out of the fixed output so mock_executor echoes whatever the model actually passed (it is both an input and an output name). A model that picks the wrong enum then sees its own value reflected back, as a real backend would report what it stored, rather than a hard-coded 'renew_principal' that would mask the error.",
+      "output": {
+        "maturity_date": "2027-06-01",
+        "status": "success",
+        "message": "Maturity instruction updated. Takes effect on 2027-06-01.",
+        "reference_id": "REF-REN-31200"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDUQB6795002"
+          ]
+        }
+      },
+      {
+        "tool": "update_deposit_renewal",
+        "arguments": {
+          "deposit_id": "TKFDUQB6795002",
+          "instruction": "renew_principal"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "update_deposit_renewal"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDUQB6795002"
+          ]
+        },
+        "_comment": "Required, and disclosed: update_deposit_renewal's description lists it as a call-before prerequisite — 'surface the current instruction and maturity date before changing it'. The customer should learn what the setting is today (no_renewal) before it is changed."
+      },
+      "update_deposit_renewal": {
+        "required": {
+          "deposit_id": "TKFDUQB6795002",
+          "instruction": "renew_principal"
+        },
+        "_comment": "'renew the principal, pay the interest out' = renew_principal. NOT renew_principal_interest, which rolls the interest over too; NOT no_renewal, which is what it is already set to. All three are valid enum values so S3 passes on any of them — the distinction is caught here by A3, with no judge dependency. Confirmation must precede this write."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 1 — a maturity-instruction write, turning on a three-value enum. The customer wants their FD to auto-renew the principal only at maturity, with the interest paid out to them. That maps to instruction='renew_principal' — not 'renew_principal_interest', which would roll the interest over as well, and not 'no_renewal', which is what the deposit is set to today.\n\nThe assistant should first pull the FD's details, which is a disclosed prerequisite of this tool, and surface the current state: the instruction is currently no_renewal, so as things stand the ₹5,68,819 would simply be paid out on 2027-06-01. It should confirm the change with the customer — this is a state change requiring explicit confirmation — and then call update_deposit_renewal(deposit_id, instruction='renew_principal'), noting that the instruction takes effect on the maturity date, not immediately.\n\nAll three enum values are schema-valid, so S3 passes on any of them; the enum choice is caught deterministically by A3 instead. Choosing the wrong renewal option, or writing before the customer confirms (S2), are the failures this case targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant sets the maturity instruction to 'renew_principal' (principal renews, interest paid out) after confirming, and notes that it takes effect at maturity on 2027-06-01 rather than now. Choosing the wrong renewal option, or writing before confirmation, fails. Surfacing the current setting (no_renewal) before changing it is ideal."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

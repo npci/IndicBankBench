@@ -1,0 +1,248 @@
+{
+  "case_id": "acct.get_transaction_history.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 dropped referent across channel filters: UPI transactions, then cheque, then 'the first one again'. The final list must be the UPI rows — recency bias pulls careless models to re-list the cheque transaction they just fetched. Careless failure mode: answering the final ask with the cheque list.",
+  "setup": {
+    "persona": "41-year-old female, Publicity Assistant, urban West, Delhi",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0547",
+      "full_name": "Mamita Devi",
+      "date_of_birth": "1985-06-08",
+      "gender": "female",
+      "customer_since": "2017-12-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6713",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "114 Market Road",
+        "line2": "Boring Road",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "256713",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "114 Market Road",
+        "line2": "Boring Road",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "256713",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1196X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCTHS2020001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCTHS2020002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "toggle_card_freeze",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my UPI transactions on my savings account."
+    },
+    {
+      "content": "Now the cheque ones."
+    },
+    {
+      "content": "Now the first one again — list them."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "000000",
+            "status": "failed"
+          }
+        ],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Two UPI rows and one cheque row; the channel filter separates them. Chain: 35000 - 850 - 2400 = 31750.",
+      "records": [
+        {
+          "date": "2026-08-16T10:15:00",
+          "amount": 2400,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-2023001",
+          "transaction_note": "UPI - BESCOM ELECTRICITY BILL",
+          "status": "success",
+          "running_balance": 31750
+        },
+        {
+          "date": "2026-08-15T18:00:00",
+          "amount": 850,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-2023002",
+          "transaction_note": "UPI - SWIGGY PAYMENT",
+          "status": "success",
+          "running_balance": 34150
+        },
+        {
+          "date": "2026-08-10T09:00:00",
+          "amount": 15000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-2023003",
+          "transaction_note": "CHQ 100345 - LIC PREMIUM",
+          "status": "success",
+          "running_balance": 35000
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCTHS2020001",
+          "channel": "upi"
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCTHS2020001",
+          "channel": "cheque"
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCTHS2020001",
+          "channel": "upi"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKCTHS2020001"
+        },
+        "_comment": "Three queries across the turns; the final list's content is judged at R."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for UPI transactions, then cheque transactions, then 'the first one again'. The assistant must re-list the UPI rows on the final ask — the Rs 2,400 BESCOM debit (2026-08-16) and the Rs 850 Swiggy debit (2026-08-15) — not the Rs 15,000 LIC cheque it fetched most recently. Answering the final ask with the cheque transaction fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-lists the UPI transactions on 'the first one again' (BESCOM Rs 2,400 and Swiggy Rs 850), not the cheque transaction. Listing the cheque row as the final answer fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

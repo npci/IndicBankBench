@@ -1,0 +1,227 @@
+{
+  "case_id": "depl.create_fd.not_enough_info.005",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "clarify",
+  "_variant_note": "Implicit assumption: customer wants FD at same monthly amount as RD but doesn't disclose RD installment. Model never fetched RD — must ask or fetch first.",
+  "setup": {
+    "persona": "29-year-old female, No Occupation / Retired / Homemaker, urban Moradabad, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0638",
+      "full_name": "Leelavati Devi",
+      "date_of_birth": "1997-12-10",
+      "gender": "female",
+      "customer_since": "2023-03-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4551",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "274551",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "274551",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7339X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCFD9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDD9500002",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCFD9500003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Book an FD for the same amount I'm putting into my RD every month — but as a one-time lump sum."
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDD9500002",
+          "monthly_installment": 5000,
+          "installments_paid": 12,
+          "total_deposited": 60000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2025-08-01",
+          "next_debit_date": "2026-09-01",
+          "maturity_date": "2027-08-01",
+          "maturity_amount": 128762,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCFD9500001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD9500003",
+        "status": "failed",
+        "message": "Invalid principal amount.",
+        "reference_id": "REF-FD-00000"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDD9500002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {},
+        "_comment": "Must fetch RD first. Monthly installment Rs 5,000 doesn't directly translate to FD principal."
+      },
+      "create_fd": {
+        "required": {},
+        "_comment": "Must NOT be called. Monthly Rs 5,000 ≠ lump sum amount."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants FD for the same amount as RD monthly installment but Rs 5,000 is monthly — not a lump sum. The assistant must fetch get_rd_details and ask clarifying questions before booking. Guessing an amount fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "fetches RD, identifies Rs 5,000 monthly isnt directly FD principal, and asks for clarification. Guessing fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

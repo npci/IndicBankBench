@@ -1,0 +1,207 @@
+{
+  "case_id": "depl.update_deposit_renewal.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer says 'change my FD renewal' but has 2 FDs. Must ask which one.",
+  "setup": {
+    "persona": "36-year-old male, Village Level Worker, urban Bhopal, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0760",
+      "full_name": "Rajendra Charmakar",
+      "date_of_birth": "1990-09-27",
+      "gender": "male",
+      "customer_since": "2020-08-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2464",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "pincode": "982464",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "pincode": "982464",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1465X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUDL8300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDUDL8300002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDUDL8300003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCUDL8300004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to change my FD so the maturity amount gets reinvested with interest. Can you set that up?"
+    }
+  ],
+  "mock": {
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only.",
+      "output": {
+        "deposit_id": "TKFDUDL8300002",
+        "instruction": "renew_principal_interest",
+        "maturity_date": "2026-09-01",
+        "status": "success",
+        "message": "Maturity instruction updated.",
+        "reference_id": "REF-UDR-75350"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "update_deposit_renewal": {
+        "required": {},
+        "_comment": "Must NOT be called: ambiguous which FD."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer has two FDs and asks to change the renewal instruction to reinvest principal and interest, without specifying which FD. The assistant must ask ONE focused question to identify which FD and must NOT call update_deposit_renewal yet."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which FD rather than guessing or calling update_deposit_renewal. Calling the tool without clarifying fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

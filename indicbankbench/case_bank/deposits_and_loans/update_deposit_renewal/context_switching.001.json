@@ -1,0 +1,332 @@
+{
+  "case_id": "depl.update_deposit_renewal.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 write with a mid-thread detour: the renewal instruction (renew principal only) is set, then the customer detours to ask the maturity date, then returns to confirm. The write must carry the ORIGINAL instruction — the instruction argument is pinned, so the default no_renewal or the near-miss renew_principal_interest both fail A3. Careless failure mode: applying the wrong instruction after the detour.",
+  "setup": {
+    "persona": "42-year-old female, No Occupation / Retired / Homemaker, rural Muzaffarnagar, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0135",
+      "full_name": "Geeta Devi",
+      "date_of_birth": "1984-01-25",
+      "gender": "female",
+      "customer_since": "2012-09-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4112",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "73 MG Road",
+        "line2": "Model Town",
+        "city": "Muzaffarnagar",
+        "state": "Uttar Pradesh",
+        "pincode": "324112",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "73 MG Road",
+        "line2": "Model Town",
+        "city": "Muzaffarnagar",
+        "state": "Uttar Pradesh",
+        "pincode": "324112",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9593X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUDDC2090001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDUD2090002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCUDDC2090003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Set my FD to renew principal only."
+    },
+    {
+      "content": "Wait — what's my FD's maturity date again?"
+    },
+    {
+      "content": "Renew principal — yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "250,000 @ 6.5% / 24mo -> 284,410.",
+      "records": [
+        {
+          "deposit_id": "TKFDUD2090002",
+          "principal_amount": 250000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-01-15",
+          "maturity_date": "2027-01-15",
+          "maturity_amount": 284410,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKUDDC2090001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "amount_credited": 0,
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "_comment": "The ORIGINAL instruction survives the detour.",
+      "output": {
+        "maturity_date": "2027-01-15",
+        "status": "success",
+        "message": "Maturity instruction updated: principal will be renewed on 2027-01-15.",
+        "reference_id": "REF-UDR-20910"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDUD2090002"
+          ]
+        }
+      },
+      {
+        "tool": "update_deposit_renewal",
+        "arguments": {
+          "deposit_id": "TKFDUD2090002",
+          "instruction": "renew_principal"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDUD2090002"
+          ]
+        }
+      },
+      "update_deposit_renewal": {
+        "required": {
+          "deposit_id": "TKFDUD2090002",
+          "instruction": "renew_principal"
+        },
+        "_comment": "The original instruction must survive the detour — no_renewal or renew_principal_interest are the near-miss values."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks to set renew principal, detours to ask the maturity date (2027-01-15 on the record), then confirms. The assistant must answer the detour from the FD details and apply the ORIGINAL instruction — renew_principal — after confirmation. Applying no_renewal (the default) or renew_principal_interest (the near miss), or writing without confirmation, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the maturity-date detour from the record and then applies the ORIGINAL instruction (renew_principal) after confirmation. Applying a different instruction, or writing without confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

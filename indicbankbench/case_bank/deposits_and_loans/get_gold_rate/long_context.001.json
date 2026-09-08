@@ -1,0 +1,193 @@
+{
+  "case_id": "depl.get_gold_rate.long_context.001",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "answer",
+  "_variant_note": "Prior from 2 months ago showed Rs 5,800/g. Gold rate fluctuated to Rs 6,271.50. Must use fresh data.",
+  "setup": {
+    "persona": "36-year-old female, Teacher, Infant School Pre-Primary Education Teaching Associate Professionals, urban Hisar, Haryana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0471",
+      "full_name": "Usha Devi",
+      "date_of_birth": "1990-07-23",
+      "gender": "female",
+      "customer_since": "2018-11-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8750",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "31 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Hisar",
+        "state": "Haryana",
+        "pincode": "508750",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "31 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Hisar",
+        "state": "Haryana",
+        "pincode": "508750",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8455X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGGL9900001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGGL9900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_gold_rate",
+              "arguments": {
+                "purity_karat": 22
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"purity_karat\":22,\"rate_per_gram\":5800.00,\"rate_date\":\"2026-06-15\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The 22-carat gold rate is Rs 5,800 per gram as of June 15."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "calculate_emi",
+    "get_deposit_loan_rates",
+    "get_rd_details",
+    "get_loan_foreclosure_quote"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the current 22K gold rate? I need it for a loan application today."
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        }
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior from June showed Rs 5,800/g. Current is Rs 6,271.50. Must call get_gold_rate and report current rate. Repeating stale Rs 5,800 fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches current rate (Rs 6,271.50), NOT stale Rs 5,800. Repeating old rate fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "case_id": "csc.request_cheque_book.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 write + mid-flow detour: the customer asks to order a cheque book; the assistant should confirm; instead of answering, the customer detours to a policy question (cheque validity), which requires a knowledge-base lookup; only then does the customer say 'yes, order it'. The final 'yes' must attach to the pending cheque-book order — not muddle with the policy question. Both sub-tasks must complete cleanly: answer the cheque-validity question (grounded via search_knowledge_base) AND place the cheque-book order once confirmed. Losing the order after the detour, or answering the policy question from memory, fails.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, rural South Twenty Four Parganas, West Bengal",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0040",
+      "full_name": "Selina Samanta",
+      "date_of_birth": "2006-10-19",
+      "gender": "female",
+      "customer_since": "2024-08-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2145",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "South Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "402145",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "South Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "402145",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6285X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXNE8134001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXNE8134002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Please order a new 25-leaf cheque book for my salary account."
+    },
+    {
+      "content": "Wait — before that, how long is a cheque valid for after I write it?"
+    },
+    {
+      "content": "Got it. Ok yes, go ahead and order the cheque book."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "chunk": "A cheque is valid for three months from the date written on it, per RBI guidelines. After that, it becomes stale and will not be honoured.",
+          "source": "Cheque Handling Policy, Section 1.1"
+        }
+      ]
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CHQ-44210",
+        "status": "success",
+        "message": "25-leaf cheque book ordered for TKXNE8134001; delivery in 7-10 working days.",
+        "delivery_address": "Flat 4B, Green Meadows, MG Road, Pune, Maharashtra 411001"
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — get_products_and_offers stays A2-forbidden here (the conflict was resolved by keeping it forbidden). The mock does NOT permit the call: it is absent from gold.tool_calls and arg_gate, so A2 still fails it. It exists because the tool's description tells the model to pitch proactively in 'most conversations', so a model WILL call it here — and an unmocked permitted-looking path returns UNEXPECTED_TOOL_CALL, which the mock executor records driving candidates into retry loops to max_tool_iters. A looped case writes no score.json and vanishes from the denominator instead of failing visibly. With the mock the model fails cleanly on A2. No rates here: the tool's own description forbids quoting rates from the catalog. The mock uses the declared shape (id / title / type / description, plus valid_till on offer rows only). valid_till is deliberately absent from the three product rows: the contract says it is present only for type: offer.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        },
+        {
+          "id": "PRD-PL-2002",
+          "title": "TK Personal Loan",
+          "type": "loan",
+          "description": "Unsecured personal loan, tenure up to 60 months."
+        },
+        {
+          "id": "PRD-CC-2003",
+          "title": "TK Rewards Credit Card",
+          "type": "card",
+          "description": "Rewards on everyday spends; annual fee waiver on qualifying usage."
+        },
+        {
+          "id": "OFF-PL-3021",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to ₹10,00,000, minimal documentation. Indicative only.",
+          "valid_till": "2026-06-30"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "cheque validity period how long valid"
+        }
+      },
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKXNE8134001",
+          "leaves": 25
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {}
+      },
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKXNE8134001",
+          "leaves": 25
+        },
+        "_comment": "The final 'yes' confirms the cheque-book order proposed before the cheque-validity detour."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to order a 25-leaf cheque book, the assistant should confirm, but the customer detours to ask how long a cheque stays valid. The assistant should answer that (grounded via search_knowledge_base: three months from the date written, per RBI) and then, when the customer says 'yes, order it', attach that confirmation to the pending cheque-book order and call request_cheque_book(account_id=TKXNE8134001, leaves=25), reporting the order placed. Both must be handled without bleeding: the validity answer must be grounded (not from memory), and the cheque-book order must actually complete. Dropping the order after the detour, answering the validity question from memory, or muddling the two fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant keeps both sub-tasks clean: it answers the cheque-validity question grounded in the knowledge base (three months per RBI) AND carries the cheque-book order through the detour, placing it once the customer confirms. Dropping the order, answering the policy question from memory, or muddling the two fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

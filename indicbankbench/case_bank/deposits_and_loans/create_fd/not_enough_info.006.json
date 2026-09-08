@@ -1,0 +1,193 @@
+{
+  "case_id": "depl.create_fd.not_enough_info.006",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "clarify",
+  "_variant_note": "Implicit assumption: customer says 'book FD till my daughter admission.' Model has no date — must ask.",
+  "setup": {
+    "persona": "53-year-old female, No Occupation / Retired / Homemaker, rural Harda, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0805",
+      "full_name": "Sarita Singh",
+      "date_of_birth": "1973-03-08",
+      "gender": "female",
+      "customer_since": "2014-10-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9990",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "111 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Harda",
+        "state": "Madhya Pradesh",
+        "pincode": "879990",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "111 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Harda",
+        "state": "Madhya Pradesh",
+        "pincode": "879990",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2684X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCFD9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCFD9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Open an FD of Rs 3,00,000 from my savings account. Make it mature round the time my daughter starts college."
+    }
+  ],
+  "mock": {
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD9700003",
+        "status": "failed",
+        "message": "Invalid tenure.",
+        "reference_id": "REF-FD-00000"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "create_fd": {
+        "required": {},
+        "_comment": "Must NOT be called. Model has no basis to guess tenure from 'daughter starts college.'"
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer gives vague temporal reference instead of tenure. The assistant must ask for specific months/years rather than guessing when college starts."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks for specific date/tenure rather than inventing one from 'daughter starts college.' Guessing tenure fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

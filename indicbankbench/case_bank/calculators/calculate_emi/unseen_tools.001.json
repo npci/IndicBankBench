@@ -1,0 +1,207 @@
+{
+  "case_id": "calc.calculate_emi.unseen_tools.001",
+  "axis": "10_unseen_tools",
+  "domain": "calculators",
+  "tool": "calculate_loan_prepayment_savings",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-10 newly-available capability: a fabricated `calculate_loan_prepayment_savings` tool is supplied inline. The customer asks how much interest a part-prepayment would save on an existing loan — something the four standard calculators CANNOT express (calculate_emi computes a fresh loan's schedule but has no notion of prepaying an in-progress loan). The assistant must use the new tool with the loan details the customer provides. Two failure modes caught: (a) declining ('I can't work out prepayment savings') as if the standard calculators were all there is, and (b) mangling calculate_emi to fake it (recomputing a full EMI and eyeballing a difference), which would not answer the question.",
+  "setup": {
+    "persona": "55-year-old male, Street Vendors, Non Food Products, urban Jaunpur, Uttar Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0442",
+      "full_name": "Mahvuva Khan",
+      "date_of_birth": "1971-08-28",
+      "gender": "male",
+      "customer_since": "2019-12-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4235",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Jaunpur",
+        "state": "Uttar Pradesh",
+        "pincode": "124235",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Jaunpur",
+        "state": "Uttar Pradesh",
+        "pincode": "124235",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9884X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKEJW9428001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNEJW9428003",
+          "type": "loan",
+          "label": "TK GruhaSetu Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCEJW9428002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    {
+      "name": "calculate_loan_prepayment_savings",
+      "category": "calculators",
+      "description": "Given an in-progress loan and a one-time part-prepayment, computes the interest saved and the reduction in remaining tenure (EMI kept constant). For existing loans, not new bookings.\n\nCategory: calculators | Action type: calculator\n\nApplies the TENURE-REDUCTION model: the EMI is unchanged and the remaining term shortens. It does not model reducing the EMI over the original term.",
+      "action_type": "calculator",
+      "requires_confirmation": false,
+      "prerequisites": [],
+      "inputs": [
+        {
+          "name": "outstanding_principal",
+          "type": "number",
+          "required": true,
+          "description": "Current outstanding principal on the loan."
+        },
+        {
+          "name": "rate",
+          "type": "number",
+          "required": true,
+          "description": "Annual interest rate (%) on the loan."
+        },
+        {
+          "name": "remaining_tenure_months",
+          "type": "integer",
+          "required": true,
+          "description": "Months left on the loan."
+        },
+        {
+          "name": "prepayment_amount",
+          "type": "number",
+          "required": true,
+          "description": "One-time part-prepayment amount."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "interest_saved",
+          "type": "number",
+          "description": "Total interest saved over the remaining life of the loan."
+        },
+        {
+          "name": "months_reduced",
+          "type": "integer",
+          "description": "Reduction in remaining tenure (EMI held constant)."
+        },
+        {
+          "name": "new_remaining_tenure_months",
+          "type": "integer",
+          "description": "Remaining tenure after the prepayment."
+        }
+      ]
+    }
+  ],
+  "user_turns": [
+    {
+      "content": "I have a home loan with about ₹30,00,000 still outstanding at 9%, and 15 years left on it. If I make a one-time prepayment of ₹2,00,000 now, how much interest would that save me?"
+    }
+  ],
+  "mock": {
+    "calculate_loan_prepayment_savings": {
+      "kind": "outcome_fixed",
+      "output": {
+        "interest_saved": 505655,
+        "months_reduced": 23,
+        "new_remaining_tenure_months": 157
+      },
+      "_comment": "Tenure-reduction model, the retail default: the EMI stays ₹30,428 and the term shortens. ₹2,00,000 off ₹30,00,000 at 9% with 180 months left -> 156.8 months, i.e. 23 fewer, saving ₹5,05,655 in interest. The previous figures (14 months / ₹3,72,000) matched neither model — the saving sat near EMI-reduction while a tenure cut only exists under tenure-reduction, so the two outputs contradicted each other."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "calculate_loan_prepayment_savings",
+        "arguments": {
+          "outstanding_principal": 3000000,
+          "rate": 9,
+          "remaining_tenure_months": 180,
+          "prepayment_amount": 200000
+        }
+      }
+    ],
+    "arg_gate": {
+      "calculate_loan_prepayment_savings": {
+        "required": {
+          "outstanding_principal": 3000000,
+          "rate": 9,
+          "remaining_tenure_months": 180,
+          "prepayment_amount": 200000
+        },
+        "_comment": "The customer supplied all four inputs (30 lakh outstanding, 9%, 15 years = 180 months, ₹2 lakh prepayment). Here the rate is a property of the customer's EXISTING loan that they stated, not a fresh bank rate to source, so using their 9% is correct."
+      },
+      "_comment": "calculate_emi is exposed but does not answer this question (it prices a new loan, not a prepayment on an existing one). Bending it to fake a prepayment saving is a failure to use the right capability.",
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks how much interest a one-time ₹2,00,000 prepayment would save on an existing home loan (₹30,00,000 outstanding, 9%, 15 years / 180 months left). The standard calculators can't answer this, but a calculate_loan_prepayment_savings tool is available in this conversation and does exactly it. The assistant should call it with the customer's stated loan details and report what it returns: ₹5,05,655 in interest saved and 23 months off the tenure, leaving 157 months to run.\n\nThose figures are the tenure-reduction model, the retail default — the EMI stays ₹30,428 and the term shortens (₹2,00,000 off ₹30,00,000 at 9% with 180 months left → 156.8 months). They are derivable, not arbitrary, and they must always match the mock's `output`: this rubric previously carried ₹3,72,000 / 14 months, which matched neither model and failed every model that reported the tool correctly . If the mock ever changes, change this text with it.\n\nDeclining as though no such capability exists, or trying to approximate it by recomputing a fresh EMI, are the failures this axis targets. (The 9% here is the rate on the customer's existing loan, which they stated, so using it is correct — this is not a fresh booking that needs a sourced rate.)"
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses the newly-available calculate_loan_prepayment_savings tool and reports the figures IT RETURNED — ₹5,05,655 saved and 23 months off the tenure. The tool's output is the source of truth: any figure it did not return fails, including a plausible-looking recomputation. Declining as if no such tool exists, or bending calculate_emi to fake a prepayment saving, fails. Mentioning the new 157-month remaining tenure is good practice but is not required."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

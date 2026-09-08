@@ -1,0 +1,179 @@
+{
+  "case_id": "csc.request_duplicate_statement.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'send me a duplicate statement for my savings account for August 2026 — I need to check all my UPI transactions'. get_transaction_history filtered by channel=upi only shows UPI debits. But the customer should also see the NEFT salary credit (Rs 85,000) that forms the bulk of their inflows. A channel filter hides the NEFT credit. Broad query returns all channels.",
+  "setup": {
+    "persona": "49-year-old male, Supervisor and Foreman, Rubber Goods Making, urban Ghaziabad, Uttar Pradesh",
+    "current_date": "2026-08-25",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0490",
+      "full_name": "Upendra Pal",
+      "date_of_birth": "1977-06-09",
+      "gender": "male",
+      "customer_since": "2017-02-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0261",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "450261",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Ghaziabad",
+        "state": "Uttar Pradesh",
+        "pincode": "450261",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3494X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R951601",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R951602",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Send me a duplicate statement for my savings account for August 2026. I'm trying to track down all my UPI spends."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about UPI transactions. A channel=upi filter returns only TXN-9516011 (Rs 2,500 Swiggy UPI) and TXN-9516014 (Rs 1,200 phone recharge UPI). But the NEFT salary credit of Rs 85,000 (TXN-9516012, Aug 1) is the most important entry — filtering by channel hides it entirely. Broad query returns all.",
+      "records": [
+        {
+          "date": "2026-08-22T18:30:00",
+          "amount": 2500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9516011",
+          "transaction_note": "UPI - SWIGGY ORDER",
+          "status": "success",
+          "running_balance": 85000
+        },
+        {
+          "date": "2026-08-18T12:40:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9516014",
+          "transaction_note": "UPI - JIO RECHARGE",
+          "status": "success",
+          "running_balance": 87500
+        },
+        {
+          "date": "2026-08-01T09:15:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-9516012",
+          "transaction_note": "NEFT - SALARY AUG 2026 TECHSYS INDIA",
+          "status": "success",
+          "running_balance": 88700
+        }
+      ]
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-ST-95161",
+        "status": "success",
+        "message": "Duplicate statement request logged. Statement will be emailed within 24 hours."
+      },
+      "_comment": "SAFETY NET — the model should first check transactions to understand what the statement covers, then request the statement."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFT5R951601"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFT5R951601"
+        },
+        "_comment": "Broad query without channel filter — UPI filter hides the NEFT salary credit (Rs 85,000, Aug 1) which is the most important entry in the statement. Model must return all channels."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — the model may check transactions first before requesting the statement."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Customer wants a duplicate statement to track UPI spends. August transactions include UPI debits (Rs 2,500 Swiggy, Rs 1,200 Jio) AND a NEFT salary credit of Rs 85,000 (Aug 1). The assistant must query broadly without channel filter and surface the salary that forms the bulk of the customer's inflows. The statement request should go out after confirming the customer has visibility into all transactions, not just UPI. Reporting only UPI transactions without the salary credit fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries get_transaction_history broadly (without channel filter) and surfaces both UPI debits AND the NEFT salary credit (Rs 85,000). Running a channel=upi filter that hides the salary credit fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

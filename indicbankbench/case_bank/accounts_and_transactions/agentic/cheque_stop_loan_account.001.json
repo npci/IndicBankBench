@@ -1,0 +1,263 @@
+{
+  "case_id": "acct.agentic.cheque_stop_loan_account.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_loan_details+get_transaction_history+stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'stop cheque on my home loan account — cheque #5512.' Loan accounts can't issue cheques. get_loan_details confirms the loan account. get_transaction_history on savings reveals cheque #5512 there. Correction: stop_cheque_payment on the linked savings account.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, rural Jind, Haryana",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0128",
+      "full_name": "Dashna Kor",
+      "date_of_birth": "2008-10-20",
+      "gender": "female",
+      "customer_since": "2026-02-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9789",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Jind",
+        "state": "Haryana",
+        "pincode": "709789",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Jind",
+        "state": "Haryana",
+        "pincode": "709789",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3175X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACW9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNW9500001",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCACW9500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_card_details",
+    "get_loan_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Stop cheque number 5512 — it was issued from my home loan account. Please stop it before it clears."
+    },
+    {
+      "content": "Yes, stop it on the savings account — go ahead."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKLNW9500001",
+          "type": "home_loan",
+          "principal": 5000000,
+          "outstanding": 4200000,
+          "emi_amount": 42890,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 132,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKACW9500001"
+        }
+      ],
+      "_comment": "Home loan TK LNW9500001 — EMI debited from TKACW9500001. Loans don't issue cheques."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-22T15:30:00",
+          "amount": 150000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-5512",
+          "transaction_note": "Cheque #5512 — Interior Design Co",
+          "status": "pending",
+          "running_balance": 350000
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Cheque #5512 on savings account, not loan."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "TKACW9500001",
+        "results": [
+          {
+            "cheque_number": "5512",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop payment placed on cheque 5512.",
+        "reference_id": "REF-CHQ-95002"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNW9500001"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKACW9500001"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKACW9500001",
+          "cheque_numbers": [
+            "5512"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_loan_details",
+        "stop_cheque_payment"
+      ],
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLNW9500001"
+          ]
+        },
+        "optional": true,
+        "_comment": "Confirms loan account — but loan accounts can't issue cheques."
+      },
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKACW9500001"
+        },
+        "_comment": "Locates cheque #5512 on savings account."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKACW9500001",
+          "cheque_numbers": [
+            "5512"
+          ]
+        },
+        "_comment": "CORRECTED to savings account. Loan accounts don't issue cheques — cheque is on the linked savings account."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'stop cheque #5512 from my home loan account.' get_loan_details confirms the loan but loans don't issue cheque books. get_transaction_history on the linked savings account reveals cheque #5512 pending (₹1,50,000 to Interior Design Co). The assistant must correct: 'Home loan accounts don't issue cheques. The cheque #5512 is on your savings account TKACW9500001. I'll stop it there.' After confirmation, calls stop_cheque_payment with account_id=TKACW9500001."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches loan details and transaction history, identifies the cheque is on the savings account not the loan, communicates the account correction, and after confirmation calls stop_cheque_payment on the savings account. FAIL if the assistant tries to stop a cheque on the loan account."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

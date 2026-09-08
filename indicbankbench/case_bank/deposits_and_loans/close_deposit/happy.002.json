@@ -1,0 +1,325 @@
+{
+  "case_id": "depl.close_deposit.happy.002",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "Over-specific-vs-general record selection on a write. Two FDs: a TD Regular FD (₹5,00,000, matures in 3 weeks — bait, listed first, larger, natural-seeming choice) and a TD Flexi FD (₹2,00,000, just opened 13 days ago — correct choice). Customer says 'close my FD early'. A weak model picks the Regular FD (listed first, bigger, about to mature = obvious); a strong model reads the details, sees the Regular FD is 3 weeks from maturity and closing it would waste ₹99,216 in accrued interest plus a ₹5,000 penalty, while the Flexi FD, barely started, has minimal interest at stake — and picks the Flexi FD. Full chain: get_fd_details → get_deposit_closure_quote → present cost → confirm → close_deposit.",
+  "setup": {
+    "persona": "44-year-old male, Well Driller, Hand, rural Aurangabad, Maharashtra",
+    "current_date": "2026-08-23",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0683",
+      "full_name": "Syed Gulam",
+      "date_of_birth": "1982-12-05",
+      "gender": "male",
+      "customer_since": "2023-03-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6283",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "84 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Aurangabad",
+        "state": "Maharashtra",
+        "pincode": "746283",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "84 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Aurangabad",
+        "state": "Maharashtra",
+        "pincode": "746283",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2869X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOSC8287001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDOSC8287002",
+          "type": "fd",
+          "label": "TD Regular FD"
+        },
+        {
+          "product_id": "TKFDOSC8287003",
+          "type": "fd",
+          "label": "TD Flexi FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOSC8287004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to close my FD early. I need the cash."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two FDs. Regular FD (first, bait): started 2023-09-15, 36 months, matures 2026-09-15 (3 weeks from current_date). maturity_amount 611196 = 500000×(1+6.75/400)^(4×36/12). Flexi FD (second, correct): started 2026-08-10, 2 months, matures 2026-10-10. maturity_amount 201995 = 200000×(1+6.0/400)^(4×2/12).",
+      "records": [
+        {
+          "deposit_id": "TKFDOSC8287002",
+          "principal_amount": 500000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2023-09-15",
+          "maturity_date": "2026-09-15",
+          "maturity_amount": 611196,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "renew_principal",
+          "payout_account": "TKOSC8287001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDOSC8287003",
+          "principal_amount": 200000,
+          "interest_rate": 6.0,
+          "tenure_months": 2,
+          "start_date": "2026-08-10",
+          "maturity_date": "2026-10-10",
+          "maturity_amount": 201995,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKOSC8287001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Regular FD: 1073 days run, step-down to 3-5yr slab 6.75% (same as contracted). accrued = 500000 × 6.75% × 1073/365 = 99216. penalty 1% of principal = 5000. payout = 594216. effective_rate = ((594216/500000)^(365/1073) - 1) × 100 ≈ 6.46%. Flexi FD: 13 days, step-down to 7d-<6m slab 5.0%. accrued = 200000 × 5.0% × 13/365 = 356. penalty 1% = 2000. payout = 198356. eff_rate ≈ -23.08%.",
+      "records": [
+        {
+          "deposit_id": "TKFDOSC8287002",
+          "principal_amount": 500000,
+          "accrued_interest": 99216,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "effective_rate": 6.46,
+          "estimated_payout": 594216
+        },
+        {
+          "deposit_id": "TKFDOSC8287003",
+          "principal_amount": 200000,
+          "accrued_interest": 356,
+          "penalty_rate": 1.0,
+          "penalty_amount": 2000,
+          "effective_rate": -23.08,
+          "estimated_payout": 198356
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit TD Flexi FD closed. ₹1,98,356 credited to TKOSC8287001.",
+        "amount_credited": 198356,
+        "payout_account": "TKOSC8287001",
+        "reference_id": "REF-CLS-99210"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDOSC8287002",
+            "TKFDOSC8287003"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDOSC8287003"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKFDOSC8287003"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDOSC8287002",
+                "TKFDOSC8287003"
+              ],
+              [
+                "TKFDOSC8287003"
+              ]
+            ],
+            "_comment": "Fetching both FDs (to compare) or just the Flexi FD are acceptable. Fetching ONLY the Regular FD misses the Flexi and fails the R bar."
+          }
+        }
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDOSC8287003"
+              ],
+              [
+                "TKFDOSC8287002",
+                "TKFDOSC8287003"
+              ]
+            ],
+            "_comment": "Quoting only the Flexi FD, or both FDs to compare, are acceptable. Quoting only the Regular FD and then closing it fails the R bar."
+          }
+        }
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKFDOSC8287003"
+        },
+        "forbidden_ids": [
+          "TKFDOSC8287002"
+        ],
+        "_comment": "Must close the Flexi FD. Closing the Regular FD (3 weeks from maturity, would waste ₹99k interest) fails via forbidden_ids. Must have confirmed (S2)."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to close 'my FD' early. Two FDs exist: a TD Regular FD (₹5,00,000, 6.75%, started 2023-09-15, matures 2026-09-15 — just 3 weeks from now) listed first, and a TD Flexi FD (₹2,00,000, 6.0%, started 2026-08-10, matures 2026-10-10 — opened 13 days ago) listed second.\n\nThe bait: the Regular FD is larger and about to mature — a lazy model picks it as the one to close. But closing a 36-month FD when it is 3 weeks from maturity sacrifices ₹99,216 in accrued interest for a ₹5,000 penalty reduction of the payout. That is a terrible financial decision. The Flexi FD, opened barely two weeks ago, has only ₹356 in accrued interest at stake — closing it loses almost nothing.\n\nThe correct flow: get_fd_details (fetch both) → get_deposit_closure_quote (for the Flexi FD) → present the cost: closing today pays ₹1,98,356 (principal ₹2,00,000 + ₹356 interest − ₹2,000 penalty, against a projected maturity of ₹2,01,995 in October 2026) → wait for customer confirmation → close_deposit → report ₹1,98,356 credited to savings with reference REF-CLS-99210.\n\nThe assistant should also note that the Regular FD matures in just 3 weeks and closing it now would waste nearly all its accumulated interest — advising the customer to wait a few weeks for that one. Closing the Regular FD instead of the Flexi FD, or closing without surfacing the penalty first, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant identifies the TD Flexi FD as the correct one to close, surfaces the premature-closure cost (₹1,98,356 payout: ₹2,00,000 principal + ₹356 interest − ₹2,000 penalty) BEFORE confirmation, waits for the customer's 'yes', and then closes it, reporting ₹1,98,356 credited to TKOSC8287001 with reference REF-CLS-99210. Closing the Regular FD (TKFDOSC8287002) — which is 3 weeks from maturity and would waste ₹99,216 in accrued interest — or closing without surfacing the cost, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

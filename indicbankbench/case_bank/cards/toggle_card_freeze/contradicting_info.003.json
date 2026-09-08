@@ -1,0 +1,289 @@
+{
+  "case_id": "cards.toggle_card_freeze.contradicting_info.003",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'I lost my debit card — freeze it immediately.' Customer's login_context shows both debit and credit cards. The debit card is active. But the CREDIT card was just used at 3 unusual locations in the last hour (suspicious activity). The customer mistakenly thinks the debit card is lost; the real risk is the credit card being used fraudulently. A model that blindly freezes only the debit card misses the credit card compromise.",
+  "setup": {
+    "persona": "28-year-old male, Clerk, General, urban Rangareddy, Telangana",
+    "current_date": "2026-09-14",
+    "current_time": "22:00",
+    "login_context": {
+      "customer_id": "SCN0477",
+      "full_name": "Jamal Khan",
+      "date_of_birth": "1998-05-08",
+      "gender": "male",
+      "customer_since": "2016-06-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0952",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Rangareddy",
+        "state": "Telangana",
+        "pincode": "640952",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Rangareddy",
+        "state": "Telangana",
+        "pincode": "640952",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5600X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9511001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9511002",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCFTB9511003",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "toggle_card_freeze",
+    "get_card_details",
+    "block_card",
+    "get_transaction_history",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I lost my debit card — freeze it immediately before someone uses it."
+    },
+    {
+      "content": "Ok, go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "CONTEXT TRAP: the customer thinks they lost their debit card. But the credit card shows 3 unusual POS transactions in the last hour — the actual fraud risk is on the credit card. A model that freezes only the debit card (as asked) misses the real compromise. The correct move is to flag the suspicious credit card activity too.",
+      "records": [
+        {
+          "card_id": "TKCFTB9511002",
+          "masked_number": "****1123",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 30000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 30000
+              }
+            }
+          },
+          "expiry": "03/28"
+        },
+        {
+          "card_id": "TKCFTB9511003",
+          "masked_number": "****7890",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 250000,
+          "available_limit": 182000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 250000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 100000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 250000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 100000
+              }
+            }
+          },
+          "expiry": "09/27"
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "status"
+      },
+      "output": {
+        "card_id": "TKCFTB9511002",
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Card frozen successfully.",
+        "reference_id": "REF-TGL-95101"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFTB9511002",
+            "TKCFTB9511003"
+          ]
+        }
+      },
+      {
+        "tool": "toggle_card_freeze",
+        "arguments": {
+          "card_id": "TKCFTB9511002",
+          "state": "freeze"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCFTB9511002",
+                "TKCFTB9511003"
+              ],
+              [
+                "TKCFTB9511003",
+                "TKCFTB9511002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must query both cards — looking only at debit hides the suspicious credit card activity."
+      },
+      "toggle_card_freeze": {
+        "required": {
+          "card_id": "TKCFTB9511002",
+          "state": "freeze"
+        },
+        "_comment": "Freezing the debit card is correct — the customer explicitly requests it. But the assistant must ALSO flag the credit card's unusual activity."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "block_card": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer believes they lost their debit card and asks to freeze it. The debit card is active with normal controls. The credit card, however, shows 3 suspicious recent POS transactions and has Rs 1,82,000 available credit remaining — the real fraud risk is on the credit card, not the debit card. The assistant should freeze the debit card as requested but also query both cards' details, identify the credit card compromise, and advise the customer that the credit card is the one at risk. Simply freezing the debit card without flagging the credit card activity fails.",
+    "dependencies": [
+      [
+        "get_card_details",
+        "toggle_card_freeze"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "freezes the debit card as requested AND queries both cards, flags the credit card's suspicious activity as the actual risk, and advises the customer to take action on the credit card. Freezing only the debit card without surfacing the credit card compromise fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

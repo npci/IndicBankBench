@@ -1,0 +1,240 @@
+{
+  "case_id": "acct.get_account_details.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 multi-thread across two tools: account details for savings, a balance detour on the current account, then a return to 'which branch was the savings account at'. The final answer must come from the details lookup (MG Road), not the balance detour's data. The balance call is also pinned to the CURRENT account — crossing accounts is the bleed this case tests. Careless failure mode: answering the final branch question with the detour's balance figures, or querying the savings balance instead of the current one.",
+  "setup": {
+    "persona": "29-year-old female, No Occupation / Retired / Homemaker, urban West, Delhi",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0188",
+      "full_name": "Vandana Sidhu",
+      "date_of_birth": "1997-03-03",
+      "gender": "female",
+      "customer_since": "2015-06-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9626",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "739626",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "739626",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6983X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCADT2010001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKCADT2010002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCADT2010003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "toggle_card_freeze",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the branch and IFSC of my savings account?"
+    },
+    {
+      "content": "Oh, and what's the balance on my current account?"
+    },
+    {
+      "content": "Back to the savings account — which branch was it again?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "000000",
+            "status": "failed"
+          }
+        ],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKCADT2010002",
+          "available_balance": 118420,
+          "hold_amount": 5000
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKCADT2010001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Vandana Sidhu",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-15"
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKCADT2010001"
+          ]
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKCADT2010002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKCADT2010001"
+          ]
+        }
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKCADT2010002"
+          ]
+        },
+        "_comment": "Must query the CURRENT account on the detour — crossing to savings is the bleed."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for the savings account's branch and IFSC, detours to the current account's balance, then returns to the savings branch question. The assistant must answer the final ask from the details lookup — MG Road branch, IFSC TKBK0001234 — and report the current account balance (Rs 1,18,420, Rs 5,000 on hold) on the detour without mixing the two threads. Answering the final branch question with balance data, or querying the wrong account on the detour, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "keeps the two threads separate: current-account balance on the detour, and the final branch answer comes from the savings details lookup (MG Road). Mixing the threads, or querying the wrong account, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

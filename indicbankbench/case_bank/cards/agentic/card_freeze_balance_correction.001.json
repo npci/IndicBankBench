@@ -1,0 +1,340 @@
+{
+  "case_id": "cards.agentic.card_freeze_balance_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_account_balance+get_card_details+toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'freeze all my cards — I just got charged ₹25,000 I didn't approve.' get_account_balance shows only one account had a ₹25,000 debit; get_card_details reveals only one card linked to that account. Correction: freeze only the specific card, not both cards. arg_gate pins the correct card_id.",
+  "setup": {
+    "persona": "50-year-old female, No Occupation / Retired / Homemaker, rural Purnia, Bihar",
+    "current_date": "2026-08-24",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0463",
+      "full_name": "Bibi Begam",
+      "date_of_birth": "1976-07-07",
+      "gender": "female",
+      "customer_since": "2018-06-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1598",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "79 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Purnia",
+        "state": "Bihar",
+        "pincode": "741598",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "79 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Purnia",
+        "state": "Bihar",
+        "pincode": "741598",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4981X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCFB9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCFB9700002",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCCFB9700003",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Freeze my cards — I just saw a ₹25,000 unauthorized transaction on my statement. Freeze everything right now."
+    },
+    {
+      "content": "Yes, freeze the debit card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "TKCFB9700001 has ₹2,75,000 — this is the savings account the debit card draws from. The ₹25,000 charge went through the debit card (savings account).",
+      "records": [
+        {
+          "account_id": "TKCFB9700001",
+          "available_balance": 275000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCFB9700002",
+          "masked_number": "****7702",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCCFB9700003",
+          "masked_number": "****9003",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 180000,
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 15000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 8000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCCFB9700002",
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Card frozen. All channels blocked until unfrozen.",
+        "reference_id": "REF-FRZ-97001"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKCFB9700001"
+          ]
+        }
+      },
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCFB9700002",
+            "TKCCFB9700003"
+          ]
+        }
+      },
+      {
+        "tool": "toggle_card_freeze",
+        "arguments": {
+          "card_id": "TKCCFB9700002",
+          "state": "freeze"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_account_balance",
+        "toggle_card_freeze"
+      ],
+      [
+        "get_card_details",
+        "toggle_card_freeze"
+      ]
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKCFB9700001"
+          ]
+        },
+        "_comment": "Must check balance — reveals the ₹25,000 debit came from the savings account (debit card)."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCCFB9700002",
+                "TKCCFB9700003"
+              ],
+              [
+                "TKCCFB9700002"
+              ],
+              [
+                "TKCCFB9700003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Fetch both card details — reveals debit card (TKCCFB9700002) for savings account and credit card (TKCCFB9700003)."
+      },
+      "toggle_card_freeze": {
+        "required": {
+          "card_id": "TKCCFB9700002",
+          "state": "freeze"
+        },
+        "forbidden_ids": [
+          "TKCCFB9700003"
+        ],
+        "_comment": "CORRECTED to freeze only the debit card TKCCFB9700002. Customer said 'freeze everything' but the ₹25K charge is on the debit card. Credit card shows no suspicious activity (available_limit=180K out of 200K). Correction: freeze debit card only."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'freeze my cards — I saw a ₹25,000 unauthorized transaction. Freeze everything.' The assistant checks account balance and card details. Only the savings account (TKCFB9700001) has a debit, and only the debit card (TKCCFB9700002) is linked to it. The credit card (TKCCFB9700003) shows no suspicious activity. The assistant must correct: 'The ₹25,000 charge appears to be from your debit card linked to your savings account. Your credit card shows normal activity. I'll freeze just the debit card — freezing both isn't necessary unless you want me to.' After confirmation, freezes only the debit card. A weak model freezes both or freezes the wrong card."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant checks balance and card details, identifies the debit card as the source of the charge, recommends freezing only the relevant card, and after confirmation freezes TKCCFB9700002. FAIL if the assistant freezes the credit card unnecessarily or freezes no card at all."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

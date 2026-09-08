@@ -1,0 +1,179 @@
+{
+  "case_id": "acct.stop_cheque_payment.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "Prior already stopped cheque 100234. Customer asks to stop again (forgot). Model must note it's already stopped, not stop again.",
+  "setup": {
+    "persona": "40-year-old female, Cultivator, General, rural Alwar, Rajasthan",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0742",
+      "full_name": "Neelam Kanwar",
+      "date_of_birth": "1986-02-12",
+      "gender": "female",
+      "customer_since": "2013-05-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2613",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Alwar",
+        "state": "Rajasthan",
+        "pincode": "172613",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Alwar",
+        "state": "Rajasthan",
+        "pincode": "172613",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5361X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCP9900001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSCP9900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "stop_cheque_payment",
+              "arguments": {
+                "account_id": "TKSCP9900001",
+                "cheque_numbers": [
+                  "100234"
+                ],
+                "reason": "lost"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"results\":[{\"cheque_number\":\"100234\",\"status\":\"stopped\"}],\"status\":\"success\",\"message\":\"Stop-payment instruction placed on 1 cheque.\",\"reference_id\":\"REF-SCP-70115\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Done — cheque 100234 has been stopped. Reference REF-SCP-70115."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "calculate_emi",
+    "get_products_and_offers"
+  ],
+  "user_turns": [
+    {
+      "content": "I lost cheque 100234 — please stop it."
+    },
+    {
+      "content": "Oh, you already did that? Yes, go ahead and confirm nothing needs to be done."
+    }
+  ],
+  "mock": {
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "Cheque already stopped — idempotent response.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "100234",
+            "status": "already_stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Cheque 100234 is already under a stop-payment instruction from REF-SCP-70115. No new action was taken.",
+        "reference_id": "REF-SCP-70115"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "stop_cheque_payment": {
+        "required": {},
+        "_comment": "Must NOT be called: cheque is already stopped per prior context. Calling again is a no-op."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior conversation already stopped cheque 100234. The customer forgot and asks to stop it again. The assistant should note it's already stopped (REF-SCP-70115) and that no new action is needed. Calling stop_cheque_payment again for an already-stopped cheque fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reminds customer that cheque 100234 was already stopped (REF-SCP-70115) and does NOT call stop_cheque_payment again. Calling the tool for an already-stopped cheque fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

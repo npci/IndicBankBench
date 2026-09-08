@@ -1,0 +1,196 @@
+{
+  "case_id": "acct.get_transaction_history.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 plain distractor: earlier in the conversation the customer raised personal-loan rates and the 10.5% figure is sitting in context. The customer now asks about last week's spending. The assistant must answer from the transaction data and must NOT let the unrelated loan content — especially the 10.5% figure — bleed into the answer. Note the number is stated by the CUSTOMER, not the assistant: CONVENTIONS.md §8 forbids a fixture assistant turn from asserting a tool-sourced fact, because it models for the candidate the exact behaviour the base prompt bans. §8's remedy — write the lookup into the fixture — is unavailable here, since get_deposit_loan_rates is not in the accounts tool set and a prior call to a tool the model cannot see would be worse than the problem. Putting the figure in the customer's mouth keeps the poison number in context, which the axis needs, while the fixture assistant asserts nothing and correctly says it cannot pull rates from here.",
+  "setup": {
+    "persona": "25-year-old male, Shop Assistant, urban Bangalore, Karnataka",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0018",
+      "full_name": "Sitaram Patil",
+      "date_of_birth": "2001-10-13",
+      "gender": "male",
+      "customer_since": "2021-09-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1753",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "34 College Road",
+        "line2": "T Nagar",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "661753",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "34 College Road",
+        "line2": "T Nagar",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "661753",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0329X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFBS5970001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFBS5970002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFBS5970003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "A colleague told me your personal loans start at around 10.5% a year. Do you have anything running at the moment?"
+      },
+      {
+        "role": "assistant",
+        "content": "Personal loan pricing depends on tenure and eligibility, and I'd need the current rate card to confirm any figure — that isn't something I can pull up here. The loans team or the app will have the live rates."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_deposit_loan_rates",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "Anyway, how much did I spend from my salary account last week?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-03-13T08:55:00",
+          "amount": 800,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-5512884",
+          "transaction_note": "POS PURCHASE - INDIAN OIL FUEL STN",
+          "status": "success",
+          "running_balance": 63410
+        },
+        {
+          "date": "2026-03-11T20:03:00",
+          "amount": 3499,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-5509127",
+          "transaction_note": "POS PURCHASE - CROMA ELECTRONICS",
+          "status": "success",
+          "running_balance": 64210
+        },
+        {
+          "date": "2026-03-10T11:26:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-5506443",
+          "transaction_note": "POS PURCHASE - RELIANCE FRESH",
+          "status": "success",
+          "running_balance": 67709
+        }
+      ],
+      "_comment": "Migrated to the CONVENTIONS.md §13 record shape: `description` renamed to `transaction_note` with rail-style narration, the invented `account_id` dropped, and `channel` / `reference_id` / `status` / `running_balance` added. Balances chain newest-first; reference ids are a per-case series so no two cases share one. Three debits totalling Rs 5,499 — the figure the gate expects."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFBS5970001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFBS5970001"
+        },
+        "forbidden_ids": [
+          "TKFBS5970002"
+        ],
+        "_comment": "Resolve 'salary account' to TKFBS5970001 and report the week's debits."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks how much they spent from the salary account last week. The assistant resolves 'salary account' to TKFBS5970001, calls get_transaction_history, and reports the spending (the three debits total ₹5,499) grounded in the returned data. The earlier personal-loan exchange is irrelevant to this question: the assistant must NOT mention loan offers, loan rates, or the 10.5% figure in this answer. Letting the unrelated loan content bleed into the spending answer is a failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the last-week spending question from the transaction data (grounded, e.g. the ₹5,499 total or the itemised debits); does NOT mention personal-loan offers/rates or leak the 10.5% figure from the earlier unrelated exchange."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "case_id": "cards.toggle_card_freeze.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 write + mid-flow detour: the customer asks to freeze the card, the assistant asks to confirm, and instead of answering the customer asks an unrelated question (the credit limit). Only AFTER that does the customer say 'yes'. The 'yes' must be understood as confirming the freeze — the sub-tasks must not bleed. The trap is a confirmation that drifts across the detour: answering the limit question and then treating the 'yes' as consent for something else, or losing the freeze entirely.",
+  "setup": {
+    "persona": "31-year-old female, Teacher, Handicapped Children, urban Bhopal, Madhya Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0441",
+      "full_name": "Shobha Bai",
+      "date_of_birth": "1995-10-06",
+      "gender": "female",
+      "customer_since": "2021-01-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2309",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "pincode": "862309",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "pincode": "862309",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9115X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAMEJA001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCAMEJA3225",
+          "card_type": "credit",
+          "masked_number": "****3225",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "calculate_fd_maturity",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I've misplaced my credit card somewhere in the house — freeze it for now, I'll find it this evening."
+    },
+    {
+      "content": "Hang on — before that, how much credit is left on it?"
+    },
+    {
+      "content": "Ok yes, go ahead with what you asked."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCAMEJA3225",
+          "masked_number": "****3225",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Card frozen. You can unfreeze it at any time.",
+        "reference_id": "REF-FRZ-77133"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCAMEJA3225"
+          ]
+        }
+      },
+      {
+        "tool": "toggle_card_freeze",
+        "arguments": {
+          "card_id": "TKCAMEJA3225",
+          "state": "freeze"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {}
+      },
+      "toggle_card_freeze": {
+        "required": {
+          "card_id": "TKCAMEJA3225",
+          "state": "freeze"
+        },
+        "_comment": "The card is misplaced but findable this evening -> freeze, never block. The final 'yes' confirms the freeze that was proposed before the detour."
+      },
+      "_comment": "block_card is exposed but must not be called — a card misplaced in the house does not warrant a permanent block. Calling it fails A2.",
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks to freeze a misplaced card, the assistant should confirm, but the customer detours to ask the available credit limit before answering. The assistant should answer the limit question (₹1,43,500 available of a ₹2,00,000 limit) and then, once the customer says 'yes, go ahead with what you asked', correctly attach that consent to the pending freeze and call toggle_card_freeze(card_id=TKCAMEJA3225, state='freeze'). Both sub-tasks must be handled without bleeding: the limit answer must be correct, and the freeze must actually happen and be reported. Losing the freeze after the detour, blocking instead of freezing, or treating the 'yes' as consent to something else are failures."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant keeps both sub-tasks separate and complete: it answers the credit-limit question correctly (₹1,43,500 available) AND carries the pending freeze through the detour, freezing the card once the customer confirms. Dropping the freeze, blocking instead, or muddling the two requests fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

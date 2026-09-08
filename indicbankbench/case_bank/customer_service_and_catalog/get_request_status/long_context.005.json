@@ -1,0 +1,195 @@
+{
+  "case_id": "csc.get_request_status.long_context.005",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior status check showed raise_request REQ-RSE-9900001 as 'in_progress'. Since then the dispute was investigated and resolved. Customer asks for an update — model must re-fetch live to discover 'resolved' status.",
+  "setup": {
+    "persona": "33-year-old male, Telemarketing Sales Person, urban North West, Delhi",
+    "current_date": "2026-09-28",
+    "current_time": "15:20",
+    "login_context": {
+      "customer_id": "SCN0771",
+      "full_name": "Romar Yadav",
+      "date_of_birth": "1993-02-05",
+      "gender": "male",
+      "customer_since": "2013-01-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8593",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "138593",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "138593",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0637X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGRS9900001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGRS9900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's the status of my dispute REQ-RSE-9900001?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "s1",
+            "type": "function",
+            "function": {
+              "name": "get_request_status",
+              "arguments": {
+                "request_id": "REQ-RSE-9900001"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "s1",
+        "content": "{\"request_id\":\"REQ-RSE-9900001\",\"status\":\"in_progress\",\"raised_date\":\"2026-09-20\",\"last_update\":\"2026-09-22\",\"remarks\":\"Transaction under investigation. Provisional credit of Rs 4,500 issued.\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your dispute REQ-RSE-9900001 is in progress — the transaction is under investigation and a provisional credit of Rs 4,500 has been issued."
+      },
+      {
+        "role": "user",
+        "content": "Alright, I'll wait for the investigation to finish."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_request_status",
+    "get_all_requests",
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Any update on my dispute REQ-RSE-9900001? Has it been resolved yet?"
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Investigation completed — dispute resolved in customer's favour. Prior showed in_progress.",
+      "output": {
+        "request_id": "REQ-RSE-9900001",
+        "status": "resolved",
+        "raised_date": "2026-09-20",
+        "last_update": "2026-09-26",
+        "remarks": "Investigation completed. Amount of Rs 4,500 confirmed as unauthorised. Permanent credit issued."
+      }
+    },
+    "get_all_requests": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_products_and_offers": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-RSE-00000",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-RSE-9900001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-RSE-9900001"
+        },
+        "_comment": "Must re-fetch live. Prior showed in_progress but dispute is now resolved."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The prior conversation showed the dispute as in_progress. Since then the investigation completed — the status is now resolved with permanent credit. The assistant must re-fetch get_request_status live and report the resolved status. Saying it's still in progress based on stale prior data fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches request status live and reports resolved (not in_progress). Using stale in_progress status fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

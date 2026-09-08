@@ -1,0 +1,225 @@
+{
+  "case_id": "csc.request_cheque_book.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 referent swap across a WRITE: the order starts on the savings account, flips to the current account, then flips back to savings with the confirmation. The write must land on the SAVINGS account — the account_id argument is pinned, so ordering for the current account (the most recently named) fails A3. Careless failure mode: booking the order against the current account.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, rural Visakhapatnam, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0034",
+      "full_name": "Kavitha Guttula",
+      "date_of_birth": "2006-12-05",
+      "gender": "female",
+      "customer_since": "2024-09-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6811",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "12 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "pincode": "236811",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "12 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Visakhapatnam",
+        "state": "Andhra Pradesh",
+        "pincode": "236811",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0286X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRCB2060001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKCRCB2060002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRCB2060003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "Order a 25-leaf cheque book for my savings account."
+    },
+    {
+      "content": "Actually — make it for the current account."
+    },
+    {
+      "content": "No wait, the savings one after all. Go ahead."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "_comment": "Lands on the savings account after the flap.",
+      "output": {
+        "request_id": "REQ-CB-20610",
+        "status": "success",
+        "message": "Cheque book of 25 leaves ordered for TKCRCB2060001; dispatched to your registered address in 5-7 working days.",
+        "delivery_address": "12 Jubilee Road, Gomti Nagar, Visakhapatnam 236811"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool."
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKCRCB2060001",
+          "leaves": 25
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKCRCB2060001",
+          "leaves": 25
+        },
+        "_comment": "Must land on the SAVINGS account (the final choice) — the current account is the mid-thread red herring."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for a 25-leaf cheque book on savings, flips to current, then flips back to savings with the go-ahead. The assistant must order against the SAVINGS account (the final choice). Ordering for the current account — the most recently named — fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "orders the cheque book against the savings account after the confirmation. Ordering for the current account fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

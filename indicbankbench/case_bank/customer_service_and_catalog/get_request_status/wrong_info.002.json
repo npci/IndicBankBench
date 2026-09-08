@@ -1,0 +1,166 @@
+{
+  "case_id": "csc.get_request_status.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap (contradicting_info flavor): customer asks to check status on 'my open complaint REQ-CM-9406'. The complaint REQ-CM-9406 exists but is RESOLVED (not open). The customer thinks it's still open. A model that queries get_all_requests with status=open would miss the resolved request entirely. The model must query get_request_status by ID directly (or get_all_requests broadly) and surface that the complaint IS resolved, correcting both the status and the customer's understanding.",
+  "setup": {
+    "persona": "30-year-old male, Blood Donor Unit Assistant, rural Amritsar, Punjab",
+    "current_date": "2026-08-20",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0482",
+      "full_name": "Sukhwinder Singh",
+      "date_of_birth": "1996-07-25",
+      "gender": "male",
+      "customer_since": "2018-09-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0086",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "7 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "pincode": "320086",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "7 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Amritsar",
+        "state": "Punjab",
+        "pincode": "320086",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2161X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQS9406001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQS9406002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you check the status of my open complaint REQ-CM-9406? I raised it for a branch service issue — it should still be open."
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "REQ-CM-9406 exists but is RESOLVED. The customer believes it's open. The model must report the actual status.",
+      "output": {
+        "request_id": "REQ-CM-9406",
+        "status": "resolved",
+        "raised_date": "2026-08-05",
+        "last_update": "2026-08-18",
+        "remarks": "Resolved — branch manager contacted customer with apology; Rs 500 service credit applied."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP (alternate path): if the model uses get_all_requests with status=open to verify, it misses REQ-CM-9406 which is resolved. The other open request is unrelated. Broad query (no status filter) returns all three.",
+      "records": [
+        {
+          "request_id": "REQ-CM-9406",
+          "category": "service_quality",
+          "status": "resolved",
+          "raised_date": "2026-08-05",
+          "last_updated_date": "2026-08-18",
+          "description": "Branch service issue — rude staff behaviour"
+        },
+        {
+          "request_id": "REQ-CHQ-9407",
+          "category": "cheque_book",
+          "status": "open",
+          "raised_date": "2026-08-15",
+          "last_updated_date": "2026-08-15",
+          "description": "Request for 50-leaf cheque book"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-CM-9406"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-CM-9406"
+        },
+        "_comment": "The customer gave a specific request_id — query it directly. The status is resolved, contradicting the customer's belief that it's open. If get_all_requests is used instead, it must not filter by status=open, which would hide the resolved complaint."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — calling get_all_requests broadly is also valid to verify. If used, must not filter by status=open."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer believes complaint REQ-CM-9406 is still open. It is actually resolved (resolved on 2026-08-18, branch manager apologised, Rs 500 service credit applied). The assistant must query REQ-CM-9406 and report the actual status — RESOLVED — correcting the customer. Claiming it is open, or failing to surface the resolved details, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries REQ-CM-9406 (directly or via broad get_all_requests) and reports that the complaint is RESOLVED on 2026-08-18 with a service credit, correcting the customer's belief that it is still open. Claiming the complaint is open, or not surfacing the resolved status, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

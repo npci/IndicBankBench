@@ -1,0 +1,216 @@
+{
+  "case_id": "calc.calculate_rd_maturity.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-4 gather-then-complete, and the cleanest conversion in the set: BOTH withheld facts are in calculate_rd_maturity's `parameters.required` (monthly_installment, tenure_months), so no argument is needed about whether asking for them is legitimate. The third required field, `rate`, is deliberately NOT withheld — it is not the customer's to give, it must be sourced from get_deposit_loan_rates per the domain's rate-sourcing rule.\n\nTurn 1 asks what the RD will be worth while giving neither the installment nor the tenure; the assistant must ask rather than assume figures. Turn 2 supplies both, and the maturity must then actually be computed and reported. Before this conversion the case ended at the question, so it could not distinguish a model that asks well and then computes correctly from one that asks and then flounders.\n\nNO confirmation turn, and S2 stays OFF: calculators expose no write tool (CONVENTIONS §7a), so there is nothing to consent to. The three-turn request→supply→confirm shape applies only to the four conversions that end in a write.\n\nINFORMATION ARRIVES ONE FIELD AT A TIME, which is the point of the axis. An earlier draft had turn 2 hand over the installment AND the tenure together; that made the case a single round trip and tested far less than the name 'not enough information in one go' promises. Now turn 2 gives the installment and turn 3 gives the tenure, so the assistant has to run TWO clarifications and hold the first answer across the second.\n\nORDER-INDEPENDENT BY CONSTRUCTION (CONVENTIONS §14). Each supplying turn names exactly one self-identifying value — '₹5,000 a month' can only be the installment, 'Two years' can only be the tenure — so the pair resolves whichever order the assistant asks in. If it asks the tenure first and gets the installment, it simply asks again and turn 3 answers. No turn depends on having been asked a particular question, and nothing is repeated.\n\n'RD' is said in turn 1 so product_type='rd' is stated rather than inferred, keeping the case out of EnumValueIsObtainable's INFERENCE_BY_DESIGN registry — the inference is already tested by calculate_rd_maturity/confusing_intent.001 and duplicating it here would only add stall risk.",
+  "setup": {
+    "persona": "21-year-old female, No Occupation / Retired / Homemaker, rural Madhubani, Bihar",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0246",
+      "full_name": "Seema Prakash",
+      "date_of_birth": "2005-05-08",
+      "gender": "female",
+      "customer_since": "2023-01-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0152",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Madhubani",
+        "state": "Bihar",
+        "pincode": "870152",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Madhubani",
+        "state": "Bihar",
+        "pincode": "870152",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8515X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKABG6147001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDABG6147003",
+          "type": "rd",
+          "label": "TK SmartRD Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCABG6147002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "toggle_card_freeze",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "What will my RD be worth when it matures?"
+    },
+    {
+      "content": "₹5,000 a month."
+    },
+    {
+      "content": "Two years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "The full RD card per CONVENTIONS §3 (RD = FD + 25bp). 24 months falls in '1 year to < 3 years' = 6.75. The 3-5 year slab is present so that selecting the covering slab is a real step rather than a single-option handout.",
+      "output": {
+        "product_type": "rd",
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          },
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹5,000/month for 24 months at 6.75%, quarterly compounding per CONVENTIONS §2: M = Σ(k=0..23) 5000 x (1 + 6.75/400)^(4 x (24-k)/12) = 128761.64 -> 128762. Principal 120000, interest 8762.",
+      "output": {
+        "maturity_amount": 128762,
+        "interest_earned": 8762,
+        "total_principal_invested": 120000
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd"
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "product_type must be 'rd' — fetching the FD card would price the deposit 25bp low. tenure_months is an OPTIONAL filter and is deliberately not pinned: passing 24 to narrow the card and omitting it to take the whole card are both correct, and per the policy it must not be asked for."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        },
+        "_comment": "All three pinned. monthly_installment and tenure_months come from the customer's turn 2 — passing anything else means the assistant invented or misread them. rate must be 6.75, the slab covering 24 months; 7.0 means it took the wrong slab, and any other value means it assumed a rate instead of sourcing one, which the domain's rate-sourcing rule forbids."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 4 where the clarification RESOLVES, on a compute rather than a write. The customer asks what their recurring deposit will be worth at maturity but supplies neither of the two facts only they can give: the monthly installment and the tenure. Both are in calculate_rd_maturity's required set, and neither is inferable from the profile — linked_products names the RD but carries no installment or term. So the assistant must ask.\n\nIt must not compute in the meantime. Assuming a plausible ₹5,000-for-a-year and presenting a confident maturity is the failure the axis targets, and it is worse here than an ordinary wrong answer because the figure looks authoritative.\n\nTurn 2 supplies the installment, ₹5,000 a month; the tenure is still missing, so it must ask again rather than assume one. Turn 3 supplies it: two years. The assistant must now finish the job — source the RD rate with get_deposit_loan_rates (the sole authoritative source; assuming a rate is forbidden), take the slab covering 24 months (1 year to < 3 years = 6.75%, NOT the 7.0% three-year slab), call calculate_rd_maturity with ₹5,000 / 6.75 / 24, and report the result: ₹1,28,762 at maturity on ₹1,20,000 invested, ₹8,762 of interest.\n\nFailures: computing on assumed inputs before asking; asking for only one of the two missing facts and then computing with a guess for the other; sourcing no rate and using an assumed one; taking the 3-year slab for a 2-year deposit; misreporting the returned figures; and — the failure this conversion exists to catch — asking correctly and then stopping, never computing the maturity once the customer has answered. A clarification that works must actually finish.\n\nNo confirmation turn is scripted and S2 is inactive: nothing here is a write, so there is nothing to consent to. That is the deliberate difference from the four write-ending axis-4 conversions."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant asks for the monthly installment and the tenure rather than assuming either, obtaining them across the two supplying turns — it must not compute after turn 2 with a guessed tenure — and then sources the RD rate and completes the calculation, reporting the ₹1,28,762 maturity (₹1,20,000 invested, ₹8,762 interest). Computing on an invented installment or tenure fails; using an unsourced or wrong-slab rate fails; and so does stopping at the question after the customer has answered."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

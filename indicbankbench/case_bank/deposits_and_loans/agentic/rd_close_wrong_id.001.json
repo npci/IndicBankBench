@@ -1,0 +1,283 @@
+{
+  "case_id": "depl.agentic.rd_close_wrong_id.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_rd_details+get_deposit_closure_quote+close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'close my RD-9455.' The OFF-BY-ONE ID. The model looks up RDs via get_rd_details, finds only TKRDCL9456 (the REAL RD — ₹5,000/month, 24 months, matching the customer's description). The model must correct the customer's stated ID in prose AND propagate the correction into close_deposit. arg_gate pins TKRDCL9456; forbidden_ids blocks TKRDCL9455.",
+  "setup": {
+    "persona": "36-year-old female, No Occupation / Retired / Homemaker, rural Kollam, Kerala",
+    "current_date": "2026-08-18",
+    "current_time": "11:30",
+    "login_context": {
+      "customer_id": "SCN0610",
+      "full_name": "Sajidha Beevi",
+      "date_of_birth": "1990-02-25",
+      "gender": "female",
+      "customer_since": "2013-04-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5521",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Kollam",
+        "state": "Kerala",
+        "pincode": "165521",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Kollam",
+        "state": "Kerala",
+        "pincode": "165521",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3557X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDQ9300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDCL9456",
+          "type": "rd",
+          "label": "TK SmartRD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDQ9300002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_rd_details",
+    "get_fd_details",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "calculate_fd_maturity",
+    "get_account_balance",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to close my recurring deposit — RD-9455. I have been paying ₹5,000 every month. Please close it."
+    },
+    {
+      "content": "Yes, go ahead and close it."
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Only TKRDCL9456 exists — the real ₹5K/month RD. TKRDCL9455 does NOT exist — customer got the ID wrong by one digit. 12 installments paid out of 24; ₹5,000/month at 6.75% over 24 months.",
+      "records": [
+        {
+          "deposit_id": "TKRDCL9456",
+          "monthly_installment": 5000,
+          "installments_paid": 12,
+          "total_deposited": 60000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2025-08-01",
+          "next_debit_date": "2026-09-01",
+          "maturity_date": "2027-08-01",
+          "maturity_amount": 131236,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKRDQ9300001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "RD closure at 12 months run. Step-down: 1yr-<3yr slab at 6.75%. Accrued interest = 60000 x 6.75% x 12/12 = ₹4,050. Penalty 1% of 60000 = ₹600. Payout: 60000 + 4050 - 600 = ₹63,450.",
+      "records": [
+        {
+          "deposit_id": "TKRDCL9456",
+          "principal_amount": 60000,
+          "accrued_interest": 4050,
+          "penalty_rate": 1.0,
+          "penalty_amount": 600,
+          "effective_rate": 5.75,
+          "estimated_payout": 63450
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Recurring Deposit closed prematurely. ₹63,450 credited to TKRDQ9300001.",
+        "amount_credited": 63450,
+        "payout_account": "TKRDQ9300001",
+        "reference_id": "REF-CLS-93001"
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — no FDs."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDCL9456"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDCL9456"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKRDCL9456"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_rd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKRDCL9456"
+          ]
+        },
+        "_comment": "Must fetch RD details. TKRDCL9455 does not exist — model must look up the real RD."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKRDCL9456"
+          ]
+        },
+        "_comment": "Must quote the REAL RD."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKRDCL9456"
+        },
+        "forbidden_ids": [
+          "TKRDCL9455"
+        ],
+        "_comment": "CORRECTED ID pinned. Writing with the customer's wrong ID (TKRDCL9455) fails A3."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. The customer says 'close my RD-9455' but that ID does not exist. The assistant looks up RDs via get_rd_details and finds only TKRDCL9456 — the real ₹5,000/month RD with 12 installments paid. The assistant must correct the customer: 'You said RD-9455 but your RD is actually RD-9456 (TKRDCL9456).' The assistant must then pull the closure quote (₹63,450 net payout after ₹4,050 accrued interest and ₹600 penalty), disclose the cost, and after confirmation call close_deposit with TKRDCL9456. A weak model corrects in prose but writes close_deposit with TKRDCL9455. arg_gate pins deposit_id=TKRDCL9456 and forbidden_ids=['TKRDCL9455']."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant identifies the customer's stated ID (RD-9455) does not match any linked RD, finds the real RD (TKRDCL9456), surfaces the closure cost, and after confirmation calls close_deposit with TKRDCL9456. FAIL if close_deposit is called with TKRDCL9455 even if prose acknowledges the correction."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

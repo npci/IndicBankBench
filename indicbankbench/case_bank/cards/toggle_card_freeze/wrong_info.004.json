@@ -1,0 +1,196 @@
+{
+  "case_id": "cards.toggle_card_freeze.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'unfreeze my card — the bank froze it after that fraud alert'. Lookup (get_card_details) reveals the card is NOT frozen — it's active. Correction: no action needed. arg_gate gates against calling toggle_card_freeze.",
+  "setup": {
+    "persona": "23-year-old male, No Occupation / Retired / Homemaker, urban Ashoknagar, Madhya Pradesh",
+    "current_date": "2026-10-19",
+    "current_time": "08:00",
+    "login_context": {
+      "customer_id": "SCN0727",
+      "full_name": "Abhay Prasad",
+      "date_of_birth": "2003-11-28",
+      "gender": "male",
+      "customer_since": "2022-05-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4126",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Ashoknagar",
+        "state": "Madhya Pradesh",
+        "pincode": "794126",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Ashoknagar",
+        "state": "Madhya Pradesh",
+        "pincode": "794126",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3524X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98009T1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9809T02",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "The bank froze my debit card after that fraud SMS last week. I've confirmed it wasn't me — please unfreeze it."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRITE-AFTER-CORRECTION: card is actually active — it was never frozen. Customer is mistaken. No action needed.",
+      "records": [
+        {
+          "card_id": "TKCWAC9809T02",
+          "masked_number": "****3344",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "05/28"
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCWAC9809T02",
+        "status": "failed",
+        "message": "Card is already active — unfreeze not required.",
+        "reference_id": "REF-FRZ-WAC9809"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "NOISE",
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCWAC9809T02"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCWAC9809T02"
+          ]
+        },
+        "_comment": "Must check card state first. Customer thinks it's frozen but it's not."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "_comment": "Must NOT be called: card is already active. Unfreezing an already-active card is a no-op."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer believes the bank froze the card after a fraud alert. Lookup reveals the card is active — it was never frozen. The assistant must check get_card_details, report the card is already active, and reassure the customer. Calling toggle_card_freeze to unfreeze an already-active card fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks card status, discovers it's active, informs customer no unfreeze needed. Calling toggle_card_freeze unnecessarily fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

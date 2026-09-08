@@ -1,0 +1,172 @@
+{
+  "case_id": "csc.search_knowledge_base.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "FILTER-TRAP: customer asks KB 'what are the FD rates'. KB returns FD rates. But the real question is about best returns — and RD rates are higher across all slabs. Narrow 'FD rates' query hides the superior RD returns.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, rural Viluppuram, Tamil Nadu",
+    "current_date": "2026-10-09",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0689",
+      "full_name": "Deepa Paanu",
+      "date_of_birth": "2008-07-16",
+      "gender": "female",
+      "customer_since": "2026-03-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4986",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "67 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Viluppuram",
+        "state": "Tamil Nadu",
+        "pincode": "434986",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "67 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Viluppuram",
+        "state": "Tamil Nadu",
+        "pincode": "434986",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0789X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSKB9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSKB9600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_products_and_offers"
+  ],
+  "user_turns": [
+    {
+      "content": "What are the current FD interest rates? I want to park some money."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "_comment": "KB returns FD rate card. But RD rates exist too and are higher. Must use get_deposit_loan_rates tool to get the full picture.",
+      "records": [
+        {
+          "chunk": "Fixed Deposit Interest Rates",
+          "source": "2026-03-01"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "24M",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "24M",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ]
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_products_and_offers": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "FD interest rates"
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "KB answers the literal question about FD rates."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Must also check the authoritative rate source. Should surface RD rates being higher."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks about FD rates. The KB returns FD rates of 6.5% for 2 years. But the assistant should also check get_deposit_loan_rates which shows RD pays 6.75% for the same tenure — 25bp more. The assistant must note the better RD rate. Only reporting FD rates and ignoring the higher RD option fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports FD rates AND flags that RD pays 6.75% for the same tenure. Narrow FD-only answer fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,217 @@
+{
+  "case_id": "depl.get_gold_rate.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale gold rate (price changed overnight). Prior round: get_gold_rate returned Rs 6,150 per gram for 22K gold (date 2026-08-19). The customer noted the rate for a gold loan. Since then the market opened lower — the live rate is Rs 6,020 per gram. The customer now asks 'what's the gold rate today for my 22K jewellery?' — a model that trusts stale prior and says Rs 6,150 fails A1. A model that re-fetches gets Rs 6,020 → PASS.",
+  "setup": {
+    "persona": "29-year-old female, Physiotherapists and Related Associate Professionals, rural Bagalkot, Karnataka",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0360",
+      "full_name": "Baiyamma Hugar",
+      "date_of_birth": "1997-05-10",
+      "gender": "female",
+      "customer_since": "2016-10-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7120",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Bagalkot",
+        "state": "Karnataka",
+        "pincode": "437120",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Bagalkot",
+        "state": "Karnataka",
+        "pincode": "437120",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4285X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD66990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD66990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's the current gold rate for 22K? I'm planning to take a gold loan."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "gr1",
+            "type": "function",
+            "function": {
+              "name": "get_gold_rate",
+              "arguments": {
+                "purity_karat": 22
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "gr1",
+        "content": "{\"purity_karat\":22,\"rate_per_gram\":6150,\"rate_date\":\"2026-08-19\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The gold rate for 22K purity as of 19 August 2026 is Rs 6,150 per gram. For a gold loan, the bank typically lends up to 75% of the value."
+      },
+      {
+        "role": "user",
+        "content": "Rs 6,150 — got it. I'll decide on the amount and come back tomorrow."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_account_balance",
+    "get_card_details",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "What's today's 22K gold rate? I need the latest before heading to the branch."
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Gold prices dropped overnight. Live rate is now Rs 6,020 per gram for 22K, not the stale Rs 6,150 from yesterday.",
+      "output": {
+        "purity_karat": 22,
+        "rate_per_gram": 6020,
+        "rate_date": "2026-08-20"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 75.0
+      },
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_card_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "THE GATE. The model MUST re-fetch the gold rate live. Prior shows Rs 6,150 but the market dropped overnight — live is Rs 6,020."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed the gold rate as Rs 6,150 per gram for 22K (dated 19 August). The customer paused and now returns asking for the rate again. Since yesterday the market opened lower — the live rate is now Rs 6,020 per gram.\n\nThe correct move is to re-fetch get_gold_rate live and report Rs 6,020 per gram as the latest rate. Quoting yesterday's Rs 6,150 without a live call is the failure — the assistant is providing an out-of-date rate that no longer matches the current market."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_gold_rate live and reports the current rate of Rs 6,020 per gram (not the stale Rs 6,150). Quoting the old rate without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

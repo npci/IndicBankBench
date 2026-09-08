@@ -1,0 +1,187 @@
+{
+  "case_id": "csc.raise_request.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap (contradicting_info flavor): customer wants to raise an unauthorised_debit dispute for a transaction they found in their statement. They tell the model to query get_transaction_history for POS debits, expecting to see the Amazon purchase. The disputed transaction was actually UPI (not POS). A channel=pos filter returns unrelated POS transactions, hiding the Rs 12,500 UPI debit the customer needs. Broad query finds the correct transaction.",
+  "setup": {
+    "persona": "55-year-old female, Knitting-Machine Operator, Automatic, rural Bulandshahr, Uttar Pradesh",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0642",
+      "full_name": "Vimala Devi",
+      "date_of_birth": "1971-01-03",
+      "gender": "female",
+      "customer_since": "2012-06-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8776",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "97 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Bulandshahr",
+        "state": "Uttar Pradesh",
+        "pincode": "548776",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "97 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Bulandshahr",
+        "state": "Uttar Pradesh",
+        "pincode": "548776",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2247X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQR9410001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQR9410002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Someone used my card at a store for Rs 12,500 that I never authorised. Pull up my POS transactions — I need the reference ID so you can raise an unauthorised_debit dispute."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the unauthorised Rs 12,500 debit (TXN-9410002) was via UPI, not POS — it's an Amazon online purchase. A channel=pos filter returns only TXN-9410003 (Rs 2,800 grocery POS) and TXN-9410001 (Rs 4,500 restaurant POS), completely hiding the transaction the customer needs to dispute. Broad query returns all four, exposing the UPI debit.",
+      "records": [
+        {
+          "date": "2026-08-14T20:30:00",
+          "amount": 12500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9410002",
+          "transaction_note": "UPI - AMAZON INDIA",
+          "status": "success",
+          "running_balance": 45200
+        },
+        {
+          "date": "2026-08-13T18:15:00",
+          "amount": 2800,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9410003",
+          "transaction_note": "POS PURCHASE - RELIANCE FRESH",
+          "status": "success",
+          "running_balance": 57700
+        },
+        {
+          "date": "2026-08-10T13:00:00",
+          "amount": 4500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9410001",
+          "transaction_note": "POS PURCHASE - BARBEQUE NATION",
+          "status": "success",
+          "running_balance": 60500
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "_comment": "SAFETY NET ONLY. The customer wants to file a dispute. A correct run would query get_transaction_history broadly, find the UPI debit, and raise an unauthorised_debit dispute for TXN-9410002.",
+      "output": {
+        "request_id": "REQ-UD-94101",
+        "category": "unauthorized_debit",
+        "status": "open",
+        "message": "Unauthorised debit dispute logged (REQ-UD-94101) and routed to the dispute resolution team. You will be updated on the outcome."
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — noise tool.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKRQR9410001"
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKRQR9410001"
+        },
+        "_comment": "Broad query without channel=pos filter — the unauthorised debit of Rs 12,500 (TXN-9410002) was UPI (Amazon), not POS. A channel=pos filter returns only the grocery and restaurant purchases, hiding the actual transaction the customer needs to dispute."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — the primary task is finding the correct transaction. If the model raises the dispute with the wrong reference_id (from a POS transaction), that's a failure. The un-pinned gold.dependencies lets the model find the transaction first, then raise correctly with confirmation."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer believes the Rs 12,500 unauthorised debit was a POS transaction. The transaction (TXN-9410002, UPI - AMAZON INDIA, 2026-08-14) was actually via UPI. The assistant must query broadly (no channel filter), identify the Amazon UPI debit of Rs 12,500 (TXN-9410002), and surface that it was UPI, not POS. The assistant should then raise the unauthorised_debit dispute with the correct reference_id. Reporting only POS transactions (Rs 2,800 Reliance, Rs 4,500 Barbeque Nation) without surfacing the Rs 12,500 UPI debit fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries get_transaction_history broadly and identifies the Rs 12,500 UPI debit (TXN-9410002, AMAZON INDIA, 2026-08-14), correcting the channel from POS to UPI. Reporting only POS transactions without surfacing the actual UPI debit fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "case_id": "cards.agentic.card_and_requests.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "_variant_note": "Compound: one message asks for card details AND pending service requests. Cross-domain.",
+  "setup": {
+    "persona": "53-year-old male, Salesman, Wholesale Trade, rural North Twenty Four Parganas, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0708",
+      "full_name": "Ekatar Karim",
+      "date_of_birth": "1973-03-06",
+      "gender": "male",
+      "customer_since": "2014-04-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4766",
+      "registered_email": "e*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "North Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "254766",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "North Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "254766",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1198X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCCR9400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCCR9400002",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "get_all_requests",
+    "get_request_status",
+    "get_account_balance",
+    "raise_request",
+    "request_duplicate_statement",
+    "block_card",
+    "set_card_controls"
+  ],
+  "user_turns": [
+    {
+      "content": "What's my credit card limit and available balance? Also, do I have any pending service requests?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCCR9400002",
+          "masked_number": "****9876",
+          "card_type": "credit",
+          "network": "Visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 85000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2027-11"
+        }
+      ]
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-CCR-001",
+          "category": "charges_dispute",
+          "status": "in_progress",
+          "raised_date": "2026-08-12T10:00:00",
+          "last_updated_date": "2026-08-15T14:00:00",
+          "description": "Dispute for incorrect fee charge"
+        },
+        {
+          "request_id": "REQ-CCR-002",
+          "category": "address_update",
+          "status": "open",
+          "raised_date": "2026-08-16T09:00:00",
+          "last_updated_date": "2026-08-16T09:00:00",
+          "description": "Update communication address"
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCCR9400002"
+          ]
+        }
+      },
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Credit limit Rs 3,00,000, available Rs 85,000."
+      },
+      "get_all_requests": {
+        "required": {},
+        "_comment": "2 requests: charges dispute (in_progress), address update (open)."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Card: Rs 3,00,000 limit, Rs 85,000 available. Requests: 2 pending — charges dispute (in_progress) and address update (open). Missing either answer fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports card details AND pending requests. Missing either answer fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

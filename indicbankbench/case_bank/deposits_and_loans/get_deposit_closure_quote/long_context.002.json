@@ -1,0 +1,238 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale closure quote (FD matured since prior). Prior round: get_deposit_closure_quote returned penalty_rate 1.0, penalty_amount Rs 5,000, estimated_payout Rs 5,10,000 for a premature closure. Since then the maturity date passed — the FD is now matured, meaning penalty_rate is 0 and estimated_payout equals full maturity amount of Rs 5,53,698. The customer now asks to close the FD — a model that trusts the stale quote and warns about the penalty fails A1. A model that re-fetches gets a no-penalty quote → PASS.",
+  "setup": {
+    "persona": "48-year-old female, Liquor Taster, urban North Twenty Four Parganas, West Bengal",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0354",
+      "full_name": "Anjali Haldar",
+      "date_of_birth": "1978-04-16",
+      "gender": "female",
+      "customer_since": "2015-05-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8519",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "North Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "928519",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "North Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "928519",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3487X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD64990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDOD64990002",
+          "type": "fd",
+          "label": "TK SmartFD Rs 5,00,000"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD64990003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I might need to close my FD early. Show me what I'd get if I close it today."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "q1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_closure_quote",
+              "arguments": {
+                "deposit_ids": [
+                  "TKFDOD64990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "q1",
+        "content": "{\"quotes\":[{\"deposit_id\":\"TKFDOD64990002\",\"principal_amount\":500000,\"accrued_interest\":15000,\"penalty_rate\":1.0,\"penalty_amount\":5000,\"effective_rate\":5.0,\"estimated_payout\":510000}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "If you closed the FD now, you'd receive about Rs 5,10,000 after the premature closure charge of Rs 5,000 (1% of principal). The FD hasn't fully earned its contracted interest yet, so you'd lose some of the projected gains."
+      },
+      {
+        "role": "user",
+        "content": "Let me hold off — the maturity date is only a few days away. I'll ask again after it matures."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_deposit_closure_quote",
+    "get_fd_details",
+    "get_rd_details",
+    "close_deposit",
+    "get_deposit_loan_rates",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Okay, the maturity date has passed. What's the payout now?"
+    }
+  ],
+  "mock": {
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "The FD matured on 19 August. Post-maturity: penalty_rate is now 0, penalty_amount is 0, and estimated_payout equals the full maturity amount of Rs 5,53,698 (5,00,000 at 6.5% for 36 months quarterly compounding: 500000 x (1+6.5/400)^12 = 553698).",
+      "records": [
+        {
+          "deposit_id": "TKFDOD64990002",
+          "principal_amount": 500000,
+          "accrued_interest": 53698,
+          "penalty_rate": 0,
+          "penalty_amount": 0,
+          "effective_rate": 6.5,
+          "estimated_payout": 553698
+        }
+      ]
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The FD is now matured. Live status reflects this.",
+      "records": [
+        {
+          "deposit_id": "TKFDOD64990002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 36,
+          "start_date": "2023-08-19",
+          "maturity_date": "2026-08-19",
+          "maturity_amount": 553698,
+          "payout_type": "cumulative",
+          "status": "matured",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKOD64990001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDOD64990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDOD64990002"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-fetch the closure quote live. Prior showed penalty_rate 1.0 and estimated_payout Rs 5,10,000, but the FD has since matured — live shows penalty_rate 0 and estimated_payout Rs 5,53,698."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — model may also re-read the FD. The key is that the closure quote was re-fetched."
+      },
+      "close_deposit": {
+        "_comment": "close_deposit is deliberately absent from gold. This is a read-only quote case. The model should show the updated quote; closing is a separate decision."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior closure quote showed a premature closure with Rs 5,000 penalty (1%) and an estimated payout of Rs 5,10,000. The customer waited for the FD to mature, and the maturity date (19 August) has now passed. The live quote now shows penalty_rate 0, penalty_amount 0, and estimated_payout of Rs 5,53,698 — the full maturity amount with no penalty.\n\nThe correct move is to re-fetch get_deposit_closure_quote live and present the updated, no-penalty quote. Quoting the old penalty figure or the stale Rs 5,10,000 payout without a live call is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_deposit_closure_quote live, discovers the FD has matured with penalty_rate 0 and estimated_payout Rs 5,53,698 (not the stale Rs 5,10,000 with penalty), and reports the updated quote. Quoting old figures without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

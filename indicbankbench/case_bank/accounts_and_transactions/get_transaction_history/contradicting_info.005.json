@@ -1,0 +1,230 @@
+{
+  "case_id": "acct.get_transaction_history.contradicting_info.005",
+  "axis": "5_contradicting_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 MULTI-TURN FILTER TRAP on channel dimension: turn 1 the customer asks for UPI transactions (channel=upi bait). A Rs 5,000 NEFT rent refund is the hidden evidence — filtered out by channel=upi. Turn 2 the customer contradicts by saying the refund was a bank transfer (NEFT), hinting to re-query broadly. Strong model re-queries without channel filter, finds the NEFT credit. Weak model sticks with channel=upi, misses the refund.",
+  "setup": {
+    "persona": "23-year-old male, Building Caretakers, rural Madhubani, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "14:15",
+    "login_context": {
+      "customer_id": "SCN0619",
+      "full_name": "Ram Paswan",
+      "date_of_birth": "2003-04-05",
+      "gender": "male",
+      "customer_since": "2021-07-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4163",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "4 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Madhubani",
+        "state": "Bihar",
+        "pincode": "654163",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "4 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Madhubani",
+        "state": "Bihar",
+        "pincode": "654163",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3422X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTM05001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFFT05001",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "toggle_card_freeze",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me all my UPI transactions from this month. I want to see what went through UPI."
+    },
+    {
+      "content": "Actually, my landlord refunded part of the rent — Rs 5,000 — and that was a bank transfer, not UPI. I need to see all transactions, not just UPI."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "000000",
+            "status": "failed"
+          }
+        ],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the Rs 5,000 rent refund on 2026-08-13 is NEFT — filtered out by channel=upi. running_balance chain (newest-first): 85000(salary) + 5000(refund) - 649(netflix) - 1200(swiggy) = 88151. Starting from oldest: balance=0 (anchor at 81500 after salary). Let's work backwards: at 08-01 salary: 81500. +1200 debit=80300. +649 debit=79651. +5000 credit=84651. +85000 credit... this doesn't chain right. Let me recompute from anchor.",
+      "records": [
+        {
+          "date": "2026-08-17T09:14:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-FT05001",
+          "transaction_note": "UPI - SWIGGY FOOD DELIVERY",
+          "status": "success",
+          "running_balance": 88151
+        },
+        {
+          "date": "2026-08-15T20:30:00",
+          "amount": 649,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-FT05002",
+          "transaction_note": "UPI AUTOPAY - NETFLIX ENTERTAINMENT SVCS",
+          "status": "success",
+          "running_balance": 89351
+        },
+        {
+          "date": "2026-08-13T14:00:00",
+          "amount": 5000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-FT05003",
+          "transaction_note": "NEFT - RENT REFUND FROM LANDLORD",
+          "status": "success",
+          "running_balance": 90000
+        },
+        {
+          "date": "2026-08-05T18:41:00",
+          "amount": 2200,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-FT05004",
+          "transaction_note": "POS PURCHASE - DMART GROCERIES",
+          "status": "success",
+          "running_balance": 85000
+        },
+        {
+          "date": "2026-08-01T08:00:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-FT05005",
+          "transaction_note": "NEFT - SALARY AUG 2026 - TECHNOVA SOLUTIONS",
+          "status": "success",
+          "running_balance": 87200
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFTM05001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFTM05001"
+        },
+        "_comment": "Pinning only the invariant account_id. Turn 1 may include channel=upi (the filter bait). Turn 2 the model must drop the channel filter to find the NEFT rent refund. The judge verifies the re-query surfaced the NEFT refund."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Turn 1: the customer asks for UPI transactions this month. The assistant may query get_transaction_history with channel=upi, finding the Rs 1,200 Swiggy debit and the Rs 649 Netflix debit — but not the rent refund. Turn 2: the customer says the landlord refunded Rs 5,000 by bank transfer (NEFT). The assistant must re-query broadly (no channel filter) and surface the Rs 5,000 NEFT rent refund (2026-08-13) alongside the UPI transactions. Reporting only UPI transactions or failing to surface the NEFT rent refund after the correction fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the customer mentions the rent refund was a bank transfer, the assistant surfaces the Rs 5,000 NEFT rent refund (2026-08-13). If the assistant still reports only UPI transactions or never surfaces the NEFT rent refund, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

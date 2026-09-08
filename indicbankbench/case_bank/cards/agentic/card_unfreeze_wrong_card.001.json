@@ -1,0 +1,309 @@
+{
+  "case_id": "cards.agentic.card_unfreeze_wrong_card.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'unfreeze my card ending 5301 — I found it in my jacket.' Model looks up cards via get_card_details. ****5301 (credit, visa, status=active — NOT frozen). ****6201 (debit, rupay, status=frozen (reversible)). Customer named the wrong suffix — 5301 is active, 6201 is the frozen one. Model must correct AND propagate the correction into toggle_card_freeze (card_id=TKCBW6201, state=unfreeze). arg_gate pins TKCBW6201; forbidden_ids blocks TKCBW5301.",
+  "setup": {
+    "persona": "41-year-old female, No Occupation / Retired / Homemaker, rural Ahmadabad, Gujarat",
+    "current_date": "2026-08-22",
+    "current_time": "11:30",
+    "login_context": {
+      "customer_id": "SCN0704",
+      "full_name": "Madhuben Sumalkhaniya",
+      "date_of_birth": "1985-04-06",
+      "gender": "female",
+      "customer_since": "2015-05-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7215",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "947215",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "947215",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3913X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCF8500020",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW6201",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCBW5301",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "I found my frozen card in my jacket pocket — it was there all along! Please unfreeze it. It's the one ending 5301."
+    },
+    {
+      "content": "Yes, unfreeze the debit card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRONG-CARD UNFREEZE TRAP: Customer says unfreeze 5301 but that card is ACTIVE (not frozen). The frozen one is 6201. Customer confused which suffix is frozen.",
+      "records": [
+        {
+          "card_id": "TKCBW5301",
+          "masked_number": "****5301",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 145000,
+          "expiry": "09/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 30000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 20000
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCBW6201",
+          "masked_number": "****6201",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "frozen (reversible)",
+          "expiry": "12/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCBW6201",
+        "card_status": "active",
+        "status": "success",
+        "message": "Card unfrozen. All channels restored.",
+        "reference_id": "REF-FRZ-85020"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW5301",
+            "TKCBW6201"
+          ]
+        }
+      },
+      {
+        "tool": "toggle_card_freeze",
+        "arguments": {
+          "card_id": "TKCBW6201",
+          "state": "unfreeze"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "toggle_card_freeze"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCBW5301",
+                "TKCBW6201"
+              ],
+              [
+                "TKCBW5301"
+              ],
+              [
+                "TKCBW6201"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must surface card details. Customer named 5301 but it's active — 6201 is the frozen one."
+      },
+      "toggle_card_freeze": {
+        "required": {
+          "card_id": "TKCBW6201",
+          "state": "unfreeze"
+        },
+        "forbidden_ids": [
+          "TKCBW5301"
+        ],
+        "_comment": "CORRECTED card_id=TKCBW6201 and state=unfreeze. Customer named 5301 but that's active. The frozen card is 6201. Unfreezing 5301 (already active) fails A3 via forbidden_ids."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'unfreeze my card ending 5301 — I found it in my jacket.' get_card_details shows: ****5301 is active (credit, visa) — NOT frozen. ****6201 is 'frozen (reversible)' (debit, rupay). The customer named the WRONG suffix. The assistant must correct: 'Card 5301 is already active. The frozen card is 6201 — shall I unfreeze that instead?' After confirmation, calls toggle_card_freeze(card_id=TKCBW6201, state=unfreeze). A weak model may unfreeze the named card 5301 anyway (writing `unfreeze` on an active card). arg_gate pins card_id=TKCBW6201 and forbidden_ids=['TKCBW5301']. The customer's confirmation 'the debit card' confirms the correction."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads both card details, identifies that the named card 5301 is active (not frozen) and the frozen card is actually 6201, communicates this correction to the customer, and after confirmation unfreezes TKCBW6201. FAIL if toggle_card_freeze is called on TKCBW5301."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

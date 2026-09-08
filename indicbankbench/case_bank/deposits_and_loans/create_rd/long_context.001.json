@@ -1,0 +1,354 @@
+{
+  "case_id": "depl.create_rd.long_context.001",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 stale-entity ghost: the prior thread shows an OLD RD (₹4,000/month, 12 months, matured last August). The live ask books a NEW RD (₹6,000/month, 24 months). The write must carry the new parameters — resurrecting the old 4000/12 is the trap.",
+  "setup": {
+    "persona": "50-year-old female, Manager, Gas, urban Khargone, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0013",
+      "full_name": "Rani Bai",
+      "date_of_birth": "1976-07-02",
+      "gender": "female",
+      "customer_since": "2018-02-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1010",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Khargone",
+        "state": "Madhya Pradesh",
+        "pincode": "711010",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Khargone",
+        "state": "Madhya Pradesh",
+        "pincode": "711010",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8863X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKATWP1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCTWP3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "lc1",
+            "type": "function",
+            "function": {
+              "name": "get_rd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKRTWP2101"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "lc1",
+        "content": "{\"deposits\":[{\"deposit_id\":\"TKRTWP2101\",\"monthly_installment\":4000,\"installments_paid\":12,\"total_deposited\":48000,\"interest_rate\":6.5,\"tenure_months\":12,\"start_date\":\"2024-08-05\",\"maturity_date\":\"2025-08-05\",\"maturity_amount\":49518,\"status\":\"matured\",\"maturity_instruction\":\"no_renewal\",\"payout_account\":\"TKATWP1101\",\"nominee\":{\"name\":\"Vivek Gupta\",\"relationship\":\"Spouse\"}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your old recurring deposit matured last August — 12 installments of Rs 4,000, settled in full."
+      },
+      {
+        "role": "user",
+        "content": "Right, that one's done."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Start me a new RD — ₹6,000 a month for 2 years from my savings account."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRTWP2102",
+        "status": "success",
+        "message": "Recurring Deposit booked; first installment of 6000 debits on 2026-09-05.",
+        "interest_rate": 6.75,
+        "maturity_date": "2028-08-17",
+        "maturity_amount": 154514,
+        "monthly_debit_date": 5,
+        "reference_id": "REF-RD-92841",
+        "maturity_instruction": "no_renewal"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "instruction": "no_renewal",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "The RD 1-3y slab covering the 24-month tenure: 6.75 = FD 6.50 + 25bp (CONVENTIONS §3). The create_rd description mandates this lookup before booking — an empty card strands the model."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 154514,
+        "interest_earned": 10514,
+        "total_principal_invested": 144000
+      },
+      "_comment": "6000 x 24 @ 6.75 quarterly (CONVENTIONS §2) = 154514 — matches the create_rd booking reply."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKATWP1101",
+          "available_balance": 38400,
+          "hold_amount": 0
+        }
+      ],
+      "_comment": "The create_rd description mandates a balance check for the first installment before booking — an empty balance also strands the model."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 6000,
+          "tenure_months": 24,
+          "source_account": "TKATWP1101"
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 6000,
+          "tenure_months": 24,
+          "source_account": "TKATWP1101"
+        },
+        "optional_ok": {
+          "maturity_instruction": {
+            "allowed": [
+              "no_renewal",
+              "renew_principal",
+              "renew_principal_interest"
+            ]
+          }
+        },
+        "_comment": "The NEW parameters — not the old 4000 x 12 from the prior thread."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior thread is about an OLD, matured RD (₹4,000 x 12 months, settled in August 2025). The live ask is a NEW RD: ₹6,000 monthly for 24 months from the savings account. The assistant must book the new parameters after confirmation — ₹6,000 x 24 at the current 6.75% rate, maturing August 2028 at ₹1,54,514. Booking the old 4000/12 figures, or refusing because 'an RD already exists' (the old one is matured), fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "books the NEW RD (₹6,000 x 24 months from savings) after confirmation. Carrying the old RD's 4000/12 parameters, or treating the matured RD as a blocker, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

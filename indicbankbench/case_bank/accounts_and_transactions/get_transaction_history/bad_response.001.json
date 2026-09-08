@@ -1,0 +1,182 @@
+{
+  "case_id": "acct.get_transaction_history.bad_response.001",
+  "axis": "2_bad_tool_response",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 for get_transaction_history: one returned transaction row has amount=null (a data glitch inside an otherwise valid row). The model must present the other rows normally and, for the broken row, flag that its amount is missing rather than inventing a figure or silently dropping the row as if it never happened. Distinct read-side per-row null.",
+  "setup": {
+    "persona": "18-year-old male, Tester, urban Dehradun, Uttarakhand",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0543",
+      "full_name": "Manoj Singh",
+      "date_of_birth": "2008-07-02",
+      "gender": "male",
+      "customer_since": "2026-05-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6930",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Dehradun",
+        "state": "Uttarakhand",
+        "pincode": "526930",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Dehradun",
+        "state": "Uttarakhand",
+        "pincode": "526930",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5842X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFYB7723001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFYB7723002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFYB7723003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_gold_rate",
+    "get_products_and_offers"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my last few transactions on my salary account."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "THE ANOMALY: the 2026-03-13 POS row has amount=null. The other rows are clean. The model must flag the missing amount, not invent one, not silently drop the row. All entries `status: success` — settled historical transactions. `status` is promised in get_transaction_history's description but is newer than every fixture, and S3 cannot enforce it (transactions.items has no `required` list), so it is mandatory by convention and test only (CONVENTIONS.md §13).",
+      "records": [
+        {
+          "date": "2026-03-14T19:20:00",
+          "amount": 1240,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI884210",
+          "transaction_note": "SWIGGY ORDER 8842",
+          "status": "success",
+          "running_balance": 88612
+        },
+        {
+          "date": "2026-03-13T13:02:00",
+          "amount": null,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS551200",
+          "transaction_note": "POS PURCHASE RELIANCE SMART",
+          "status": "success",
+          "running_balance": 89852
+        },
+        {
+          "date": "2026-03-12T10:05:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT770021",
+          "transaction_note": "SALARY MAR26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 94092
+        }
+      ]
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFYB7723001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFYB7723001"
+        },
+        "forbidden_ids": [
+          "TKFYB7723002"
+        ],
+        "_comment": "Account resolves to TKFYB7723001. 'Last few' -> a small limit is fine; not pinned. Must not query the Business Current account."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for their last few salary-account transactions. get_transaction_history returns three rows, one of which (a 2026-03-13 POS purchase at Reliance Smart) has amount=null. The assistant must list the transactions and, for the POS row, clearly indicate the amount isn't available / didn't come through for that entry, rather than inventing a figure or omitting the row as though it doesn't exist. The clean rows (Swiggy INR 1,240 debit on 03-14; Salary INR 85,000 credit on 03-12) must be reported accurately. Fabricating an amount for the POS row, or silently dropping it, are failures; printing 'amount: null' verbatim is a placeholder-echo failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the clean rows accurately AND flags that the 2026-03-13 POS entry's amount is unavailable — without inventing an amount for it or silently dropping the row."
+    },
+    "judge_advisory": [
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

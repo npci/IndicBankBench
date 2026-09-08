@@ -1,0 +1,240 @@
+{
+  "case_id": "depl.get_loan_details.long_context.005",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale loan (EMI auto-debited overnight, outstanding reduced). Prior round: get_loan_details showed a home loan with outstanding Rs 32,00,000 and 180 EMIs remaining. Since then the monthly EMI of Rs 31,847 was auto-debited — live shows outstanding Rs 31,75,743 and 179 EMIs remaining. The customer now asks 'what's my current home loan outstanding?' — a model that trusts stale prior says Rs 32,00,000 fails A1. A model that re-fetches live sees Rs 31,75,743 → PASS.",
+  "setup": {
+    "persona": "47-year-old female, No Occupation / Retired / Homemaker, rural Dakshin Dinajpur, West Bengal",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0080",
+      "full_name": "Padmavati Sing",
+      "date_of_birth": "1979-12-10",
+      "gender": "female",
+      "customer_since": "2023-04-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0279",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Dakshin Dinajpur",
+        "state": "West Bengal",
+        "pincode": "450279",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Dakshin Dinajpur",
+        "state": "West Bengal",
+        "pincode": "450279",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9115X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD63990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLN63990002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD63990003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Show me my home loan details. I want to check the balance."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "h1",
+            "type": "function",
+            "function": {
+              "name": "get_loan_details",
+              "arguments": {
+                "loan_ids": [
+                  "TKLN63990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "h1",
+        "content": "{\"loans\":[{\"loan_id\":\"TKLN63990002\",\"type\":\"home\",\"principal\":4500000,\"outstanding\":3200000,\"emi_amount\":31847,\"interest_rate\":8.6,\"emi_day_of_month\":5,\"tenure_remaining\":180,\"status\":\"active\",\"next_due_date\":\"2026-09-05\",\"emi_account_id\":\"TKOD63990001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your home loan has an outstanding balance of Rs 32,00,000 with 180 EMIs of Rs 31,847 remaining at 8.6%. The next EMI is due 5 September."
+      },
+      {
+        "role": "user",
+        "content": "Okay. I think the August EMI should have gone through — let me check and come back."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "What's my current home loan outstanding after the August EMI?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The August EMI of Rs 31,847 auto-debited on 5 August. Live shows outstanding reduced to Rs 31,75,743 with 179 EMIs remaining. Rule check: outstanding = 31847 x (1 - (1 + 8.6/1200)^-179) / (8.6/1200) ≈ 3175743.",
+      "records": [
+        {
+          "loan_id": "TKLN63990002",
+          "type": "home",
+          "principal": 4500000,
+          "outstanding": 3175743,
+          "emi_amount": 31847,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 179,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKOD63990001"
+        }
+      ]
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0,
+        "schedule": []
+      },
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLN63990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLN63990002"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-read the loan live. Prior shows Rs 32,00,000 outstanding but the August EMI auto-debited — live shows Rs 31,75,743 with 179 remaining."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed the home loan with Rs 32,00,000 outstanding and 180 EMIs remaining after the August EMI was pending. Since then the August EMI of Rs 31,847 was auto-debited on 5 August — the live outstanding is now Rs 31,75,743 with 179 EMIs remaining.\n\nThe correct move is to re-fetch get_loan_details live and report the updated outstanding and remaining tenure. Quoting the stale Rs 32,00,000 without a live call is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_loan_details live, discovers Rs 31,75,743 outstanding with 179 EMIs remaining (not the stale Rs 32,00,000 / 180), and reports the updated figures. Quoting old numbers without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

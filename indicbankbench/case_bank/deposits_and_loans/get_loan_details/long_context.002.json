@@ -1,0 +1,177 @@
+{
+  "case_id": "depl.get_loan_details.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 staleness: loan outstanding changed by prepayment.",
+  "setup": {
+    "persona": "46-year-old male, Cook, General (Food Canning and Preserving), urban Kozhikode, Kerala",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0152",
+      "full_name": "Krishnankutti Kiran",
+      "date_of_birth": "1980-08-10",
+      "gender": "male",
+      "customer_since": "2019-12-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0451",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "92 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Kozhikode",
+        "state": "Kerala",
+        "pincode": "700451",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "92 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Kozhikode",
+        "state": "Kerala",
+        "pincode": "700451",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2132X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWC150001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNWC150002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCWC150003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_loan_details",
+              "arguments": "{\"loan_ids\":[\"TKLNWC150002\"]}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"loans\":[{\"loan_id\":\"TKLNWC150002\",\"type\":\"home\",\"principal\":1500000,\"outstanding\":842000,\"emi_amount\":21457,\"interest_rate\":10.25,\"emi_day_of_month\":5,\"tenure_remaining\":48,\"status\":\"active\",\"next_due_date\":\"2026-09-05\",\"emi_account_id\":\"TKWC150001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your home loan outstanding is Rs 8,42,000."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_account_balance",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I paid an extra ₹50,000 toward my home loan principal yesterday. What's my outstanding balance now?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKLNWC150002",
+          "type": "home",
+          "principal": 1500000,
+          "outstanding": 792000,
+          "interest_rate": 10.25,
+          "tenure_remaining": 47,
+          "emi_amount": 20530,
+          "emi_day_of_month": 5,
+          "next_due_date": "2026-09-05",
+          "status": "active",
+          "emi_account_id": "TKWC150001"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKWC150001",
+          "available_balance": 65480.25,
+          "hold_amount": 0
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNWC150002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLNWC150002"
+          ]
+        }
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Prior conversation said Rs 8,42,000. The customer then paid an extra Rs 50,000, so the fresh outstanding is Rs 7,92,000. The assistant must call get_loan_details and report Rs 7,92,000 — NOT the stale Rs 8,42,000. Repeating the stale figure fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the current outstanding (Rs 7,92,000) from a fresh call, NOT the stale Rs 8,42,000. Repeating stale data fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

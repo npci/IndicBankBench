@@ -1,0 +1,262 @@
+{
+  "case_id": "csc.get_all_requests.confusing_intent.003",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 compound-to-narrowed request: turn 1 asks what is 'pending'; turn 2 corrects the scope to what is 'resolved'. The list must be filtered to the two resolved requests and the open/in_progress rows must NOT be presented as the answer. Named careless failure mode: answering with the turn-1 pending list (recency + already-fetched data) and ignoring the correction. The gold call carries the status filter, and optional_ok permits an earlier unfiltered fetch, so the discrimination is in the final answer.",
+  "setup": {
+    "persona": "59-year-old male, Sub-Inspector, Police, rural Kapurthala, Punjab",
+    "current_date": "2026-08-12",
+    "current_time": "10:30",
+    "login_context": {
+      "customer_id": "SCN0553",
+      "full_name": "Hardev Singh",
+      "date_of_birth": "1967-05-01",
+      "gender": "male",
+      "customer_since": "2016-05-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8740",
+      "registered_email": "h*****@gmail.com",
+      "communication_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Kapurthala",
+        "state": "Punjab",
+        "pincode": "498740",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Kapurthala",
+        "state": "Punjab",
+        "pincode": "498740",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7217X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGRQ4704001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRQ4704002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "What requests do I have pending?"
+    },
+    {
+      "content": "Actually, just show me what's been resolved."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-CHQ-882101",
+          "category": "cheque_book",
+          "status": "in_progress",
+          "raised_date": "2026-07-20",
+          "last_updated_date": "2026-07-24",
+          "description": "Cheque book order (25 leaves) for savings account."
+        },
+        {
+          "request_id": "REQ-STM-882102",
+          "category": "duplicate_statement",
+          "status": "resolved",
+          "raised_date": "2026-07-02",
+          "last_updated_date": "2026-07-05",
+          "description": "Duplicate statement April to June."
+        },
+        {
+          "request_id": "REQ-DIS-882103",
+          "category": "unauthorized_debit",
+          "status": "open",
+          "raised_date": "2026-08-05",
+          "last_updated_date": "2026-08-08",
+          "description": "Unauthorized debit dispute for a POS charge."
+        },
+        {
+          "request_id": "REQ-SQ-882104",
+          "category": "service_quality",
+          "status": "resolved",
+          "raised_date": "2026-06-11",
+          "last_updated_date": "2026-06-15",
+          "description": "Branch queue-time complaint."
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-12T10:30:00",
+        "last_update": "2026-08-12T10:30:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {
+          "status": "resolved"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "optional_ok": {
+          "status": {
+            "allowed": [
+              "resolved",
+              "all",
+              null
+            ]
+          }
+        },
+        "_comment": "The corrected request is for resolved items; the gold call filters status=resolved. An earlier unfiltered fetch (before the correction) is permitted via allowed all/null."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Turn 1 asks which requests are pending; turn 2 corrects the scope to resolved. The assistant must answer with the RESOLVED requests only: the duplicate statement (REQ-STM-882102, resolved 2026-07-05) and the branch service-quality complaint (REQ-SQ-882104, resolved 2026-06-15). The still-open unauthorized-debit dispute (REQ-DIS-882103) and the in-progress cheque book order (REQ-CHQ-882101) must NOT be presented as the answer. Listing the pending/open rows after the correction is the careless failure this case catches."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the answer lists ONLY the resolved requests (duplicate statement, service-quality complaint) and does not present the open or in-progress requests as the answer; FAIL if the reply is the pending list or mixes in the open/in-progress rows."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "case_id": "depl.close_deposit.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer says 'close my deposit' but has both an FD and an RD. Must ask which one.",
+  "setup": {
+    "persona": "55-year-old male, Carpenters and Joiners Operatives, urban Rupnagar, Punjab",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0557",
+      "full_name": "Kulwant Lal",
+      "date_of_birth": "1971-01-02",
+      "gender": "male",
+      "customer_since": "2012-02-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4668",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Rupnagar",
+        "state": "Punjab",
+        "pincode": "194668",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Rupnagar",
+        "state": "Punjab",
+        "pincode": "194668",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1440X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCLD8000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDC8000002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKRDC8000003",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCLD8000004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to close my deposit. Can you help me with that?"
+    }
+  ],
+  "mock": {
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only.",
+      "output": {
+        "deposit_id": "TKFDC8000002",
+        "status": "success",
+        "message": "Deposit closed.",
+        "amount_credited": 568819,
+        "payout_account": "TKCLD8000001",
+        "reference_id": "REF-CLS-75200"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "close_deposit": {
+        "required": {},
+        "_comment": "Must NOT be called: 'my deposit' ambiguous across FD and RD."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer has both an FD and an RD and says 'close my deposit' without specifying which. The assistant must ask ONE focused question to identify whether they mean the FD or the RD, and must NOT call close_deposit yet."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks whether the customer means the FD or RD rather than guessing or calling close_deposit. Calling the tool without clarifying fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

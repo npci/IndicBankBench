@@ -1,0 +1,242 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.long_context.001",
+  "axis": "8_long_context",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-extraction between sister products. The history is tool-backed around the RD: its 6.75%/7.25% rate card for a 2-year run and the maturity arithmetic on Rs 5,000/month. The live turn pivots to the FD for the SAME tenure. The trap is parroting the RD's 6.75%/7.25% figures — the FD slab is 6.5%/7.0%. Gold stays tight: one get_deposit_loan_rates call pinned to product_type=fd and tenure 24 months.",
+  "setup": {
+    "persona": "26-year-old male, Chemist, Forensic Science, urban Madurai, Tamil Nadu",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0298",
+      "full_name": "Abdul Khan",
+      "date_of_birth": "2000-03-09",
+      "gender": "male",
+      "customer_since": "2018-02-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1138",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "pincode": "771138",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "pincode": "771138",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5987X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKRAT8240",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKRAT8241",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's the RD rate these days for a 2-year run?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "rd",
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"product_type\":\"rd\",\"rates\":[{\"slab\":\"1 year to < 3 years\",\"rate\":6.75,\"senior_citizen_rate\":7.25}],\"effective_date\":\"2026-03-01\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The 2-year RD pays 6.75% per annum — 7.25% for senior citizens."
+      },
+      {
+        "role": "user",
+        "content": "And what would Rs 5,000 a month grow to over those two years?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p2",
+            "type": "function",
+            "function": {
+              "name": "calculate_rd_maturity",
+              "arguments": {
+                "monthly_installment": 5000,
+                "rate": 6.75,
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p2",
+        "content": "{\"maturity_amount\":128761.64,\"interest_earned\":8761.64,\"total_principal_invested\":120000}"
+      },
+      {
+        "role": "assistant",
+        "content": "About Rs 1,28,762 at maturity — the Rs 1,20,000 in installments plus roughly Rs 8,762 interest."
+      },
+      {
+        "role": "user",
+        "content": "Nice number. Hold on, dinner's ready — back in a bit."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_transaction_history",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Sorry about that. So the FD equivalent now — what's the current FD rate for that same 2-year tenure, standard and senior citizen?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "FD slab covering 24 months per the rate card: 6.5 standard / 7.0 senior citizen. product_type is echoed from the call args.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 128761.64,
+        "interest_earned": 8761.64,
+        "total_principal_invested": 120000
+      },
+      "_comment": "Noise prerequisite — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd",
+          "tenure_months": 24
+        },
+        "_comment": "Pinned to the FD product, not the RD whose 6.75/7.25 card sits in context. Repeating the RD figures or querying the wrong product fails deterministically."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The history is all RD: 6.75% standard / 7.25% senior citizen for 24 months, plus the maturity run on Rs 5,000/month. The customer now asks for the FD rate on the same 2-year tenure. The assistant must call get_deposit_loan_rates with product_type fd and tenure 24 months and report 6.5% standard / 7.0% senior citizen — the FD slab, not the RD's. Relaying the RD's 6.75/7.25 figures as the FD rate fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches and reports the FD rate card for the 2-year tenure — 6.5% standard, 7.0% senior citizen. Repeating the RD's 6.75/7.25 figures from the earlier conversation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

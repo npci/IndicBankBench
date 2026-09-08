@@ -1,0 +1,227 @@
+{
+  "case_id": "acct.agentic.balance_cheque_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance+stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'stop cheque 6644 on my main account — the one with enough funds.' get_account_balance on both accounts reveals savings_01 has only ₹12,000 (can't cover the cheque) while savings_02 has ₹4,50,000. The cheque 6644 must be on savings_02. Correction: stop_cheque_payment on TKACC7000002.",
+  "setup": {
+    "persona": "18-year-old female, Salesman, Wholesale Trade, urban Madurai, Tamil Nadu",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0770",
+      "full_name": "Jakkia Begam",
+      "date_of_birth": "2008-06-25",
+      "gender": "female",
+      "customer_since": "2026-12-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8869",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "pincode": "988869",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "pincode": "988869",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1156X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACC7000001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKACC7000002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCACC7000003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_card_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Stop cheque 6644 right now — it's from my main savings account, the one that has enough balance to cover it. Please stop it before it clears."
+    },
+    {
+      "content": "Yes, stop it on that account — go ahead."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "TKACC7000001 = ₹12,000 (can't cover a cheque). TKACC7000002 = ₹4,50,000 (the 'main' account with funds). Customer said 'the one with enough funds' — that's TKACC7000002.",
+      "records": [
+        {
+          "account_id": "TKACC7000001",
+          "available_balance": 12000,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKACC7000002",
+          "available_balance": 450000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "TKACC7000002",
+        "results": [
+          {
+            "cheque_number": "6644",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop payment placed on cheque 6644.",
+        "reference_id": "REF-CHQ-70001"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKACC7000001",
+            "TKACC7000002"
+          ]
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKACC7000002",
+          "cheque_numbers": [
+            "6644"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_account_balance",
+        "stop_cheque_payment"
+      ]
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKACC7000001",
+            "TKACC7000002"
+          ]
+        },
+        "_comment": "Must check both balances — discovers that TKACC7000002 is the account with the funds to back a cheque."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKACC7000002",
+          "cheque_numbers": [
+            "6644"
+          ]
+        },
+        "forbidden_ids": [
+          "TKACC7000001"
+        ],
+        "_comment": "CORRECTED to TKACC7000002. Customer said 'the one with enough funds' which is TKACC7000002 (₹4,50,000), not TKACC7000001 (₹12,000)."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'stop cheque 6644 on my main account — the one with enough funds.' get_account_balance shows TKACC7000001 has only ₹12,000 while TKACC7000002 has ₹4,50,000. The cheque-tracking account is TKACC7000002. The assistant must correct: 'Your account TKACC7000001 has only ₹12,000 — the cheque 6644 must be on TKACC7000002. I'll stop it there.' After confirmation, calls stop_cheque_payment with account_id=TKACC7000002. A weak model may stop on the wrong account based on order alone."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant checks both account balances, identifies that TKACC7000002 is the account with sufficient funds for a cheque, communicates the correction, and after confirmation calls stop_cheque_payment on TKACC7000002. FAIL if stop_cheque_payment is called on TKACC7000001."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

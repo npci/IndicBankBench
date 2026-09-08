@@ -1,0 +1,212 @@
+{
+  "case_id": "acct.get_account_details.long_context.002",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale account status (frozen overnight). Prior round: get_account_details showed account status 'active'. Since then the bank's fraud system auto-froze the account after detecting a suspicious login attempt. The customer now asks for account verification for a KYC update appointment — a request that assumes the account is still active. A model that trusts prior context, skips re-read, and confirms account is active fails A1. A model that re-fetches get_account_details live discovers status 'frozen' and warns the customer → PASS.",
+  "setup": {
+    "persona": "56-year-old male, Selling Agent, urban Mahesana, Gujarat",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0230",
+      "full_name": "Bharatbhai Rajput",
+      "date_of_birth": "1970-11-10",
+      "gender": "male",
+      "customer_since": "2022-11-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8886",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Mahesana",
+        "state": "Gujarat",
+        "pincode": "808886",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Mahesana",
+        "state": "Gujarat",
+        "pincode": "808886",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0384X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD56990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD56990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I need my account details for a form — branch, IFSC, status, all of it."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "a1",
+            "type": "function",
+            "function": {
+              "name": "get_account_details",
+              "arguments": {
+                "account_ids": [
+                  "TKOD56990001"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "a1",
+        "content": "{\"accounts\":[{\"account_id\":\"TKOD56990001\",\"account_type\":\"savings\",\"status\":\"active\",\"branch_name\":\"MG Road\",\"ifsc\":\"TKBK0001234\",\"holders\":[{\"name\":\"Bharatbhai Rajput\",\"role\":\"primary\"}],\"nominee\":{\"name\":\"Vivek Gupta\",\"relationship\":\"Spouse\"},\"open_date\":\"2020-01-15\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your savings account Number ending 90001 at MG Road branch (IFSC TKBK0001234) is active since 15 January 2020. Nominee is Vivek Gupta (Spouse). Would you like me to note anything else from this?"
+      },
+      {
+        "role": "user",
+        "content": "Perfect, let me fill out this form. I'll confirm when done."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_details",
+    "get_account_balance",
+    "get_transaction_history",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Okay, can you reconfirm my account is active and quote the IFSC again? I need to screenshot this for the bank appointment."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Overnight the bank's fraud system auto-froze the account after detecting a suspicious login attempt from an unrecognised device at 3:17 AM. The live status is now 'frozen', not the 'active' from prior.",
+      "records": [
+        {
+          "account_id": "TKOD56990001",
+          "account_type": "savings",
+          "status": "frozen",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Bharatbhai Rajput",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2020-01-15"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKOD56990001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKOD56990001"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-read the account live. Prior shows status 'active' but the bank froze it overnight due to a suspicious login. Reporting 'active' from memory fails A1."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior round shows the account as active. Overnight the bank's fraud system auto-froze the account after detecting a suspicious login attempt at 3:17 AM from an unrecognised device. The customer now returns asking for the same details to screenshot for an appointment — expecting an active account.\n\nThe correct move is to re-fetch get_account_details live, discover the account is now 'frozen', and report this to the customer. The IFSC and branch haven't changed, but the status has — and quoting 'active' without re-reading is the stale-context failure. The assistant should additionally advise the customer to raise a request or visit the branch to have the freeze addressed."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_account_details live, discovers the account is now frozen (not the stale 'active' status), and reports the frozen status along with the IFSC. Reporting the account as still active without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

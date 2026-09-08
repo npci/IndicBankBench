@@ -1,0 +1,280 @@
+{
+  "case_id": "depl.agentic.rd_closure_chain.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "answer",
+  "_axis_note": "GENERAL EVAL — the full informed-consent closure pipeline on an RD (the FD version is close_deposit/happy.001; no agentic case covers an RD). get_rd_details surfaces the deposit state, get_deposit_closure_quote shows the cost (premature-closure rate step-down + penalty), and only after the customer confirms the numbers does close_deposit fire. Exercises A4 twice (state before quote, quote before write), the RD-specific detail that closure stops all future installment debits, and the arithmetic in CONVENTIONS.md §4. Every never-again ID in the chain comes from the earlier call's record.",
+  "setup": {
+    "persona": "39-year-old female, Loader and Unloader, rural Anantapur, Andhra Pradesh",
+    "current_date": "2026-04-15",
+    "current_time": "10:05",
+    "login_context": {
+      "customer_id": "SCN0345",
+      "full_name": "Triveeni Revada",
+      "date_of_birth": "1987-05-08",
+      "gender": "female",
+      "customer_since": "2016-12-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8440",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Anantapur",
+        "state": "Andhra Pradesh",
+        "pincode": "228440",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Anantapur",
+        "state": "Andhra Pradesh",
+        "pincode": "228440",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7272X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDC7211001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDC7211002",
+          "type": "rd",
+          "label": "TK StepUp Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDC7211003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need money urgently. What exactly would I get right now if I closed my recurring deposit — and if the numbers work, go ahead and close it."
+    },
+    {
+      "content": "Ok, go ahead and close it."
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "RD booked 2025-01-15 for 36 months at the 3y-<5y card rate of 7.0%. 15 installments paid (Rs 75,000 deposited). maturity_amount 200,686 is exact quarterly compounding per CONVENTIONS.md §2.",
+      "records": [
+        {
+          "deposit_id": "TKRDC7211002",
+          "monthly_installment": 5000,
+          "installments_paid": 15,
+          "total_deposited": 75000,
+          "interest_rate": 7.0,
+          "tenure_months": 36,
+          "start_date": "2025-01-15",
+          "next_debit_date": "2026-04-15",
+          "maturity_date": "2028-01-15",
+          "maturity_amount": 200686,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKRDC7211001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Premature closure after 15 months run. Interest at the 1-year-<3-years RD card rate of 6.75% (the slab covering the period actually run), not the contracted 7.0%. Per installment: whole quarters compound at (1 + 6.75/400)^q, residual months earn simple interest on the accumulated balance at r/12 per month — Σ over the 15 paid installments = Rs 3,447 accrued. Premature-closure charge 1.0% of principal (Rs 75,000) = Rs 750. estimated_payout = 75,000 + 3,447 - 750 = Rs 77,697. effective_rate 2.88 = annualised net yield after the charge across the 15 months.",
+      "records": [
+        {
+          "deposit_id": "TKRDC7211002",
+          "principal_amount": 75000,
+          "accrued_interest": 3447,
+          "penalty_rate": 1.0,
+          "penalty_amount": 750,
+          "effective_rate": 2.88,
+          "estimated_payout": 77697
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Recurring Deposit closed prematurely. Rs 77,697 credited to TKRDC7211001; all future monthly installment debits are stopped.",
+        "amount_credited": 77697,
+        "payout_account": "TKRDC7211001",
+        "reference_id": "REF-CLS-77130"
+      },
+      "_comment": "deposit_id is echoed by the executor (input ∩ output name)."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDC7211002"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDC7211002"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKRDC7211002"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKRDC7211002"
+          ]
+        },
+        "_comment": "Required state read (installments paid, next debit — the facts the reply must surface). NO A4 pair pins it before the quote: the quote's args come from login_context, not from this call's output, so batching the two reads in one message is fine (A4 is only for args derived from an earlier call's output)."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKRDC7211002"
+          ]
+        },
+        "_comment": "The quote is mandatory before close_deposit (disclosed in close_deposit's own description); it is the only source of the payout and the charge the customer must be told."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKRDC7211002"
+        },
+        "_comment": "Close the RD AFTER the quote has been shown and AFTER the customer confirms (S2). Closing first, or closing without ever showing the Rs 77,697 payout and the Rs 750 charge, fails."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants to know exactly what they would get by closing their RD now and, if the numbers work, have it closed. The correct flow is get_rd_details → get_deposit_closure_quote → present the cost → wait for the customer's confirmation → close_deposit.\n\nWhat must be surfaced before confirmation: the RD has 15 of 36 installments paid (Rs 75,000 deposited, Rs 5,000/month, contracted at 7.0%). Closing now pays Rs 77,697 — the Rs 3,447 of interest accrued at the 6.75% card rate applicable to the period the deposit has actually run (not the 7.0% contracted for 36 months), less a Rs 750 premature-closure charge — against a projected Rs 2,00,686 if the RD ran to maturity in January 2028. It must also state that closing permanently stops all future monthly installment debits. Only after the customer's confirmation should it call close_deposit and report Rs 77,697 credited to the savings account with reference REF-CLS-77130.\n\nA model that closes without a quote, hides the charge or the reduced interest, frames the gap to maturity as a flat loss rather than forgone projected interest, or closes before confirmation, fails. The read-then-quote-then-close ordering is both logically necessary and disclosed in the tools' descriptions, so A4 gates it."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant pulls the RD state and the closure quote, presents the cost (Rs 77,697 payout: Rs 3,447 interest at the reduced 6.75% for the period actually run, less Rs 750 charge) INCLUDING that future debits stop, then — only after confirmation — closes and reports Rs 77,697 credited (REF-CLS-77130). Closing without the quote, hiding the charge, or closing before confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

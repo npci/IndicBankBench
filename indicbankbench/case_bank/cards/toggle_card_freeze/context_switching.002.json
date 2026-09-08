@@ -1,0 +1,200 @@
+{
+  "case_id": "cards.toggle_card_freeze.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 DETOUR-REVERSES-THE-WRITE (the reverse of context_switching.001, where the write survives the detour). The customer asks to freeze a misplaced card; the assistant sets up the freeze; the customer detours to ask the credit limit; the limit answer reveals enough headroom that the customer reverses course — 'never mind, don't freeze it.' The trap: the model must NOT execute the originally-pending freeze just because it was proposed earlier. gold.tool_calls contains only the detour's read (get_card_details); toggle_card_freeze is deliberately absent from the arg_gate, so any freeze call fails A2 deterministically. This is the mirror of the existing four write+detour cases where the write MUST survive — here it must be ABANDONED, testing that the model doesn't carry stale intent across the detour.",
+  "setup": {
+    "persona": "22-year-old female, Weavers, Knitters & Related Workers, rural Y.S.R., Andhra Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0120",
+      "full_name": "Lakshmi Harivaram",
+      "date_of_birth": "2004-07-22",
+      "gender": "female",
+      "customer_since": "2022-07-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7330",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Y.S.R.",
+        "state": "Andhra Pradesh",
+        "pincode": "367330",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Y.S.R.",
+        "state": "Andhra Pradesh",
+        "pincode": "367330",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3967X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFRZ9102001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKFRZ9102002",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_all_requests"
+  ],
+  "user_turns": [
+    {
+      "content": "I've misplaced my credit card — freeze it until I find it."
+    },
+    {
+      "content": "Actually, before you do that — how much of my credit limit is still available?"
+    },
+    {
+      "content": "₹1,43,500 left? That's plenty — never mind, don't freeze it. I'll find it later."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKFRZ9102002",
+          "masked_number": "****9102",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only. Any toggle_card_freeze call fails A2 (the tool is absent from arg_gate). The mock exists to prevent UNEXPECTED_TOOL_CALL retry loops if a model freezes anyway.",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Card frozen. You can unfreeze it at any time.",
+        "reference_id": "REF-FRZ-77134"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKFRZ9102002"
+          ]
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "The detour question — the customer asked the available limit, and the only source is get_card_details."
+      },
+      "_comment": "toggle_card_freeze is deliberately ABSENT from this gate. The customer reversed their decision after learning the available limit, so no freeze should happen. Any toggle_card_freeze call fails A2 deterministically — the model carried stale intent from turn 1 across the detour. block_card is also absent: misplacing a card does not warrant a permanent block.",
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Axis 6 — a detour that reverses the write. The customer starts by asking to freeze a misplaced credit card. The assistant should ask for confirmation; instead of answering, the customer detours to ask the available credit limit (₹1,43,500 out of a ₹2,00,000 limit). On learning there's substantial headroom remaining, the customer reverses course — 'never mind, don't freeze it.'\n\nThe assistant must ABANDON the pending freeze. Carrying stale intent from before the detour — freezing the card despite the customer's reversal — is the failure. The available-limit question must be answered correctly; the freeze must NOT happen. Reporting the card as frozen, or freezing it and then unfreezing, both fail."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "PASS requires the assistant to answer the credit-limit question correctly (₹1,43,500 available of ₹2,00,000) and to NOT freeze the card — honoring the customer's reversal. FREEZING the card — executing the originally-pending write after the detour — fails. Freezing and then claiming it was a mistake also fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

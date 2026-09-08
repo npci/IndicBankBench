@@ -1,0 +1,193 @@
+{
+  "case_id": "csc.get_insurance_details.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks about 'health insurance policy details — I want the sum assured'. The customer asks about health, but their LIFE policy has lapsed status — a critical fact. A policy_type=health filter (or querying only the health policy_id) returns only the health policy and hides the lapsed life policy. Broad query reveals both, letting the model warn about the lapsed life cover.",
+  "setup": {
+    "persona": "38-year-old male, Plumbers and Pipe Fitters, rural Janjgir, Chhattisgarh",
+    "current_date": "2026-08-18",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0586",
+      "full_name": "Shyam Lal",
+      "date_of_birth": "1988-01-12",
+      "gender": "male",
+      "customer_since": "2012-03-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1796",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Janjgir",
+        "state": "Chhattisgarh",
+        "pincode": "741796",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Janjgir",
+        "state": "Chhattisgarh",
+        "pincode": "741796",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7558X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 2
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9476001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "POL947602",
+          "type": "policy",
+          "label": "TK HealthGuard Plus"
+        },
+        {
+          "product_id": "POL947603",
+          "type": "policy",
+          "label": "TK TermShield Life"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9476004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my health insurance details — I want to check the sum assured and the insurer."
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about health insurance. The health policy (POL947602, Star Health, Rs 15L sum assured) is fine. But the LIFE policy (POL947603, HDFC Life) has status LAPSED — the customer's life cover has expired. A policy_ids filter for only the health policy (or a policy_type=health filter on results) hides the lapsed life policy. Broad query reveals both and lets the model warn about the lapsed coverage.",
+      "records": [
+        {
+          "policy_id": "POL947602",
+          "policy_type": "health",
+          "insurer": "Star Health",
+          "sum_assured": 1500000,
+          "premium": 22000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-12-15",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL947603",
+          "policy_type": "life",
+          "insurer": "HDFC Life",
+          "sum_assured": 5000000,
+          "premium": 35000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-03-01",
+          "status": "lapsed"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "POL947602",
+            "POL947603"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "optional_ok": {
+          "policy_ids": {
+            "allowed": [
+              [
+                "POL947602",
+                "POL947603"
+              ],
+              [
+                "POL947603",
+                "POL947602"
+              ],
+              [
+                "POL947602"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both policies. Querying only the health policy answers the health question but hides the lapsed life policy — a critical coverage gap. The model must surface both."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about health insurance. The health policy (POL947602, Star Health, Rs 15L sum assured, yearly premium Rs 22,000 due Dec 15) is active. But the LIFE policy (POL947603, HDFC Life, Rs 50L sum assured) is LAPSED — premium of Rs 35,000 was due on 2026-03-01 and not paid. The assistant must query both policies, answer the health question, AND proactively warn about the lapsed life cover. Reporting only the health policy without surfacing the lapsed life insurance fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports health policy details AND surfaces the lapsed life policy (POL947603, Rs 50L cover lapsed since March 2026). Answering only the health question without flagging the lapsed life cover fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

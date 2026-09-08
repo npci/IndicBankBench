@@ -1,0 +1,263 @@
+{
+  "case_id": "depl.agentic.fd_renewal_payout_conflict.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'renew my FD with interest reinvested' (renew_principal_interest). But the FD has payout_type=monthly — interest is already paid out monthly, so there is NO interest to reinvest at maturity. The model must correct the customer AND write update_deposit_renewal with instruction=renew_principal (not renew_principal_interest). A weak model corrects in prose but still writes 'renew_principal_interest' as the customer requested. A strong model carries the correction through to the write. The arg_gate pins instruction=renew_principal (the CORRECTED value) and forbidden_ids blocks renew_principal_interest.",
+  "setup": {
+    "persona": "28-year-old female, No Occupation / Retired / Homemaker, urban Moradabad, Uttar Pradesh",
+    "current_date": "2026-08-15",
+    "current_time": "15:45",
+    "login_context": {
+      "customer_id": "SCN0199",
+      "full_name": "Rita Bee",
+      "date_of_birth": "1998-08-19",
+      "gender": "female",
+      "customer_since": "2019-06-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6223",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "676223",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "676223",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1591X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRPC8200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDRPC8200002",
+          "type": "fd",
+          "label": "TK Monthly Payout FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCRPC8200003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want my FD to renew at maturity with the interest reinvested — renew both principal and interest together."
+    },
+    {
+      "content": "Ok, go ahead and set it to renew principal then."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Monthly payout FD: ₹3,00,000 at 6.5% over 18 months, started 2025-11-01. Interest is paid out MONTHLY, so at maturity only the principal returns — there is NO accumulated interest to reinvest. maturity_amount = principal only per CONVENTIONS.md §2. The only sensible renewal option for a monthly-payout FD is renew_principal (renew the principal at maturity). renew_principal_interest makes no sense here because interest was already distributed monthly.",
+      "records": [
+        {
+          "deposit_id": "TKFDRPC8200002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-11-01",
+          "maturity_date": "2027-05-01",
+          "maturity_amount": 300000,
+          "payout_type": "monthly",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKRPC8200001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_date": "2027-05-01",
+        "status": "success",
+        "message": "Maturity instruction updated. Takes effect on 2027-05-01.",
+        "reference_id": "REF-REN-82001"
+      },
+      "_comment": "instruction is left out so the executor echoes what the model passed. A model that writes renew_principal_interest sees its own error echoed back."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDRPC8200002"
+          ]
+        }
+      },
+      {
+        "tool": "update_deposit_renewal",
+        "arguments": {
+          "deposit_id": "TKFDRPC8200002",
+          "instruction": "renew_principal"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "update_deposit_renewal"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDRPC8200002"
+          ]
+        },
+        "_comment": "Must pull FD details — the monthly payout fact is disclosed only here."
+      },
+      "update_deposit_renewal": {
+        "required": {
+          "deposit_id": "TKFDRPC8200002",
+          "instruction": "renew_principal"
+        },
+        "forbidden_ids": [
+          "renew_principal_interest"
+        ],
+        "_comment": "The CORRECTED instruction is pinned. The customer said 'reinvest both principal and interest' but this is a MONTHLY-payout FD — interest is already paid out, there's nothing to reinvest. renew_principal_interest makes no sense here. Writing renew_principal_interest (what the customer asked for) fails A3 via forbidden_ids."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. The customer says 'renew my FD with interest reinvested — both principal and interest together.' This maps to update_deposit_renewal with instruction=renew_principal_interest. However, the FD (TKFDRPC8200002) has payout_type=monthly — the interest is already paid out every month throughout the tenure. At maturity, the FD's maturity_amount is just the principal (₹3,00,000). There is NO accumulated interest to reinvest, so renew_principal_interest is physically impossible for this payout type. The assistant must explain this to the customer and suggest renew_principal instead (renew the principal only, which is the only meaningful option for a monthly-payout FD). After the customer confirms ('go ahead and set it to renew the principal'), the assistant writes update_deposit_renewal(deposit_id=TKFDRPC8200002, instruction='renew_principal'). A weak model may mouth 'interest can't be reinvested on a monthly FD' in prose but still fire renew_principal_interest because the customer asked for it. A strong model carries the correction through. The arg_gate pins instruction=renew_principal; forbidden_ids blocks renew_principal_interest, catching the weak-model failure deterministically via A3."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant pulls the FD details, identifies it as a monthly-payout FD (interest already distributed), explains that 'reinvest principal and interest' is not possible for this FD type, and after the customer's confirmation writes update_deposit_renewal with instruction=renew_principal. FAIL if update_deposit_renewal is called with renew_principal_interest (the customer's mistaken request), even if the prose acknowledges the monthly-payout limitation."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

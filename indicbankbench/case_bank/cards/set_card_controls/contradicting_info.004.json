@@ -1,0 +1,260 @@
+{
+  "case_id": "cards.set_card_controls.contradicting_info.004",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 compound constraint on a WRITE: the customer believes the online domestic limit is currently Rs 50,000 and asks to raise it to Rs 60,000. Two checks before acting: the record shows the current limit is Rs 25,000 (the premise is wrong, and the correction must be surfaced before the write), and the new limit must be below the Rs 2,00,000 credit limit (it is, so the write proceeds after confirmation). Careless failure mode: applying the raise while the confirmation still says 'raising your Rs 50,000 limit' — the correction never surfaces; or bundling enabled+limit in one call.",
+  "setup": {
+    "persona": "56-year-old male, Laundary Workers, rural Jaunpur, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0762",
+      "full_name": "Devendra Singh",
+      "date_of_birth": "1970-09-23",
+      "gender": "male",
+      "customer_since": "2020-02-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1312",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "33 Temple Road",
+        "line2": "Andheri West",
+        "city": "Jaunpur",
+        "state": "Uttar Pradesh",
+        "pincode": "171312",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "33 Temple Road",
+        "line2": "Andheri West",
+        "city": "Jaunpur",
+        "state": "Uttar Pradesh",
+        "pincode": "171312",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1963X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGSCC9000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGSCC9002730",
+          "card_type": "credit",
+          "masked_number": "****2730",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "request_duplicate_statement",
+    "create_rd"
+  ],
+  "user_turns": [
+    {
+      "content": "My online spending limit is Rs 50,000 right now — raise it to Rs 60,000."
+    },
+    {
+      "content": "Ok, go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "THE CONTRADICTION: online.domestic.daily_limit is 25,000 — not the 50,000 the customer believes. credit_limit 200,000, so 60,000 is permissible.",
+      "records": [
+        {
+          "card_id": "TKCGSCC9002730",
+          "masked_number": "****2730",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 168500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "_comment": "Computed reply from get_card_details + the call payload; rejects the documented no-no of changing enabled and daily_limit in one call.",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "reject_when": {
+        "payload_has_all_of": [
+          "enabled",
+          "daily_limit"
+        ],
+        "output": {
+          "status": "failed",
+          "message": "Send them as sequential calls.",
+          "reference_id": "REF-CTL-00000"
+        }
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-90010"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCGSCC9002730"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCGSCC9002730",
+          "online": {
+            "domestic": {
+              "daily_limit": 60000
+            }
+          }
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCGSCC9002730"
+          ]
+        }
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCGSCC9002730"
+        },
+        "_comment": "The limit payload is judged at R (the reply must end at 60,000 and the correction must be surfaced); enabling-status + limit in one call is rejected by the mock per the documented rule."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer wants the online domestic daily limit raised from (what they believe is) Rs 50,000 to Rs 60,000. get_card_details shows the current online domestic limit is Rs 25,000 — the premise is wrong, and the assistant must say so before acting. The requested Rs 60,000 is below the Rs 2,00,000 credit limit, so after the customer confirms the assistant calls set_card_controls for online domestic daily_limit 60,000 (status and limit must not change in one call). The final report must show the limit is now Rs 60,000. Applying the change while parroting the customer's Rs 50,000 premise, or leaving the limit unchanged, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces that the current online domestic limit is Rs 25,000 (not Rs 50,000), then — after confirmation — sets it to Rs 60,000 in a call that does not bundle enabled with the limit. Silently confirming the Rs 50,000 premise, or ending without the 60,000 limit applied, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

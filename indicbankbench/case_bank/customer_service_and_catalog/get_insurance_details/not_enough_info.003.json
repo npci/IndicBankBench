@@ -1,0 +1,199 @@
+{
+  "case_id": "csc.get_insurance_details.not_enough_info.003",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Wave-4 asymmetric failure: customer says 'I need to check my policy' without naming WHICH policy type (they have both life and health). a small model: over-clarifies, asking for details without calling tools (A1). Stronger model: calls get_insurance_details but for only ONE policy (say life), reports just that, misses the fact there are two — the correct move is query both and ask. One clear path, two distinct failure modes: (a) no tool calls at all, (b) answers based on one policy as if it's the only one.",
+  "setup": {
+    "persona": "20-year-old female, Medical and Health Technicians, rural Sundargarh, Odisha",
+    "current_date": "2026-08-12",
+    "current_time": "15:30",
+    "login_context": {
+      "customer_id": "SCN0617",
+      "full_name": "Keluni Tudu",
+      "date_of_birth": "2006-03-07",
+      "gender": "female",
+      "customer_since": "2024-11-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2346",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Sundargarh",
+        "state": "Odisha",
+        "pincode": "392346",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Sundargarh",
+        "state": "Odisha",
+        "pincode": "392346",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7413X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 2
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGNN9398001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "POL939802",
+          "type": "policy",
+          "label": "TK LifeShield"
+        },
+        {
+          "product_id": "POL939803",
+          "type": "policy",
+          "label": "TK HealthProtect"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCGNN9398004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to check my insurance policy — can you pull up the details?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two policies: life (POL939802, HDFC Life, Rs 40L, premium Rs 22,000 annual) and health (POL939803, ICICI Lombard, Rs 15L, premium Rs 18,500 annual). Both active. Querying just one hides the other.",
+      "records": [
+        {
+          "policy_id": "POL939802",
+          "policy_type": "life",
+          "insurer": "HDFC Life",
+          "sum_assured": 4000000,
+          "premium": 22000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2027-01-15",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL939803",
+          "policy_type": "health",
+          "insurer": "ICICI Lombard",
+          "sum_assured": 1500000,
+          "premium": 18500,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-09-30",
+          "status": "active"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — noise tool.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "POL939802",
+            "POL939803"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "optional_ok": {
+          "policy_ids": {
+            "allowed": [
+              [
+                "POL939802",
+                "POL939803"
+              ],
+              [
+                "POL939802"
+              ],
+              [
+                "POL939803"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying both policies is the right move to surface the ambiguity. Querying just one is acceptable tool-wise but fails the R bar (answering with only one policy as if it's the only one)."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer says 'my insurance policy' but holds TWO — a life policy (POL939802, HDFC Life, Rs 40L sum assured) and a health policy (POL939803, ICICI Lombard, Rs 15L sum assured). The assistant must query both policies and ask which one the customer wants. Answering with the details of just one policy (as if it's the only one), or doing nothing at all, both fail — the customer needs to specify which policy, and the assistant needs to present the choice."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant queries both insurance policies (or queries them and asks), and asks which one the customer wants. Answering with details of only one policy, as if the customer has only one, fails. Not calling tools at all and just asking 'which policy' without data also fails A1."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

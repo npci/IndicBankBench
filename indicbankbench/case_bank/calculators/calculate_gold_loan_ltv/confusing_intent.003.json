@@ -1,0 +1,162 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.confusing_intent.003",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'evaluate my 50 grams of gold for a loan — I think it's all 22 karat'. The customer assumes 50g total. But the gold items might actually total more weight — the customer only estimated. A model that takes 50g at face value computes a lower loan amount. A broader model asks the customer to verify the total weight and suggests branch weighing for accuracy.",
+  "setup": {
+    "persona": "25-year-old male, Loader and Unloader, rural Karbi Anglong, Assam",
+    "current_date": "2026-08-14",
+    "current_time": "11:30",
+    "login_context": {
+      "customer_id": "SCN0596",
+      "full_name": "James Talukdar",
+      "date_of_birth": "2001-03-06",
+      "gender": "male",
+      "customer_since": "2019-03-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2734",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "15 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Karbi Anglong",
+        "state": "Assam",
+        "pincode": "112734",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "15 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Karbi Anglong",
+        "state": "Assam",
+        "pincode": "112734",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9941X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9473001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9473002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I have some family gold — about 50 grams, mostly 22 karat. How much loan can I get against it?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "purity_karat": 22,
+        "rate_per_gram": 5800,
+        "rate_date": "2026-08-14"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 290000,
+        "eligible_loan_amount": 217500,
+        "ltv_percent_used": 75
+      },
+      "_comment": "50g x 5800 = 290000. 75% LTV = 217500."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 5800
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        }
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 5800
+        },
+        "_comment": "50g at 22k: ~Rs 2,17,500 eligible. But the customer said 'about 50 grams' — this is an estimate. The model should flag that actual weight must be verified at the branch."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "expected_resolution": "The customer estimates 50 grams at 22k. At Rs 5,800/gram, gold value is Rs 2,90,000 and eligible loan is Rs 2,17,500. The assistant should compute this AND explicitly note that the actual weight must be verified by branch appraisal — the customer's estimate may differ from the real weight, affecting the loan amount. Computing without the weight-verification caveat fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes LTV correctly (~Rs 2,17,500) AND flags that weight and purity are subject to branch verification since the customer only estimated 50g. Computing without the verification caveat fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

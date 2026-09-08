@@ -1,0 +1,257 @@
+{
+  "case_id": "acct.show_mandates.long_context.004",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Buried-in-noise: 10 mandates returned. Two SIP mandates exist. The bait at position 4 (Rs 2,000 HDFC Small Cap SIP active) is the first SIP found by a model that scans shallow. The key at position 9 (Rs 5,000 SBI Bluechip SIP paused) requires deep scanning to discover. A weak model stops at position 4-5 finds only one SIP and reports it as active. A strong model scans all 10 finds both SIPs and notes one is active and one is paused.",
+  "setup": {
+    "persona": "27-year-old female, No Occupation / Retired / Homemaker, urban Darrang, Assam",
+    "current_date": "2026-08-22",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0809",
+      "full_name": "Begum Khatun",
+      "date_of_birth": "1999-06-24",
+      "gender": "female",
+      "customer_since": "2017-09-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5881",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "42 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Darrang",
+        "state": "Assam",
+        "pincode": "925881",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "42 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Darrang",
+        "state": "Assam",
+        "pincode": "925881",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1323X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSMNB10001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSMNB10002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "create_rd",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to check my SIP is it still active?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "10 mandates. Two SIP mandates: bait at position 4 (MNDSMNB10004, Rs 2,000 HDFC Small Cap SIP, active) and key at position 9 (MNDSMNB10009, Rs 5,000 SBI Bluechip SIP, paused). A weak model stops scanning at position 4-5 finds only one SIP and says yes it's active. A strong model scans all 10 finds both SIPs and reports one active and one paused.",
+      "records": [
+        {
+          "mandate_id": "MNDSMNB10001",
+          "type": "si",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10002",
+          "type": "si",
+          "payee": "Amazon Prime",
+          "amount": 299,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-03",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10003",
+          "type": "si",
+          "payee": "LIC Premium",
+          "amount": 2400,
+          "frequency": "quarterly",
+          "status": "active",
+          "next_debit_date": "2026-10-15",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10004",
+          "type": "si",
+          "payee": "HDFC Small Cap SIP",
+          "amount": 2000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10005",
+          "type": "si",
+          "payee": "Hotstar",
+          "amount": 499,
+          "frequency": "yearly",
+          "status": "paused",
+          "next_debit_date": "2026-12-01",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10006",
+          "type": "si",
+          "payee": "BESCOM Electricity",
+          "amount": 0,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-10",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10007",
+          "type": "si",
+          "payee": "Airtel Broadband",
+          "amount": 999,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-08",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10008",
+          "type": "si",
+          "payee": "Bajaj Finance EMI",
+          "amount": 8500,
+          "frequency": "monthly",
+          "status": "cancelled",
+          "next_debit_date": "2026-07-01",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10009",
+          "type": "si",
+          "payee": "SBI Bluechip SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "paused",
+          "next_debit_date": "2026-09-15",
+          "account_id": "TKSMNB10001"
+        },
+        {
+          "mandate_id": "MNDSMNB10010",
+          "type": "si",
+          "payee": "Swasth Health Insurance",
+          "amount": 2100,
+          "frequency": "quarterly",
+          "status": "active",
+          "next_debit_date": "2026-11-01",
+          "account_id": "TKSMNB10001"
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool not intended.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Customer has one linked account. Calling without filters returns all mandates. Must find both SIPs: HDFC Small Cap SIP (Rs 2,000 active position 4) and SBI Bluechip SIP (Rs 5,000 paused position 9)."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite optional."
+      }
+    },
+    "expected_resolution": "The customer asks whether their SIP is still active. show_mandates returns 10 mandates. Two are SIPs: the bait at position 4 (MNDSMNB10004 HDFC Small Cap SIP Rs 2,000 monthly active) and the key at position 9 (MNDSMNB10009 SBI Bluechip SIP Rs 5,000 monthly paused). A weak model that stops scanning at position 4-5 finds only the HDFC SIP says yes it's active and stops. A strong model scans all 10 finds both SIPs and correctly reports that there are two SIP mandates: HDFC Small Cap Rs 2,000 is active while SBI Bluechip Rs 5,000 is paused. Reporting only the active HDFC SIP with no mention of the paused SBI Bluechip SIP fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies BOTH SIP mandates (HDFC Small Cap Rs 2,000 active AND SBI Bluechip Rs 5,000 paused) NOT just the active HDFC SIP at position 4. Reporting only one SIP as if it is the only one fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

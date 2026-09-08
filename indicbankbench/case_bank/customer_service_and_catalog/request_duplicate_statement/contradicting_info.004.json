@@ -1,0 +1,216 @@
+{
+  "case_id": "csc.request_duplicate_statement.contradicting_info.004",
+  "axis": "5_contradicting_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'send me the statement for my salary account for August — I'm disputing a charge'. get_transaction_history filtered to the salary account shows normal transactions. But the disputed Rs 12,500 charge actually hit the SAVINGS account, not the salary account. An account_id filter for only salary hides the disputed transaction. Broad query finds it on the savings account.",
+  "setup": {
+    "persona": "42-year-old male, Cart Driver, rural Purba Medinipur, West Bengal",
+    "current_date": "2026-08-20",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0428",
+      "full_name": "Bibhuti Ghosh",
+      "date_of_birth": "1984-02-01",
+      "gender": "male",
+      "customer_since": "2013-07-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0081",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Purba Medinipur",
+        "state": "West Bengal",
+        "pincode": "590081",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Purba Medinipur",
+        "state": "West Bengal",
+        "pincode": "590081",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0341X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9484001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9484002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9484003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "There's a Rs 12,500 charge I don't recognise on my salary account this month — send me the August statement and I'll raise a dispute."
+    },
+    {
+      "content": "Ok, go ahead and send the statement."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer believes the Rs 12,500 charge is on the salary account. The salary account (TKFTB9484001) has only normal transactions — salary credit and rent. The disputed Rs 12,500 (TXN-FTB84003, online purchase) actually hit the SAVINGS account (TKFTB9484002). An account_id filter for only the salary account hides the disputed charge. Broad query across both accounts reveals the disputed transaction on savings.",
+      "records": [
+        {
+          "date": "2026-08-15T09:00:00",
+          "amount": 92000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-FTB84004",
+          "transaction_note": "NEFT - SALARY AUG 2026",
+          "status": "success",
+          "running_balance": 175000
+        },
+        {
+          "date": "2026-08-12T18:30:00",
+          "amount": 12500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-FTB84002",
+          "transaction_note": "POS PURCHASE - GADGETZONE ONLINE",
+          "status": "success",
+          "running_balance": 83000
+        },
+        {
+          "date": "2026-08-10T10:00:00",
+          "amount": 5000,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-FTB84001",
+          "transaction_note": "UPI - AMAZON",
+          "status": "success",
+          "running_balance": 95500
+        },
+        {
+          "date": "2026-08-05T14:00:00",
+          "amount": 25000,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-FTB84003",
+          "transaction_note": "NEFT - RENT AUG 2026",
+          "status": "success",
+          "running_balance": 100500
+        }
+      ]
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-DS-94841",
+        "status": "success",
+        "message": "Duplicate statement requested and will be emailed."
+      },
+      "_comment": "Success — statement ordered."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFTB9484002"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKFTB9484002",
+              "TKFTB9484001"
+            ]
+          }
+        },
+        "_comment": "Must find the Rs 12,500 charge. Querying only the salary account (TKFTB9484001) misses it — it's on the savings account. The model should query both accounts or identify the savings account as the source."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKFTB9484002",
+              "TKFTB9484001"
+            ]
+          }
+        },
+        "_comment": "Statement should be for the savings account where the disputed charge actually is."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "request_duplicate_statement"
+      ]
+    ],
+    "expected_resolution": "The customer believes the Rs 12,500 charge is on the salary account. The assistant must query transactions, discover that the disputed Rs 12,500 (GADGETZONE ONLINE, POS) actually hit the SAVINGS account (TKFTB9484002), correct the customer, and order the statement for the savings account. Ordering a salary-account statement without surfacing that the charge is on savings fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "discovers the Rs 12,500 charge is on the savings account (not salary), corrects the customer, and orders the statement for the correct account. Ordering salary-account statement without surfacing the savings account charge fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

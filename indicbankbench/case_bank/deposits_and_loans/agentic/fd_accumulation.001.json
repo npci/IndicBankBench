@@ -1,0 +1,246 @@
+{
+  "case_id": "depl.agentic.fd_accumulation.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "_variant_note": "Numerical reasoning: customer has 2 FDs maturing at different dates plus savings balance. Wants to know total available for a new FD after both mature.",
+  "setup": {
+    "persona": "28-year-old male, Cart Driver, rural Mainpuri, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0464",
+      "full_name": "Manoj Poojan",
+      "date_of_birth": "1998-07-14",
+      "gender": "male",
+      "customer_since": "2018-03-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7538",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Mainpuri",
+        "state": "Uttar Pradesh",
+        "pincode": "147538",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Mainpuri",
+        "state": "Uttar Pradesh",
+        "pincode": "147538",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0567X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDA9300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDL9300002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDL9300003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFDA9300004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I have two FDs — one for Rs 3,00,000 and one for Rs 4,00,000. Also about Rs 50,000 in savings. If I combine everything, how much do I have to invest in a new FD?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDL9300002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2024-09-01",
+          "maturity_date": "2026-09-01",
+          "maturity_amount": 341292,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDA9300001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDL9300003",
+          "principal_amount": 400000,
+          "interest_rate": 6.5,
+          "tenure_months": 36,
+          "start_date": "2024-06-01",
+          "maturity_date": "2027-06-01",
+          "maturity_amount": 485363,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDA9300001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKFDA9300001",
+          "available_balance": 50000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDL9300002",
+            "TKFDL9300003"
+          ]
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFDA9300001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "_comment": "Must fetch both FDs. Maturity amounts: Rs 3,41,292 (Sep 2026) + Rs 4,85,363 (Jun 2027)."
+      },
+      "get_account_balance": {
+        "required": {},
+        "_comment": "Savings: Rs 50,000. Total potential: Rs 3,41,292 + Rs 4,85,363 + Rs 50,000 = Rs 8,76,655."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks how much they have across 2 FDs and savings. The assistant must fetch get_fd_details (FD1: Rs 3,41,292 maturity, FD2: Rs 4,85,363 maturity) and get_account_balance (Rs 50,000). It should report the total: approximately Rs 8,76,655, noting that FD1 matures in Sep 2026 and FD2 in Jun 2027, so the full amount won't be available simultaneously unless FD2 is broken early. Failing to note the maturity timing, or adding the numbers incorrectly, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches both FDs and savings balance, reports total Rs 8,76,655 with maturity timing caveat. Adding incorrectly, or not noting different maturity dates, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

@@ -1,0 +1,273 @@
+{
+  "case_id": "csc.get_insurance_details.long_context.002",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "Buried-in-noise: 8 policies returned. The key policy (HDFC Whole Life Protect at position 7) has actual lifetime features. A similar bait (LIC Term Life Plan at position 2) has 'Life' in the name but is a term plan with no lifetime benefits. A weak model stops scanning at position 2-3 and picks LIC Term Life Plan. A strong model scans all 8 and identifies HDFC Whole Life Protect as the lifetime benefits policy.",
+  "setup": {
+    "persona": "32-year-old male, Call Centre Executive, urban Mumbai Suburban, Maharashtra",
+    "current_date": "2026-08-22",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0598",
+      "full_name": "Shrikant Shah",
+      "date_of_birth": "1994-12-02",
+      "gender": "male",
+      "customer_since": "2023-04-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2679",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Mumbai Suburban",
+        "state": "Maharashtra",
+        "pincode": "392679",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Mumbai Suburban",
+        "state": "Maharashtra",
+        "pincode": "392679",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4162X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 8
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKINS98011",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "POL98020",
+          "type": "policy",
+          "label": "TK Insurance"
+        },
+        {
+          "product_id": "POL98021",
+          "type": "policy",
+          "label": "TK Insurance"
+        },
+        {
+          "product_id": "POL98022",
+          "type": "policy",
+          "label": "TK Insurance"
+        },
+        {
+          "product_id": "POL98023",
+          "type": "policy",
+          "label": "TK Insurance"
+        },
+        {
+          "product_id": "POL98024",
+          "type": "policy",
+          "label": "TK Insurance"
+        },
+        {
+          "product_id": "POL98025",
+          "type": "policy",
+          "label": "TK Insurance"
+        },
+        {
+          "product_id": "POL98026",
+          "type": "policy",
+          "label": "TK Insurance"
+        },
+        {
+          "product_id": "POL98027",
+          "type": "policy",
+          "label": "TK Insurance"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCINS98012",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "I have a policy with lifetime benefits can you tell me its current status and when the next premium is due?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "_comment": "8 policies. Bait = position 2 (LIC Term Life Plan) has 'Life' in name but is a term plan no lifetime benefits. Key = position 7 (HDFC Whole Life Protect) has actual lifetime coverage features. A weak model stops scanning at position 2-3 and picks the term plan. A strong model scans all 8 and finds the whole life policy.",
+      "records": [
+        {
+          "policy_id": "POL98020",
+          "policy_type": "health",
+          "insurer": "Star Health",
+          "sum_assured": 500000,
+          "premium": 8500,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2027-01-15",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL98021",
+          "policy_type": "life",
+          "insurer": "LIC Term Life Plan",
+          "sum_assured": 2500000,
+          "premium": 18000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-11-10",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL98022",
+          "policy_type": "general",
+          "insurer": "Bajaj Allianz",
+          "sum_assured": 300000,
+          "premium": 4200,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-10-05",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL98023",
+          "policy_type": "life",
+          "insurer": "SBI Life",
+          "sum_assured": 1000000,
+          "premium": 12000,
+          "premium_frequency": "monthly",
+          "premium_due_date": "2026-09-01",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL98024",
+          "policy_type": "health",
+          "insurer": "HDFC Ergo",
+          "sum_assured": 1000000,
+          "premium": 22000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-12-20",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL98025",
+          "policy_type": "general",
+          "insurer": "ICICI Lombard",
+          "sum_assured": 200000,
+          "premium": 1800,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2027-03-10",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL98026",
+          "policy_type": "life",
+          "insurer": "HDFC Whole Life Protect",
+          "sum_assured": 5000000,
+          "premium": 48000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-09-18",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL98027",
+          "policy_type": "health",
+          "insurer": "Max Bupa",
+          "sum_assured": 1500000,
+          "premium": 16000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2027-02-05",
+          "status": "active"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "POL98020",
+            "POL98021",
+            "POL98022",
+            "POL98023",
+            "POL98024",
+            "POL98025",
+            "POL98026",
+            "POL98027"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "_comment": "policy_ids deliberately not pinned order-sensitive list. The model must fetch all 8 policies and find the one with lifetime benefits HDFC Whole Life Protect at position 7 not the LIC Term Life Plan at position 2."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      }
+    },
+    "expected_resolution": "The customer asks about their policy with lifetime benefits. get_insurance_details returns 8 policies. The bait is POL98021 at position 2 (LIC Term Life Plan policy_type life) which has 'Life' in the insurer name and is a life policy but is a term plan with no lifetime benefits. The correct record is POL98026 at position 7 (HDFC Whole Life Protect policy_type life sum_assured Rs 50L premium Rs 48,000 yearly due 2026-09-18 status active) which is the actual lifetime benefits policy. A weak model stops scanning at position 2-3 picks LIC Term Life Plan and reports its details. A strong model scans all 8 and correctly identifies HDFC Whole Life Protect at position 7 as the lifetime benefits policy. Picking the LIC Term Life Plan or any other non-whole-life policy fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies HDFC Whole Life Protect (POL98026, Rs 50L sum assured, premium Rs 48,000 yearly, due 2026-09-18) as the lifetime benefits policy NOT the LIC Term Life Plan at position 2. Picking any non-whole-life policy fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

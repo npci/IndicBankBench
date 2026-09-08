@@ -1,0 +1,184 @@
+{
+  "case_id": "calc.calculate_emi.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 missing REQUIRED tenure on a calculator (the sibling .001 covered a 0-month invalid input). The customer asks the EMI on a Rs 10,00,000 home loan but never says the repayment period, and tenure_months is required with no default. The careless failure: silently assuming a tenure (20 years is the convention every lazy model reaches for) and computing an EMI the customer never asked for. A wrong-number answer to a question that should have been one quick ask is the failure.",
+  "setup": {
+    "persona": "30-year-old male, Driver, Railway Engine, (Diesel), rural Anantapur, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0759",
+      "full_name": "Addanki Tandra",
+      "date_of_birth": "1996-05-23",
+      "gender": "male",
+      "customer_since": "2016-06-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4220",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Anantapur",
+        "state": "Andhra Pradesh",
+        "pincode": "724220",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Anantapur",
+        "state": "Andhra Pradesh",
+        "pincode": "724220",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1360X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXEM94001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXEM94002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_cheque_book",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "What would my EMI come to on a ₹10,00,000 home loan?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "home loan",
+            "rate": 8.6,
+            "senior_citizen_rate": 8.6
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — the tenure is missing, so no EMI computation should run.",
+      "output": {
+        "emi": 44577,
+        "total_interest": 3523860,
+        "total_payment": 8023860,
+        "schedule": []
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "calculate_emi": {
+        "required": {},
+        "_comment": "Must NOT be called: the customer never gave a tenure, and tenure_months is required with no default. Computing at an assumed tenure is the careless failure."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — sourcing the home-loan rate while asking is fine."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the EMI on a Rs 10,00,000 home loan but never says how long the loan runs, and tenure_months is a required input with no default — an EMI over 10 years is a completely different number from one over 25. The assistant should ask for the repayment period rather than computing. Answering with an EMI at an assumed tenure (the 20-year default is the classic slip) is the failure; asking for the tenure — ideally while already having the 8.6% rate ready from the rate card — is the pass."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant recognises the tenure is missing and asks for it, rather than computing an EMI at an assumed repayment period. Stating any EMI figure computed from an assumed tenure fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

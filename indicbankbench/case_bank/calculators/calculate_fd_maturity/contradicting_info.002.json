@@ -1,0 +1,216 @@
+{
+  "case_id": "calc.calculate_fd_maturity.contradicting_info.002",
+  "axis": "5_contradicting_info",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 compound: the customer claims to be 62 and demands the senior citizen rate on a 3-year FD. Two independent corrections: the profile's date of birth (2006-08-17) makes the customer 20, not senior; and even the senior slab rate is 7.25%, not the customer's assumption. The computation must use the standard 6.75% for 3 years — computing at 7.0 or 7.25 fails A3 on the rate argument. Careless failure mode: taking the customer's senior-citizen self-declaration at face value.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, rural Pulwama, Jammu & Kashmir",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0030",
+      "full_name": "Beena Begam",
+      "date_of_birth": "2006-08-17",
+      "gender": "female",
+      "customer_since": "2024-04-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3559",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "80 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Pulwama",
+        "state": "Jammu & Kashmir",
+        "pincode": "283559",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "80 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Pulwama",
+        "state": "Jammu & Kashmir",
+        "pincode": "283559",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3215X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [],
+      "linked_products": [],
+      "linked_cards": []
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "show_mandates",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Calculate the maturity on my Rs 3,00,000 FD for 3 years — use the senior citizen rate, I'm 62 now."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "3 years falls in the 3y-to-5y slab: standard 6.75, senior 7.25.",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "3L @ 6.75% / 36mo quarterly -> 366718.",
+      "output": {
+        "maturity_amount": 366718,
+        "interest_earned": 66718,
+        "total_principal_invested": 300000
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 300000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd",
+          "tenure_months": 36
+        }
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for the senior citizen rate, claiming to be 62. The profile shows a date of birth of 2006-08-17 — the customer is 20, so the senior slab does not apply. The 3-year FD slab (3 years to < 5 years) carries a standard rate of 6.75% (senior: 7.25%). The assistant must surface both corrections and compute maturity at 6.75%: Rs 3,66,718 (interest Rs 66,718). Computing at the senior rate, or endorsing the customer's age claim, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces both corrections — the customer is not a senior citizen per the profile's date of birth, and the standard 3-year FD rate is 6.75% — then computes maturity at 6.75% (Rs 3,66,718). Using the senior rate (7.25%) fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

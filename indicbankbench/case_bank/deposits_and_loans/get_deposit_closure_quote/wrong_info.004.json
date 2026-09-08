@@ -1,0 +1,308 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'close my active FD — I need cash now'. Two FDs exist: one active (TKFT5R951402, Rs 2,00,000, started Mar 2026) and one already matured (TKFT5R951403, Rs 3,00,000, matured Aug 2026, sitting idle). A status=active filter on get_fd_details hides the matured FD which is actually READY to close with zero penalty. Broad query reveals the matured FD — close this first and avoid penalty entirely.",
+  "setup": {
+    "persona": "20-year-old female, Store Keeper, urban Mumbai Suburban, Maharashtra",
+    "current_date": "2026-08-20",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0639",
+      "full_name": "Pratibha Vinay",
+      "date_of_birth": "2006-01-19",
+      "gender": "female",
+      "customer_since": "2024-01-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2984",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "25 MG Road",
+        "line2": "Alkapuri",
+        "city": "Mumbai Suburban",
+        "state": "Maharashtra",
+        "pincode": "112984",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "25 MG Road",
+        "line2": "Alkapuri",
+        "city": "Mumbai Suburban",
+        "state": "Maharashtra",
+        "pincode": "112984",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9313X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R951401",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFT5R951402",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFT5R951403",
+          "type": "fd",
+          "label": "TK Annual FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R951404",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need cash urgently — show me what I'd get if I close my fixed deposit now."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: TKFT5R951402 (SmartFD, Rs 2L, 12mo at 6.5%, started 2026-03-01, active) — premature closure incurs penalty. TKFT5R951403 (Annual FD, Rs 3L, 12mo at 6.5%, started 2025-08-01, matured 2026-08-01 — ALREADY MATURED, no penalty to close). A status=active filter hides the matured FD which is penalty-free. Broad query reveals both.",
+      "records": [
+        {
+          "deposit_id": "TKFT5R951402",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2026-03-01",
+          "maturity_date": "2027-03-01",
+          "maturity_amount": 213276,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFT5R951401",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFT5R951403",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-08-01",
+          "maturity_date": "2026-08-01",
+          "maturity_amount": 319914,
+          "payout_type": "cumulative",
+          "status": "matured",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFT5R951401",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "SmartFD (active, 5.67mo run): accrued=200000*5%*5.67/12=4725, penalty=2000, payout=202725. Annual FD (matured): no penalty, payout=maturity=319914.",
+      "records": [
+        {
+          "deposit_id": "TKFT5R951402",
+          "principal_amount": 200000,
+          "accrued_interest": 4725,
+          "penalty_rate": 1.0,
+          "penalty_amount": 2000,
+          "effective_rate": 2.35,
+          "estimated_payout": 202725
+        },
+        {
+          "deposit_id": "TKFT5R951403",
+          "principal_amount": 300000,
+          "accrued_interest": 19914,
+          "penalty_rate": 0.0,
+          "penalty_amount": 0,
+          "effective_rate": 6.5,
+          "estimated_payout": 319914
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFT5R951402",
+            "TKFT5R951403"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFT5R951402",
+            "TKFT5R951403"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFT5R951402",
+                "TKFT5R951403"
+              ],
+              [
+                "TKFT5R951403",
+                "TKFT5R951402"
+              ],
+              [
+                "TKFT5R951402"
+              ],
+              [
+                "TKFT5R951403"
+              ]
+            ]
+          }
+        },
+        "_comment": "Query both FDs. Filtering by status=active hides the matured TKFT5R951403 (Rs 3L, ready to close penalty-free). The model must query broadly and surface the matured FD."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFT5R951402",
+                "TKFT5R951403"
+              ],
+              [
+                "TKFT5R951403",
+                "TKFT5R951402"
+              ],
+              [
+                "TKFT5R951402"
+              ],
+              [
+                "TKFT5R951403"
+              ]
+            ]
+          }
+        },
+        "_comment": "Quote both. The matured FD (319,914 payout, zero penalty) is the smarter choice over the active FD (202,725 payout with penalty)."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer wants to close their FD for cash. Two FDs exist: TK SmartFD (Rs 2,00,000, active with penalty ~Rs 2,02,725 if broken) and TK Annual FD (Rs 3,00,000, ALREADY MATURED — Rs 3,19,914 payout with ZERO penalty). The assistant must query both FDs, surface the matured FD, and recommend closing it first since it's penalty-free and ready to redeem. Quoting only the active FD without surfacing the matured penalty-free one fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both FDs and presents both closure quotes, highlighting that the matured Annual FD (Rs 3,19,914, zero penalty) is the smarter choice for immediate cash. Quoting only the active SmartFD without surfacing the matured one fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

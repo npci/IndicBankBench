@@ -1,0 +1,231 @@
+{
+  "case_id": "depl.update_deposit_renewal.contradicting_info.001",
+  "axis": "5_contradicting_info",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "Customer wants renew_principal_interest on monthly payout FD. CONVENTIONS: non-cumulative FDs cannot use renew_principal_interest. Model must flag.",
+  "setup": {
+    "persona": "41-year-old male, Senior Officials of Humanitarian and Other Special – Interest Organisations, urban Sheohar, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0275",
+      "full_name": "Ranjit Pandey",
+      "date_of_birth": "1985-01-08",
+      "gender": "male",
+      "customer_since": "2012-10-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9060",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Sheohar",
+        "state": "Bihar",
+        "pincode": "229060",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Sheohar",
+        "state": "Bihar",
+        "pincode": "229060",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7639X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUDL9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDUDL9800002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCUDL9800003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Set my FD to auto-renew with full principal and interest at maturity. I want the interest to compound."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Monthly payout FD. renew_principal_interest is invalid per CONVENTIONS — interest is already paid out monthly, so there's nothing to renew.",
+      "records": [
+        {
+          "deposit_id": "TKFDUDL9800002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-11-01",
+          "maturity_date": "2027-05-01",
+          "maturity_amount": 300000,
+          "payout_type": "monthly",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKUDL9800001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net.",
+      "output": {
+        "deposit_id": "TKFDUDL9800002",
+        "instruction": "renew_principal_interest",
+        "status": "failed",
+        "message": "Invalid instruction for monthly payout FD. Only no_renewal or renew_principal are valid for non-cumulative deposits.",
+        "reference_id": "REF-UDR-00000"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDUDL9800002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDUDL9800002"
+          ]
+        },
+        "_comment": "Must check FD first. Monthly payout — renew_principal_interest is invalid since interest is paid out monthly."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "_comment": "Must NOT be called with renew_principal_interest. Only no_renewal or renew_principal are valid for monthly payout FDs."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants to auto-renew with principal and interest on their FD. The assistant must first call get_fd_details, which shows payout_type=monthly. Monthly payout FDs pay interest during the tenure, so there is no accumulated interest left to renew — only no_renewal or renew_principal are valid. The assistant must surface this constraint and offer the valid options. Calling update_deposit_renewal with renew_principal_interest on a monthly FD fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks FD, identifies monthly payout constraint, and does NOT call with renew_principal_interest. Only offering valid options (no_renewal, renew_principal) passes."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

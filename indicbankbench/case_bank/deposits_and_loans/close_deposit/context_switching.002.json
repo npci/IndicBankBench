@@ -1,0 +1,320 @@
+{
+  "case_id": "depl.close_deposit.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 referential tracking across two same-type entities. The customer holds two FDs and refers to them by position ('my first FD', 'the second one'), never by id. They ask about the first FD's maturity, then the second's, then ask to close 'the second one'. The model must map 'the second one' to the correct deposit_id (TKFDDEP9101003, the ₹5,00,000 FD) and act on THAT one — not the first, not both. A3 pins the close_deposit deposit_id deterministically, so closing the wrong FD fails outright; the tracking itself is the test. This differs from context_switching.001 (single FD + balance detour): here both sub-tasks are the SAME tool on the SAME entity type, so the only thing distinguishing them is the model's own bookkeeping across turns.",
+  "setup": {
+    "persona": "26-year-old male, Police Constable, rural Hardoi, Uttar Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0758",
+      "full_name": "Bhoopendra Jeet",
+      "date_of_birth": "2000-10-12",
+      "gender": "male",
+      "customer_since": "2021-07-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4557",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "118 College Road",
+        "line2": "Model Town",
+        "city": "Hardoi",
+        "state": "Uttar Pradesh",
+        "pincode": "794557",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "118 College Road",
+        "line2": "Model Town",
+        "city": "Hardoi",
+        "state": "Uttar Pradesh",
+        "pincode": "794557",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3172X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDEP9101001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDDEP9101002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDEP9101003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCDEP9101004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the maturity amount on my first fixed deposit?"
+    },
+    {
+      "content": "And what about the second one?"
+    },
+    {
+      "content": "Close the second FD — the one we just discussed."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two FDs, deliberately different amounts and tenures. FD1: ₹2,00,000, 24 months at 6.5%, maturity 227528 (CONVENTIONS §2). FD2: ₹5,00,000, 36 months at 6.75%, maturity 611196. The customer refers to them only by position, so the model's tracking across turns is what distinguishes them.",
+      "records": [
+        {
+          "deposit_id": "TKFDDEP9101002",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-09-01",
+          "maturity_date": "2027-09-01",
+          "maturity_amount": 227528,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDEP9101001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDEP9101003",
+          "principal_amount": 500000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2025-09-15",
+          "maturity_date": "2028-09-15",
+          "maturity_amount": 611196,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDEP9101001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Premature closure of FD2 at ~6 months run. Interest at the 6-months-to-<1-year card rate of 6.0% for 6 months = 15000; premature-closure charge 1.0% of principal = 5000; estimated_payout 500000 + 15000 - 5000 = 510000. See CONVENTIONS §4.",
+      "records": [
+        {
+          "deposit_id": "TKFDDEP9101003",
+          "principal_amount": 500000,
+          "accrued_interest": 15000,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "effective_rate": 4.0,
+          "estimated_payout": 510000
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely. ₹5,10,000 credited to TKDEP9101001.",
+        "amount_credited": 510000,
+        "payout_account": "TKDEP9101001",
+        "reference_id": "REF-CLS-77460"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDDEP9101002"
+          ]
+        }
+      },
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDDEP9101003"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDDEP9101003"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKFDDEP9101003"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDDEP9101002"
+              ],
+              [
+                "TKFDDEP9101003"
+              ],
+              [
+                "TKFDDEP9101002",
+                "TKFDDEP9101003"
+              ],
+              [
+                "TKFDDEP9101003",
+                "TKFDDEP9101002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Fetching each FD separately or both together is fine — the tracking test is downstream, in which id the close targets."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDDEP9101003"
+          ]
+        },
+        "_comment": "The quote must be for the SECOND FD — the one the customer asked to close."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKFDDEP9101003"
+        },
+        "_comment": "THE GATE: closing the first FD (TKFDDEP9101002) fails A3 deterministically — the model tracked 'the second one' to the wrong entity."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 6 — referential tracking across two same-type entities. The customer holds two FDs and refers to them only by position. They ask the first FD's maturity (₹2,27,528, maturing 2027-09-01), then the second's (₹6,11,196, maturing 2028-09-15), then ask to close 'the second one'.\n\nThe assistant must map 'the second one' to the correct deposit — TKFDDEP9101003, the ₹5,00,000 FD — quote its premature-closure cost (₹5,000 charge, ₹5,10,000 payout), confirm, and close THAT deposit. Closing the first FD (₹2,00,000), closing both, or confusing which maturity figure belongs to which FD, are the failures. The two sub-tasks are the same tool on the same entity type, so the only thing distinguishing them is the model's own bookkeeping."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "PASS requires the assistant to track the two FDs correctly across turns: report the first FD's maturity (₹2,27,528) and the second's (₹6,11,196) correctly, then close the SECOND FD (the ₹5,00,000 one) with its cost surfaced (₹5,000 charge, ₹5,10,000 payout) before confirmation. Closing the first FD, closing both, or mixing up which maturity figure belongs to which FD, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

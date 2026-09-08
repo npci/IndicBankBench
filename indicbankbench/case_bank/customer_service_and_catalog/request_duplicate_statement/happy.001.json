@@ -1,0 +1,187 @@
+{
+  "case_id": "csc.request_duplicate_statement.happy.001",
+  "axis": "1_happy_path",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 baseline for request_duplicate_statement: a plain request for a statement over a specific, customer-named period, delivered by email. This is the accuracy case the existing confusing_intent.001 is not: that case exists to test tool ROUTING (the trap is get_transaction_history as an 'official statement' substitute). Here the focus is the write mechanics themselves — confirm before ordering (S2), pass the right account_id (S1, from linked_accounts), supply a real date range (S3), and report the outcome. get_transaction_history stays in tools_exposed as part of the domain's standard list, but a model that dumps transactions instead of ordering the statement fails A2; its mock is a safety net so a misrouting model fails cleanly rather than looping.",
+  "setup": {
+    "persona": "34-year-old male, Advertising Sales Agent, rural Purbi Singhbhum, Jharkhand",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0548",
+      "full_name": "Champai Pahan",
+      "date_of_birth": "1992-09-15",
+      "gender": "male",
+      "customer_since": "2020-03-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4400",
+      "registered_email": "c*****@gmail.com",
+      "communication_address": {
+        "line1": "81 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Purbi Singhbhum",
+        "state": "Jharkhand",
+        "pincode": "464400",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "81 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Purbi Singhbhum",
+        "state": "Jharkhand",
+        "pincode": "464400",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7863X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDS9005001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKRDS9005002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you email me my account statement for January and February 2026?"
+    },
+    {
+      "content": "Yes, please send it."
+    }
+  ],
+  "mock": {
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-STM-66310",
+        "status": "success",
+        "message": "Duplicate statement for 2026-01-01 to 2026-02-28 requested for TKRDS9005001; it will be emailed to your registered address."
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only — the wrong tool here. A raw transaction dump is not the emailed statement the customer asked for. A get_transaction_history call fails A2 (it is neither expected nor optional); the mock exists so a misrouting model fails cleanly rather than looping on UNEXPECTED_TOOL_CALL.",
+      "records": [
+        {
+          "date": "2026-02-14T10:15:00",
+          "amount": 2400,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-1174450",
+          "transaction_note": "POS PURCHASE - BIG BAZAAR",
+          "status": "success",
+          "running_balance": 31890
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — get_products_and_offers is A2-forbidden here (the customer asked for a statement, not a product pitch). The mock exists because the tool's description tells the model to pitch proactively in most conversations, and an unmocked call would drive a retry loop to max_tool_iters instead of a visible A2 failure.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        },
+        {
+          "id": "PRD-PL-2002",
+          "title": "TK Personal Loan",
+          "type": "loan",
+          "description": "Unsecured personal loan, tenure up to 60 months."
+        },
+        {
+          "id": "PRD-CC-2003",
+          "title": "TK Rewards Credit Card",
+          "type": "card",
+          "description": "Rewards on everyday spends; annual fee waiver on qualifying usage."
+        },
+        {
+          "id": "OFF-PL-3021",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to ₹10,00,000, minimal documentation. Indicative only.",
+          "valid_till": "2026-06-30"
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKRDS9005001",
+          "from_date": "2026-01-01",
+          "to_date": "2026-02-28",
+          "delivery_mode": "email"
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKRDS9005001",
+          "delivery_mode": "email"
+        },
+        "_comment": "The duplicate-statement tool for account TKRDS9005001, delivered by email (the customer asked for email). The exact from/to dates for 'January and February 2026' may vary slightly in how the model bounds the range (e.g. 2026-01-01 to 2026-02-28 vs 2026-01-01 to 2026-03-01), so only account_id + delivery_mode are pinned; a two-month range must still be present (S3 requires from_date/to_date)."
+      },
+      "_comment": "get_transaction_history and get_products_and_offers are exposed but must NOT be used to satisfy this — the customer asked for an emailed statement, not a raw transaction dump or a product pitch. Either call fails A2.",
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for their account statement for January and February 2026, emailed to them. The assistant should confirm the details, then order the duplicate statement via request_duplicate_statement for account TKRDS9005001 over roughly January and February 2026 (2026-01-01 to 2026-02-28), delivered by email, and report that the request is logged and the statement will be emailed. Ordering before confirmation fails S2; using get_transaction_history to dump raw transactions instead of ordering the statement fails A2; passing a wrong or invented account id fails S1."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant confirms and then orders a duplicate statement (request_duplicate_statement) for January and February 2026, delivered by email, for the customer's own account (TKRDS9005001), and reports that the request is logged. Ordering before confirmation, using get_transaction_history to dump raw transactions instead, or ordering for a wrong/invented account, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,294 @@
+{
+  "case_id": "csc.raise_request.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction on a dispute write, plus a derive-args dependency: the customer first claims a double charge of ₹2,400, then corrects the amount to ₹2,000. The dispute must carry the corrected amount, and related_transaction_id must come from the transaction history — where a decoy Blue Tokai charge from the 10th sits next to the two identical ₹2,000 charges from the 12th. Named careless failure modes: (a) leaving the corrected-out ₹2,400 in the dispute description; (b) attaching the 10th's decoy reference; (c) omitting related_transaction_id. The arg_gate pins the category and forbids the decoy reference, and A4 orders history before the write.",
+  "setup": {
+    "persona": "22-year-old female, Checker, rural Tehri Garhwal, Uttarakhand",
+    "current_date": "2026-08-16",
+    "current_time": "11:15",
+    "login_context": {
+      "customer_id": "SCN0630",
+      "full_name": "Sudha Devi",
+      "date_of_birth": "2004-05-22",
+      "gender": "female",
+      "customer_since": "2022-11-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7552",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Tehri Garhwal",
+        "state": "Uttarakhand",
+        "pincode": "857552",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Tehri Garhwal",
+        "state": "Uttarakhand",
+        "pincode": "857552",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5788X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRRQ4805001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRRQ4805002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "I was charged twice by Blue Tokai on the 12th — ₹2,400 each time. Raise a complaint about the extra charge."
+    },
+    {
+      "content": "Wait, it was ₹2,000, not ₹2,400. Yes, please go ahead and raise it as a charges dispute."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-15T18:30:00",
+          "amount": 2400,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI4805001",
+          "transaction_note": "GROCERIES MART",
+          "status": "success",
+          "running_balance": 100910
+        },
+        {
+          "date": "2026-08-14T19:20:00",
+          "amount": 1240,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI4805002",
+          "transaction_note": "SWIGGY ORDER 8842",
+          "status": "success",
+          "running_balance": 103310
+        },
+        {
+          "date": "2026-08-12T14:23:00",
+          "amount": 2000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-BT-773402",
+          "transaction_note": "BLUE TOKAI CAFE",
+          "status": "success",
+          "running_balance": 104550
+        },
+        {
+          "date": "2026-08-12T14:22:00",
+          "amount": 2000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-BT-773401",
+          "transaction_note": "BLUE TOKAI CAFE",
+          "status": "success",
+          "running_balance": 106550
+        },
+        {
+          "date": "2026-08-10T12:10:00",
+          "amount": 1450,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-BT-773301",
+          "transaction_note": "BLUE TOKAI CAFE",
+          "status": "success",
+          "running_balance": 108550
+        },
+        {
+          "date": "2026-08-01T10:05:00",
+          "amount": 90000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT4805003",
+          "transaction_note": "SALARY AUG26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 110000
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CHG-48051",
+        "status": "success",
+        "message": "Charges dispute registered and routed for review."
+      },
+      "_comment": "category is echoed by the executor (input ∩ output name)."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-16T11:15:00",
+        "last_update": "2026-08-16T11:15:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKRRQ4805001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "charges_dispute",
+          "related_transaction_id": "TXN-BT-773402",
+          "account_id": "TKRRQ4805001",
+          "description": "Duplicate charge of INR 2,000 at Blue Tokai Cafe on 2026-08-12 14:23 (reference TXN-BT-773402) — customer was charged twice for one purchase and disputes the extra charge."
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKRRQ4805001"
+        },
+        "_comment": "The dispute's related_transaction_id must be located from the actual history first (also the disclosed prerequisite)."
+      },
+      "raise_request": {
+        "required": {
+          "category": "charges_dispute"
+        },
+        "forbidden_ids": [
+          "TXN-BT-773301"
+        ],
+        "optional_ok": {
+          "related_transaction_id": {
+            "allowed": [
+              "TXN-BT-773402",
+              "TXN-BT-773401"
+            ]
+          },
+          "account_id": {
+            "allowed": [
+              "TKRRQ4805001",
+              null
+            ]
+          }
+        },
+        "_comment": "The dispute must reference one of the two identical ₹2,000 charges from the 12th — never the decoy ₹1,450 Blue Tokai charge from the 10th (forbidden). The corrected ₹2,000 (not the withdrawn ₹2,400) belongs in the description, judged on the final text."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer claims a double charge of ₹2,400, then corrects the amount to ₹2,000 and confirms a charges dispute. The assistant must first pull the transaction history of the savings account, where two identical ₹2,000 Blue Tokai Cafe POS debits from 2026-08-12 appear (14:22 and 14:23) alongside a decoy ₹1,450 Blue Tokai charge from the 10th. The dispute must reference one of the two ₹2,000 charges from the 12th — not the 10th's — and its description must carry the CORRECTED amount ₹2,000 (not the withdrawn ₹2,400). Gold uses the 14:23 reference TXN-BT-773402. Filing without the transaction reference, with the decoy reference, or with the stale amount, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the charges dispute references one of the two ₹2,000 Blue Tokai charges from 2026-08-12 (not the ₹1,450 from the 10th), its description states the corrected ₹2,000, and the history lookup precedes the write; FAIL if the description still says ₹2,400, the decoy transaction is referenced, or related_transaction_id is omitted."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

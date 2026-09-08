@@ -1,0 +1,290 @@
+{
+  "case_id": "depl.agentic.fd_amount_rate_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_loan_rates+calculate_fd_maturity+get_account_balance+create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — MULTI-TURN MEMORY-WIPE trap. Turn 1 books a ₹2L FD at the standard rate (6.5%). Turn 2 changes BOTH the amount to ₹3L AND requires the senior citizen rate (customer explicitly says 'I'm 68'). A weak model carries forward turn 1's rate (6.5%) or amount (₹2L) into the booking. A strong model re-queries get_deposit_loan_rates, picks the senior_citizen_rate (7.0%), and creates the FD with the corrected ₹3L amount. Gap-widening: a small model re-queries and corrects; another model reuses stale values. The arg_gate pins principal_amount=300000 (the CORRECTED amount) on create_fd; the rate is verified through the R bar per gotcha #8.",
+  "setup": {
+    "persona": "68-year-old male, No Occupation / Retired / Homemaker, urban Gulbarga, Karnataka",
+    "current_date": "2026-08-15",
+    "current_time": "11:30",
+    "login_context": {
+      "customer_id": "SCN0869",
+      "full_name": "Satish Poojari",
+      "date_of_birth": "1958-09-26",
+      "gender": "male",
+      "customer_since": "2020-11-01",
+      "customer_segment": "senior_citizen",
+      "registered_mobile": "XXXXXX1700",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Gulbarga",
+        "state": "Karnataka",
+        "pincode": "821700",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Gulbarga",
+        "state": "Karnataka",
+        "pincode": "821700",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6780X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFAR7700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFAR7700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "create_fd",
+    "create_rd",
+    "get_account_balance",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to book an FD for ₹2,00,000 for 2 years from my savings. Book it for me."
+    },
+    {
+      "content": "Actually, make it ₹3,00,000 instead — and I should get the senior citizen rate since I'm 68. Yes, go ahead and book it."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "One slab row carries BOTH the standard 6.5% and senior 7.0%. In turn 1, a weak model picks 6.5 (first listed, or doesn't check age). In turn 2, the customer explicitly invokes the senior rate — strong model re-queries and picks 7.0%.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹3,00,000 at the senior rate 7.0% over 24 months: 300000 x (1+7.0/400)^8 = 3,44,665. At the standard 6.5% it would be 3,41,292.",
+      "output": {
+        "maturity_amount": 344665,
+        "interest_earned": 44665,
+        "total_principal_invested": 300000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKFAR7700001",
+          "available_balance": 420000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDFAR7700003",
+        "status": "success",
+        "message": "Fixed Deposit booked at the senior citizen rate.",
+        "interest_rate": 7.0,
+        "maturity_date": "2028-08-15",
+        "maturity_amount": 344665,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-77001"
+      },
+      "_comment": "Booking at the senior rate with the corrected ₹3L amount. Consistent with the projection."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 300000,
+          "rate": 7.0,
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFAR7700001"
+          ]
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 300000,
+          "tenure_months": 24,
+          "source_account": "TKFAR7700001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ],
+      [
+        "calculate_fd_maturity",
+        "create_fd"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "optional_ok": {
+          "tenure_months": {
+            "allowed": [
+              24,
+              null
+            ]
+          }
+        },
+        "_comment": "Must fetch rates. The model may call once or twice; the R bar verifies the senior rate is applied."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 300000,
+          "tenure_months": 24
+        },
+        "_comment": "Gotcha #8 — do NOT pin rate in required. If the model computed at 6.5% in turn 1 then corrects to 7.0% in turn 2, pinning rate would kill the pre-correction call. The CORRECTED amount (₹3L) IS pinned since it's invariant across the corrected flow."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKFAR7700001"
+          ]
+        },
+        "_comment": "Verify funding. Savings holds ₹4,20,000, which covers ₹3,00,000."
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 300000,
+          "tenure_months": 24,
+          "source_account": "TKFAR7700001"
+        },
+        "_comment": "The CORRECTED amount ₹3L is pinned. The bank applies the senior rate. Weak model passing ₹2L fails A3."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Multi-turn memory-wipe trap with amount AND rate correction. Turn 1: customer asks for a ₹2L, 2-year FD. The assistant fetches rates (slab shows standard 6.5% and senior 7.0%) and begins the booking flow — a weak model may pick 6.5% (first listed) and project at ₹2L. Turn 2: customer corrects BOTH the amount (₹3L) AND explicitly invokes the senior citizen rate. The assistant must RE-QUERY get_deposit_loan_rates (if it didn't already pick 7.0%), recompute the maturity at 7.0% for ₹3L (₹3,44,665), verify the savings balance (₹4,20,000 covers it), and book create_fd(principal_amount=300000, tenure_months=24, source_account=TKFAR7700001). The booking lands at TKDFAR7700003 with reference REF-FD-77001. A weak model carries forward the ₹2L amount or the standard 6.5% rate from turn 1, both of which are now wrong. The arg_gate pins the CORRECTED amount (₹3L) on create_fd; the rate (7.0%) and the fact of re-querying are verified through the R bar per gotcha #8."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-queries the rate, applies the SENIOR citizen rate (7.0%), and books the FD with the CORRECTED ₹3,00,000 principal — projecting ₹3,44,665 at maturity — after the turn-2 confirmation (which contains 'go ahead'). FAIL if the standard rate 6.5% or the original ₹2,00,000 amount is used in the final booking, or if the assistant never re-checks the rate after the customer invokes the senior benefit."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

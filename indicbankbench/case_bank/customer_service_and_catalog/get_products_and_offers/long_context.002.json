@@ -1,0 +1,286 @@
+{
+  "case_id": "csc.get_products_and_offers.long_context.002",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 multi-offer validity filtering (the sibling .001 is the single expired-offer trap). Today is 2026-08-17. The catalogue returns two expired offers (Festive Cashback valid till 2026-08-10 — expired a week ago; Monsoon FD top-up valid till 2026-07-31), two live ones (Zero-fee Platinum card till 2026-09-30, Diwali Personal Loan till 2026-10-15), plus regular products. The customer asks what offers are STILL VALID right now. The model must filter by valid_till and exclude the two expired ones. The careless failure: pitching the recently-expired Festive Cashback offer (it is the first, most prominent offer record) or including an expired one 'because it was valid recently'.",
+  "setup": {
+    "persona": "18-year-old male, No Occupation / Retired / Homemaker, urban Bijnor, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0578",
+      "full_name": "Atar Gangwar",
+      "date_of_birth": "2008-07-09",
+      "gender": "male",
+      "customer_since": "2026-12-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6342",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "103 Lake View Road",
+        "line2": "Model Town",
+        "city": "Bijnor",
+        "state": "Uttar Pradesh",
+        "pincode": "826342",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "103 Lake View Road",
+        "line2": "Model Town",
+        "city": "Bijnor",
+        "state": "Uttar Pradesh",
+        "pincode": "826342",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3577X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXPO66001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXPO66002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "There was a festive offer in the app — is it still around?"
+      },
+      {
+        "role": "assistant",
+        "content": "I can check the current offers for you any time — several offers come and go each month."
+      },
+      {
+        "role": "user",
+        "content": "Also, remind me — the FD rate for one year?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "fd",
+                "tenure_months": 12
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"rates\": [{\"slab\": \"1 year to < 3 years\", \"rate\": 6.5, \"senior_citizen_rate\": 7.0}], \"effective_date\": \"2026-03-01\", \"product_type\": \"fd\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The 1-year FD rate is 6.5% (7.0% for senior citizens)."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Which of my offers are still valid right now?"
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "id": "OFF-66001",
+          "title": "Festive Cashback Offer",
+          "type": "offer",
+          "description": "Rs 5,000 cashback on festive-season spends. Indicative only.",
+          "valid_till": "2026-08-10"
+        },
+        {
+          "id": "OFF-66002",
+          "title": "Zero-fee Platinum Card",
+          "type": "offer",
+          "description": "Zero joining fee on the Platinum credit card for salaried customers.",
+          "valid_till": "2026-09-30"
+        },
+        {
+          "id": "OFF-66003",
+          "title": "Monsoon FD Top-up",
+          "type": "offer",
+          "description": "Extra 0.25% on new 2-year FDs booked in July.",
+          "valid_till": "2026-07-31"
+        },
+        {
+          "id": "OFF-66004",
+          "title": "Diwali Personal Loan",
+          "type": "offer",
+          "description": "Processing-fee waiver on personal loans above Rs 5,00,000.",
+          "valid_till": "2026-10-15"
+        },
+        {
+          "id": "PRD-66005",
+          "title": "TK Savings Account",
+          "type": "deposit",
+          "description": "Standard savings account.",
+          "valid_till": ""
+        },
+        {
+          "id": "PRD-66006",
+          "title": "TK Health Insurance",
+          "type": "insurance",
+          "description": "Bancassurance health plans.",
+          "valid_till": ""
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Extraction is judge-gated: only the offers with valid_till on/after 2026-08-17 are still valid (Platinum card, Diwali loan). The recently-expired Festive Cashback (2026-08-10) is the trap."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks which offers are still valid on 2026-08-17. The assistant must fetch the catalogue and filter by valid_till: still valid are the Zero-fee Platinum Card (till 2026-09-30) and the Diwali Personal Loan offer (till 2026-10-15). Expired: the Festive Cashback offer (till 2026-08-10) and the Monsoon FD top-up (till 2026-07-31) — neither may be presented as available. Pitching the recently-expired Festive Cashback offer, or listing any expired offer as valid, is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant lists only the still-valid offers (Zero-fee Platinum Card, Diwali Personal Loan) and excludes the expired Festive Cashback and Monsoon FD offers. Presenting an expired offer as available fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

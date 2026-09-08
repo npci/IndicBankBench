@@ -1,0 +1,281 @@
+{
+  "case_id": "cards.set_card_controls.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: a fully-specified limit change ('raise my daily ATM withdrawal limit to ₹60,000') with an unnamed card — the customer holds a debit and a credit card, and set_card_controls is per-card. Distinct from not_enough_info.001 (an impossible 'unlimited' value). The assistant must ask which card; changing the limit on the wrong card silently spends the customer's control change on nothing.",
+  "setup": {
+    "persona": "55-year-old male, Market-Oriented Crop and Animal Producers, rural Jaunpur, Uttar Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "16:10",
+    "login_context": {
+      "customer_id": "SCN0146",
+      "full_name": "Manish Kumar",
+      "date_of_birth": "1971-02-05",
+      "gender": "male",
+      "customer_since": "2013-09-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6321",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Jaunpur",
+        "state": "Uttar Pradesh",
+        "pincode": "986321",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Jaunpur",
+        "state": "Uttar Pradesh",
+        "pincode": "986321",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5633X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCC4804001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSCC4804002",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCSCC4804003",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_transaction_history",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Raise my daily ATM withdrawal limit to ₹60,000."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Optional helper — reading both cards to show the current limits and ask which card is a reasonable move. Note the debit card's current ATM limit is already ₹50,000; the credit card's is ₹25,000.",
+      "records": [
+        {
+          "card_id": "TKCSCC4804002",
+          "masked_number": "****2104",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2028-06"
+        },
+        {
+          "card_id": "TKCSCC4804003",
+          "masked_number": "****8830",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 215000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2027-11"
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — the change must not execute while the card is unnamed.",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "ACCT-NOISE",
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "set_card_controls": {
+        "required": {},
+        "_comment": "Must NOT be called: the customer has not named a card. A2 catches the call; the judge catches an answer that proceeds without asking."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks to raise the ATM withdrawal limit to ₹60,000 but holds two cards — a debit card (current ATM limit ₹50,000) and a credit card (current ATM limit ₹25,000) — and set_card_controls applies to one card at a time. The assistant must ask WHICH card the limit change is for rather than applying it to one card unilaterally. It may look up both cards to state the current limits while asking (which helpfully shows the debit card is only ₹10,000 away from the request while the credit card merits a very different change). The clarification is the complete answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which card (debit or credit) the ATM limit change is for rather than calling set_card_controls on an assumed card or answering as if one card were obvious. Calling set_card_controls without a named card fails; stating the two current limits while asking is a plus."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

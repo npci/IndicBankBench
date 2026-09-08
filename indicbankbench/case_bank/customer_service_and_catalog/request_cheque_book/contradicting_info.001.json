@@ -1,0 +1,193 @@
+{
+  "case_id": "csc.request_cheque_book.contradicting_info.001",
+  "axis": "5_contradicting_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5: customer asks for 25 leaves, then mid-conversation changes to 50 leaves. The model must update the payload before calling the tool. Final call must use leaves=50, not 25. This is a genuine conversational correction — not a scripted stall.",
+  "setup": {
+    "persona": "21-year-old female, Weigher, rural Shivpuri, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0653",
+      "full_name": "Urmila Sharma",
+      "date_of_birth": "2005-05-18",
+      "gender": "female",
+      "customer_since": "2023-10-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4208",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "89 Church Street",
+        "line2": "Bandra East",
+        "city": "Shivpuri",
+        "state": "Madhya Pradesh",
+        "pincode": "694208",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "89 Church Street",
+        "line2": "Bandra East",
+        "city": "Shivpuri",
+        "state": "Madhya Pradesh",
+        "pincode": "694208",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9359X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQB8400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQB8400002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "calculate_rd_maturity",
+    "get_transaction_history",
+    "get_insurance_details",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a new chequebook for my savings account — the standard 25 leaves one. Can you order it?"
+    },
+    {
+      "content": "Actually, make that 50 leaves instead. I write a lot of cheques."
+    },
+    {
+      "content": "Yes, go ahead with the 50-leaf one."
+    }
+  ],
+  "mock": {
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "_comment": "account_id auto-echoed.",
+      "output": {
+        "request_id": "REQ-CB-75125",
+        "status": "success",
+        "message": "Cheque book request placed for 50 leaves.",
+        "delivery_address": "89 Church Street, Bandra East, Shivpuri 694208"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T10:00:00",
+          "amount": 100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-NOISE",
+          "transaction_note": "Noise entry",
+          "status": "success",
+          "running_balance": 100
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKRQB8400001",
+          "leaves": 50
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKRQB8400001",
+          "leaves": 50
+        },
+        "_comment": "Must use 50 leaves (the corrected value), NOT 25 (the original request). Confirmation must precede the call (S2)."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer initially asks for a 25-leaf chequebook but changes to 50 leaves mid-conversation. The assistant must update the request to 50 leaves, re-confirm with the customer, and on confirmation call request_cheque_book with leaves=50. Calling with leaves=25 (the original value, ignoring the correction) or calling before confirmation fails. The correction is the whole point of the case: the assistant must respect the customer's change of mind rather than racing ahead with the first number given."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "books 50 leaves (the corrected value) after confirming the change with the customer. Booking 25 leaves (ignoring the correction), or calling before the customer confirms the updated request, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

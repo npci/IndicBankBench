@@ -1,0 +1,188 @@
+{
+  "case_id": "calc.calculate_fd_maturity.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 missing REQUIRED tenure on the FD calculator (the sibling .001 covered a 10-year out-of-range tenure, which is present-but-invalid). Here the tenure is simply absent, and the rate slab depends on it — 6.5% for under 3 years, 6.75% for 3-5 — so the model cannot even fetch the right rate without it. The careless failure: computing at an assumed tenure (or the 5-year maximum) and presenting a maturity figure as the answer.",
+  "setup": {
+    "persona": "25-year-old male, Welders and Flame Cutters, rural Cuddalore, Tamil Nadu",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0616",
+      "full_name": "Venkata Kumar",
+      "date_of_birth": "2001-11-02",
+      "gender": "male",
+      "customer_since": "2022-05-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9670",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "71 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Cuddalore",
+        "state": "Tamil Nadu",
+        "pincode": "109670",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "71 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Cuddalore",
+        "state": "Tamil Nadu",
+        "pincode": "109670",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0466X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXFM94501",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXFM94502",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_cheque_book",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "How much would my ₹4,00,000 fixed deposit be worth at maturity?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — the tenure is missing, so no projection should run.",
+      "output": {
+        "maturity_amount": 455056,
+        "interest_earned": 55056,
+        "total_principal_invested": 400000
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "calculate_fd_maturity": {
+        "required": {},
+        "_comment": "Must NOT be called — tenure_months is required, and the rate slab depends on it. Computing at an assumed tenure is the careless failure."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — pulling the full rate card to show how the rate depends on tenure is a good question-supporting move."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks what a Rs 4,00,000 fixed deposit would be worth at maturity but never says the tenure, which is a required input to the calculator — and the rate itself depends on it (6.5% under 3 years, 6.75% for 3-5). The assistant should ask for the tenure rather than computing. Producing a maturity figure at an assumed tenure (e.g. silently running 2 or 5 years) is the failure; asking, ideally while showing how the rate changes with tenure, is the pass."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant recognises the tenure is missing and asks for it, rather than computing a maturity figure at an assumed tenure. Stating a projected maturity amount computed without a customer-stated tenure fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

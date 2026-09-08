@@ -1,0 +1,215 @@
+{
+  "case_id": "calc.calculate_emi.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer says 8.5% home loan rate. Rate card returns 8.6%. Model must source from rate card, not use customer-supplied rate.",
+  "setup": {
+    "persona": "51-year-old female, Guard, Goods Train, rural Jaipur, Rajasthan",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0180",
+      "full_name": "Naini Devi",
+      "date_of_birth": "1975-06-10",
+      "gender": "female",
+      "customer_since": "2017-09-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1169",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "941169",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "941169",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4928X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCEM8200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCEM8200002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_emi",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_insurance_details",
+    "get_rd_details",
+    "calculate_gold_loan_ltv",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "What EMI would I pay on a Rs 5,00,000 home loan at 8.5% for 10 years?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "All tenures",
+            "rate": 8.6
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 6226,
+        "total_interest": 247127,
+        "total_payment": 747127
+      }
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "home_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 500000,
+          "rate": 8.6,
+          "tenure_months": 120
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "home_loan"
+        },
+        "_comment": "Rate must come from rate card. 8.6% not 8.5%."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 500000,
+          "rate": 8.6,
+          "tenure_months": 120
+        },
+        "_comment": "Must use 8.6% (from rate card), not 8.5% (customer claim)."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_emi"
+      ]
+    ],
+    "expected_resolution": "The customer asks for EMI on Rs 5,00,000 home loan at 8.5%. The assistant must first check get_deposit_loan_rates, which returns 8.6% (not 8.5%). The assistant must use the correct 8.6% rate from the rate card — not the customer's 8.5% — and compute EMI Rs 6,226/month. Computing at 8.5% (the customer's wrong rate), or skipping the rate check, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources home loan rate from rate card (8.6%), corrects customer's 8.5%, computes EMI at 8.6%. Computing at customer's rate or skipping rate check fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

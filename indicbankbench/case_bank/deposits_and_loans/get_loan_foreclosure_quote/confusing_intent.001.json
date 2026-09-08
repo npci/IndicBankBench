@@ -1,0 +1,215 @@
+{
+  "case_id": "depl.get_loan_foreclosure_quote.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: customer asks 'what will it cost to close my loan' — must map 'close a loan' to get_loan_foreclosure_quote. Single loan, so infer which one.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, urban Washim, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0148",
+      "full_name": "Sitara Raut",
+      "date_of_birth": "2006-05-03",
+      "gender": "female",
+      "customer_since": "2024-09-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2012",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Washim",
+        "state": "Maharashtra",
+        "pincode": "212012",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Washim",
+        "state": "Maharashtra",
+        "pincode": "212012",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9229X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFCL7700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNFCL7700002",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFCL7700003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm thinking of closing my personal loan early. What would it cost me to pay it off today?"
+    }
+  ],
+  "mock": {
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Personal loan: 5L outstanding, 10.5%, 48 remain. Accrued interest ~Rs 4,375 (1 month). Foreclosure charges ~Rs 10,000 (2% of outstanding). Total payoff ~Rs 5,14,375.",
+      "records": [
+        {
+          "loan_id": "TKLNFCL7700002",
+          "outstanding_principal": 500000,
+          "accrued_interest": 4375,
+          "foreclosure_charges": 10000,
+          "total_payoff": 514375
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "TKLNFCL7700002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_foreclosure_quote": {
+        "required": {
+          "loan_ids": [
+            "TKLNFCL7700002"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks how much it would cost to close their personal loan early — 'close my loan' maps to get_loan_foreclosure_quote (pre-loan-details is optional; the tool takes a loan_id directly). With a single linked loan, the assistant must infer the loan and call the tool, then report the total payoff: Rs 5,14,375 (outstanding Rs 5,00,000 + accrued interest Rs 4,375 + foreclosure charges Rs 10,000). It must not ask 'which loan?' when there is only one, and must not invent payoff figures without the tool call."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "maps 'close my loan' to get_loan_foreclosure_quote, infers the single personal loan, and reports the total payoff Rs 5,14,375. Asking 'which loan?' with a single linked loan, or inventing figures without the tool call, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

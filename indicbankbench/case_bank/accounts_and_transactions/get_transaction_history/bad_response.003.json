@@ -1,0 +1,226 @@
+{
+  "case_id": "acct.get_transaction_history.bad_response.003",
+  "axis": "2_bad_tool_response",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 per-row degradation: the transaction the customer asks about has its transaction_note come back empty (the siblings .001 covered amount missing and .002 the reversed status). The customer asks WHO a specific Rs 2,450 POS debit went to — the payee field is the one field that answers it, and it is blank. The careless failure: inventing a plausible payee from context, or answering with a different row's payee. The model must flag that the payee narration for that row did not come through and offer a next step.",
+  "setup": {
+    "persona": "52-year-old male, Cultivator, General, rural Haveri, Karnataka",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0340",
+      "full_name": "Shrikant Powar",
+      "date_of_birth": "1974-09-19",
+      "gender": "male",
+      "customer_since": "2020-01-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3888",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Haveri",
+        "state": "Karnataka",
+        "pincode": "663888",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Haveri",
+        "state": "Karnataka",
+        "pincode": "663888",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5758X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXTB73001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXTB73002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_rd_details",
+    "toggle_card_freeze"
+  ],
+  "user_turns": [
+    {
+      "content": "Who did I pay Rs 2,450 to on 13 March? It's a POS debit I don't remember."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "THE ANOMALY: the 2026-03-13 row's transaction_note is empty — the one field that names the payee. Running balance chains: 88412+1200=89612; 89612+2450=92062; 92062-85000=7062; opening 7062+649=7711.",
+      "records": [
+        {
+          "date": "2026-03-15T12:10:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI73150",
+          "transaction_note": "SWIGGY ORDERS",
+          "status": "success",
+          "running_balance": 88412
+        },
+        {
+          "date": "2026-03-13T18:45:00",
+          "amount": 2450,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS73130",
+          "transaction_note": null,
+          "status": "success",
+          "running_balance": 89612
+        },
+        {
+          "date": "2026-03-10T09:00:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT73100",
+          "transaction_note": "SALARY CREDIT",
+          "status": "success",
+          "running_balance": 92062
+        },
+        {
+          "date": "2026-03-08T20:05:00",
+          "amount": 649,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI73080",
+          "transaction_note": "NETFLIX SUBSCRIPTION",
+          "status": "success",
+          "running_balance": 7062
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKXTB73001",
+          "available_balance": 88412,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKXTB73001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKXTB73001"
+        }
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks who the Rs 2,450 POS debit of 13 March went to. The record shows the amount, channel and reference (POS73130), but the transaction_note — the narration that names the payee — did not come through for that row. The assistant must present the row honestly and say the payee name is unavailable for that transaction right now, offering a next step (e.g. a duplicate statement or raising a request to trace it). Inventing a plausible payee, or quoting a different row's payee (Swiggy, Netflix, salary), is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant flags that the payee narration for the Rs 2,450 POS debit did not come through and does NOT invent a payee or substitute another row's payee. Presenting the row honestly with a next step passes; a fabricated payee fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

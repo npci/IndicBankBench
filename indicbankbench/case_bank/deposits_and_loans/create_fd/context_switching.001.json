@@ -1,0 +1,245 @@
+{
+  "case_id": "depl.create_fd.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 rate-bleed across a WRITE. The customer asks to book a 2-year FD of ₹3,00,000, breaks off to ask the 2-year RD rate, then returns to book. Both sub-tasks pull from get_deposit_loan_rates and the two rates are close: 6.5% FD vs 6.75% RD (RD = FD + 25bp, CONVENTIONS §3). Bleeding the RD rate into the FD booking yields a wrong-but-plausible 6.75% — the sneakiest kind of error. create_fd differs from calculate_emi (the existing rate-bleed case) in one important way: create_fd does NOT take a `rate` argument, so A3 cannot pin the rate the way calculate_emi's arg_gate does. The deterministic gates here are A1 (get_deposit_loan_rates must be called to answer the detour), A3 (create_fd right principal/tenure/source), and S2 (confirmation before booking). The rate-bleed itself is judged at R — the confirmation text and final report must quote 6.5% for the FD, not 6.75%. That is deliberate: this is the judge-gated companion to calculate_emi's A3-gated rate-bleed, and it is honest about the difference. create_fd had no axis-6 case at all.",
+  "setup": {
+    "persona": "32-year-old female, No Occupation / Retired / Homemaker, rural Dakshin Dinajpur, West Bengal",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0691",
+      "full_name": "Shibani Sarkar",
+      "date_of_birth": "1994-08-18",
+      "gender": "female",
+      "customer_since": "2019-06-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4387",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Dakshin Dinajpur",
+        "state": "West Bengal",
+        "pincode": "494387",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Dakshin Dinajpur",
+        "state": "West Bengal",
+        "pincode": "494387",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5658X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCFD9110001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCFD9110003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'd like to book a fixed deposit of ₹3,00,000 for 2 years from my savings account."
+    },
+    {
+      "content": "Actually, hold on — what's the recurring deposit rate for the same 2 years? My wife wants to start one."
+    },
+    {
+      "content": "Okay. Now go ahead and book the FD."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Both slabs visible at once (product-prefixed labels, same approach as calculate_emi.context_switching.001). FD 1–3y = 6.5%; RD 1–3y = 6.75% (FD + 25bp, CONVENTIONS §3). Both visible makes the switch HARDER — the model must pick the right one for each sub-task.",
+      "output": {
+        "rates": [
+          {
+            "slab": "fd 1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "rd 1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net — create_fd's description names get_account_balance as a call-before prerequisite. Ample balance.",
+      "records": [
+        {
+          "account_id": "TKCFD9110001",
+          "available_balance": 850000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "The booking returns the correct 6.5% FD rate (the tool computes it from the tenure — create_fd takes no rate argument). maturity_amount 341292 is exact quarterly compounding of ₹3,00,000 at 6.5% over 24 months (CONVENTIONS §2).",
+      "output": {
+        "deposit_id": "TKFDCFD9110002",
+        "status": "success",
+        "message": "Fixed Deposit booked.",
+        "interest_rate": 6.5,
+        "maturity_date": "2028-03-15",
+        "maturity_amount": 341292,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-90200"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 300000,
+          "tenure_months": 24,
+          "source_account": "TKCFD9110001"
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "create_fd": {
+        "required": {
+          "principal_amount": 300000,
+          "tenure_months": 24,
+          "source_account": "TKCFD9110001"
+        },
+        "_comment": "Right principal, tenure, source account. Confirmation must precede the call (S2). create_fd takes NO rate argument, so the FD-vs-RD rate bleed cannot be caught here — it is judged at R."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Required to answer the RD-rate detour (no rate is in login_context). Called at least once, for either product — A1 only checks the tool name. The bleed is judged at R, not here, because the rate arrives as text, not as a create_fd argument."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — verifying funding before booking is correct and create_fd's description names it as a prerequisite."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 6 — a rate-bleed across a write. The customer asks to book a ₹3,00,000 2-year FD, detours to ask the 2-year RD rate, then returns to book. The assistant must answer the RD-rate detour (6.75%, the RD 1–3 year slab) and still book the FD at the FD rate (6.5%, the FD 1–3 year slab).\n\nOn the return, it must confirm the booking quoting 6.5% — NOT 6.75% — and then call create_fd(principal_amount=300000, tenure_months=24, source_account=TKCFD9110001), reporting the outcome (deposit TKFDCFD9110002, maturing 2028-03-15 at ₹3,41,292). Quoting 6.75% for the FD in the confirmation, dropping the booking after the detour, or booking without confirmation, all fail. The two rates are only 25bp apart — the bleed produces a wrong-but-plausible number, which is the whole point."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant answers the RD-rate detour correctly (6.75%) AND books the FD at the FD rate — its confirmation and final report quote 6.5% for the FD, not 6.75% — then reports the booking (₹3,00,000, 2 years, maturity ₹3,41,292) after confirmation. Quoting 6.75% for the FD, dropping the booking, or booking without confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

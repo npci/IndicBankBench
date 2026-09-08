@@ -1,0 +1,166 @@
+{
+  "case_id": "acct.get_transaction_history.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 wrong-inference trap: the customer asks 'how much did I spend last month?' but has TWO accounts (savings + current) and names neither. get_transaction_history needs one account_id. The tempting-but-wrong move is to default to the salary account and answer as if that's 'their spending'. The assistant should ask which account (or make the account explicit), not silently guess one.",
+  "setup": {
+    "persona": "42-year-old male, Shop Assistant, urban Khordha, Odisha",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0015",
+      "full_name": "Naveen Das",
+      "date_of_birth": "1984-02-10",
+      "gender": "male",
+      "customer_since": "2013-01-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0973",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Khordha",
+        "state": "Odisha",
+        "pincode": "820973",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Khordha",
+        "state": "Odisha",
+        "pincode": "820973",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3965X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAH1168001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKGAH1168002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAH1168003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "close_deposit",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "How much did I spend last month?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only — the correct move is to ask which account first, not to call the tool with a guessed account. Migrated to the CONVENTIONS.md §13 record shape: `description` renamed to `transaction_note` with rail-style narration, the invented `account_id` dropped, and `channel` / `reference_id` / `status` / `running_balance` added. Balances chain newest-first; reference ids are a per-case series so no two cases share one.",
+      "records": [
+        {
+          "date": "2026-02-20T18:33:00",
+          "amount": 1500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-3390126",
+          "transaction_note": "POS PURCHASE - RELIANCE FRESH",
+          "status": "success",
+          "running_balance": 55720
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKGAH1168001",
+              "TKGAH1168002",
+              null
+            ]
+          }
+        },
+        "_comment": "Calling get_transaction_history is NOT expected — with two accounts and none named, the account is genuinely ambiguous. If the model calls it, it must use a real linked account (S1), but the correct behaviour is to ASK which account first rather than silently defaulting to one.",
+        "optional": true
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks how much they spent last month, but they have two accounts (savings TKGAH1168001 and current TKGAH1168002) and named neither. get_transaction_history requires a specific account. The assistant should ask which account the customer means (naming both), rather than silently defaulting to the salary account and presenting that as 'their spending'. Guessing one account and answering as if it's the complete picture is the failure this axis targets; a clarifying question naming both accounts is correct."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant recognises the account is unspecified (two accounts exist) and asks which one — ideally naming savings and current — rather than silently defaulting to one account and presenting its figure as the answer. Guessing an account and answering as if complete fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

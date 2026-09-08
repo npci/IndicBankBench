@@ -1,0 +1,223 @@
+{
+  "case_id": "acct.get_transaction_history.long_context.005",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Prior showed running_balance Rs 88,612 from old transaction set. 2 months later balance is Rs 31,750. Model must use fresh data.",
+  "setup": {
+    "persona": "36-year-old female, Home Based Personal Care Workers, urban Mau, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0076",
+      "full_name": "Neetu Shikha",
+      "date_of_birth": "1990-09-16",
+      "gender": "female",
+      "customer_since": "2020-02-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9724",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Mau",
+        "state": "Uttar Pradesh",
+        "pincode": "599724",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Mau",
+        "state": "Uttar Pradesh",
+        "pincode": "599724",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8309X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGTH9500001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGTH9500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_history",
+              "arguments": {
+                "account_id": "TKGTH9500001",
+                "limit": 5
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"transactions\":[{\"date\":\"2026-06-15T10:00:00\",\"amount\":1200,\"type\":\"debit\",\"channel\":\"pos\",\"reference_id\":\"TXN-OLD-001\",\"transaction_note\":\"POS - CAFE\",\"status\":\"success\",\"running_balance\":88612}],\"total_count\":1}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your last transaction was Rs 1,200 at a cafe. Current running balance is approximately Rs 88,612."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "close_deposit",
+    "set_card_controls",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my latest transactions from this week."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Now Rs 31,750 running balance, not Rs 88,612.",
+      "records": [
+        {
+          "date": "2026-08-16T10:15:00",
+          "amount": 2400,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-95010",
+          "transaction_note": "UPI - BESCOM BILL",
+          "status": "success",
+          "running_balance": 31750
+        },
+        {
+          "date": "2026-08-15T18:00:00",
+          "amount": 850,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-95011",
+          "transaction_note": "UPI - SWIGGY",
+          "status": "success",
+          "running_balance": 34150
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKGTH9500001",
+          "limit": 10
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {},
+        "_comment": "Current running balance is Rs 31,750, not Rs 88,612 from 2 months ago."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior conversation from 2 months ago showed running balance Rs 88,612. The assistant must call get_transaction_history and report the CURRENT transactions and current running balance (Rs 31,750). NOT repeat the stale Rs 88,612. Repeating the old balance fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches current transactions with running balance Rs 31,750, NOT stale Rs 88,612 from prior. Repeating old balance fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

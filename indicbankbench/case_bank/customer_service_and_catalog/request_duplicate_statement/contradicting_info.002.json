@@ -1,0 +1,285 @@
+{
+  "case_id": "csc.request_duplicate_statement.contradicting_info.002",
+  "axis": "5_contradicting_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 with a write anchor: the customer dates the account to 2021 and demands statements from March 2021. get_account_details shows open_date 2024-02-15. The assistant must push back with the open_date, propose starting from 2024-02-15, and only then order (S2).",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, rural Patiala, Punjab",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0158",
+      "full_name": "Gurmej Kaur",
+      "date_of_birth": "2006-07-26",
+      "gender": "female",
+      "customer_since": "2024-04-19",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5618",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Patiala",
+        "state": "Punjab",
+        "pincode": "265618",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Patiala",
+        "state": "Punjab",
+        "pincode": "265618",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3402X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBCLP1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBCLP3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_account_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I need statements from March 2021 to now for my tax filing — I opened this account in 2021. Email them to me."
+    },
+    {
+      "content": "Ok, from when the account opened then. Go ahead."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "delivery_address": "Registered address"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-STM-77420",
+        "status": "success",
+        "message": "Duplicate statement for 2024-02-15 to 2026-08-17 requested for TKBCLP1101; emailed to your registered address."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01",
+        "last_update": "2026-01-01",
+        "remarks": "Noise tool."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "open_date is 2024-02-15 — the customer's 2021 belief is wrong; no statement from 2021 can exist.",
+      "records": [
+        {
+          "account_id": "TKBCLP1101",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road Branch",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Gurmej Kaur",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2024-02-15"
+        }
+      ]
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKBCLP1101"
+          ]
+        }
+      },
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKBCLP1101",
+          "from_date": "2024-02-15",
+          "to_date": "2026-08-17",
+          "delivery_mode": "email"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKBCLP1101"
+          ]
+        },
+        "_comment": "Must check the account record — open_date 2024-02-15 is the evidence against the 2021 claim."
+      },
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKBCLP1101",
+          "from_date": "2024-02-15",
+          "delivery_mode": "email"
+        },
+        "_comment": "Statement must start at the real open date, not March 2021. to_date is not pinned (any current-date form passes; the judge checks the substance)."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asserts the account was opened in 2021 and needs statements from March 2021. get_account_details shows open_date 2024-02-15, so statements before that date cannot exist. The assistant must check the account record and push back with the actual open date — not silently trim the range, and not accept the 2021 premise. The second turn accepts starting from the account's open date, so the assistant should then order a duplicate statement covering 2024-02-15 to 2026-08-17, by email, after confirming. Ordering the 2021 range, or never correcting the customer's opening-date claim, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks the account record, surfaces that the account was opened on 2024-02-15 (not 2021), and after the customer's acceptance orders the statement from the actual open date by email. Ordering from 2021 without correction, or failing to surface the false date, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

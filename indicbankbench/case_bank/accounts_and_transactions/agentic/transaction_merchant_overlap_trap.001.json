@@ -1,0 +1,245 @@
+{
+  "case_id": "acct.agentic.transaction_merchant_overlap_trap.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 Goldilocks derive-args chain: get_transaction_history → raise_request. Customer reports unauthorized ~Rs 5,500 at electronics store yesterday. Mock returns TWO pos debits: NOISE (TXN-SM7501, Rs 5,500 EXACT, merchant 'ELECTRO POINT' — 70% keyword overlap with 'electronics store') listed FIRST at 16:30, and CORRECT (TXN-SM7502, Rs 5,445, different amount by ~1%, merchant 'DIGITRONICS HUB') listed SECOND at 12:15. The noise matches the customer's stated amount EXACTLY and has 'ELECTRO' in the merchant name AND is listed first (newer). The correct one differs in amount and merchant. a small model should latch to noise (exact amount + keyword + recency), a strong model should discriminate (amount mismatch, different merchant nuances).",
+  "setup": {
+    "persona": "57-year-old male, Salesman, Retail Trade, urban Junagadh, Gujarat",
+    "current_date": "2026-08-23",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0510",
+      "full_name": "Maheshbhai Bhat",
+      "date_of_birth": "1969-11-06",
+      "gender": "male",
+      "customer_since": "2022-09-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2790",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "71 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Junagadh",
+        "state": "Gujarat",
+        "pincode": "712790",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "71 Mill Road",
+        "line2": "Civil Lines",
+        "city": "Junagadh",
+        "state": "Gujarat",
+        "pincode": "712790",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4936X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSM75001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TCKSM75002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "I see an unauthorized debit for around Rs 5,500 at an electronics store from yesterday — I didn't buy anything there. Check and dispute it for me."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "GOLDILOCKS TRAP: NOISE (TXN-SM7501, Rs 5,500, 'ELECTRO POINT', 2026-08-22 16:30) listed FIRST — exact amount match with customer's 'around Rs 5,500', merchant has 'ELECTRO' keyword (~70% overlap with 'electronics store'). CORRECT (TXN-SM7502, Rs 5,445, 'DIGITRONICS HUB', 2026-08-22 12:15) listed SECOND — amount off by ~1%, merchant less directly matching. running_balance: anchor 78500; +58000 salary 2026-08-20 = 136500; -5445 DIGITRONICS at 12:15 = 131055; -5500 ELECTRO at 16:30 = 125555.",
+      "records": [
+        {
+          "date": "2026-08-22T16:30:00",
+          "amount": 5500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-SM7501",
+          "transaction_note": "POS PURCHASE - ELECTRO POINT",
+          "status": "success",
+          "running_balance": 125555
+        },
+        {
+          "date": "2026-08-22T12:15:00",
+          "amount": 5445,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-SM7502",
+          "transaction_note": "POS PURCHASE - DIGITRONICS HUB",
+          "status": "success",
+          "running_balance": 131055
+        },
+        {
+          "date": "2026-08-20T09:00:00",
+          "amount": 58000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-SM7503",
+          "transaction_note": "NEFT - SALARY AUG26",
+          "status": "success",
+          "running_balance": 136500
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-SM-75021",
+        "category": "unauthorized_debit",
+        "status": "open",
+        "message": "Unauthorized debit dispute logged for TXN-SM7502 (Rs 5,445, Digitronics Hub) and flagged urgent for investigation."
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKSM75001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-SM7502",
+          "description": "Customer disputes unauthorized Rs 5,445 debit at Digitronics Hub on 2026-08-22 (TXN-SM7502).",
+          "account_id": "TKSM75001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKSM75001"
+        },
+        "_comment": "Must fetch history. Two pos debits: noise (TXN-SM7501, Rs 5,500 exactly, ELECTRO POINT, listed first) and correct (TXN-SM7502, Rs 5,445, DIGITRONICS HUB, listed second). The noise has exact amount match and keyword overlap — a small model should find it attractive. a strong model should discriminate."
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-SM7502"
+        },
+        "_comment": "related_transaction_id must be the Digitronics Hub debit (TXN-SM7502, Rs 5,445). Picking the noise (TXN-SM7501, Rs 5,500, Electro Point) fails A3."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Customer reports unauthorized ~Rs 5,500 electronics store debit from yesterday. History shows two pos debits: TXN-SM7501 (Rs 5,500.00, ELECTRO POINT, 2026-08-22 16:30 — listed FIRST, exact amount match, 'ELECTRO' keyword overlap) and TXN-SM7502 (Rs 5,445, DIGITRONICS HUB, 2026-08-22 12:15 — listed SECOND, ~1% amount difference). The noise is superficially attractive (exact amount, keyword, recency) but the unauthorized one is TXN-SM7502 (Digitronics Hub). Assistant must identify TXN-SM7502, confirm, and raise unauthorized_debit dispute referencing it. Picking TXN-SM7501 (Electro Point) fails A3."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "correctly identifies the Rs 5,445 Digitronics Hub debit (TXN-SM7502, 2026-08-22 12:15) as the unauthorized one, confirms, and raises an unauthorized_debit dispute referencing it. Picking the noise transaction (TXN-SM7501, Rs 5,500, Electro Point) fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

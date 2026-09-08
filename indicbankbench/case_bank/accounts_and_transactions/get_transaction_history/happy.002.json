@@ -1,0 +1,285 @@
+{
+  "case_id": "acct.get_transaction_history.happy.002",
+  "axis": "1_happy_path",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Over-specific-vs-general record selection. 12 transactions returned, two restaurant-related: Dhaba Express Delhi (₹450, first restaurant, bait) and Phoenix Diner (₹2,850, second restaurant, correct). Customer asks about 'that big dinner last week' — 'big dinner' disqualifies the ₹450 takeaway. A weak model scans for 'restaurant' and reports the first hit (₹450); a strong model verifies the amount against 'big dinner' and picks the ₹2,850 one.",
+  "setup": {
+    "persona": "28-year-old female, No Occupation / Retired / Homemaker, urban Bangalore, Karnataka",
+    "current_date": "2026-08-23",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0533",
+      "full_name": "Noor Dilavaranayak",
+      "date_of_birth": "1998-09-12",
+      "gender": "female",
+      "customer_since": "2020-10-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1100",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "191100",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "191100",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9919X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOST8286001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOSV8286002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "create_fd",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to check my savings account — how much did I spend on that big dinner last week?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "12 records, newest first. Two restaurant transactions: Dhaba Express Delhi (₹450, POS, first restaurant — bait, record 3) and Phoenix Diner (₹2,850, POS, second restaurant — correct, record 5). 'Big dinner' maps to ₹2,850 not ₹450. Running balance anchored at ₹15,000 before the oldest entry. All status: success.",
+      "records": [
+        {
+          "date": "2026-08-22T20:45:00",
+          "amount": 3200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI992310",
+          "transaction_note": "FLIPKART ORDER 9923",
+          "status": "success",
+          "running_balance": 83520
+        },
+        {
+          "date": "2026-08-22T09:30:00",
+          "amount": 1850,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI887710",
+          "transaction_note": "BESCOM ELECTRICITY BILL",
+          "status": "success",
+          "running_balance": 86720
+        },
+        {
+          "date": "2026-08-21T20:15:00",
+          "amount": 450,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS442001",
+          "transaction_note": "DHABA EXPRESS DELHI",
+          "status": "success",
+          "running_balance": 88570
+        },
+        {
+          "date": "2026-08-20T14:00:00",
+          "amount": 799,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT773310",
+          "transaction_note": "AMAZON REFUND ORDER 3391",
+          "status": "success",
+          "running_balance": 89020
+        },
+        {
+          "date": "2026-08-19T19:55:00",
+          "amount": 2850,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS441355",
+          "transaction_note": "PHOENIX DINER BANGALORE",
+          "status": "success",
+          "running_balance": 88221
+        },
+        {
+          "date": "2026-08-19T17:40:00",
+          "amount": 2100,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS441210",
+          "transaction_note": "HP FUEL STATION BANGALORE",
+          "status": "success",
+          "running_balance": 91071
+        },
+        {
+          "date": "2026-08-18T11:20:00",
+          "amount": 499,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI880122",
+          "transaction_note": "AIRTEL PREPAID RECHARGE",
+          "status": "success",
+          "running_balance": 93171
+        },
+        {
+          "date": "2026-08-17T08:45:00",
+          "amount": 5000,
+          "type": "debit",
+          "channel": "atm",
+          "reference_id": "ATM991120",
+          "transaction_note": "HDFC ATM CASH WITHDRAWAL",
+          "status": "success",
+          "running_balance": 93670
+        },
+        {
+          "date": "2026-08-16T10:05:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT770021",
+          "transaction_note": "SALARY AUG26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 98670
+        },
+        {
+          "date": "2026-08-15T18:30:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS440881",
+          "transaction_note": "DMART GROCERY BANGALORE",
+          "status": "success",
+          "running_balance": 13670
+        },
+        {
+          "date": "2026-08-15T15:10:00",
+          "amount": 250,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS440765",
+          "transaction_note": "CAFE COFFEE DAY INDIRANAGAR",
+          "status": "success",
+          "running_balance": 14870
+        },
+        {
+          "date": "2026-08-14T08:00:00",
+          "amount": 120,
+          "type": "credit",
+          "channel": "internal",
+          "reference_id": "REF-INT-99201",
+          "transaction_note": "INTEREST CREDIT SAVINGS",
+          "status": "success",
+          "running_balance": 15120
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKOST8286001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKOST8286001"
+        },
+        "date_resolution": {
+          "from_date": {
+            "anchor": "current_date",
+            "approx": "2026-08-16",
+            "tolerance_days": 2,
+            "_comment": "'last week' -> roughly 2026-08-16 (current_date minus 7 days). Not brittly pinned — the set covers roughly 9 days. Omitting from_date entirely is fine (the mock returns the full window)."
+          }
+        },
+        "_comment": "Account resolves to TKOST8286001 (only savings account). type and channel should NOT be filtered — the customer wants all transactions. The model must select the right record from the full result set."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about the cost of 'that big dinner last week' on the savings account. get_transaction_history returns 12 records. Two are restaurant transactions: Dhaba Express Delhi (₹450 debit, 2026-08-21, listed third) and Phoenix Diner Bangalore (₹2,850 debit, 2026-08-19, listed fifth).\n\nThe phrase 'big dinner' is the key: a casual ₹450 dhaba takeaway is not a 'big dinner,' while a ₹2,850 sit-down at Phoenix Diner fits. A weak model scans for restaurant transactions, hits Dhaba Express first (it appears earlier in the newest-first list), and reports ₹450 — wrong substance. A strong model reads both, compares amounts against the 'big dinner' descriptor, and correctly reports the ₹2,850 Phoenix Diner transaction from 2026-08-19.\n\nThe assistant should call get_transaction_history for the savings account, scan the results, and report: the Phoenix Diner charge of ₹2,850 (debit, POS, 2026-08-19). Reporting ₹450 (the dhaba) as the answer, or listing both without identifying which matches the 'big dinner' request, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the ₹2,850 Phoenix Diner Bangalore transaction (debit, POS, 2026-08-19) as the 'big dinner' spend. Reporting the ₹450 Dhaba Express Delhi as the answer, or conflating both restaurant transactions without identifying which is the big dinner, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

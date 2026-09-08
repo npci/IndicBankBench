@@ -1,0 +1,362 @@
+{
+  "case_id": "depl.create_fd.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 dropped referent across a WRITE: the FD booking request (Rs 2,00,000 / 2 years) is interrupted by a personal-loan EMI detour (Rs 3,00,000 / 3 years), and the return says only 'book it then'. The write must carry the ORIGINAL FD parameters — the loan's Rs 3,00,000 and 36 months are the near-miss values, and the create_fd arguments are pinned so booking with them fails A3. Careless failure mode: booking the FD with the loan's figures.",
+  "setup": {
+    "persona": "37-year-old female, No Occupation / Retired / Homemaker, urban Guntur, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0603",
+      "full_name": "Lalita Sadarla",
+      "date_of_birth": "1989-08-11",
+      "gender": "female",
+      "customer_since": "2019-07-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6351",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "32 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "296351",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "32 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "296351",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8905X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDCFC2080001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCDCFC2080002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "calculate_emi"
+  ],
+  "user_turns": [
+    {
+      "content": "Book an FD — Rs 2,00,000 for 2 years from my savings account."
+    },
+    {
+      "content": "Hold on — what would the EMI be on a Rs 3,00,000 personal loan for 3 years?"
+    },
+    {
+      "content": "Ok, book it then."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "The ORIGINAL FD parameters survive the detour.",
+      "output": {
+        "deposit_id": "TKFDDCF2080003",
+        "status": "success",
+        "message": "Fixed Deposit booked.",
+        "interest_rate": 6.5,
+        "maturity_date": "2028-08-17",
+        "maturity_amount": 227528,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-20810"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "amount_credited": 0,
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "instruction": "no_renewal",
+        "maturity_date": "2099-01-01",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Both rows visible at once: FD 1-3y 6.5 and personal loan 10.5.",
+      "output": {
+        "rates": [
+          {
+            "slab": "fd 1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "personal loan",
+            "rate": 10.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "2L @ 6.5% / 24mo -> 227,528.",
+      "output": {
+        "maturity_amount": 227528,
+        "interest_earned": 27528,
+        "total_principal_invested": 200000
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKDCFC2080001",
+          "available_balance": 850000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "3L @ 10.5% / 36mo -> EMI 9751; interest 51,036.",
+      "output": {
+        "emi": 9751,
+        "total_interest": 51036,
+        "total_payment": 351036
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 300000,
+          "rate": 10.5,
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 200000,
+          "tenure_months": 24,
+          "source_account": "TKDCFC2080001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Both threads pull rates; the model must pick the right row per thread — judged at R."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 300000,
+          "rate": 10.5,
+          "tenure_months": 36
+        }
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 200000,
+          "tenure_months": 24,
+          "source_account": "TKDCFC2080001"
+        },
+        "_comment": "The ORIGINAL FD parameters — the loan's 300,000/36mo are the near-miss values."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional prerequisite — mocked with real data."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — verifying funding is correct and disclosed."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks to book a Rs 2,00,000 2-year FD, detours to a personal-loan EMI (Rs 3,00,000 over 3 years — Rs 9,751 a month), then says 'book it then'. The assistant must answer the EMI detour and then book the ORIGINAL FD: Rs 2,00,000 for 24 months from the savings account at 6.5%, maturing 2028-08-17 at Rs 2,27,528. Booking with the loan's figures, dropping the booking, or booking without confirmation fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the EMI detour and then books the FD with the ORIGINAL parameters (Rs 2,00,000 / 2 years at 6.5%) after confirmation. Booking the loan's figures (Rs 3,00,000 / 36 months), or skipping confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

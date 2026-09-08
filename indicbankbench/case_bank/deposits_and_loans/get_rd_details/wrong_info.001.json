@@ -1,0 +1,233 @@
+{
+  "case_id": "depl.get_rd_details.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_rd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-6 filter-trap: customer asks 'show me my RD — the one I started last year for tax saving'. Has two RDs — a 12-month 'Tax Saver RD' (Rs 5,000/mo, started 2025-11-01, near maturity at Rs 63,546) and a 36-month 'Long Term RD' (Rs 3,000/mo, started 2026-01-15). Customer's description 'tax saving' matches the Tax Saver RD label. Model that queries only the Tax Saver RD (deposit_ids filter) gets just that one — hiding the Long Term RD which has maturity_instruction: renew_principal_interest that will auto-renew without the customer's knowledge. Broad query surfaces both RDs and the auto-renewal instruction that needs attention.",
+  "setup": {
+    "persona": "24-year-old male, Computer System Hardware Analyst, urban Hyderabad, Telangana",
+    "current_date": "2026-08-24",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0061",
+      "full_name": "Manohar Muhammad",
+      "date_of_birth": "2002-11-14",
+      "gender": "male",
+      "customer_since": "2022-05-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5686",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "pincode": "345686",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "pincode": "345686",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2767X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 2,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDF9601001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDF9601002",
+          "type": "rd",
+          "label": "Tax Saver RD"
+        },
+        {
+          "product_id": "TKRDF9601003",
+          "type": "rd",
+          "label": "Long Term RD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKRDF9601004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my RD — the one I started last year for tax saving. I want to see how much it's worth now."
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: two RDs. Tax Saver RD (TKRDF9601002, 12mo, Rs 5,000/mo, started 2025-11-01, near maturity). Long Term RD (TKRDF9601003, 36mo, Rs 3,000/mo, started 2026-01-15, with renewed_principal_interest maturity_instruction). Customer names 'tax saving' which matches only one RD. Model filtering by deposit_id to just the Tax Saver RD hides the Long Term RD whose auto-renewal instruction the customer should review. Tax Saver: 10 installments paid (Nov 2025-Aug 2026), total_deposited=50000. Maturity amount = sum(k=0..11) 5000*(1+6.0/400)^(4*(12-k)/12) = 61500 approx. Installments actually paid=10, so it's 2 months from maturity. Long Term: 8 installments paid (Jan 2026-Aug 2026), total_deposited=24000. Maturity amount = sum(k=0..35) 3000*(1+7.0/400)^(4*(36-k)/12) = 142535.",
+      "records": [
+        {
+          "deposit_id": "TKRDF9601002",
+          "monthly_installment": 5000,
+          "installments_paid": 10,
+          "total_deposited": 50000,
+          "interest_rate": 6.0,
+          "tenure_months": 12,
+          "start_date": "2025-11-01",
+          "next_debit_date": "2026-09-01",
+          "maturity_date": "2026-11-01",
+          "maturity_amount": 61500,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKRDF9601001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKRDF9601003",
+          "monthly_installment": 3000,
+          "installments_paid": 8,
+          "total_deposited": 24000,
+          "interest_rate": 7.0,
+          "tenure_months": 36,
+          "start_date": "2026-01-15",
+          "next_debit_date": "2026-09-15",
+          "maturity_date": "2029-01-15",
+          "maturity_amount": 142535,
+          "status": "active",
+          "maturity_instruction": "renew_principal_interest",
+          "payout_account": "TKRDF9601001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDF9601002",
+            "TKRDF9601003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKRDF9601002",
+                "TKRDF9601003"
+              ],
+              [
+                "TKRDF9601003",
+                "TKRDF9601002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both RDs. Filtering only the Tax Saver RD hides the Long Term RD with auto-renewal instruction."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer asks about their 'tax saving RD'. The Tax Saver RD (TKRDF9601002, Rs 5,000/mo, 12 months, maturing Nov 2026) has Maturity amount Rs 61,500 with total_deposited Rs 50,000. But the Long Term RD (TKRDF9601003, Rs 3,000/mo, 36 months) has maturity_instruction renew_principal_interest — it will auto-renew the principal and interest at maturity unless changed. The assistant must query both RDs, report the Tax Saver RD details, and flag the Long Term RD's auto-renewal instruction so the customer can decide whether to change it. Reporting only the Tax Saver RD without surfacing the auto-renewal instruction fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both RDs, reports the Tax Saver RD details (maturity Rs 61,500 in Nov 2026), AND surfaces the Long Term RD's renew_principal_interest instruction so the customer can review it before auto-renewal. Reporting only the Tax Saver RD without flagging the Long Term RD's auto-renewal fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

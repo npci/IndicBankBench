@@ -1,0 +1,233 @@
+{
+  "case_id": "acct.agentic.balance_gated.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance+show_mandates",
+  "target_behavior": "answer",
+  "_axis_note": "GENERAL EVAL — agentic multi-tool task. A single query requires TWO different tools whose results must be cross-referenced: get_account_balance (available balance on the salary account) and show_mandates (the HDFC SIP's amount + next debit date). Neither alone answers 'will the SIP overdraw me?' — the model must fetch both and compare. The two reads are INDEPENDENT (either order is fine), so this case tests multi-tool COVERAGE + numeric synthesis, not ordering; hence no gold.dependencies (A4 inactive). The gate is A1 (both tools called) ∧ A2 ∧ a correct shortfall judgment.",
+  "setup": {
+    "persona": "47-year-old male, No Occupation / Retired / Homemaker, rural Karbi Anglong, Assam",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0147",
+      "full_name": "Leeladhar Boniya",
+      "date_of_birth": "1979-08-21",
+      "gender": "male",
+      "customer_since": "2019-11-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9943",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Karbi Anglong",
+        "state": "Assam",
+        "pincode": "229943",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Karbi Anglong",
+        "state": "Assam",
+        "pincode": "229943",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9115X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRAE6757001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKRAE6757002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRAE6757006",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "set_card_controls",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "My HDFC SIP is due soon — is there enough in my salary account to cover it, or am I going to fall short?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "HDFC SIP (MND-RAE6757-04) is INR 5,000, next debit 2026-04-05. The model needs this amount to compare against the salary balance.",
+      "records": [
+        {
+          "mandate_id": "MND-RAE6757-03",
+          "type": "upi_autopay",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-04-01",
+          "account_id": "TKRAE6757001"
+        },
+        {
+          "mandate_id": "MND-RAE6757-04",
+          "type": "enach",
+          "payee": "HDFC SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-04-05",
+          "account_id": "TKRAE6757001"
+        },
+        {
+          "mandate_id": "MND-RAE6757-05",
+          "type": "si",
+          "payee": "LIC Premium",
+          "amount": 2200,
+          "frequency": "yearly",
+          "status": "paused",
+          "next_debit_date": "2026-04-10",
+          "account_id": "TKRAE6757002"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Salary account available balance is INR 3,200 — LESS than the INR 5,000 SIP. The model must recognise the ~INR 1,800 shortfall by cross-referencing the two tools.",
+      "records": [
+        {
+          "account_id": "TKRAE6757001",
+          "available_balance": 3200,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKRAE6757002",
+          "available_balance": 118420.1,
+          "hold_amount": 5000
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKRAE6757001"
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKRAE6757001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "forbidden_ids": [
+          "TKRAE6757002"
+        ],
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKRAE6757001",
+              null
+            ]
+          },
+          "status": {
+            "allowed": [
+              "all",
+              "active",
+              null
+            ]
+          }
+        },
+        "_comment": "Needed to get the HDFC SIP amount/date. Order relative to get_account_balance doesn't matter (independent reads)."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKRAE6757001"
+          ]
+        },
+        "forbidden_ids": [
+          "TKRAE6757002"
+        ],
+        "_comment": "Salary account balance for the comparison. The Business Current account is irrelevant to this question."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks whether their salary account can cover the upcoming HDFC SIP debit. Answering requires TWO tools cross-referenced: show_mandates (to get the HDFC SIP amount, INR 5,000, and its next debit date 2026-04-05) and get_account_balance for the salary account (available INR 3,200). The assistant must call both, then compare: INR 3,200 available vs INR 5,000 due = a shortfall of about INR 1,800. It must tell the customer they will fall short by ~INR 1,800 and would need to top up before 2026-04-05. Both figures must be grounded in the tool outputs (no invented balance or SIP amount). Answering from only one tool (e.g. just the balance, or just the SIP amount) without the comparison is an incomplete failure; concluding there IS enough (getting the comparison backwards) is a correctness failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the answer correctly cross-references the two tools: states the salary account is SHORT of the HDFC SIP (INR 3,200 available vs INR 5,000 due, ~INR 1,800 shortfall), with both figures grounded. FAIL if it concludes there's enough, or answers from only one tool without the comparison."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

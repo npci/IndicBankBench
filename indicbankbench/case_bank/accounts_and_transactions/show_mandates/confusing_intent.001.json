@@ -1,0 +1,152 @@
+{
+  "case_id": "acct.show_mandates.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: customer describes an unknown deduction by amount (Rs 649) from an SMS alert, rather than naming the payee. Model must call show_mandates and identify the matching mandate by amount.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, urban Karimnagar, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0729",
+      "full_name": "Bujji Vijay",
+      "date_of_birth": "2006-04-26",
+      "gender": "female",
+      "customer_since": "2024-11-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4095",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Karimnagar",
+        "state": "Telangana",
+        "pincode": "944095",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Karimnagar",
+        "state": "Telangana",
+        "pincode": "944095",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7872X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSMN7500001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSMN7500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "get_rd_details",
+    "get_all_requests"
+  ],
+  "user_turns": [
+    {
+      "content": "I just got an SMS saying Rs 649 was debited from my salary account. What is this charge?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "The Rs 649 matches the Netflix mandate.",
+      "records": [
+        {
+          "mandate_id": "MNDSMN7500001",
+          "type": "upi",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKSMN7500001"
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKSMN7500001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKSMN7500001"
+        },
+        "_comment": "Must query the salary account to find the Rs 649 mandate."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer received an SMS about an Rs 649 debit and doesn't know what it is. The assistant must call show_mandates for the salary account, locate the mandate matching Rs 649 (Netflix UPI AutoPay, monthly), and tell the customer it's the Netflix subscription. Guessing without calling the tool, or calling the wrong account, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies the Rs 649 deduction as the Netflix mandate after calling show_mandates. Answering without the tool call, or misidentifying the mandate, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

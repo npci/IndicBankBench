@@ -1,0 +1,198 @@
+{
+  "case_id": "acct.show_mandates.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer asks about mandates on salary account, detours to check savings account balance, then returns asking for mandate amounts. Model must keep the two accounts' data separate.",
+  "setup": {
+    "persona": "19-year-old male, No Occupation / Retired / Homemaker, urban Dakshina Kannada, Karnataka",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0293",
+      "full_name": "Prakash Kadam",
+      "date_of_birth": "2007-02-13",
+      "gender": "male",
+      "customer_since": "2025-05-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3521",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Dakshina Kannada",
+        "state": "Karnataka",
+        "pincode": "693521",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Dakshina Kannada",
+        "state": "Karnataka",
+        "pincode": "693521",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4098X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSMN8500001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKSMN8500002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSMN8500003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "get_products_and_offers",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me all the auto-debit mandates on my salary account."
+    },
+    {
+      "content": "Hang on, what's the current balance on my savings account?"
+    },
+    {
+      "content": "Ok, and going back to the salary mandates — how much is being debited every month in total?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "mandate_id": "MNDSMN8500001",
+          "type": "nach",
+          "payee": "HDFC SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKSMN8500001"
+        },
+        {
+          "mandate_id": "MNDSMN8500002",
+          "type": "upi",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKSMN8500001"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKSMN8500002",
+          "available_balance": 234000,
+          "hold_amount": 2500
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKSMN8500001"
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKSMN8500002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKSMN8500001"
+        },
+        "_comment": "Must query the SALARY account mandates. Using savings account fails."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKSMN8500002"
+          ]
+        },
+        "_comment": "Detour: must query the SAVINGS account balance. Using salary account fails."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for salary account mandates (HDFC SIP Rs 5,000 + Netflix Rs 649 = Rs 5,649 total monthly). After the assistant answers, the customer detours to ask the savings account balance (Rs 2,34,000 available, Rs 2,500 on hold). When the customer returns and asks for the total monthly debit on salary mandates, the assistant must correctly sum Rs 5,000 + Rs 649 = Rs 5,649 without confusing it with the savings account balance. Adding savings account data into the mandate total, or forgetting the mandate amounts, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the balance detour, correctly totals the salary account mandates as Rs 5,649/month (Rs 5,000 + Rs 649). Confusing mandate data with savings balance, or forgetting the figures, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

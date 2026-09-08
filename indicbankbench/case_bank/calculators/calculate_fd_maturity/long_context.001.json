@@ -1,0 +1,311 @@
+{
+  "case_id": "calc.calculate_fd_maturity.long_context.001",
+  "axis": "8_long_context",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-extraction among competing deposit numbers. The history holds tool-backed computations for an FD of Rs 1,00,000 at 6.5% for 24 months and an RD of Rs 5,000/month at 6.75% for 12 months. The live turn scales the FD plan up to Rs 2,50,000, same tenure, same FD rate. The trap is reusing the old Rs 1,00,000 principal or the RD's 6.75%/12-month parameters. Gold stays tight: one calculate_fd_maturity call with all three inputs pinned.",
+  "setup": {
+    "persona": "42-year-old male, Tea Taster, rural Jalaun, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0459",
+      "full_name": "Ankit Lal",
+      "date_of_birth": "1984-12-10",
+      "gender": "male",
+      "customer_since": "2023-05-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9591",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Jalaun",
+        "state": "Uttar Pradesh",
+        "pincode": "459591",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Jalaun",
+        "state": "Uttar Pradesh",
+        "pincode": "459591",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1020X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKFDM8230",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKFDM8231",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I want to compare a couple of options for some savings I have. What's the going FD rate for a 2-year deposit?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "fd",
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"product_type\":\"fd\",\"rates\":[{\"slab\":\"1 year to < 3 years\",\"rate\":6.5,\"senior_citizen_rate\":7.0}],\"effective_date\":\"2026-03-01\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "A 2-year FD currently pays 6.5% per annum — 7.0% for senior citizens."
+      },
+      {
+        "role": "user",
+        "content": "Okay. And what would Rs 1,00,000 there mature to?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p2",
+            "type": "function",
+            "function": {
+              "name": "calculate_fd_maturity",
+              "arguments": {
+                "principal_amount": 100000,
+                "rate": 6.5,
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p2",
+        "content": "{\"maturity_amount\":113763.9,\"interest_earned\":13763.9,\"total_principal_invested\":100000}"
+      },
+      {
+        "role": "assistant",
+        "content": "About Rs 1,13,764 at maturity — roughly Rs 13,764 in interest over the two years."
+      },
+      {
+        "role": "user",
+        "content": "And while we're at it — an RD putting away Rs 5,000 a month for 12 months. What's that rate, and what does it grow to?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p3",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "rd",
+                "tenure_months": 12
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p3",
+        "content": "{\"product_type\":\"rd\",\"rates\":[{\"slab\":\"1 year to < 3 years\",\"rate\":6.75,\"senior_citizen_rate\":7.25}],\"effective_date\":\"2026-03-01\"}"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p4",
+            "type": "function",
+            "function": {
+              "name": "calculate_rd_maturity",
+              "arguments": {
+                "monthly_installment": 5000,
+                "rate": 6.75,
+                "tenure_months": 12
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p4",
+        "content": "{\"maturity_amount\":62226.9,\"interest_earned\":2226.9,\"total_principal_invested\":60000}"
+      },
+      {
+        "role": "assistant",
+        "content": "Rs 5,000 a month for 12 months at 6.75% would mature at about Rs 62,227 — the Rs 60,000 you put in plus roughly Rs 2,227 interest."
+      },
+      {
+        "role": "user",
+        "content": "Hmm, the FD route looks better. Let me think about the amount."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_transaction_history",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Right — keep the 2-year FD plan, but make it Rs 2,50,000, at the same FD rate you quoted. What does that mature to?"
+    }
+  ],
+  "mock": {
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Gold inputs: 2,50,000 at 6.5% for 24 months, quarterly compounding per bank standard.",
+      "output": {
+        "maturity_amount": 284409.75,
+        "interest_earned": 34409.75,
+        "total_principal_invested": 250000
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 62226.9,
+        "interest_earned": 2226.9,
+        "total_principal_invested": 60000
+      },
+      "_comment": "Noise prerequisite — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "Noise prerequisite — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 250000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 250000,
+          "rate": 6.5,
+          "tenure_months": 24
+        },
+        "_comment": "All inputs pinned against the buried history: the old Rs 1,00,000 principal, the RD's 6.75% rate and the RD's 12-month tenure are each wrong."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The history holds tool-backed runs for a Rs 1,00,000 FD at 6.5% for 24 months (~1,13,764) and a Rs 5,000/month RD at 6.75% for 12 months (~62,227). The customer now scales the FD up to Rs 2,50,000 with the same 6.5% rate and 2-year tenure. The assistant must call calculate_fd_maturity with principal_amount 2,50,000, rate 6.5 and tenure_months 24, and report a maturity of about Rs 2,84,410. Reusing the old Rs 1,00,000 principal, the RD's 6.75% rate, or 12-month tenure fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "recomputes the FD maturity with the revised inputs — principal 2,50,000, rate 6.5%, 24 months — and reports about Rs 2,84,410. Using the old 1,00,000 principal, the RD's 6.75% rate, or the 12-month tenure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

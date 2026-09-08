@@ -1,0 +1,185 @@
+{
+  "case_id": "csc.get_insurance_details.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer says 'my policy' singular but has 2 linked policies (health + life). Must ask which one.",
+  "setup": {
+    "persona": "56-year-old female, No Occupation / Retired / Homemaker, rural Aurangabad, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0384",
+      "full_name": "Anju Kumari",
+      "date_of_birth": "1970-12-26",
+      "gender": "female",
+      "customer_since": "2023-07-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3111",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Aurangabad",
+        "state": "Bihar",
+        "pincode": "753111",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Aurangabad",
+        "state": "Bihar",
+        "pincode": "753111",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4685X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 2
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCIN7700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKPLCIN7700002",
+          "type": "policy",
+          "label": "TK Health Insurance"
+        },
+        {
+          "product_id": "TKPLCIN7700003",
+          "type": "policy",
+          "label": "TK Life Insurance"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCIN7700004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "calculate_rd_maturity",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you check my insurance policy details?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only.",
+      "records": [
+        {
+          "policy_id": "TKPLCIN7700002",
+          "policy_type": "health",
+          "insurer": "Star Health",
+          "sum_assured": 1000000,
+          "premium": 15000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2027-01-15",
+          "status": "active"
+        },
+        {
+          "policy_id": "TKPLCIN7700003",
+          "policy_type": "life",
+          "insurer": "LIC",
+          "sum_assured": 2500000,
+          "premium": 42000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-11-10",
+          "status": "active"
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T10:00:00",
+          "amount": 100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-NOISE",
+          "transaction_note": "Noise entry",
+          "status": "success",
+          "running_balance": 100
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "_comment": "Must NOT be called: 'my policy' ambiguous across 2 policies."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer has two insurance policies (health and life) and asks to check 'my policy' without specifying which. The assistant must ask ONE focused question to disambiguate and must NOT call get_insurance_details or guess."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which policy (health or life) rather than calling get_insurance_details or guessing. Calling the tool fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "case_id": "csc.get_all_requests.happy.002",
+  "axis": "1_happy_path",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Over-specific-vs-general record selection. Three requests returned. The customer asks about 'my card request' (singular). Two requests are card-related: a charges dispute about card fee that is resolved (listed first — bait, looks like the right match at a glance) and a failed card transaction that is still open (listed second — the actionable one). A weak model picks the first card-related hit (resolved); a strong model reads the status and picks the open one (the request still needing follow-up).",
+  "setup": {
+    "persona": "40-year-old female, Fashion and Models, rural Gadag, Karnataka",
+    "current_date": "2026-08-23",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0782",
+      "full_name": "Vaishali Khalifa",
+      "date_of_birth": "1986-03-08",
+      "gender": "female",
+      "customer_since": "2014-01-19",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3686",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Gadag",
+        "state": "Karnataka",
+        "pincode": "223686",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Gadag",
+        "state": "Karnataka",
+        "pincode": "223686",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6754X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOSR8285001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOSR8285002",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "What's happening with my card request?"
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 3
+      },
+      "_comment": "Three requests. REQ-CHG (first, card-related charges dispute about card fee, resolved — bait) and REQ-FTX (second, card-related failed transaction, open — correct) are both card-topic. REQ-APP (third) is an app issue, not card-related. The customer asked for a status update on 'my card request' (singular) — the open one is the one still 'happening.'",
+      "records": [
+        {
+          "request_id": "REQ-CHG-48210",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-08-15",
+          "last_updated_date": "2026-08-18",
+          "description": "Credit card annual fee double-charged in July statement."
+        },
+        {
+          "request_id": "REQ-FTX-49155",
+          "category": "failed_transaction",
+          "status": "open",
+          "raised_date": "2026-08-10",
+          "last_updated_date": "2026-08-12",
+          "description": "Card payment failed at POS but amount deducted from account."
+        },
+        {
+          "request_id": "REQ-APP-50122",
+          "category": "app_issue",
+          "status": "in_progress",
+          "raised_date": "2026-08-20",
+          "last_updated_date": "2026-08-22",
+          "description": "Mobile app crashes on the transaction history screen."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "No filter required — the customer didn't name a status or category. The model fetches all and must select the right one from the result. Passing a narrow filter like status=resolved would exclude the correct request; passing status=open would still work but the model should verify the description mentions a card."
+      },
+      "get_request_status": {
+        "required": {},
+        "_comment": "The wrong tool here. It requires a request_id, and the customer did not name one — any call must carry an invented id (S1) or ask for one the customer never hinted at. A2 also fails the call itself, since the tool is neither expected nor optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks what's happening with 'my card request' — singular, implying one specific request. Three exist: a resolved credit-card annual-fee dispute (REQ-CHG-48210, listed first), an open failed card transaction (REQ-FTX-49155, listed second), and an in-progress app issue (REQ-APP-50122, not card-related).\n\nThe assistant must call get_all_requests, scan the results, and identify the card request that is still 'happening' — the one that is open. That is REQ-FTX-49155: a failed card POS transaction raised 2026-08-10, status open, last updated 2026-08-12. The assistant should report it as the active card request.\n\nThe bait is REQ-CHG-48210, which mentions 'credit card' in its description and is listed first — a lazy model scanning for the word 'card' will land on it and report a resolved request as though it were still active. Reporting that one, or listing all three without distinguishing which is the one the customer is asking about, fails. Calling get_request_status with an invented id fails A2 and S1."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant calls get_all_requests and identifies the open card-related request — the failed card transaction (REQ-FTX-49155, raised 2026-08-10, status open, last updated 2026-08-12) — as the one still 'happening.' Reporting the resolved credit-card fee dispute (REQ-CHG-48210) as the answer, or listing all three without identifying which is the active card request, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

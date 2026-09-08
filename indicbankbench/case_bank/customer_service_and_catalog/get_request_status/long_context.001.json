@@ -1,0 +1,234 @@
+{
+  "case_id": "csc.get_request_status.long_context.001",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 by the long-prior-conversation mechanism: the customer closes with a vague back-reference — 'that request from earlier' — and the reference number it points at was issued ten turns ago, with five unrelated exchanges (ATM limits, UPI cap, branch hours, NEFT charges) sitting between. The fact is PRESENT but DISTANT, which is the axis-8 discriminator against axis 4, where the fact is absent until asked for. Asking the customer to repeat the reference is therefore the failure, not the safe move: it is axis-4 behaviour on an axis-8 case. Fair under S1 because the id reached the transcript in a TOOL result, not just in assistant prose — S1 draws known ids from login_context and tool outputs only, so burying it in an assistant sentence alone would have made the correct action an S1 violation. csc lost axis 8 entirely with update_address/long_context.001; this restores it.",
+  "setup": {
+    "persona": "54-year-old female, Bearer, Domestic, rural Ariyalur, Tamil Nadu",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0177",
+      "full_name": "Tamil Lakshmi",
+      "date_of_birth": "1972-01-20",
+      "gender": "female",
+      "customer_since": "2012-02-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6340",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Ariyalur",
+        "state": "Tamil Nadu",
+        "pincode": "666340",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Ariyalur",
+        "state": "Tamil Nadu",
+        "pincode": "666340",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8666X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFNS7422001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFNS7422002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I need a new cheque book for my savings account — 25 leaves is fine."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "request_cheque_book",
+              "arguments": {
+                "account_id": "TKFNS7422001",
+                "leaves": 25,
+                "delivery_mode": "registered_address"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"request_id\": \"REQ-CHQ-88512\", \"status\": \"success\", \"message\": \"Cheque book request registered; delivery to registered address in 7-10 working days.\", \"reference_id\": \"REF-CHQ-88512\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Done — your 25-leaf cheque book is on its way to your registered address, usually 7–10 working days. The reference is REQ-CHQ-88512."
+      },
+      {
+        "role": "user",
+        "content": "Great. While I have you — how many free ATM withdrawals do I get a month?"
+      },
+      {
+        "role": "assistant",
+        "content": "On a savings account you get 5 free withdrawals a month at our own ATMs and 3 at other banks' ATMs in metro cities. After that it's ₹21 plus GST per withdrawal."
+      },
+      {
+        "role": "user",
+        "content": "And what's the daily UPI limit?"
+      },
+      {
+        "role": "assistant",
+        "content": "₹1,00,000 per day across UPI apps for most retail customers, subject to your app's own per-transaction cap."
+      },
+      {
+        "role": "user",
+        "content": "Is the MG Road branch open on Saturdays?"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes — MG Road is open on the first, third and fifth Saturday of each month, 10am to 2pm. It's closed on second and fourth Saturdays."
+      },
+      {
+        "role": "user",
+        "content": "Okay. And do you charge for NEFT?"
+      },
+      {
+        "role": "assistant",
+        "content": "NEFT through net banking and the mobile app is free. Branch-initiated NEFT carries a charge that varies by amount slab."
+      },
+      {
+        "role": "user",
+        "content": "Got it, thanks."
+      },
+      {
+        "role": "assistant",
+        "content": "Happy to help. Anything else I can look into?"
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Oh — one more thing. Any update on that request from earlier?"
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Flat object, so outcome_fixed per CONVENTIONS.md §6 — get_request_status has no array in its output_schema and mocking it as a record set would wrap the fields under a scalar. The status has genuinely moved on since the prior turn, so a model that re-reports the old 'registered' line instead of fetching is visibly wrong.",
+      "output": {
+        "request_id": "REQ-CHQ-88512",
+        "status": "in_progress",
+        "raised_date": "2026-03-15T13:58:00",
+        "last_update": "2026-03-15T14:20:00",
+        "remarks": "Cheque book printed and handed to courier; tracking will be sent by SMS."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Listing everything and picking the cheque-book request out is a defensible alternative route, so it is mocked and allowed rather than punished — the model still has to work out WHICH request 'that request from earlier' means, so the axis-8 discriminator survives either path.",
+      "records": [
+        {
+          "request_id": "REQ-CHQ-88512",
+          "category": "cheque_book",
+          "status": "in_progress",
+          "raised_date": "2026-03-15",
+          "last_updated_date": "2026-03-15",
+          "description": "25-leaf cheque book, delivery to registered address."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-CHQ-88512"
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-CHQ-88512"
+        },
+        "_comment": "The whole case. The id is recoverable only by reading back through the prior conversation; any other value is either invented (S1 catches it) or a misidentified request."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Alternative route — list, then identify the cheque-book request."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for an update on 'that request from earlier'. The reference is REQ-CHQ-88512, the cheque-book request raised at the top of this conversation, ten turns and five unrelated topics ago. The assistant must resolve the back-reference itself and look the request up — reporting that it is now in progress: the cheque book has been printed and handed to the courier, with SMS tracking to follow. Asking the customer to supply the reference number is the failure this case targets: the number is in the conversation and re-asking for it is the axis-4 move on an axis-8 case. Repeating the earlier 'registered, 7-10 working days' line without re-checking is also wrong — the status has moved on. Inventing a reference or a status fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant identifies the earlier request as REQ-CHQ-88512 WITHOUT asking the customer for it, looks it up, and reports the current status — in progress, printed and with the courier. Asking the customer to provide the reference number, restating the earlier 'registered / 7-10 working days' answer as if current, or inventing a status all fail."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

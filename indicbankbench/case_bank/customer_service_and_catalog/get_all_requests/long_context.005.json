@@ -1,0 +1,196 @@
+{
+  "case_id": "csc.get_all_requests.long_context.005",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale request list (new cheque-book request added since prior). Prior round: get_all_requests returned 1 open request (a dispute). Since then a new cheque-book request was placed via the branch and is now in the system. The live list has 2 open requests. The customer now asks 'show me all my pending requests' — a model that trusts stale prior and says 'just the one dispute' fails A1. A model that re-fetches live discovers 2 requests → PASS.",
+  "setup": {
+    "persona": "32-year-old female, No Occupation / Retired / Homemaker, rural Bangalore, Karnataka",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0082",
+      "full_name": "Shilpa Patil",
+      "date_of_birth": "1994-02-24",
+      "gender": "female",
+      "customer_since": "2013-08-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1125",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "86 Station Road",
+        "line2": "Civil Lines",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "951125",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "86 Station Road",
+        "line2": "Civil Lines",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "951125",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9728X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD70990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD70990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Show me all my open service requests."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "ar1",
+            "type": "function",
+            "function": {
+              "name": "get_all_requests",
+              "arguments": {
+                "status": "open",
+                "limit": 10
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "ar1",
+        "content": "{\"requests\":[{\"request_id\":\"REQ-DIS-70991\",\"category\":\"charges_dispute\",\"status\":\"open\",\"raised_date\":\"2026-08-15\",\"last_updated_date\":\"2026-08-15\",\"description\":\"Disputed quarterly maintenance charge Rs 450\"}],\"total_count\":1,\"limit\":10,\"offset\":0}"
+      },
+      {
+        "role": "assistant",
+        "content": "You have one open request: a dispute about the quarterly maintenance charge of Rs 450, raised on 15 August. It's currently in review."
+      },
+      {
+        "role": "user",
+        "content": "Okay. I also need to order a cheque book — let me do that separately."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_all_requests",
+    "get_request_status",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me all my pending requests now — has anything changed?"
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 2,
+        "limit": 10,
+        "offset": 0
+      },
+      "_comment": "Since the prior round the customer visited the branch and placed a cheque book request. That request is now in the system. Live shows 2 open requests — the dispute and the new cheque book request.",
+      "records": [
+        {
+          "request_id": "REQ-CHQ-70992",
+          "category": "cheque_book",
+          "status": "open",
+          "raised_date": "2026-08-19",
+          "last_updated_date": "2026-08-19",
+          "description": "Cheque book request — 25 leaves for account TKOD70990001"
+        },
+        {
+          "request_id": "REQ-DIS-70991",
+          "category": "charges_dispute",
+          "status": "open",
+          "raised_date": "2026-08-15",
+          "last_updated_date": "2026-08-15",
+          "description": "Disputed quarterly maintenance charge Rs 450"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {
+          "limit": 10
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "THE GATE. The model MUST re-fetch the request list live. Prior showed 1 open request but a new cheque-book request was added since then — live has 2."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — model may drill into individual requests."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed 1 open request — a maintenance charge dispute. The customer mentioned needing a cheque book and visited the branch. Since then a new cheque-book request (REQ-CHQ-70992) was placed at the branch and entered the system on 19 August. The live list now shows 2 open requests.\n\nThe correct move is to re-fetch get_all_requests live and report both requests — the older dispute and the new cheque-book order. Saying 'still just the one dispute' from stale memory without a live call is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_all_requests live, discovers 2 open requests (not the stale 1), and reports both. Reporting only the old dispute without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.happy.001",
+  "axis": "1_happy_path",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 baseline for get_deposit_loan_rates: the customer names the product (FD) and the tenure (1 year) up front, so the whole question is answerable in one read with no missing field and no ordering subtlety. This is the accuracy case the existing not_enough_info.001 is not: that case tests the ORDERING policy (fetch the full card before asking for a missing tenure) and only pins product_type=fd. Here tenure is supplied, so the correct answer is a single slab (6.5% for 1–3 years, CONVENTIONS §3) and A3 pins both product_type and tenure_months — a model that fetches the right product but the wrong slab, or returns a rate the tool never returned, is caught.",
+  "setup": {
+    "persona": "59-year-old female, Mechanic, Automobile, urban Faridabad, Haryana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0125",
+      "full_name": "Tina Joseph",
+      "date_of_birth": "1967-03-13",
+      "gender": "female",
+      "customer_since": "2014-02-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1746",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Faridabad",
+        "state": "Haryana",
+        "pincode": "901746",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Faridabad",
+        "state": "Haryana",
+        "pincode": "901746",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7177X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDPL9002001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKDPL9002002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "set_card_controls",
+    "request_cheque_book"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the current fixed deposit rate for a 1-year term?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "The slab that covers a 12-month tenure is 1 year to < 3 years: 6.5% FD (CONVENTIONS §3). The customer is not a senior (segment regular, born 1990)."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 12
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "product_type must be 'fd' — the customer named an FD; the rd or a loan card is wrong. tenure_months is deliberately NOT pinned: the tool documents it as an optional filter ('All slabs if omitted'), and the sibling happy case (calculate_fd_maturity.happy.001) leaves it unpinned for the same reason. The correct-rate requirement is carried by the R bar — a model that reports a slab other than the returned 6.5% (1–3 years) fails there."
+      },
+      "_comment": "The calculators are exposed but must NOT be called — a maturity projection was not asked for. They are absent from the allowed set, so such a call fails A2.",
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks the FD rate for a 1-year term. The assistant should call get_deposit_loan_rates(product_type='fd', tenure_months=12) and report the slab that covers 12 months — 6.5% for the 1-year-to-under-3-years band (effective 2026-03-01). Fetching the RD or a loan card, reporting a rate for the wrong slab (e.g. the 6.0% 6–12 month or the 6.75% 3–5 year band), or stating a rate the tool did not return, are failures. Mentioning the senior-citizen rate (7.0%) is optional but harmless; this customer is not a senior."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant sources the FD rate from get_deposit_loan_rates and reports the 1-year term rate (6.5%, 1 year to < 3 years slab) as returned. Reporting a wrong slab's rate, inventing a rate, or answering without calling the tool, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

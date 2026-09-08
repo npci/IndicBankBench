@@ -1,0 +1,254 @@
+{
+  "case_id": "depl.get_fd_details.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer asks about FD maturity, detours to RD status check, then returns to FD payout type. Model must keep FD and RD data separate.",
+  "setup": {
+    "persona": "26-year-old female, Bill Poster, rural Rangareddy, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0049",
+      "full_name": "Varada Lalya",
+      "date_of_birth": "2000-03-03",
+      "gender": "female",
+      "customer_since": "2018-07-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5114",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "75 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Rangareddy",
+        "state": "Telangana",
+        "pincode": "135114",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "75 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Rangareddy",
+        "state": "Telangana",
+        "pincode": "135114",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7029X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDC8600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDFDC8600002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKRDFDC8600003",
+          "type": "rd",
+          "label": "TK RD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFDC8600004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "When does my FD mature, and is the interest paid out monthly or at maturity?"
+    },
+    {
+      "content": "Before we talk about the FD — how is my RD doing? How many installments have I paid?"
+    },
+    {
+      "content": "So back to the FD — what was the payout type again?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDFDC8600002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2024-09-01",
+          "maturity_date": "2026-09-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDC8600001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDFDC8600003",
+          "monthly_installment": 5000,
+          "installments_paid": 18,
+          "total_deposited": 90000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2025-02-01",
+          "next_debit_date": "2026-09-01",
+          "maturity_date": "2028-02-01",
+          "maturity_amount": 199902,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDC8600001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDFDC8600002"
+          ]
+        }
+      },
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDFDC8600003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDFDC8600002"
+          ]
+        }
+      },
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKRDFDC8600003"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about their FD: matures 2026-09-01, payout_type cumulative (interest at maturity). After the assistant answers, the customer detours to ask about their RD: 18 of 36 installments paid, Rs 90,000 deposited so far at 6.75%. The customer returns to ask the FD payout type again — the assistant must correctly answer 'cumulative' (interest at maturity) without confusing it with the RD data. Confusing FD payout type with RD installment data, or forgetting the answer, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the RD detour, correctly recalls FD payout type as cumulative. Confusing FD data with RD data, or forgetting the answer, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

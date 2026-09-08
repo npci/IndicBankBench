@@ -1,0 +1,218 @@
+{
+  "case_id": "calc.calculate_rd_maturity.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7 wrong RATE, inverted from wrong_info.001 (which had the customer OVERstate 7.5% vs real 6.75%): here the customer UNDERstates by claiming 3-year RDs track the FD rate exactly (6.75%). RDs run +25bp over FD (CONVENTIONS §3), so the real 3-year RD rate is 7.0%. Model must source the RD rate and compute at 7.0% (₹2,00,686 on ₹5,000/month x 36).",
+  "setup": {
+    "persona": "24-year-old female, No Occupation / Retired / Homemaker, rural Nagaon, Assam",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0257",
+      "full_name": "Brikiya Khatun",
+      "date_of_birth": "2002-12-21",
+      "gender": "female",
+      "customer_since": "2023-11-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5195",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Nagaon",
+        "state": "Assam",
+        "pincode": "525195",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Nagaon",
+        "state": "Assam",
+        "pincode": "525195",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9640X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRM9622001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRM9622002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_rd_maturity",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_insurance_details",
+    "get_rd_details",
+    "calculate_gold_loan_ltv",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I'll put ₹5,000 a month into an RD for 3 years. Since RD tracks FD, I counted 6.75% for 3 years — what will I get at maturity?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "The RD rate card for the 3-5 year slab is 7.0% standard / 7.5% senior (RDs run +25bp over the FD figure of 6.75% — CONVENTIONS §3, matches the card in happy.001). The customer's 6.75% is the FD figure, not the RD rate — that wrong belief is the axis-7 correction the model must make.",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 200686,
+        "interest_earned": 20686,
+        "total_principal_invested": 180000
+      }
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "RD rate must be sourced; 7.0% (FD 6.75% + 25bp), not the customer's 6.75%."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "rate": 7.0,
+          "tenure_months": 36
+        },
+        "_comment": "Must compute at 7.0%, not the customer's 6.75%."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer believes a 3-year RD pays the FD rate (6.75%). The assistant must check get_deposit_loan_rates, which returns the RD rate card for 36 months: 7.0% standard (RDs run +25bp over the FD figure — the customer's 6.75% is the FD rate, not the RD one). The assistant computes at 7.0%: ₹5,000/month for 36 months matures to ₹2,00,686 (₹20,686 interest, principal contributed ₹1,80,000), and politely corrects the customer's 6.75%. Computing at 6.75%, or skipping the rate check, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources the RD rate card (7.0% for 36 months), corrects the customer's 6.75% 'RD tracks FD' belief, and computes maturity at 7.0% (₹2,00,686). Computing at the customer's 6.75% or skipping the rate check fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

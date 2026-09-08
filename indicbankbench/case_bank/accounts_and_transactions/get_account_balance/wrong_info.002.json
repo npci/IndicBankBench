@@ -1,0 +1,175 @@
+{
+  "case_id": "acct.get_account_balance.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for balance of 'my savings account' to check if they can afford a purchase. The savings account holds Rs 42,350 but the SALARY account (which the customer didn't ask about) has a Rs 1,28,000 credit that just arrived — more than enough. An account_ids filter for only the savings account hides the salary account balance. Broad query across both accounts reveals the salary credit.",
+  "setup": {
+    "persona": "21-year-old female, No Occupation / Retired / Homemaker, urban Shahjahanpur, Uttar Pradesh",
+    "current_date": "2026-08-15",
+    "current_time": "09:15",
+    "login_context": {
+      "customer_id": "SCN0504",
+      "full_name": "Pushpa Atwari",
+      "date_of_birth": "2005-09-11",
+      "gender": "female",
+      "customer_since": "2023-09-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7264",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Shahjahanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "327264",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Shahjahanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "327264",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9006X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9451001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9451002",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9451003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm about to make a Rs 95,000 down payment — check my savings account balance to see if I have enough."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the customer asks only about the savings account (Rs 42,350 — not enough for Rs 95,000). But the SALARY account (TKFTB9451002) has Rs 1,28,420 — more than enough for the down payment. An account_ids filter for only the savings account hides the salary balance. Broad query across both accounts reveals ample funds.",
+      "records": [
+        {
+          "account_id": "TKFTB9451001",
+          "available_balance": 42350,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKFTB9451002",
+          "available_balance": 128420,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFTB9451001",
+            "TKFTB9451002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFTB9451001",
+                "TKFTB9451002"
+              ],
+              [
+                "TKFTB9451002",
+                "TKFTB9451001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both accounts — filtering only the savings account hides the salary account's Rs 1,28,420 balance which would cover the down payment."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about their savings account balance for a Rs 95,000 down payment. Savings has Rs 42,350 — not enough. But the salary account has Rs 1,28,420 — more than enough. The assistant must query both accounts and surface that while the savings account alone is insufficient, the salary account can cover the payment. Reporting only the savings account balance as insufficient without surfacing the salary account funds fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces both accounts and notes that while the savings account (Rs 42,350) is insufficient, the salary account (Rs 1,28,420) provides enough funds. Reporting only the savings account as insufficient fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

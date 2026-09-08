@@ -1,0 +1,322 @@
+{
+  "case_id": "depl.agentic.loan_fd_amount_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details+get_deposit_loan_rates+calculate_fd_maturity+get_account_balance+create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'book FD for ₹8,00,000 from my personal loan top-up disbursal.' get_loan_details shows the personal loan outstanding is ₹5,50,000 with only ₹1,50,000 sanctioned as top-up (not ₹8,00,000). Correction: FD is limited by available funds. arg_gate pins principal_amount to what the account can actually hold.",
+  "setup": {
+    "persona": "36-year-old male, Upholsterer, Furniture, rural Sitapur, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "16:00",
+    "login_context": {
+      "customer_id": "SCN0102",
+      "full_name": "Yashvant Singh",
+      "date_of_birth": "1990-10-01",
+      "gender": "male",
+      "customer_since": "2021-06-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1801",
+      "registered_email": "y*****@gmail.com",
+      "communication_address": {
+        "line1": "82 College Road",
+        "line2": "Koregaon Park",
+        "city": "Sitapur",
+        "state": "Uttar Pradesh",
+        "pincode": "181801",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "82 College Road",
+        "line2": "Koregaon Park",
+        "city": "Sitapur",
+        "state": "Uttar Pradesh",
+        "pincode": "181801",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4615X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKLFD9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNL9500001",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCLFD9500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_card_details",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "Book an FD for ₹8,00,000 from my personal loan top-up — use the funds from my personal loan disbursal for a 2-year FD."
+    },
+    {
+      "content": "Yes, book it for that amount — go ahead."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Personal loan: principal 5L, outstanding 4.2L, EMI at 10.5%. Loan accounts don't disburse to savings — there's only ₹1,50,000 top-up sanctioned, not ₹8,00,000. The customer's savings account only has ₹2,00,000.",
+      "records": [
+        {
+          "loan_id": "TKLNL9500001",
+          "type": "personal_loan",
+          "principal": 500000,
+          "outstanding": 420000,
+          "emi_amount": 13410,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 7,
+          "tenure_remaining": 36,
+          "status": "active",
+          "next_due_date": "2026-09-07",
+          "emi_account_id": "TKLFD9500001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "2-year tenure falls in 1yr-<3yr slab: FD 6.50%.",
+      "output": {
+        "product_type": "fd",
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹2,00,000 at 6.5% for 24mo quarterly compounded. (1+0.01625)^8=1.137647 => 200000*1.137647=227529. Interest: 27529.",
+      "output": {
+        "maturity_amount": 227529,
+        "interest_earned": 27529,
+        "total_principal_invested": 200000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Only ₹2,00,000 available in savings. Customer's ₹8,00,000 estimate is completely wrong — neither the loan top-up nor the savings balance supports that.",
+      "records": [
+        {
+          "account_id": "TKLFD9500001",
+          "available_balance": 200000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKLFD9500101",
+        "principal_amount": 200000,
+        "status": "success",
+        "message": "Fixed Deposit booked. ₹2,00,000 debited from TKLFD9500001.",
+        "interest_rate": 6.5,
+        "maturity_date": "2028-08-24",
+        "maturity_amount": 227529,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-95001"
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — optional."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — optional."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — optional."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — optional."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNL9500001"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKLFD9500001"
+          ]
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 200000,
+          "tenure_months": 24,
+          "source_account": "TKLFD9500001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_loan_details",
+        "create_fd"
+      ],
+      [
+        "get_account_balance",
+        "create_fd"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ],
+      [
+        "calculate_fd_maturity",
+        "create_fd"
+      ]
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLNL9500001"
+          ]
+        },
+        "_comment": "Check loan — reveals personal loan doesn't disburse ₹8,00,000. Only ₹2,00,000 available in savings."
+      },
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Fetch FD rates."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional calculator."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKLFD9500001"
+          ]
+        },
+        "_comment": "Must check balance — reveals only ₹2,00,000 is available."
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 200000,
+          "tenure_months": 24,
+          "source_account": "TKLFD9500001"
+        },
+        "_comment": "CORRECTED principal_amount=200000 pinned. Customer said ₹8,00,000 from loan top-up — actual available = ₹2,00,000."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'book FD for ₹8,00,000 from my personal loan top-up.' get_loan_details reveals the personal loan has no disbursal facility — loan accounts don't credit savings. get_account_balance shows only ₹2,00,000 available. The assistant must correct: 'Your personal loan doesn't provide a top-up disbursal, and your savings account has only ₹2,00,000. I can book an FD for ₹2,00,000 instead — projected maturity ₹2,27,529.' After confirmation, calls create_fd with principal_amount=200000."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant checks loan details, discovers the loan doesn't support ₹8,00,000 disbursal, checks balance showing ₹2,00,000, communicates the correction, and after confirmation creates FD with principal_amount=200000. FAIL if create_fd is called with 800000."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

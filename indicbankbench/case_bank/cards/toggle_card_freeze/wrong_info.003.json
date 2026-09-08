@@ -1,0 +1,224 @@
+{
+  "case_id": "cards.toggle_card_freeze.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer asks to freeze 'my credit card ending 4567'. Lookup (get_card_details) reveals she only has a debit card ending 4567 — no credit card. Correction: freeze the debit card instead. arg_gate pins the debit card_id.",
+  "setup": {
+    "persona": "25-year-old female, No Occupation / Retired / Homemaker, rural Mathura, Uttar Pradesh",
+    "current_date": "2026-10-11",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0595",
+      "full_name": "Seema Sharma",
+      "date_of_birth": "2001-08-02",
+      "gender": "female",
+      "customer_since": "2019-05-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1763",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "44 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "pincode": "841763",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "44 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "pincode": "841763",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4292X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98000T1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9800T02",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I lost my credit card ending 4567 — freeze it right now."
+    },
+    {
+      "content": "Yes, freeze the debit card then."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRITE-AFTER-CORRECTION: customer says 'credit card ending 4567' but only has debit card ending 4567. Lookup corrects to debit.",
+      "records": [
+        {
+          "card_id": "TKCWAC9800T02",
+          "masked_number": "****4567",
+          "card_type": "debit",
+          "network": "visa",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "03/28"
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Freeze the corrected (debit) card.",
+      "output": {
+        "card_id": "TKCWAC9800T02",
+        "status": "frozen",
+        "message": "Card TKCWAC9800T02 has been frozen.",
+        "reference_id": "REF-FRZ-WAC9800"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "NOISE",
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCWAC9800T02"
+          ]
+        }
+      },
+      {
+        "tool": "toggle_card_freeze",
+        "arguments": {
+          "card_id": "TKCWAC9800T02",
+          "state": "freeze"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Must check cards first. Customer claims credit card but only debit exists."
+      },
+      "toggle_card_freeze": {
+        "required": {
+          "card_id": "TKCWAC9800T02"
+        },
+        "_comment": "CORRECTED: freeze the debit card (not the non-existent credit card)."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_card_details",
+        "toggle_card_freeze"
+      ]
+    ],
+    "expected_resolution": "The customer says 'credit card ending 4567' but the lookup reveals she only has a debit card ending 4567. The assistant must correct the customer: it's a debit card, not a credit card. After confirmation, freeze the debit card. Freezing a non-existent credit card or proceeding without correction fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "corrects card type from credit to debit, confirms with customer, freezes the debit card. Freezing non-existent credit card fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

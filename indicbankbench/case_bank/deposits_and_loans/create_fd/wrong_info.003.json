@@ -1,0 +1,222 @@
+{
+  "case_id": "depl.create_fd.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'I want to lock Rs 2,00,000 in an FD for 2 years'. get_deposit_loan_rates filtered to product_type=fd returns 6.5%. But an RD at 6.75% for the same tenure would earn more — and if the customer has monthly income, an RD may suit them better. The filter trap is the model computing only FD and not comparing with RD.",
+  "setup": {
+    "persona": "35-year-old male, No Occupation / Retired / Homemaker, urban Rangareddy, Telangana",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0480",
+      "full_name": "Praveen Pantulu",
+      "date_of_birth": "1991-09-27",
+      "gender": "male",
+      "customer_since": "2020-11-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5776",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "57 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Rangareddy",
+        "state": "Telangana",
+        "pincode": "565776",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "57 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Rangareddy",
+        "state": "Telangana",
+        "pincode": "565776",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8693X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R950000111",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R950000112",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I have Rs 2,00,000 saved — book an FD for 2 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks FD rate. A product_type=fd filter returns 6.5% (1-3yr). But RD at 6.75% for same tenure would earn more interest. FD maturity: 200000*(1+6.5/400)^8 = 200000*1.1382 = 227640.",
+      "records": [
+        {
+          "slab": "1 year to less than 3 years",
+          "rate": 6.5
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 227640,
+        "interest_earned": 27640,
+        "total_principal_invested": 200000
+      },
+      "_comment": "FD: 200000*(1+6.5/400)^8 = 227640."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFTR950000113",
+        "principal_amount": 200000,
+        "status": "success",
+        "message": "FD booked: TK eFixed Deposit for 24 months at 6.5%.",
+        "interest_rate": 6.5,
+        "maturity_date": "2028-08-15",
+        "maturity_amount": 227640,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-95111"
+      },
+      "_comment": "SAFETY NET. FD books correctly for 200k/24mo at 6.5% cumulative."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Query FD rate. Filter trap: querying only FD rate hides RD at 6.75% which may be a better fit."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        },
+        "_comment": "Compute FD maturity: ~Rs 2,27,640."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — booking may need confirmation."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants 2-year FD at Rs 2,00,000. FD maturity at 6.5% = ~Rs 2,27,640. But the assistant should proactively mention that an RD at 6.75% would earn more interest — and if the customer has regular income, monthly RD installments might be a better fit. Presenting only the FD without comparing RD fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes FD maturity correctly (~Rs 2,27,640) AND proactively mentions RD at 6.75% as an alternative with higher interest rate. Presenting only the FD without the RD comparison fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

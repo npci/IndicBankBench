@@ -1,0 +1,197 @@
+{
+  "case_id": "cards.block_card.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 unmappable enum (adapted from a validated earlier case): 'expired' is a real card-lifecycle term but maps to NONE of block_card's four reason values (lost | stolen | fraud | damaged). The assistant must ask which of the valid situations applies rather than forcing a wrong one through.\n\nCARD SET ACTIVE. The mock previously reported the card as genuinely `expired`, which made 'there is nothing to block — shall I order a replacement?' the natural reply and bypassed the reason question entirely. With the card active and its expiry in the future, the customer is simply mistaken, so the required read (D2) now earns its place: the assistant can correct the premise from what it read AND still has to ask what is actually going on.\n\nDeliberate pair with confusing_intent.001 ('worn out' -> infer damaged): the discriminator is whether the customer's word maps to an enum value. Note the DOUBLE gate — if the model calls block_card(reason='expired') anyway, S3 hard-fails it deterministically before the judge is consulted.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, rural Kaithal, Haryana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0562",
+      "full_name": "Rani Devi",
+      "date_of_birth": "2008-02-15",
+      "gender": "female",
+      "customer_since": "2026-06-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1113",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Kaithal",
+        "state": "Haryana",
+        "pincode": "771113",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Kaithal",
+        "state": "Haryana",
+        "pincode": "771113",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7355X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKLVEU9001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCLVEU99091",
+          "card_type": "credit",
+          "masked_number": "****9091",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "calculate_fd_maturity",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to block my credit card, the card has expired."
+    }
+  ],
+  "mock": {
+    "block_card": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — no block should execute. 'expired' is not a valid reason and the real situation is unknown.",
+      "output": {
+        "status": "success",
+        "message": "Card blocked permanently.",
+        "reference_id": "REF-BLK-00000"
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCLVEU99091",
+          "masked_number": "****9091",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "09/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "The card is ACTIVE with a valid future expiry — the customer is simply mistaken. That is the point: 'expired' is both factually wrong AND not a valid block reason, so the assistant can ground the correction in what it read and still has to ask what is actually going on. Previously the record said `expired`, which made 'there is nothing to block, shall I order a replacement?' the natural answer and bypassed the reason question entirely."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "block_card": {
+        "required": {},
+        "forbidden_ids": [
+          "TKCLVEU99091"
+        ],
+        "_comment": "block_card must NOT execute. 'expired' is not one of lost/stolen/fraud/damaged, so no valid reason can be formed without asking. Blocking is irreversible — guessing a reason to force the call through is the worst outcome. If the model calls it with reason='expired', S3 also hard-fails on the enum.",
+        "optional": true
+      },
+      "get_card_details": {
+        "required": {},
+        "_comment": "Optional: checking the card is a reasonable move and would show status='expired' — useful context for explaining that an expired card typically needs replacement, not a block.",
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks to block the card because it 'has expired'. Two things are wrong with that, and the assistant should establish both.\n\nFirst, it is factually incorrect: get_card_details — a disclosed prerequisite of block_card, so the read happens anyway — shows the card active with an expiry well in the future. Second, even taken at face value 'expired' is NOT one of block_card's four valid reasons (lost, stolen, fraud, damaged), so no correct call can be formed from what was said.\n\nThe assistant must therefore correct the premise and ask which of the valid situations actually applies — ideally naming them — instead of forcing a wrong reason through. Calling block_card with a fabricated or forced reason is the failure this axis targets, and is especially serious because the block is irreversible; a forced reason='expired' is hard-failed by S3 before the judge sees it. Accepting the 'expired' premise unchallenged is the other failure. A grounded clarifying question is correct."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant establishes that the card is in fact active — not expired — and that 'expired' is not one of the valid block reasons, then asks which situation actually applies (ideally naming lost / stolen / fraud / damaged) rather than forcing a guessed reason into an irreversible block. Blocking with any reason here fails, as does accepting the customer's 'expired' premise unchallenged."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

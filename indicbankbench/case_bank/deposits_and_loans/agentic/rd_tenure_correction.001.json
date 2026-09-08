@@ -1,0 +1,262 @@
+{
+  "case_id": "depl.agentic.rd_tenure_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_loan_rates+calculate_rd_maturity+get_account_balance+create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'start an RD for ₹3,000/month for 6 months.' Model fetches RD rate card from get_deposit_loan_rates — the shortest RD slab is '1 year to < 3 years' (minimum 12 months). 6 months is too short. Model must correct the customer in prose AND propagate the corrected tenure_months (12) into create_rd. arg_gate pins tenure_months=12; a value of 6 fails A3 via required exact-match.",
+  "setup": {
+    "persona": "50-year-old male, Transferor, Photomechanical, urban Muzaffarnagar, Uttar Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "14:30",
+    "login_context": {
+      "customer_id": "SCN0781",
+      "full_name": "Brajesh Prasad",
+      "date_of_birth": "1976-10-16",
+      "gender": "male",
+      "customer_since": "2021-02-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4685",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "46 College Road",
+        "line2": "Indiranagar",
+        "city": "Muzaffarnagar",
+        "state": "Uttar Pradesh",
+        "pincode": "594685",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "46 College Road",
+        "line2": "Indiranagar",
+        "city": "Muzaffarnagar",
+        "state": "Uttar Pradesh",
+        "pincode": "594685",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3529X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDT9400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDT9400002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "calculate_fd_maturity",
+    "get_account_balance",
+    "create_rd",
+    "create_fd",
+    "get_fd_details",
+    "get_rd_details",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Start an RD at ₹3,000 per month for 6 months. Take it from my savings account."
+    },
+    {
+      "content": "Yes, go ahead — book it for 12 months."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "RD rate card: shortest slab is 1yr-<3yr at 7.0%. No slab for 6 months — the rate card structure implies 12mo minimum tenure.",
+      "output": {
+        "product_type": "rd",
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹3,000/month for 12 months at 7.0%, quarterly compounded. M=Σ3000*(1.0175)^(4*(12-k)/12) ≈ ₹37,328. Interest: ₹1,328.",
+      "output": {
+        "maturity_amount": 37328,
+        "interest_earned": 1328,
+        "total_principal_invested": 36000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "₹80,000 available — enough for ₹3,000/month RD.",
+      "records": [
+        {
+          "account_id": "TKRDT9400001",
+          "available_balance": 80000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRDNB9401",
+        "status": "success",
+        "message": "Recurring Deposit booked. ₹3,000 will be debited monthly from TKRDT9400001.",
+        "interest_rate": 7.0,
+        "maturity_date": "2027-08-20",
+        "maturity_amount": 37328,
+        "monthly_debit_date": 20,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-94001"
+      }
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd"
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 3000,
+          "rate": 7.0,
+          "tenure_months": 12
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKRDT9400001"
+          ]
+        }
+      },
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 3000,
+          "tenure_months": 12,
+          "source_account": "TKRDT9400001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ],
+      [
+        "calculate_rd_maturity",
+        "create_rd"
+      ],
+      [
+        "get_account_balance",
+        "create_rd"
+      ]
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 3000,
+          "tenure_months": 12,
+          "source_account": "TKRDT9400001"
+        },
+        "_comment": "CORRECTED tenure_months=12 pinned. Customer said 6 — required catches via exact-match inequality."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'start an RD for 6 months.' The assistant fetches the RD rate card — the shortest slab is '1 year to < 3 years' (minimum 12 months). 6 months has no rate slab. The assistant must correct: 'The shortest RD tenure available is 12 months (1 year). I can book it at 12 months with ₹3,000/month — projected maturity ₹37,328.' After confirmation, calls create_rd with tenure_months=12. A weak model might mention the correction in prose but still write tenure_months=6. arg_gate pins tenure_months=12; passing 6 fails A3 via required exact-match."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant runs the RD booking chain, discovers 6 months is below the minimum RD tenure (12 months from the rate card) and the rate card has no slab for it, communicates this and proposes 12 months, and after confirmation books create_rd with tenure_months=12. FAIL if create_rd is called with tenure_months=6."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

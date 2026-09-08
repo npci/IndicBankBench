@@ -1,0 +1,221 @@
+{
+  "case_id": "depl.create_rd.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "clarify",
+  "setup": {
+    "persona": "23-year-old male, Shop Attendant, urban East, Delhi",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0634",
+      "full_name": "Eamesh Raj",
+      "date_of_birth": "2003-10-17",
+      "gender": "male",
+      "customer_since": "2021-11-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3337",
+      "registered_email": "e*****@gmail.com",
+      "communication_address": {
+        "line1": "58 College Road",
+        "line2": "Model Town",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "393337",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "58 College Road",
+        "line2": "Model Town",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "393337",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9249X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDVU9316001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCDVU9316002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Start a recurring deposit of ₹5,000 a month from my savings account, and add my brother Vikram Gupta as the nominee."
+    },
+    {
+      "content": "Two years."
+    },
+    {
+      "content": "Does that really matter? Just go ahead and start it."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "RD 1y-<3y covers the 24-month tenure. 6.75 is the RD rate at this slab, +25bp over the FD card's 6.5.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹5,000/month for 24 months at 6.75%, quarterly compounding = 128761.64 -> 128762. Mocked because arg_gate permits the call: sourcing the rate and showing the projection while asking for the missing DOB is the natural flow, and previously produced two consecutive UNEXPECTED_TOOL_CALLs.",
+      "output": {
+        "maturity_amount": 128762,
+        "interest_earned": 8762,
+        "total_principal_invested": 120000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKDVU9316001",
+          "available_balance": 300000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — must not execute while the nominee is incomplete. A call carrying a nominee without date_of_birth never reaches this mock: mock_executor rejects it with SCHEMA_VALIDATION_ERROR, the same violation S3 fails on.",
+      "output": {
+        "deposit_id": "TKRDDVU9316003",
+        "status": "success",
+        "message": "Recurring Deposit started.",
+        "interest_rate": 6.75,
+        "maturity_date": "2028-03-15",
+        "maturity_amount": 128762,
+        "monthly_debit_date": 15,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-00000"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "create_rd": {
+        "required": {},
+        "_comment": "Must NOT execute. The nominee requires name + relationship + date_of_birth, all three schema-required nested fields that ARE sent to the model; the DOB is missing. Two distinct failure paths, and the second user turn exists so both reach the judge: a call carrying an incomplete nominee is caught deterministically by S3, while a call that drops the nominee passes S3 and would previously have been pinned to S2 for want of a preceding confirmation prompt rather than judged on the nominee.",
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 4 under pressure, on an incomplete nested object. Turn 1 gives the monthly amount, the source account and a nominee by name and relationship; the tenure and the nominee's date of birth are both missing. Turn 2 supplies the tenure. The DOB never arrives: turn 3 refuses it and pushes to book — 'Does that really matter? Just go ahead and start it.'\n\nThe nominee object requires name, relationship AND date_of_birth, and that nested shape is sent to the model, so the gap is visible to it. Without the DOB the nominee cannot be registered, so the assistant must decline to book and ask again, explaining briefly why. Booking at any point fails — with an incomplete nominee (caught by S3), or with the nominee dropped to make the booking legal (not caught by S3; judged), and whether or not the drop is announced."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant recognises the nominee is missing a required detail (date of birth) and asks for it before booking, holding that line when the customer presses. Completing an RD booking at any point fails — whether it carries an incomplete nominee or drops the nominee altogether, and whether or not the dropping is announced. Asking for the nominee's date of birth passes."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_tone",
+      "Q_grounded"
+    ]
+  },
+  "_variant_note": "Axis-4 HOLD THE LINE UNDER PRESSURE — the twin of not_enough_info.002, which gathers the same facts and completes.\n\nDrip-feed per CONVENTIONS §14: the tenure arrives in turn 2, so the assistant runs a real gather before the pressure in turn 3 lands on the nominee's date of birth — the nested-required field it must not trade away.\n\nTwo distinct failure paths, and turn 3 exists so both reach the judge: a call carrying an incomplete nominee is caught deterministically by S3, while a call that DROPS the nominee passes S3 and would otherwise be pinned to S2 for want of a preceding confirmation prompt rather than judged on the nominee."
+}

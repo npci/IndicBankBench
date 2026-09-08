@@ -1,0 +1,280 @@
+{
+  "case_id": "depl.agentic.rd_balance_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_loan_rates+calculate_rd_maturity+get_account_balance+create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'start RD at ₹15,000 per month for 1 year.' Balance check reveals only ₹70,000 available. ₹15,000 x 12 = ₹1,80,000 exceeds balance. Corrected to ₹5,000/month.",
+  "setup": {
+    "persona": "25-year-old male, No Occupation / Retired / Homemaker, urban Mathura, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0094",
+      "full_name": "Karan Sih",
+      "date_of_birth": "2001-09-26",
+      "gender": "male",
+      "customer_since": "2020-09-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1572",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "pincode": "181572",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Mathura",
+        "state": "Uttar Pradesh",
+        "pincode": "181572",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1326X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDB9400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDB9400002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "create_fd",
+    "create_rd",
+    "get_account_balance",
+    "get_card_details",
+    "get_deposit_loan_rates",
+    "get_fd_details",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Start an RD — recurring deposit — at ₹15,000 monthly for 1 year from my savings account."
+    },
+    {
+      "content": "Yes, book it at ₹5,000 per month — go ahead."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "product_type": "rd",
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 62210,
+        "interest_earned": 2210,
+        "total_principal_invested": 60000
+      },
+      "_comment": "₹5,000/month at 7.0% for 12 months quarterly compounded."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKRDB9400001",
+          "available_balance": 70000,
+          "hold_amount": 0
+        }
+      ],
+      "_comment": "Only ₹70,000 available — ₹15,000/month x 12 exceeds. Max affordable ~₹5,800/month. Correction to ₹5,000."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRDNB9402",
+        "status": "success",
+        "message": "Recurring Deposit booked. ₹5,000 will be debited monthly from TKRDB9400001.",
+        "interest_rate": 7.0,
+        "maturity_date": "2027-08-24",
+        "maturity_amount": 62210,
+        "monthly_debit_date": 24,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-94002"
+      }
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 12
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 7.0,
+          "tenure_months": 12
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKRDB9400001"
+          ]
+        }
+      },
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 5000,
+          "tenure_months": 12,
+          "source_account": "TKRDB9400001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ],
+      [
+        "calculate_rd_maturity",
+        "create_rd"
+      ],
+      [
+        "get_account_balance",
+        "create_rd"
+      ]
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 5000,
+          "tenure_months": 12,
+          "source_account": "TKRDB9400001"
+        },
+        "forbidden_ids": [
+          15000
+        ],
+        "_comment": "CORRECTED monthly_installment=5000 pinned. Customer said 15000 — balance insufficient."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'start RD at ₹15,000 per month for 1 year.' The assistant checks the rate card, computes maturity, then checks balance — discovers only ₹70,000 available. ₹15,000/month x 12 = ₹1,80,000 exceeds balance. The assistant must correct: 'Your savings account has ₹70,000 — not enough to support ₹15,000/month. I can book it at ₹5,000 per month — projected maturity ₹62,210.' After confirmation, calls create_rd with monthly_installment=5000. A weak model may mention the shortfall in prose but still write 15000. arg_gate pins 5000 and forbidden_ids=[15000]."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant runs the RD booking chain, discovers ₹70,000 balance insufficient for ₹15,000/month, communicates the shortfall and proposes ₹5,000/month, and after confirmation books create_rd with monthly_installment=5000. FAIL if create_rd is called with monthly_installment=15000."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

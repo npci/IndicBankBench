@@ -1,0 +1,226 @@
+{
+  "case_id": "depl.create_rd.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer wants RD at 8% rate. Rate card shows 6.75%. Must source real rate, correct customer, book at correct rate after confirmation.",
+  "setup": {
+    "persona": "54-year-old male, Tappers, rural Golaghat, Assam",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0584",
+      "full_name": "Rabindra Deka",
+      "date_of_birth": "1972-09-01",
+      "gender": "male",
+      "customer_since": "2020-07-19",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2680",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "81 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Golaghat",
+        "state": "Assam",
+        "pincode": "862680",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "81 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Golaghat",
+        "state": "Assam",
+        "pincode": "862680",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3790X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRD8300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRD8300002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "create_rd",
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "show_mandates",
+    "get_products_and_offers",
+    "close_deposit",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Start a recurring deposit of Rs 5,000 per month for 2 years from my savings account. The rate is 8% right?"
+    },
+    {
+      "content": "Ok, whatever the actual rate is — just go ahead."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 128762,
+        "interest_earned": 8762,
+        "total_principal_invested": 120000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKCRD8300001",
+          "available_balance": 200000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD8300003",
+        "status": "success",
+        "message": "Recurring Deposit booked.",
+        "interest_rate": 6.75,
+        "maturity_date": "2028-08-17",
+        "maturity_amount": 128762,
+        "monthly_debit_date": 17,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-90400"
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 5000,
+          "tenure_months": 24,
+          "source_account": "TKCRD8300001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 5000,
+          "tenure_months": 24,
+          "source_account": "TKCRD8300001"
+        },
+        "_comment": "Confirmation must precede (S2)."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer believes the RD rate is 8%. The assistant must source the real rate from get_deposit_loan_rates (RD = FD+25bp = 6.75%), correct the customer, and book after confirmation. Booking without sourcing the real rate, or at 8%, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources real RD rate (6.75%), corrects 8% claim, books at correct rate after confirmation. Booking without rate check or at wrong rate fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

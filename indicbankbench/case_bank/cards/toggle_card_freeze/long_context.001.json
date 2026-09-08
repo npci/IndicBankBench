@@ -1,0 +1,325 @@
+{
+  "case_id": "cards.toggle_card_freeze.long_context.001",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-extraction across two cards with different statuses. History: the debit card was frozen in an earlier tool round (reversible), and a get_card_details round shows the credit card is permanently BLOCKED. The live turn says 'unfreeze my card' — the debit one. The trap is targeting the blocked credit card (which can never be unfrozen) or the wrong state. Gold stays tight: one toggle_card_freeze call pinned to the debit card id with state=unfreeze, after the customer's own confirmation turn.",
+  "setup": {
+    "persona": "21-year-old male, No Occupation / Retired / Homemaker, rural Katihar, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0483",
+      "full_name": "Ekbal Ansar",
+      "date_of_birth": "2005-12-19",
+      "gender": "male",
+      "customer_since": "2023-11-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7155",
+      "registered_email": "e*****@gmail.com",
+      "communication_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Katihar",
+        "state": "Bihar",
+        "pincode": "217155",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Katihar",
+        "state": "Bihar",
+        "pincode": "217155",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3143X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKTFZ8252",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKTFZ8250",
+          "card_type": "debit",
+          "status": "frozen"
+        },
+        {
+          "card_id": "TKCKTFZ8251",
+          "card_type": "credit",
+          "status": "blocked"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I can't find my debit card anywhere — freeze it right away."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "toggle_card_freeze",
+              "arguments": {
+                "card_id": "TKCKTFZ8250",
+                "state": "freeze"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"card_id\":\"TKCKTFZ8250\",\"card_status\":\"frozen\",\"status\":\"success\",\"message\":\"Card frozen.\",\"reference_id\":\"REF-FRZ-82501\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Done — your debit card is now frozen, so no new transactions will go through on it until you unfreeze it."
+      },
+      {
+        "role": "user",
+        "content": "Thank you. And my credit card is still permanently blocked from last month, right?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p2",
+            "type": "function",
+            "function": {
+              "name": "get_card_details",
+              "arguments": {
+                "card_ids": [
+                  "TKCKTFZ8250",
+                  "TKCKTFZ8251"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p2",
+        "content": "{\"cards\":[{\"card_id\":\"TKCKTFZ8250\",\"masked_number\":\"****8250\",\"card_type\":\"debit\",\"network\":\"rupay\",\"status\":\"frozen (reversible)\",\"expiry\":\"01/29\",\"controls\":{\"atm\":{\"domestic\":{\"enabled\":true,\"daily_limit\":25000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":true,\"daily_limit\":40000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"pos\":{\"domestic\":{\"enabled\":true,\"daily_limit\":40000},\"international\":{\"enabled\":false,\"daily_limit\":0}}}},{\"card_id\":\"TKCKTFZ8251\",\"masked_number\":\"****8251\",\"card_type\":\"credit\",\"network\":\"visa\",\"status\":\"blocked (permanent)\",\"credit_limit\":200000,\"available_limit\":187400,\"expiry\":\"05/29\",\"controls\":{\"atm\":{\"domestic\":{\"enabled\":true,\"daily_limit\":0},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":true,\"daily_limit\":50000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"pos\":{\"domestic\":{\"enabled\":true,\"daily_limit\":30000},\"international\":{\"enabled\":false,\"daily_limit\":0}}}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes — the credit card is permanently blocked, while the debit card is frozen and can be unfrozen any time."
+      },
+      {
+        "role": "user",
+        "content": "Good. Wait — I just found the debit card in my gym bag!"
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "create_rd",
+    "close_deposit"
+  ],
+  "user_turns": [
+    {
+      "content": "Unfreeze it then — the debit card, not the credit one. That one stays gone."
+    },
+    {
+      "content": "Yes, unfreeze it."
+    }
+  ],
+  "mock": {
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Gold target: the DEBIT card (frozen, reversible) with state=unfreeze. card_id and card_status are echoed/returned per the outcome. A model that targets the blocked credit card fails the pinned gate.",
+      "output": {
+        "card_status": "active",
+        "status": "success",
+        "message": "Card unfrozen and ready to use.",
+        "reference_id": "REF-FRZ-82502"
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCKTFZ8250",
+          "masked_number": "****8250",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "frozen (reversible)",
+          "expiry": "01/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCKTFZ8251",
+          "masked_number": "****8251",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "blocked (permanent)",
+          "credit_limit": 200000,
+          "available_limit": 187400,
+          "expiry": "05/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "Safety net for models that re-check card status first."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "toggle_card_freeze",
+        "arguments": {
+          "card_id": "TKCKTFZ8250",
+          "state": "unfreeze"
+        }
+      }
+    ],
+    "arg_gate": {
+      "toggle_card_freeze": {
+        "required": {
+          "card_id": "TKCKTFZ8250",
+          "state": "unfreeze"
+        },
+        "_comment": "Pinned: the debit card (frozen, reversible), unfreeze state. The permanently blocked credit card must not be the target."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Permitted: re-checking card status before unfreezing is a sane move."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The history shows the debit card was frozen earlier (reversible) while the credit card is permanently blocked. The customer asks to unfreeze 'the debit card, not the credit one'. The assistant must target the debit card (TKCKTFZ8250) with state=unfreeze, confirm the action first (toggle_card_freeze is a write; the second user turn is the confirmation), then report the unfreeze reference. Attempting to unfreeze the blocked credit card, freezing instead of unfreezing, or acting without confirmation fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "unfreezes the DEBIT card (not the blocked credit card) after the customer's explicit confirmation and reports the result. Targeting the credit card, using state=freeze, or skipping confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

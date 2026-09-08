@@ -1,0 +1,212 @@
+{
+  "case_id": "depl.get_loan_foreclosure_quote.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "FILTER-TRAP: customer asks for foreclosure quote on 'my home loan' but has two loans — home loan (8.6%) and personal loan (10.5%). Personal loan is better candidate. Narrow query hides opportunity.",
+  "setup": {
+    "persona": "36-year-old female, Teaching Associate Professionals, urban Shivpuri, Madhya Pradesh",
+    "current_date": "2026-10-08",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0153",
+      "full_name": "Parveen Syed",
+      "date_of_birth": "1990-08-13",
+      "gender": "female",
+      "customer_since": "2019-08-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5639",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "80 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Shivpuri",
+        "state": "Madhya Pradesh",
+        "pincode": "575639",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "80 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Shivpuri",
+        "state": "Madhya Pradesh",
+        "pincode": "575639",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1570X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKLFQ9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "LN-LFQ9500001",
+          "type": "loan",
+          "label": "Home Loan"
+        },
+        {
+          "product_id": "LN-LFQ9500002",
+          "type": "loan",
+          "label": "Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCLFQ9500003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you give me a foreclosure quote on my home loan? I want to see if I can close it early."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Home loan at 8.6%. Personal loan at 10.5% — higher rate, better candidate.",
+      "records": [
+        {
+          "loan_id": "LN-LFQ9500001",
+          "type": "loan",
+          "interest_rate": 8.6,
+          "emi_amount": 22500,
+          "tenure_remaining": 72,
+          "principal": 2500000,
+          "outstanding": 1500000,
+          "next_due_date": "2026-11-05",
+          "emi_day_of_month": 5,
+          "status": "active",
+          "emi_account_id": "TK-ACCT-01"
+        },
+        {
+          "loan_id": "LN-LFQ9500002",
+          "type": "loan",
+          "interest_rate": 10.5,
+          "emi_amount": 11850,
+          "tenure_remaining": 48,
+          "principal": 700000,
+          "outstanding": 550000,
+          "next_due_date": "2026-11-01",
+          "emi_day_of_month": 5,
+          "status": "active",
+          "emi_account_id": "TK-ACCT-01"
+        }
+      ]
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "LN-LFQ9500001",
+          "outstanding_principal": 1500000,
+          "accrued_interest": 3536,
+          "foreclosure_charges": 30000,
+          "total_payoff": 1533536
+        },
+        {
+          "loan_id": "LN-LFQ9500002",
+          "outstanding_principal": 550000,
+          "accrued_interest": 1100,
+          "foreclosure_charges": 11000,
+          "total_payoff": 562100
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "LN-LFQ9500001",
+            "LN-LFQ9500002"
+          ]
+        }
+      },
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "LN-LFQ9500001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "LN-LFQ9500001",
+            "LN-LFQ9500002"
+          ]
+        },
+        "_comment": "Must query both loans. Home-loan-only hides personal loan at 10.5%."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {
+          "loan_ids": [
+            "LN-LFQ9500001"
+          ]
+        },
+        "_comment": "Quote for home loan as requested."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer asks only about home loan but has personal loan at 10.5%. Must query both loans and flag personal loan as better candidate for early closure. Narrow query only to home loan fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both loans and flags personal loan at 10.5% as better to close. Narrow query to home loan only fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

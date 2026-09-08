@@ -1,0 +1,164 @@
+{
+  "case_id": "calc.calculate_emi.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'personal loan EMI on Rs 5,00,000 for 5 years'. Personal loan rate is 10.5%. But a HOME LOAN at 8.6% for the same amount would save Rs 550/month — a far better option. get_deposit_loan_rates filtered to product_type=personal_loan returns only the 10.5% rate and hides the 8.6% home loan option. Broad query (or proactive suggestion of alternatives) reveals the cheaper option.",
+  "setup": {
+    "persona": "56-year-old female, Traditional Medicine Practitioners, rural Jalgaon, Maharashtra",
+    "current_date": "2026-08-10",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0109",
+      "full_name": "Durga Dhanji",
+      "date_of_birth": "1970-10-21",
+      "gender": "female",
+      "customer_since": "2021-06-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6857",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "58 College Road",
+        "line2": "Model Town",
+        "city": "Jalgaon",
+        "state": "Maharashtra",
+        "pincode": "956857",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "58 College Road",
+        "line2": "Model Town",
+        "city": "Jalgaon",
+        "state": "Maharashtra",
+        "pincode": "956857",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4127X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9464001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9464002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a Rs 5,00,000 personal loan for 5 years. What will my monthly EMI be?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for personal loan rate. get_deposit_loan_rates returns rates for ALL product_types. A product_type=personal_loan filter returns only the 10.5% rate slab. But the HOME LOAN rate is 8.6% — significantly cheaper. Broad query reveals the home loan as an alternative. EMI at 10.5% for 5yr/500k: 500000*0.00875/(1-(1.00875)^-60) = Rs 10,736. Home loan at 8.6%: 500000*0.0071667/(1-(1.0071667)^-60) = Rs 10,262. Saving Rs 474/month.",
+      "records": [
+        {
+          "slab": "personal loan all amounts",
+          "rate": 10.5
+        },
+        {
+          "slab": "home loan all amounts",
+          "rate": 8.6
+        }
+      ]
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 10736,
+        "total_interest": 144160,
+        "total_payment": 644160,
+        "schedule": []
+      },
+      "_comment": "EMI computed: i=10.5/1200=0.00875, n=60. EMI = 500000*0.00875/(1-(1.00875)^-60) = 500000*0.00875/0.40748 = 10736"
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 500000,
+          "rate": 10.5,
+          "tenure_months": 60
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "personal_loan"
+        },
+        "_comment": "Must query personal loan rate. The filter trap is on the REPORTING side: a model that only reports personal loan EMI at 10.5% misses the home loan alternative at 8.6%. Ideally the assistant queries both or proactively mentions the cheaper home loan option."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 500000,
+          "rate": 10.5,
+          "tenure_months": 60
+        },
+        "_comment": "Must compute EMI. The computed EMI is ~Rs 10,736/month. A thorough response would also note that a home loan at 8.6% would be ~Rs 10,262/month — a saving of ~Rs 474/month."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for a personal loan EMI on Rs 5,00,000 for 5 years. The rate is 10.5%, giving an EMI of approximately Rs 10,736/month — total repayment ~Rs 6,44,160. The assistant should calculate this AND proactively mention that a home loan at 8.6% would give ~Rs 10,262/month — Rs 474/month less. Reporting only the personal loan EMI without surfacing the cheaper home loan alternative fails the proactive recommendation test."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes personal loan EMI correctly (~Rs 10,736) AND proactively surfaces the home loan alternative at 8.6% as a materially cheaper option. Reporting only the personal loan without mentioning home loan fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

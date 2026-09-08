@@ -1,0 +1,254 @@
+{
+  "case_id": "acct.agentic.conditional_stop_cheque.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history+stop_cheque_payment",
+  "target_behavior": "answer",
+  "_axis_note": "GENERAL EVAL — agentic multi-tool task with a genuine CONDITIONAL branch and ordering. The query 'check if cheque 100234 has been paid; if not, stop it' requires: get_transaction_history FIRST (to determine whether the cheque has already cleared), THEN — only because it has NOT cleared — a confirmed stop_cheque_payment. In this case the transaction history shows NO cleared cheque 100234, so the correct branch is to proceed (with confirmation) to stop it. Exercises A4 (the check must precede the act), S2 (confirm before the write), and conditional reasoning (act because the precondition holds). Turn 2 supplies the stop reason in the customer's own words. `reason` is optional (`required: [account_id, cheque_numbers]`) but asking 'which reason?' is reasonable on a write — and, under the reactive-turn limitation (ARCHITECTURE.md Part 6), an unanticipated question strands the scripted turn so the write never happens and A1 fails. The reason is deliberately NOT placed in turn 1: telling the customer's story as \"I lost it\" up front invites a model to stop the cheque immediately, which would break the check-before-act ordering this case exists to measure. The wording restates enough context to read naturally whether or not the model asked, per the gather-then-complete guidance. `reason` stays unpinned in arg_gate — the gate pins only the two schema-required fields.",
+  "setup": {
+    "persona": "43-year-old female, Sweepers and Related Labourers, rural Bid, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0451",
+      "full_name": "Mrinalini Pawar",
+      "date_of_birth": "1983-11-26",
+      "gender": "female",
+      "customer_since": "2022-12-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7062",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Bid",
+        "state": "Maharashtra",
+        "pincode": "927062",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Bid",
+        "state": "Maharashtra",
+        "pincode": "927062",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3034X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKNCL1731001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKNCL1731002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCNCL1731003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "create_fd",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you check whether cheque 100234 from my salary account has been paid out yet? If it hasn't cleared, please stop it."
+    },
+    {
+      "content": "Yes, please go ahead and stop it — I lost the cheque somewhere between the office and home, so that's the reason."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "NO cheque-channel debit and nothing referencing cheque 100234 — so the cheque has NOT cleared. If the model filters channel='cheque' the executor returns [] (none match), an equally clear 'not cleared' signal. Either way the precondition to stop holds. All entries `status: success` — settled historical transactions. `status` is promised in get_transaction_history's description but is newer than every fixture, and S3 cannot enforce it (transactions.items has no `required` list), so it is mandatory by convention and test only (CONVENTIONS.md §13).",
+      "records": [
+        {
+          "date": "2026-03-14T19:20:00",
+          "amount": 1240,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI884210",
+          "transaction_note": "SWIGGY ORDER 8842",
+          "status": "success",
+          "running_balance": 88612
+        },
+        {
+          "date": "2026-03-12T10:05:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT770021",
+          "transaction_note": "SALARY MAR26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 89852
+        },
+        {
+          "date": "2026-03-11T08:30:00",
+          "amount": 2499,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI773310",
+          "transaction_note": "AIRTEL POSTPAID BILL",
+          "status": "success",
+          "running_balance": 4852
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "100234",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment instruction placed on 1 cheque.",
+        "reference_id": "REF-SCP-71200"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKNCL1731001",
+          "channel": "cheque"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKNCL1731001",
+          "cheque_numbers": [
+            "100234"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "_dependencies_comment": "A4: the assistant must CHECK the transaction history (has the cheque cleared?) before deciding to stop it. The check must precede the write.",
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKNCL1731001"
+        },
+        "forbidden_ids": [
+          "TKNCL1731002"
+        ],
+        "optional_ok": {
+          "channel": {
+            "allowed": [
+              "cheque",
+              "all",
+              null
+            ]
+          }
+        },
+        "_comment": "Check the salary account for a cleared cheque. Filtering to channel='cheque' is the sharpest way; querying all is also acceptable."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKNCL1731001",
+          "cheque_numbers": [
+            "100234"
+          ]
+        },
+        "forbidden_ids": [
+          "TKNCL1731002"
+        ],
+        "_comment": "Since the cheque has NOT cleared, proceed (after confirmation) to stop it. Salary account, cheque 100234."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks the assistant to first check whether cheque 100234 (on the salary account) has already been paid, and to stop it only if it hasn't cleared. The assistant must call get_transaction_history on TKNCL1731001 to look for a cleared cheque 100234 — the history shows no such cheque debit, so it has NOT cleared. Having established that, the assistant should tell the customer the cheque doesn't appear to have been paid yet, confirm the stop-payment (a write action), and on affirmation call stop_cheque_payment(account_id=TKNCL1731001, cheque_numbers=['100234']) and report it stopped. The check MUST come before the stop (the decision to stop depends on it). It must not stop the cheque before checking, must not act on the wrong account, and must confirm before the write. The customer names the reason (lost) when confirming; passing reason='lost' to stop_cheque_payment is natural but NOT required — the field is optional in the schema and a correct minimal call that omits it is equally right."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "establishes from the transaction history that cheque 100234 has NOT cleared, states this, then (after confirmation) stops it and reports success. FAIL if it stops the cheque without checking first, claims it HAD cleared (contradicting the data), or acts on the wrong account."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

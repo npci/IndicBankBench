@@ -1,0 +1,151 @@
+{
+  "case_id": "acct.get_transaction_history.bad_response.002",
+  "axis": "2_bad_tool_response",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 SEMANTIC trap for get_transaction_history (the axis-2 null case already covers per-row amount=null; this covers a status that reverses the meaning of a normal-looking row). One transaction: amount 18000, type debit, a rent-payment note — everything reads 'a payment that went out' — but status: 'reversed'. A model that reads amount+type and says 'yes, ₹18,000 was debited' has answered with a payment that did not actually stick. The correct answer reconciles status against amount: the debit was reversed, so the money came out and went back — it did not go through. `reversed` is a declared status enum; nothing is null and nothing says 'failed', so this is a meaning-trap, not a null-trap. The single record keeps the running_balance chain valid (the reversal returns the balance to its pre-debit level).",
+  "setup": {
+    "persona": "22-year-old female, No Occupation / Retired / Homemaker, urban Sagar, Madhya Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0682",
+      "full_name": "Tulsi Chaudhary",
+      "date_of_birth": "2004-03-04",
+      "gender": "female",
+      "customer_since": "2022-12-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6566",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Sagar",
+        "state": "Madhya Pradesh",
+        "pincode": "496566",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Sagar",
+        "state": "Madhya Pradesh",
+        "pincode": "496566",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8680X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRTD9008001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRTD9008002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_loan_details",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Did my March rent payment of ₹18,000 go through? I need to know whether my landlord got it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "THE TRAP: status is 'reversed' — the debit went out and came back. amount/type/note all read 'a completed rent payment', so a model that skims reports ₹18,000 as debited. running_balance 68000 is the post-reversal balance (the reversal returned it to its pre-debit level), so the chain stays valid.",
+      "records": [
+        {
+          "date": "2026-03-05T09:15:00",
+          "amount": 18000,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "NEFT551801",
+          "transaction_note": "NEFT TRANSFER - RENT PAYMENT MARCH",
+          "status": "reversed",
+          "running_balance": 68000
+        }
+      ]
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKRTD9008001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKRTD9008001"
+        }
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Axis 2 — a transaction whose status reverses its own meaning. The customer asks whether their ₹18,000 March rent payment went through. The matching transaction is a debit of ₹18,000 with a rent note, but its status is 'reversed'. The assistant must reconcile the status against the amount: the debit was REVERSED, so the money came out and then went back — the rent did not actually go through, and the landlord did not receive it.\n\nReporting 'yes, ₹18,000 was debited on March 5th' — treating a reversed payment as completed because the amount and note look normal — is the failure. The correct answer says the payment did not complete, it was reversed, and offers the natural next step (retry the payment, or confirm with the landlord). It must not invent a reason for the reversal, and must not fabricate a second, successful transaction to smooth over the gap."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports that the ₹18,000 March rent payment was REVERSED — i.e. it did not go through — reconciling the 'reversed' status against the debit amount rather than reporting it as a completed ₹18,000 debit. Reporting 'yes, ₹18,000 went through', or implying the landlord received the money, fails. Noting the payment did not complete (and ideally offering to retry / confirming the amount) is correct; inventing a reason for the reversal or a second successful transaction fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

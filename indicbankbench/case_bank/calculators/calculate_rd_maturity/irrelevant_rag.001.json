@@ -1,0 +1,296 @@
+{
+  "case_id": "calc.calculate_rd_maturity.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 RAG noise: prior context is premature FD closure penalty rules. The live question is an RD maturity projection. The penalty rules are irrelevant; the computation uses the RD rate card and the calculator.",
+  "setup": {
+    "persona": "40-year-old male, Supervisors and Foremen and Related Workers in Precision Work in Metal and Related Materials, rural Gumla, Jharkhand",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0772",
+      "full_name": "Asgar Ansari",
+      "date_of_birth": "1986-07-07",
+      "gender": "male",
+      "customer_since": "2018-08-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2974",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Gumla",
+        "state": "Jharkhand",
+        "pincode": "422974",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Gumla",
+        "state": "Jharkhand",
+        "pincode": "422974",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0070X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAOPL1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOPL3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "rag_1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "premature FD closure penalty"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "rag_1",
+        "content": "{\"results\": [{\"chunk\": \"Premature FD closure attracts a penalty of 1% of the principal, and interest is recalculated at the slab covering the period the deposit actually ran.\", \"source\": \"Fixed Deposit Terms\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Closing an FD early charges 1% penalty and interest is recalculated at the step-down slab."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "raise_request",
+    "request_duplicate_statement",
+    "create_rd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "₹6,000 a month in an RD for 2 years — what will I get at maturity?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "6000 x 24 @ 6.75 quarterly = 154514. No premature closure anywhere in this projection.",
+      "output": {
+        "maturity_amount": 154514,
+        "interest_earned": 10514,
+        "total_principal_invested": 144000
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 6000,
+          "rate": 6.75,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "RD 2-year rate = 6.75."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 6000,
+          "rate": 6.75,
+          "tenure_months": 24
+        },
+        "_comment": "Maturity 154514 — no penalty applies, the RAG thread is not a factor."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior thread is premature FD closure penalties. The live question is an RD maturity projection: ₹6,000 x 24 months at 6.75% matures to ₹1,54,514. The assistant must compute it straight from the rate card and calculator — the penalty discussion is irrelevant, and subtracting a 'closure penalty' from a maturity projection fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes the RD maturity at ₹1,54,514 from the sourced 6.75% rate, with no penalty applied. Applying closure-penalty logic from the RAG context to the projection fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

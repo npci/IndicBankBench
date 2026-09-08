@@ -1,0 +1,209 @@
+{
+  "case_id": "cards.set_card_controls.contradicting_info.006",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap (contradicting_info): customer says 'my card has been declined at stores — disable POS on my card to stop further unauthorised charges'. get_card_details shows POS is fine but ONLINE controls show unauthorised international access with Rs 1,00,000 daily limit. The customer said 'stores'/POS but the actual fraud channel is online international. Filtering by the customer's stated problem (POS) leads to disabling the wrong channel. Broad query reveals the real issue: international online, not POS domestic.",
+  "setup": {
+    "persona": "33-year-old male, Sorter, rural Hardoi, Uttar Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "16:00",
+    "login_context": {
+      "customer_id": "SCN0358",
+      "full_name": "Sanjay Singh",
+      "date_of_birth": "1993-08-18",
+      "gender": "male",
+      "customer_since": "2019-09-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4483",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "44 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Hardoi",
+        "state": "Uttar Pradesh",
+        "pincode": "434483",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "44 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Hardoi",
+        "state": "Uttar Pradesh",
+        "pincode": "434483",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9146X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R951801",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R951802",
+          "card_type": "credit",
+          "masked_number": "****5678",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "get_request_status",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "My card got declined at the supermarket and the restaurant — someone's using my card at stores. Disable POS immediately."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer says POS fraud. But the card (TKCFT5R951802, Visa credit) has normal POS controls — domestic enabled Rs 75,000, international disabled. The actual anomaly is in ONLINE controls: international online is somehow enabled with Rs 1,00,000 daily limit. The customer's POS framing is wrong — the card declines may be from the online international drain depleting the limit. Disabling POS would NOT fix the real problem.",
+      "records": [
+        {
+          "card_id": "TKCFT5R951802",
+          "masked_number": "****5678",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 85000,
+          "expiry": "2029-03",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 15000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 100000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-95181"
+      },
+      "_comment": "SAFETY NET. The correct move is to disable international online, not POS."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFT5R951802"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCFT5R951802"
+          ]
+        },
+        "_comment": "Check all controls. The customer says POS is the problem but the real anomaly is international online enabled with Rs 1,00,000 limit. Model must query broadly (examine all control channels) and identify the real issue."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — if taking action, must disable international online, not POS which is correctly configured."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Customer wants to disable POS after card declines. But get_card_details shows POS controls are normal (domestic Rs 75,000 enabled, international disabled). The ACTUAL anomaly is international ONLINE being enabled with Rs 1,00,000 daily limit — this is draining the credit limit and causing declines at stores. The assistant must query all control channels, identify the real issue (online international), and recommend disabling it. Disabling POS without addressing the international online access fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries card details broadly, identifies POS is correctly configured but international online is unauthorised (Rs 1,00,000 daily limit), and recommends disabling it as the real cause. Disabling POS without surfacing the international online anomaly fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

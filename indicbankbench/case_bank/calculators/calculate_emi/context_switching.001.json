@@ -1,0 +1,245 @@
+{
+  "case_id": "calc.calculate_emi.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 in the domain's own idiom. The customer starts a loan calculation, breaks off mid-thread for an unrelated deposit question, then returns to the loan. Calculators is where a context switch does the most damage, because both sub-tasks pull a rate from the same tool and the rates differ: 10.5% for the personal loan, 6.5% for the 2-year FD. Bleeding one into the other yields a number that is wrong but entirely plausible, and there is no invariant that can see it — S3 passes, A1-A4 pass, and only the arithmetic gives it away. Every figure here is derived from CONVENTIONS.md §2-3 and recomputed: EMI ₹26,002 on ₹8,00,000 at 10.5% over 36 months, and ₹2,27,528 on a ₹2,00,000 2-year FD at 6.5% quarterly. Calculators had no axis-6 case at all.",
+  "setup": {
+    "persona": "39-year-old female, No Occupation / Retired / Homemaker, urban Belgaum, Karnataka",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0155",
+      "full_name": "Kamalavva Devi",
+      "date_of_birth": "1987-11-21",
+      "gender": "female",
+      "customer_since": "2022-06-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4586",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "107 Mill Road",
+        "line2": "Sector 17",
+        "city": "Belgaum",
+        "state": "Karnataka",
+        "pincode": "694586",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "107 Mill Road",
+        "line2": "Sector 17",
+        "city": "Belgaum",
+        "state": "Karnataka",
+        "pincode": "694586",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0354X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKNZK2494001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCNZK2494002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_duplicate_statement",
+    "close_deposit"
+  ],
+  "user_turns": [
+    {
+      "content": "What would the EMI be on a ₹8,00,000 personal loan over 3 years?"
+    },
+    {
+      "content": "Hold on — before that, my mother wants to put ₹2,00,000 into a 2-year FD. What would that be worth at maturity?"
+    },
+    {
+      "content": "Right, I'll pass that on. So coming back to the loan — what was the EMI again, and what do I pay in interest over the three years?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Both slabs in one card, with product-prefixed labels — the same design agentic/compare_fd_rd.001 uses when one conversation needs two products. It has to be outcome_fixed rather than record_set_filtered: the rates items declare slab / rate / senior_citizen_rate and nothing else, so carrying a product_type field inside each row to drive filtering would emit a field the output_schema does not declare. Both rates being visible at once makes the switch HARDER, not easier, which suits the axis.",
+      "output": {
+        "rates": [
+          {
+            "slab": "personal loan",
+            "rate": 10.5
+          },
+          {
+            "slab": "fd 1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "₹8,00,000 at 10.5% over 36 months. Recomputed: EMI 26,002, total interest 136,072.",
+      "output": {
+        "emi": 26002,
+        "total_interest": 136072,
+        "total_payment": 936072,
+        "schedule": []
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹2,00,000 at 6.5% for 24 months, quarterly compounding per §2 = 227,528.",
+      "output": {
+        "maturity_amount": 227528,
+        "interest_earned": 27528,
+        "total_principal_invested": 200000
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_emi"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Called twice with different product_types, so a single pinned value would be wrong for one of them; the rate each calculator receives is where the switch is actually graded."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 36
+        },
+        "_comment": "rate is pinned at 10.5 precisely because 6.5 is the bleed this axis produces — the FD rate arriving in the loan calculation. Deterministic, so the case does not lean on the judge for its central check."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        },
+        "_comment": "Mirror of the above: 10.5 here would be the bleed in the other direction."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for a personal loan EMI, breaks off to ask about her mother's 2-year FD, then returns to the loan. The assistant must handle both cleanly and keep the two rates apart. For the loan it sources the personal loan rate (10.5%) and reports an EMI of ₹26,002 on ₹8,00,000 over 36 months, with ₹1,36,072 of total interest. For the deposit it sources the FD rate for a 2-year tenure (6.5%) and reports a maturity value of ₹2,27,528, ₹27,528 of interest. On the return to the loan it must restate the EMI consistently — ₹26,002, the same figure as before — rather than recomputing it against the FD rate it just used. Applying 6.5% to the loan, or 10.5% to the deposit, is the failure this axis targets: both produce plausible numbers that no invariant can catch. Losing the loan thread entirely, or asking the customer to repeat what she already said, also fail."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant answers both sub-tasks with the right rate on each — loan EMI ₹26,002 (₹8,00,000, 10.5%, 36 months, ₹1,36,072 total interest) and FD maturity ₹2,27,528 (₹2,00,000, 6.5%, 24 months) — and on returning to the loan restates ₹26,002 consistently. Any cross-contamination of the two rates, an EMI or maturity figure that does not match these, dropping the loan thread, or asking the customer to repeat details already given, all fail."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

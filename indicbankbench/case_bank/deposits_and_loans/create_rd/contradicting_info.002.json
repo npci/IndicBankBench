@@ -1,0 +1,325 @@
+{
+  "case_id": "depl.create_rd.contradicting_info.002",
+  "axis": "5_contradicting_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 rate-belief correction on a WRITE: the customer read '6.5%' online for a 3-year RD. The 3-year RD slab rate is 7.0% (RD = FD + 25bp on the 3y-5y slab). The confirmation and booking must carry the corrected 7.0% — the 6.5% figure is the 1-3 year FD rate. Careless failure mode: confirming '6.5%' and booking on the customer's figure.",
+  "setup": {
+    "persona": "30-year-old male, Freight Handlers, urban Mumbai Suburban, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0456",
+      "full_name": "Salar Khan",
+      "date_of_birth": "1996-11-09",
+      "gender": "male",
+      "customer_since": "2022-04-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7866",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "107 Mill Road",
+        "line2": "Sector 17",
+        "city": "Mumbai Suburban",
+        "state": "Maharashtra",
+        "pincode": "687866",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "107 Mill Road",
+        "line2": "Sector 17",
+        "city": "Mumbai Suburban",
+        "state": "Maharashtra",
+        "pincode": "687866",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3568X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDCRD1020001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCDCRD1020002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Start an RD — Rs 5,000 a month for 3 years from my savings account. I read online the rate is 6.5%."
+    },
+    {
+      "content": "Ok, go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "Booked at the corrected 7.0%.",
+      "output": {
+        "deposit_id": "TKRDDCR1020003",
+        "status": "success",
+        "message": "Recurring Deposit booked.",
+        "interest_rate": 7.0,
+        "maturity_date": "2029-08-17",
+        "maturity_amount": 200686,
+        "monthly_debit_date": "1",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-10210"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "amount_credited": 0,
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "instruction": "no_renewal",
+        "maturity_date": "2099-01-01",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "THE CONTRADICTION: 3-year RD -> 3y-5y slab at 7.0% (FD 6.75 + 25bp), not the 6.5% the customer read.",
+      "output": {
+        "rates": [
+          {
+            "slab": "rd 3 years to < 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "5,000/mo @ 7.0% / 36mo -> 200,686.",
+      "output": {
+        "maturity_amount": 200686,
+        "interest_earned": 20686,
+        "total_principal_invested": 180000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKDCRD1020001",
+          "available_balance": 850000,
+          "hold_amount": 0
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 5000,
+          "tenure_months": 36,
+          "source_account": "TKDCRD1020001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      "create_rd": {
+        "required": {
+          "monthly_installment": 5000,
+          "tenure_months": 36,
+          "source_account": "TKDCRD1020001"
+        }
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for a Rs 5,000/month 3-year RD and believes the rate is 6.5%. The rate card shows the 3-year RD slab at 7.0% (6.5% is the 1-3 year FD rate — wrong product, wrong slab). The assistant must surface the correction and, after confirmation, book at 7.0% with maturity Rs 2,00,686 on 2029-08-17. Quoting 6.5% in the confirmation, or booking without confirmation, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "corrects the rate belief (the 3-year RD rate is 7.0%, not 6.5%), then books the RD at 7.0% after confirmation, reporting the maturity figure. Confirming 6.5% or skipping confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

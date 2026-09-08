@@ -1,0 +1,237 @@
+{
+  "case_id": "acct.stop_cheque_payment.wrong_info.006",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'stop cheque 665500 on my salary account'. Lookup (get_account_details) reveals the salary account doesn't exist anymore — account type was recently changed to NRE. Correction: account renamed, use correct account_id. arg_gate pins corrected account.",
+  "setup": {
+    "persona": "24-year-old male, No Occupation / Retired / Homemaker, rural Alwar, Rajasthan",
+    "current_date": "2026-10-20",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0317",
+      "full_name": "Madan Kumar",
+      "date_of_birth": "2002-02-26",
+      "gender": "male",
+      "customer_since": "2020-10-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1469",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "110 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Alwar",
+        "state": "Rajasthan",
+        "pincode": "661469",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "110 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Alwar",
+        "state": "Rajasthan",
+        "pincode": "661469",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6550X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98010T1",
+          "account_type": "nre",
+          "status": "active"
+        },
+        {
+          "account_id": "TKWAC98010T2",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC98010T3",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_details",
+    "get_transaction_history",
+    "stop_cheque_payment",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Please stop cheque 665500 on my salary account — I issued it last week but want to cancel."
+    },
+    {
+      "content": "Ok, just stop it on the first account then — whatever it's called now."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRITE-AFTER-CORRECTION: what was a salary account is now an NRE account (status change). Customer calls it 'salary' but that type doesn't match. Correct to the NRE account.",
+      "records": [
+        {
+          "account_id": "TKWAC98010T1",
+          "account_type": "nre",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Madan Kumar",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-16"
+        },
+        {
+          "account_id": "TKWAC98010T2",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Madan Kumar",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2022-05-01"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-10-15T11:00:00",
+          "amount": 35000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-665500",
+          "transaction_note": "CHEQUE 665500 - PAYMENT",
+          "status": "pending",
+          "running_balance": 215000
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "665500",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment applied.",
+        "reference_id": "REF-SCP-WAC98010"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKWAC98010T1",
+            "TKWAC98010T2"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKWAC98010T1"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKWAC98010T1",
+          "cheque_numbers": [
+            "665500"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKWAC98010T1",
+            "TKWAC98010T2"
+          ]
+        },
+        "_comment": "Must check account types. Customer says salary but no salary account exists — it's now NRE."
+      },
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKWAC98010T1"
+        },
+        "_comment": "Verify cheque exists on the corrected account."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKWAC98010T1",
+          "cheque_numbers": [
+            "665500"
+          ]
+        },
+        "_comment": "CORRECTED: stop on NRE account (formerly salary), not a non-existent salary account."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_account_details",
+        "get_transaction_history"
+      ],
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "expected_resolution": "Customer says 'salary account' but no salary account exists — the former salary account was reclassified as NRE. The assistant must check get_account_details, discover the mismatch, inform the customer, verify the cheque is on the correct account, and stop it after confirmation. Stopping on a non-existent salary account fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks account types, corrects salary to NRE, confirms, stops cheque on correct account. Stopping on non-existent salary account fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

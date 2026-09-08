@@ -1,0 +1,185 @@
+{
+  "case_id": "csc.get_products_and_offers.long_context.001",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Prior conversation showed a valid credit card offer with valid_till=2026-07-31. Now it's August — offer expired. Must not pitch.",
+  "setup": {
+    "persona": "59-year-old female, Medical Assistants, rural Dindori, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0542",
+      "full_name": "Bhagwati Bai",
+      "date_of_birth": "1967-02-05",
+      "gender": "female",
+      "customer_since": "2013-10-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1537",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Dindori",
+        "state": "Madhya Pradesh",
+        "pincode": "911537",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Dindori",
+        "state": "Madhya Pradesh",
+        "pincode": "911537",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6977X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCPO9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCPO9600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_products_and_offers",
+              "arguments": {
+                "type": "card"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"items\":[{\"id\":\"CC-ZERO-001\",\"title\":\"Zero Annual Fee Card\",\"type\":\"offer\",\"description\":\"Limited time: zero annual fee for first year.\",\"valid_till\":\"2026-07-31\"},{\"id\":\"CC-PLT-001\",\"title\":\"TK Platinum Credit Card\",\"type\":\"card\",\"description\":\"Annual fee Rs 999.\",\"valid_till\":\"\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "We have the Zero Annual Fee Card — no fee for the first year. Valid till end of July."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "calculate_rd_maturity",
+    "create_fd"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm ready to apply. Show me that zero annual fee card again."
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "Zero fee card offer expired (valid_till=2026-07-31). Only PK Platinum remains.",
+      "records": [
+        {
+          "id": "CC-PLT-001",
+          "title": "TK Platinum Credit Card",
+          "type": "card",
+          "description": "Annual fee Rs 999, complimentary lounge access.",
+          "valid_till": ""
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "card"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Must check current products. Zero fee card expired."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior conversation showed Zero Annual Fee Card (valid till July 31). Current date is August 17 — the offer expired. The assistant must call get_products_and_offers, which no longer returns the zero-fee card. It must report it's expired and offer the Platinum card instead. Pitching the expired zero-fee card fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks current products, reports zero-fee card expired, offers Platinum alternative. Pitching expired offer fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

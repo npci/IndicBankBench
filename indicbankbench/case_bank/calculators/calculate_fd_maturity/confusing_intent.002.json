@@ -1,0 +1,292 @@
+{
+  "case_id": "calc.calculate_fd_maturity.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 correction plus compound: '2 years... actually 3' AND a second amount for the 3 years. Final answer must cover 200000 x 36 AND 250000 x 36 at the 3-5y slab; the abandoned 24-month variant must not survive.",
+  "setup": {
+    "persona": "25-year-old male, Demographer, urban North West, Delhi",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0666",
+      "full_name": "Swdbuir Sharma",
+      "date_of_birth": "2001-07-07",
+      "gender": "male",
+      "customer_since": "2019-12-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1294",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "811294",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "811294",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4318X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAJWL1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCJWL3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "raise_request",
+    "request_duplicate_statement",
+    "create_rd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "If I invest ₹2,00,000 in an FD for 2 years... actually make it 3 years. And also show me ₹2,50,000 for the 3 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "flat mock: both 36-month projections computed at 6.75: 200000 -> 244479; 250000 -> 305598.",
+      "output": {
+        "maturity_amount": 244479,
+        "interest_earned": 44479,
+        "total_principal_invested": 200000
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 250000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "3-5y slab = 6.75 after the correction."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional_ok": {
+          "principal_amount": {
+            "allowed": [
+              200000,
+              250000
+            ]
+          },
+          "tenure_months": {
+            "allowed": [
+              36
+            ]
+          },
+          "rate": {
+            "allowed": [
+              6.75
+            ]
+          }
+        },
+        "_comment": "Both requested projections; the abandoned 24-month tenure fails the allowed list."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer corrects the tenure to 3 years and adds a second amount. The assistant must compute BOTH 36-month projections at the 3-5y slab of 6.75%: ₹2,00,000 -> ₹2,44,479 and ₹2,50,000 -> ₹3,05,598. Computing the abandoned 24-month tenure, publishing only one of the two amounts, or using the wrong slab fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes both corrected projections (200000 x 36 -> 244479; 250000 x 36 -> 305598) at 6.75%. A 24-month result, missing one amount, or a wrong slab fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

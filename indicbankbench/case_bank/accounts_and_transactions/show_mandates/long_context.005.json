@@ -1,0 +1,220 @@
+{
+  "case_id": "acct.show_mandates.long_context.005",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale mandate (paused by bank overnight). Prior round: show_mandates returned a Netflix eNACH mandate with status 'active' and next_debit_date 2026-08-21. Since then, the bank paused the mandate because the second-consecutive debit attempt failed due to insufficient balance. The live status is now 'paused'. The customer now asks 'is the Netflix mandate still active? I need to know before the debit tomorrow.' A model that trusts the stale prior and says 'yes, active' without re-fetching fails A1. A model that re-fetches show_mandates discovers status 'paused' → reports correctly → PASS.",
+  "setup": {
+    "persona": "30-year-old male, Building Construction Labourers, rural Ghazipur, Uttar Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0672",
+      "full_name": "Atultra Singh",
+      "date_of_birth": "1996-01-09",
+      "gender": "male",
+      "customer_since": "2014-10-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2016",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "97 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "192016",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "97 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "192016",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3849X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD58990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD58990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Show me all my active mandates and subscriptions."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "m1",
+            "type": "function",
+            "function": {
+              "name": "show_mandates",
+              "arguments": {
+                "account_id": "TKOD58990001",
+                "status": "active"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "m1",
+        "content": "{\"mandates\":[{\"mandate_id\":\"MND-58990001\",\"type\":\"enach\",\"payee\":\"Netflix India\",\"amount\":649,\"frequency\":\"monthly\",\"status\":\"active\",\"next_debit_date\":\"2026-08-21\",\"account_id\":\"TKOD58990001\"},{\"mandate_id\":\"MND-58990002\",\"type\":\"si\",\"payee\":\"ICICI Prudential\",\"amount\":5000,\"frequency\":\"monthly\",\"status\":\"active\",\"next_debit_date\":\"2026-08-25\",\"account_id\":\"TKOD58990001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "You have two active mandates on your savings account: a Netflix India eNACH of Rs 649 due 21 August, and an ICICI Prudential standing instruction of Rs 5,000 due 25 August."
+      },
+      {
+        "role": "user",
+        "content": "Got it. I'll make sure funds are there by the 21st."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Is my Netflix mandate still going through tomorrow? I topped up the account last night."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "The Netflix eNACH mandate was auto-paused by the bank overnight after the second-consecutive debit attempt failed due to insufficient balance. The live status is 'paused', not 'active'. The ICICI Prudential mandate is still active.",
+      "records": [
+        {
+          "mandate_id": "MND-58990001",
+          "type": "enach",
+          "payee": "Netflix India",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "paused",
+          "next_debit_date": null,
+          "account_id": "TKOD58990001"
+        },
+        {
+          "mandate_id": "MND-58990002",
+          "type": "si",
+          "payee": "ICICI Prudential",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-08-25",
+          "account_id": "TKOD58990001"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKOD58990001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKOD58990001"
+        },
+        "_comment": "THE GATE. The model MUST re-fetch mandates live. Prior shows Netflix as 'active' but the bank paused it overnight after failed debit attempts. Reporting 'yes, it's active' from stale memory fails A1."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed the Netflix eNACH mandate as active with a debit due 21 August. The customer topped up the account and now asks if it's still going through — expecting it to be active. But overnight the bank's system paused the mandate after the second-consecutive debit attempt failed (the account had insufficient funds on two attempts). The live status is now 'paused'.\n\nThe correct move is to re-fetch show_mandates live, discover the Netflix mandate is now 'paused', and report this to the customer. Saying 'yes, it's still active, it will debit tomorrow' without a live call is the stale-context failure. The assistant should advise the customer that the mandate can be resumed via raise_request or a branch visit."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches show_mandates live, discovers the Netflix mandate is now paused (not the stale 'active'), and reports this. Confirming it as still active without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

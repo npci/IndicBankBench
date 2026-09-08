@@ -1,0 +1,210 @@
+{
+  "case_id": "acct.get_account_details.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks about 'my savings account details' after an incoming transfer failed. Savings account is active with no issues. The CURRENT account is dormant — and that's where the transfer was attempted. An account_ids filter for only the savings account hides the current account dormancy. Broad query reveals the real problem.",
+  "setup": {
+    "persona": "25-year-old male, Counter Moulder, urban Pune, Maharashtra",
+    "current_date": "2026-09-08",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0606",
+      "full_name": "Nasir Sheikh",
+      "date_of_birth": "2001-02-15",
+      "gender": "male",
+      "customer_since": "2019-04-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7001",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "307001",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "307001",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5134X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9471001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9471002",
+          "account_type": "current",
+          "status": "dormant"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9471003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_details",
+    "get_account_balance",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "An NEFT transfer to my account failed yesterday. Show me my savings account details — maybe something's wrong with it."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks only about the savings account — it's active with no issues. The CURRENT account (TKFTB9471002) is dormant, which is why the NEFT failed. Filtering to only savings hides the dormant current account. Broad query reveals the dormant status.",
+      "records": [
+        {
+          "account_id": "TKFTB9471001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Nasir Sheikh",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2020-01-15"
+        },
+        {
+          "account_id": "TKFTB9471002",
+          "account_type": "current",
+          "status": "dormant",
+          "branch_name": "Sector 17",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Nasir Sheikh",
+              "role": "primary"
+            }
+          ],
+          "nominee": {},
+          "open_date": "2021-06-01"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKFTB9471001",
+            "TKFTB9471002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFTB9471001",
+                "TKFTB9471002"
+              ],
+              [
+                "TKFTB9471002",
+                "TKFTB9471001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both accounts — filtering only savings hides the current account dormancy that caused the NEFT failure."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks about their savings account details after a failed NEFT transfer. The savings account (TKFTB9471001) is active with no issues. The current account (TKFTB9471002) is dormant — that's why the transfer failed. The assistant must query both accounts and surface the dormant current account status as the likely cause. Reporting only the savings account as fine without identifying the dormant current account fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both accounts and identifies that the current account (TKFTB9471002) is dormant, which explains the failed NEFT transfer. Reporting that the savings account is fine without surfacing the dormant current account fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

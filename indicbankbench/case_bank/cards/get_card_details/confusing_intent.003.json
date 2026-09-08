@@ -1,0 +1,236 @@
+{
+  "case_id": "cards.get_card_details.confusing_intent.003",
+  "axis": "3_confusing_intent",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Tier-2 filter-trap (channel-to-ID implication): customer says 'the one I use when I'm out shopping, swiping at stores' — IMPLIES the debit card used for POS transactions. The model that queries only the debit card misses the credit card with a valuable promotional credit-limit increase. The model that queries both cards (or doesn't infer a narrow card selection) surfaces the promotion.",
+  "setup": {
+    "persona": "45-year-old female, No Occupation / Retired / Homemaker, rural Chatra, Jharkhand",
+    "current_date": "2026-08-20",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0774",
+      "full_name": "Jubeda Bibi",
+      "date_of_birth": "1981-07-11",
+      "gender": "female",
+      "customer_since": "2018-10-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1150",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "31 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Chatra",
+        "state": "Jharkhand",
+        "pincode": "901150",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "31 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Chatra",
+        "state": "Jharkhand",
+        "pincode": "901150",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1185X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCDR04001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCDR04002",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCCDR04003",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "block_card",
+    "toggle_card_freeze",
+    "set_card_controls",
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you pull up my card details? I want to check the one I use when I'm out shopping — you know, the one for swiping at stores."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two cards: debit (TKCCDR04002 — the one the customer is thinking of for POS swiping) and a credit card (TKCCDR04003) with a recently enhanced credit limit from a promotional campaign.",
+      "records": [
+        {
+          "card_id": "TKCCDR04002",
+          "masked_number": "4532-XXXX-XXXX-7890",
+          "card_type": "debit",
+          "network": "Visa",
+          "status": "active",
+          "credit_limit": null,
+          "available_limit": null,
+          "controls": {
+            "international": "disabled",
+            "online": "enabled",
+            "pos": "enabled",
+            "contactless": "enabled"
+          },
+          "expiry": "2028-06-30"
+        },
+        {
+          "card_id": "TKCCDR04003",
+          "masked_number": "5214-XXXX-XXXX-3456",
+          "card_type": "credit",
+          "network": "Mastercard",
+          "status": "active",
+          "credit_limit": 150000,
+          "available_limit": 138500,
+          "controls": {
+            "international": "enabled",
+            "online": "enabled",
+            "pos": "enabled",
+            "contactless": "enabled"
+          },
+          "expiry": "2027-12-31"
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCDR04002",
+            "TKCCDR04003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "forbidden_ids": [],
+        "_comment": "Must query both cards. 'The one for swiping at stores' implies the debit card, but the model must not infer a single-card fetch from the implication. The trap: querying only the debit card excludes the credit card with the enhanced credit limit."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "The customer describes their card conversationally as 'the one for swiping at stores' — a channel-based description that implies the debit card. The assistant must not infer a single-card selection. Query both cards: the debit card (TKCCDR04002, Visa, active, POS enabled) and the credit card (TKCCDR04003, Mastercard, active, with a ₹1,50,000 credit limit and ₹1,38,500 available). The credit card's enhanced limit is a valuable piece of information the customer should know about. Reporting only the debit card and suppressing the credit card because 'swiping at stores' sounds like a debit card fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports on BOTH cards: the debit card AND the credit card with its ₹1,50,000 credit limit. Reporting only the debit card and omitting the credit card fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

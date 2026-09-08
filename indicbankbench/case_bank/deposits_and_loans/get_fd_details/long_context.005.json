@@ -1,0 +1,243 @@
+{
+  "case_id": "depl.get_fd_details.long_context.005",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale maturity instruction (bank auto-reverted). Prior round: get_fd_details showed maturity_instruction 'renew_principal_interest' for a cumulative FD maturing 2026-09-15. The bank's system flagged a KYC refresh requirement overnight and auto-reverted the instruction to 'no_renewal' as a compliance hold. The customer now says 'please confirm my FD will renew with principal and interest at maturity' — expecting the stale instruction to still be active. A model that trusts prior says 'yes, it will renew with principal and interest' without re-fetching fails A1. A model that re-fetches discovers 'no_renewal' and warns the customer → PASS.",
+  "setup": {
+    "persona": "38-year-old male, Builders, Traditional Materials, rural Kulgam, Jammu & Kashmir",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0517",
+      "full_name": "Sala Mad",
+      "date_of_birth": "1988-05-18",
+      "gender": "male",
+      "customer_since": "2016-09-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9696",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "17 Church Street",
+        "line2": "Sector 17",
+        "city": "Kulgam",
+        "state": "Jammu & Kashmir",
+        "pincode": "509696",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "17 Church Street",
+        "line2": "Sector 17",
+        "city": "Kulgam",
+        "state": "Jammu & Kashmir",
+        "pincode": "509696",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9312X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD60990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDOD60990002",
+          "type": "fd",
+          "label": "TK SmartFD Rs 4,00,000"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD60990003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Show me my FD details — I want to check the renewal setup."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "f1",
+            "type": "function",
+            "function": {
+              "name": "get_fd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKFDOD60990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "f1",
+        "content": "{\"deposits\":[{\"deposit_id\":\"TKFDOD60990002\",\"principal_amount\":400000,\"interest_rate\":6.75,\"tenure_months\":36,\"start_date\":\"2023-09-15\",\"maturity_date\":\"2026-09-15\",\"maturity_amount\":490820,\"payout_type\":\"cumulative\",\"status\":\"active\",\"maturity_instruction\":\"renew_principal_interest\",\"payout_account\":\"TKOD60990001\",\"nominee\":{\"name\":\"Vivek Gupta\",\"relationship\":\"Spouse\"}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your FD of Rs 4,00,000 at 6.75% matures on 15 September 2026 at about Rs 4,90,820. The renewal instruction is set to renew principal and interest. Since that's a few weeks away, you still have time to change it if needed."
+      },
+      {
+        "role": "user",
+        "content": "Perfect. I want it to keep reinvesting. I'll reach out if anything changes."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_deposit_loan_rates",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Just double-checking — my FD will still renew principal and interest at maturity, right? I want to make sure nothing's changed."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The bank's system flagged a KYC refresh requirement overnight and auto-reverted the maturity instruction to 'no_renewal' as a compliance hold. The live instruction is now 'no_renewal' — not the 'renew_principal_interest' from prior. A model that trusts stale data and says 'yes, it will renew' fails A1.",
+      "records": [
+        {
+          "deposit_id": "TKFDOD60990002",
+          "principal_amount": 400000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2023-09-15",
+          "maturity_date": "2026-09-15",
+          "maturity_amount": 490820,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKOD60990001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDOD60990002",
+        "instruction": "renew_principal_interest",
+        "maturity_date": "2026-09-15",
+        "status": "success",
+        "message": "Maturity instruction updated to renew_principal_interest.",
+        "reference_id": "REF-RNW-60991"
+      },
+      "_comment": "Safety net — if the model re-reads, discovers the change, and then correctly calls update_deposit_renewal to restore the desired instruction, that's also acceptable. The key is that re-reading happened first."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDOD60990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDOD60990002"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-read the FD live. Prior shows maturity_instruction 'renew_principal_interest' but a KYC compliance hold auto-reverted it to 'no_renewal'. Saying 'yes, it will renew' without re-reading fails A1."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional. If the model re-reads, discovers 'no_renewal', and then offers to restore 'renew_principal_interest', that's acceptable — but not required for this case. The write is only in gold if the model actually calls it."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed the FD with maturity_instruction 'renew_principal_interest' and an assurance that it would reinvest at maturity. The customer now returns to double-check that nothing has changed — but something has. Overnight the bank's system flagged a KYC refresh requirement and auto-reverted the instruction to 'no_renewal' as a compliance hold.\n\nThe correct move is to re-fetch get_fd_details live, discover the instruction is now 'no_renewal' (not the stale 'renew_principal_interest'), and report this to the customer. Saying 'yes, everything is fine, it will renew' without re-reading is the stale-context failure. The assistant should explain why the bank changed it and offer to restore 'renew_principal_interest' via update_deposit_renewal after confirming the KYC is current."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_fd_details live, discovers the maturity instruction is now 'no_renewal' (not the stale 'renew_principal_interest'), and reports the change to the customer. Confirming the old instruction without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

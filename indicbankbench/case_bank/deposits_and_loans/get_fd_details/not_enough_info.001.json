@@ -1,0 +1,225 @@
+{
+  "case_id": "depl.get_fd_details.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: two FDs, customer says 'my fixed deposit' singular. Must ask which.",
+  "setup": {
+    "persona": "26-year-old male, Building Construction Labourers, rural Nabarangapur, Odisha",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0435",
+      "full_name": "Bhagu Panta",
+      "date_of_birth": "2000-06-08",
+      "gender": "male",
+      "customer_since": "2018-03-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8073",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "114 Market Road",
+        "line2": "Boring Road",
+        "city": "Nabarangapur",
+        "state": "Odisha",
+        "pincode": "998073",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "114 Market Road",
+        "line2": "Boring Road",
+        "city": "Nabarangapur",
+        "state": "Odisha",
+        "pincode": "998073",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9997X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "loan": 0,
+        "rd": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDL741100001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDEFDE7411002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDEFDE7411003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDL741100004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "When does my fixed deposit mature?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only. 5L@6.5%/24mo->568819; 2L@6.5%/12mo->213320.",
+      "records": [
+        {
+          "deposit_id": "TKFDEFDE7411002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2024-09-01",
+          "maturity_date": "2026-09-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKGDL741100001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDEFDE7411003",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-12-01",
+          "maturity_date": "2026-12-01",
+          "maturity_amount": 213320,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "renew_principal",
+          "payout_account": "TKGDL741100001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "_comment": "Must NOT be called: ambiguous."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer has two FDs and asks when 'my fixed deposit' matures without specifying which. The assistant must ask ONE focused question to identify the intended FD. Calling get_fd_details or guessing fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which FD the customer means rather than calling get_fd_details or guessing. Calling the tool fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

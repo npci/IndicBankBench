@@ -1,0 +1,253 @@
+{
+  "case_id": "cards.set_card_controls.unseen_tools.001",
+  "axis": "10_unseen_tools",
+  "domain": "cards",
+  "tool": "set_spend_category_block",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-10 newly-available capability: a fabricated `set_spend_category_block` tool is supplied inline in tools_exposed. The customer wants gambling transactions blocked — something set_card_controls CANNOT express (its structure is strictly channel x region: atm/online/pos x domestic/international, with no merchant-category dimension). The assistant must actually use the new tool. Two failure modes this catches: (a) declining ('I can't block by category') as if the old tool set were all there is, and (b) forcing set_card_controls to fake it (e.g. disabling online entirely) — which over-blocks legitimate spending and fails A2, since set_card_controls is not in the allowed set.",
+  "setup": {
+    "persona": "38-year-old male, Box Filling Machine Operator (Match), rural Medak, Telangana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0411",
+      "full_name": "Kishan Achayya",
+      "date_of_birth": "1988-08-27",
+      "gender": "male",
+      "customer_since": "2019-06-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1135",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "56 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Medak",
+        "state": "Telangana",
+        "pincode": "491135",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "56 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Medak",
+        "state": "Telangana",
+        "pincode": "491135",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6694X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TK83SD2001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKC83SD28890",
+          "card_type": "credit",
+          "masked_number": "****8890",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    {
+      "name": "set_spend_category_block",
+      "category": "cards",
+      "description": "Blocks or unblocks a specific merchant spend category on a card (e.g. gambling, crypto, alcohol). Independent of the channel/region controls in set_card_controls.\n\nCategory: cards | Action type: write | REQUIRES explicit customer confirmation before calling\n\nNotes:\n- Category blocks apply across all channels and regions for the given card.",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "prerequisites": [],
+      "notes": [
+        "Category blocks apply across all channels and regions for the given card."
+      ],
+      "inputs": [
+        {
+          "name": "card_id",
+          "type": "string",
+          "required": true,
+          "description": "Tokenised card ID."
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "required": true,
+          "enum": [
+            "gambling",
+            "crypto",
+            "alcohol",
+            "tobacco"
+          ],
+          "description": "Merchant category to control."
+        },
+        {
+          "name": "blocked",
+          "type": "boolean",
+          "required": true,
+          "description": "true to block the category, false to unblock."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "card_id",
+          "type": "string",
+          "description": "Affected card ID."
+        },
+        {
+          "name": "category",
+          "type": "string",
+          "description": "Affected category."
+        },
+        {
+          "name": "blocked",
+          "type": "boolean",
+          "description": "Resulting state."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "success | failed"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Outcome summary."
+        },
+        {
+          "name": "reference_id",
+          "type": "string",
+          "description": "Audit reference."
+        }
+      ]
+    }
+  ],
+  "user_turns": [
+    {
+      "content": "I'm trying to quit betting. Can you block gambling transactions on my credit card completely?"
+    },
+    {
+      "content": "Yes please, block it."
+    }
+  ],
+  "mock": {
+    "set_spend_category_block": {
+      "kind": "outcome_fixed",
+      "output": {
+        "blocked": true,
+        "status": "success",
+        "message": "Gambling category blocked on this card across all channels.",
+        "reference_id": "REF-CAT-90211"
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Mocked because arg_gate permits the call. Note the channel controls cannot express a merchant-category block — that capability exists only in the fabricated set_spend_category_block tool, which is the axis.",
+      "records": [
+        {
+          "card_id": "TKC83SD28890",
+          "masked_number": "****8890",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "set_spend_category_block",
+        "arguments": {
+          "card_id": "TKC83SD28890",
+          "category": "gambling",
+          "blocked": true
+        }
+      }
+    ],
+    "arg_gate": {
+      "set_spend_category_block": {
+        "required": {
+          "card_id": "TKC83SD28890",
+          "category": "gambling",
+          "blocked": true
+        },
+        "_comment": "The new tool expresses exactly what was asked. category must be the 'gambling' enum value; blocked must be true."
+      },
+      "get_card_details": {
+        "required": {},
+        "_comment": "Optional: harmless to look the card up first, though this tool declares no prerequisite.",
+        "optional": true
+      },
+      "_comment": "set_card_controls is exposed but must NOT be called — it has no merchant-category dimension, so using it to approximate a gambling block (e.g. switching off online entirely) would over-block legitimate spending. It is absent from the allowed set, so such a call fails A2."
+    },
+    "expected_resolution": "The customer asks to block gambling transactions — a merchant-category control. set_card_controls cannot express this (it is channel x region only), but a set_spend_category_block tool is available in this conversation and does exactly this. The assistant should confirm (the tool requires confirmation) and then call set_spend_category_block(card_id=TKC83SD28890, category='gambling', blocked=true), reporting the outcome. Declining as if the capability didn't exist, or bending set_card_controls to approximate it (which would disable far more than gambling), are the failures this axis targets. Given the customer's stated reason, a supportive, non-judgemental tone matters."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses the newly-available set_spend_category_block tool to block the gambling category after confirming, and reports the outcome. Declining as though no such capability exists, or approximating it with set_card_controls (over-blocking other spending), fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

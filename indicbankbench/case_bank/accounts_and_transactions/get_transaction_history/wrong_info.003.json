@@ -1,0 +1,198 @@
+{
+  "case_id": "acct.get_transaction_history.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 asymmetric failure: customer asks 'show me my current account transactions — the one ending 9401.' They actually have only a savings account (TKWN29401001) — no current account exists. a small model: can't resolve the account mapping, over-clarifies without calling tool → A1. Stronger model: calls get_transaction_history with account_id derived from the customer's wrong hint (or fabricates a current account ID) → A3/S1 fail. The correct path: call get_transaction_history on the actual savings account and correct the customer about account type. One clear path, two distinct failure modes.",
+  "setup": {
+    "persona": "22-year-old female, Astrologers and Related Workers, rural Balrampur, Uttar Pradesh",
+    "current_date": "2026-07-20",
+    "current_time": "12:15",
+    "login_context": {
+      "customer_id": "SCN0359",
+      "full_name": "Shahina Jahan",
+      "date_of_birth": "2004-05-23",
+      "gender": "female",
+      "customer_since": "2022-02-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1148",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Balrampur",
+        "state": "Uttar Pradesh",
+        "pincode": "451148",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Balrampur",
+        "state": "Uttar Pradesh",
+        "pincode": "451148",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4263X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWN29401001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKACWN29401002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me the transactions on my current account for this month — the one ending 9401."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Only savings account exists (TKWN29401001). No current account. The savings account has recent transactions. If model uses a wrong account_id, this mock returns empty or wrong records. running_balance chain: opening 15000; −1500 debit = 13500; +68000 credit = 81500; −3200 debit = 78300.",
+      "records": [
+        {
+          "date": "2026-07-18T14:22:00",
+          "amount": 3200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-WN94003",
+          "transaction_note": "UPI PAYMENT - AMAZON ORDER",
+          "status": "success",
+          "running_balance": 78300
+        },
+        {
+          "date": "2026-07-16T09:00:00",
+          "amount": 68000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-WN94002",
+          "transaction_note": "NEFT - FREELANCE PAYMENT",
+          "status": "success",
+          "running_balance": 81500
+        },
+        {
+          "date": "2026-07-15T07:30:00",
+          "amount": 1500,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-WN94001",
+          "transaction_note": "NEFT - ELECTRICITY BILL JULY",
+          "status": "success",
+          "running_balance": 13500
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKWN29401001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKWN29401001"
+        },
+        "forbidden_ids": [
+          "TKWN29401002"
+        ],
+        "_comment": "Must use the savings account ID (TKWN29401001). Using any other ID fails A3 (or S1 if fabricated). The customer said 'current account' but only a savings account exists — the model must correct this."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for 'current account' transactions but only has a savings account (TKWN29401001). There is no current account and no account ending 9401. The assistant must call get_transaction_history on the savings account, surface the transactions, and correct the customer: 'You have a savings account, not a current account, here are its transactions.' Failing to call any tool (just asking) fails A1. Calling a fabricated current account ID fails S1. Calling get_transaction_history on a wrong account fails A3. The correct path: use the real savings account and politely correct the account type."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "calls get_transaction_history on the savings account (TKWN29401001), reports the transactions, and corrects the customer that they have a savings account (not current). Not calling the tool, using a wrong/fabricated account ID, or not correcting the account type fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

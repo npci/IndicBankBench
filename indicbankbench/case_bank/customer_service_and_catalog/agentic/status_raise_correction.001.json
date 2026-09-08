@@ -1,0 +1,257 @@
+{
+  "case_id": "csc.agentic.status_raise_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status+get_all_requests+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'reopen my failed-transaction report REQ-FT-88003 as unauthorized_debit.' get_request_status shows REQ-FT-88003 is already 'in_progress' (not resolved/failed). get_all_requests confirms it's category 'failed_transaction'. The customer's assumption that it needs reopening is wrong, and the category they want (unauthorized_debit) is different from the actual category. Correction: raise_request should be a related follow-up, not a reopen.",
+  "setup": {
+    "persona": "25-year-old male, Sickle Dresser, Mica, rural Ghazipur, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "13:00",
+    "login_context": {
+      "customer_id": "SCN0004",
+      "full_name": "Vijendra Singh",
+      "date_of_birth": "2001-05-02",
+      "gender": "male",
+      "customer_since": "2019-07-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5920",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "345920",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "345920",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9179X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSF9900001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSF9900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_all_requests",
+    "get_card_details",
+    "get_products_and_offers",
+    "get_request_status",
+    "get_transaction_history",
+    "raise_request",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to reopen my failed transaction complaint REQ-FT-88003 — mark it as unauthorized debit since they never sent the money back. Raise it again, or file it as an other type of follow-up."
+    },
+    {
+      "content": "Yes, raise the follow-up — go ahead."
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-FT-88003",
+        "status": "in_progress",
+        "raised_date": "2026-08-20",
+        "last_update": "2026-08-23",
+        "remarks": "Investigation active — beneficiary bank contacted for reversal confirmation."
+      },
+      "_comment": "REQUEST IS IN PROGRESS — cannot be 'reopened' since it was never closed."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-FT-88003",
+          "category": "failed_transaction",
+          "status": "in_progress",
+          "raised_date": "2026-08-20",
+          "last_updated_date": "2026-08-23",
+          "description": "NEFT ₹62,500 to HDFC a/c debited but not credited to beneficiary. Transaction reference: NEFT-TK-880301."
+        }
+      ],
+      "static_output": {
+        "total_count": 1,
+        "limit": 50,
+        "offset": 0
+      },
+      "_comment": "Full context: category is failed_transaction, not unauthorized_debit. Status is in_progress."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-FT-88004",
+        "status": "success",
+        "message": "Follow-up request logged for REQ-FT-88003.",
+        "category": "other"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-FT-88003"
+        }
+      },
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "other",
+          "description": "Customer requested reopening of in_progress request REQ-FT-88003 (failed_transaction category) as unauthorized_debit. Correction: request is already active, raised as follow-up."
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_request_status",
+        "raise_request"
+      ],
+      [
+        "get_all_requests",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-FT-88003"
+        },
+        "_comment": "Must check status — reveals REQ-FT-88003 is in_progress, not resolved/closed. Can't be 'reopened'."
+      },
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Fetch full request details — reveals category is failed_transaction, not unauthorized_debit."
+      },
+      "raise_request": {
+        "required": {},
+        "optional_ok": {
+          "category": {
+            "allowed": [
+              "other",
+              "unauthorized_debit"
+            ]
+          }
+        },
+        "_comment": "Raise follow-up. Customer wanted 'reopen as unauthorized_debit' but the original is in_progress (failed_transaction). R judge verifies the correction is communicated."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'reopen my failed-transaction report REQ-FT-88003 as unauthorized_debit.' get_request_status shows it's already in_progress (active investigation) — can't be reopened. get_all_requests confirms category is failed_transaction (NEFT reversal), not unauthorized_debit. The assistant must correct: 'REQ-FT-88003 is already in progress — the bank is investigating the NEFT. It's a failed_transaction not unauthorized_debit. I can raise a follow-up instead.' After confirmation, calls raise_request."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant checks request status and all requests, discovers the request is in_progress and category is failed_transaction (not unauthorized_debit), communicates both corrections, and after confirmation raises a follow-up. FAIL if the assistant blindly reopens or changes category without correction."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

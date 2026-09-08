@@ -1,0 +1,195 @@
+{
+  "case_id": "csc.get_request_status.long_context.003",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale dispute status. Prior round: get_all_requests returned a dispute REQ-DIS-41980 with status 'in_progress' and the assistant reported it as such. Since then the bank resolved the dispute overnight. The customer now asks 'what's the status of my dispute' — a natural follow-up. A model that trusts the stale prior context responds 'still in progress' without making a live call → A1 fail (neither get_request_status nor get_all_requests was called). A model that makes a live call to get_request_status discovers status 'resolved' → PASS.",
+  "setup": {
+    "persona": "31-year-old male, Oiler and Greaser, Stationary Engine and Machinery, rural Fatehabad, Haryana",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0365",
+      "full_name": "Amit Ram",
+      "date_of_birth": "1995-01-19",
+      "gender": "male",
+      "customer_since": "2013-02-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4520",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "1 MG Road",
+        "line2": "Indiranagar",
+        "city": "Fatehabad",
+        "state": "Haryana",
+        "pincode": "504520",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "1 MG Road",
+        "line2": "Indiranagar",
+        "city": "Fatehabad",
+        "state": "Haryana",
+        "pincode": "504520",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6586X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD42988001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD42988002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I raised a dispute last week about a wrong charge — what's happening with it?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "r1",
+            "type": "function",
+            "function": {
+              "name": "get_all_requests",
+              "arguments": {
+                "category": "charges_dispute"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "r1",
+        "content": "{\"requests\":[{\"request_id\":\"REQ-DIS-41980\",\"category\":\"charges_dispute\",\"status\":\"in_progress\",\"raised_date\":\"2026-08-12\",\"last_updated_date\":\"2026-08-16\",\"description\":\"Disputed non-maintenance charge of Rs 750\"}],\"total_count\":1}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your dispute (REQ-DIS-41980) about the Rs 750 non-maintenance charge is still in progress. It was last updated on 16 August."
+      },
+      {
+        "role": "user",
+        "content": "Fair enough. I'll check again in a few days."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Any update on my dispute? The one about the Rs 750 charge."
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "The bank resolved the dispute overnight. The live status is now 'resolved', not the stale 'in_progress' from the prior round. A model that trusts the prior context, skips this live call, and answers from memory reports the wrong status — and fails A1 because this required tool was never called.",
+      "output": {
+        "status": "resolved",
+        "raised_date": "2026-08-12T09:30:00",
+        "last_update": "2026-08-19T22:15:00",
+        "remarks": "Dispute resolved — Rs 750 charge reversed and credited to account TKOD42988001. Reversal reference: REV-88291."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Safety net. A model that calls get_all_requests instead of get_request_status also gets the updated status from this live mock.",
+      "records": [
+        {
+          "request_id": "REQ-DIS-41980",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-08-12",
+          "last_updated_date": "2026-08-19",
+          "description": "Disputed non-maintenance charge of Rs 750 — resolved, charge reversed."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-DIS-41980"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-DIS-41980"
+        },
+        "_comment": "THE GATE. The model MUST look up the dispute live. The prior round shows status 'in_progress' — but the bank resolved it overnight. Reporting 'in_progress' from memory without making a live call fails A1 because this required tool was never called. request_id comes from the prior tool output and is a known ID."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional alternative — calling get_all_requests live instead is also valid (it reveals the resolved status). But get_request_status is the targeted tool since the customer is asking about a specific known dispute."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior conversation shows the dispute REQ-DIS-41980 as 'in_progress' as of 16 August. The customer returns and asks for an update. The bank has since resolved the dispute overnight — the live status is now 'resolved', the Rs 750 charge has been reversed, and the refund reference is REV-88291.\n\nThe correct move is to call get_request_status live and report the updated status — resolved, with the charge reversed and credited. Answering 'still in progress' from the stale prior data without making a live call is the failure: the assistant is reporting information that was true four days ago but is wrong now, which is precisely the stale-context trap.\n\nIt is acceptable for the model to also mention the reversal reference and the date of resolution. Calling get_all_requests instead is fine — the case permits it — but the most direct and efficient tool for following up on a known request_id is get_request_status."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant makes a live call (get_request_status or get_all_requests), discovers the dispute is now resolved (not 'in_progress'), and reports the charge has been reversed. Reporting the stale 'in_progress' status without making a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

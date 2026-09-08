@@ -1,0 +1,211 @@
+{
+  "case_id": "acct.get_account_balance.long_context.001",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Prior showed balance Rs 2,50,000 from 4 months ago. After debits/expenses, now Rs 56,000. Must not repeat old figure.",
+  "setup": {
+    "persona": "35-year-old female, Primary School Teacher, urban Nashik, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0583",
+      "full_name": "Navghare Pawar",
+      "date_of_birth": "1991-07-06",
+      "gender": "female",
+      "customer_since": "2018-05-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4370",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Nashik",
+        "state": "Maharashtra",
+        "pincode": "924370",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Nashik",
+        "state": "Maharashtra",
+        "pincode": "924370",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2256X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAB9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAB9800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_account_balance",
+              "arguments": {
+                "account_ids": [
+                  "TKGAB9800001"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"balances\":[{\"account_id\":\"TKGAB9800001\",\"available_balance\":250000,\"hold_amount\":0}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your savings account has Rs 2,50,000 available."
+      },
+      {
+        "role": "user",
+        "content": "Great, I have some expenses coming up. I'll be using some of that."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_transaction_history",
+    "get_account_details",
+    "get_insurance_details",
+    "toggle_card_freeze",
+    "stop_cheque_payment",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my current savings balance — I've had a lot of expenses recently."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKGAB9800001",
+          "available_balance": 56000,
+          "hold_amount": 2500
+        }
+      ]
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKGAB9800001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKGAB9800001"
+          ]
+        }
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior showed Rs 2,50,000. Now Rs 56,000 available with Rs 2,500 hold. Assistant must fetch fresh data. Repeating the stale Rs 2,50,000 fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches current balance (Rs 56,000) from fresh call, NOT stale Rs 2,50,000. Repeating old balance fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

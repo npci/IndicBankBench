@@ -1,0 +1,177 @@
+{
+  "case_id": "csc.request_duplicate_statement.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer requests a statement with from_date in the future (2027-01-01). Model must flag before calling tool.",
+  "setup": {
+    "persona": "37-year-old female, No Occupation / Retired / Homemaker, rural Bankura, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0252",
+      "full_name": "Tanuja Panja",
+      "date_of_birth": "1989-03-09",
+      "gender": "female",
+      "customer_since": "2014-02-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0018",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Bankura",
+        "state": "West Bengal",
+        "pincode": "840018",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Bankura",
+        "state": "West Bengal",
+        "pincode": "840018",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9134X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDS8500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDS8500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "create_fd",
+    "get_loan_foreclosure_quote",
+    "get_products_and_offers",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "Send me a bank statement for my savings account from 2027-01-01 to 2027-06-30 — I need it for visa application planning."
+    },
+    {
+      "content": "Right — I meant this year, 2026. From January to June. Go ahead."
+    }
+  ],
+  "mock": {
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "account_id auto-echoed.",
+      "output": {
+        "request_id": "REQ-DS-75700",
+        "status": "success",
+        "message": "Statement from 2026-01-01 to 2026-06-30 will be emailed."
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKRDS8500001",
+          "from_date": "2026-01-01",
+          "to_date": "2026-06-30"
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKRDS8500001",
+          "from_date": "2026-01-01",
+          "to_date": "2026-06-30"
+        },
+        "_comment": "Must use corrected 2026 dates, not 2027. Confirmation must precede (S2)."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for a statement with from_date in 2027 — a future date (current date is 2026-08-17). The assistant must flag this anomaly: the statement period starts in the future. After the customer corrects to 2026 and confirms, the assistant calls request_duplicate_statement with the corrected dates. Silently accepting the future date, or calling before confirmation, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "flags the future from_date (2027), accepts the correction to 2026, confirms, and books. Accepting the future dates without flagging, or calling before confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

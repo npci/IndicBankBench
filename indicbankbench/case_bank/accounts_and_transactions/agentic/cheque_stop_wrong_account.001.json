@@ -1,0 +1,246 @@
+{
+  "case_id": "acct.agentic.cheque_stop_wrong_account.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details+get_transaction_history+stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'stop cheque #1035 on my current account.' get_account_details shows only savings account. Correction: stop_cheque_payment on savings account_id TKACQ9500001.",
+  "setup": {
+    "persona": "35-year-old female, No Occupation / Retired / Homemaker, urban Faridabad, Haryana",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0035",
+      "full_name": "Shagun Devi",
+      "date_of_birth": "1991-03-18",
+      "gender": "female",
+      "customer_since": "2014-09-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3118",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "39 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Faridabad",
+        "state": "Haryana",
+        "pincode": "233118",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "39 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Faridabad",
+        "state": "Haryana",
+        "pincode": "233118",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9000X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACQ9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCACQ9500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_card_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Stop cheque number 1035 on my current account — I lost the cheque leaf. Please stop it immediately."
+    },
+    {
+      "content": "Yes, stop it on the savings account — go ahead."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKACQ9500001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "Boring Road",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Shagun Devi",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-15"
+        }
+      ],
+      "_comment": "Only savings account — no current account."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-23T14:30:00",
+          "amount": 45000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-1035",
+          "transaction_note": "Cheque #1035 — Lakshmi Enterprises",
+          "status": "pending",
+          "running_balance": 195000
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Cheque #1035 found on savings account."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "TKACQ9500001",
+        "results": [
+          {
+            "cheque_number": "1035",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop payment placed on cheque 1035.",
+        "reference_id": "REF-CHQ-95001"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKACQ9500001"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKACQ9500001"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKACQ9500001",
+          "cheque_numbers": [
+            "1035"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_account_details",
+        "stop_cheque_payment"
+      ],
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKACQ9500001"
+          ]
+        },
+        "_comment": "Must fetch account details — reveals only savings."
+      },
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKACQ9500001"
+        },
+        "_comment": "Must fetch transactions — locates cheque #1035."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKACQ9500001",
+          "cheque_numbers": [
+            "1035"
+          ]
+        },
+        "_comment": "CORRECTED to savings account_id. Customer said 'current account' but only savings exists."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'stop cheque #1035 on my current account.' get_account_details shows only a savings account TKACQ9500001. get_transaction_history confirms cheque #1035 is pending. The assistant must correct: 'You don't have a current account — only savings TKACQ9500001. Cheque #1035 is pending there. I'll stop it on your savings account.' After confirmation, calls stop_cheque_payment with account_id=TKACQ9500001. arg_gate pins the savings account_id."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches account details and transaction history, discovers no current account exists, communicates the account-type correction, and after confirmation calls stop_cheque_payment on the savings account. FAIL if stop_cheque_payment uses a different account_id."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

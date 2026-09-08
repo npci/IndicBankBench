@@ -1,0 +1,276 @@
+{
+  "case_id": "depl.agentic.book_rd.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "_variant_note": "Agentic: RD booking chain — rate check -> maturity calc -> balance check -> confirm -> book.",
+  "setup": {
+    "persona": "50-year-old female, No Occupation / Retired / Homemaker, urban Moga, Punjab",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0436",
+      "full_name": "Nirmala Manhas",
+      "date_of_birth": "1976-03-14",
+      "gender": "female",
+      "customer_since": "2014-06-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1214",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "15 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Moga",
+        "state": "Punjab",
+        "pincode": "611214",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "15 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Moga",
+        "state": "Punjab",
+        "pincode": "611214",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5845X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRD8900001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRD8900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "create_rd",
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "get_rd_details",
+    "get_gold_rate",
+    "request_cheque_book",
+    "get_deposit_closure_quote",
+    "get_loan_foreclosure_quote"
+  ],
+  "user_turns": [
+    {
+      "content": "Start a recurring deposit of Rs 3,000 per month for 3 years from my savings account. No nominee."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 120412,
+        "interest_earned": 12412,
+        "total_principal_invested": 108000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKCRD8900001",
+          "available_balance": 80000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD8900003",
+        "status": "success",
+        "message": "Recurring Deposit booked.",
+        "interest_rate": 7.0,
+        "maturity_date": "2029-08-17",
+        "maturity_amount": 120412,
+        "monthly_debit_date": 17,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-90700"
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 3000,
+          "tenure_months": 36,
+          "source_account": "TKCRD8900001"
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 3000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKCRD8900001"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ],
+      [
+        "calculate_rd_maturity",
+        "create_rd"
+      ],
+      [
+        "get_account_balance",
+        "create_rd"
+      ]
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 3000,
+          "tenure_months": 36,
+          "source_account": "TKCRD8900001"
+        },
+        "_comment": "Confirmation must precede (S2)."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Full RD booking: source rate (3-5yr RD=7.0%, FD=6.75%+25bp), compute maturity (Rs 1,20,412), verify funding (Rs 80,000 available), confirm, book. Skipping prerequisites or booking before confirmation fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "completes the full RD booking chain, reports deposit ID and maturity. Skipping prerequisites or booking before confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

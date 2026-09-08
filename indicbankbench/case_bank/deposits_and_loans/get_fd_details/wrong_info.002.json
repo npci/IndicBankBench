@@ -1,0 +1,254 @@
+{
+  "case_id": "depl.get_fd_details.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks about 'my fixed deposit maturity'. The profile has an FD (Rs 2,00,000) AND an RD (Rs 8,000/month). The customer assumes only the FD exists. A model that queries get_fd_details with only one deposit_id gets the FD, confirms it, and stops — missing the RD entirely. But the customer's actual concern is about maturity of everything they hold. Broad query (both product IDs) surfaces the RD as well, letting the model give a complete picture.",
+  "setup": {
+    "persona": "25-year-old female, No Occupation / Retired / Homemaker, urban Ranchi, Jharkhand",
+    "current_date": "2026-09-01",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0807",
+      "full_name": "Sarita Devi",
+      "date_of_birth": "2001-05-21",
+      "gender": "female",
+      "customer_since": "2019-04-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1412",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Ranchi",
+        "state": "Jharkhand",
+        "pincode": "211412",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Ranchi",
+        "state": "Jharkhand",
+        "pincode": "211412",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3636X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDW9411001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDW9411002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKRDW9411003",
+          "type": "rd",
+          "label": "TK StepUp Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFDW9411004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the maturity value on my fixed deposit? I opened one earlier this year and I want to know what I'll get."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the customer only explicitly asks about their FD. But they also have an RD (TKRDW9411003). A model that only queries the FD ID gets just the FD, confirming it matures at Rs 216,600. A broad query that also fetches the RD (or a model that reads linked_products_summary and proactively mentions both) gives complete information. The FD: Rs 2,00,000 at 6.5% for 2 years. M = 200000 x (1 + 6.5/400)^(8) = 200000 x (1.01625)^8 ≈ 227,415 (check: 1.01625^8 ≈ 1.13708, x 200000 = 227416). RD: Rs 8,000/month, 24-month tenure at 6.75%, 6 installments paid.",
+      "records": [
+        {
+          "deposit_id": "TKFDW9411002",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2026-03-01",
+          "maturity_date": "2028-03-01",
+          "maturity_amount": 227416,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDW9411001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The RD that also exists, surfaced if the model queries broadly. RD: Rs 8,000/month, 24-month tenure at 6.75%, started 2026-03-01, 6 installments paid so far (Rs 48,000 total deposited).",
+      "records": [
+        {
+          "deposit_id": "TKRDW9411003",
+          "monthly_installment": 8000,
+          "installments_paid": 6,
+          "total_deposited": 48000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2026-03-01",
+          "next_debit_date": "2026-10-01",
+          "maturity_date": "2028-03-01",
+          "maturity_amount": 212583,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDW9411001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDW9411002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDW9411002"
+              ],
+              [
+                "TKFDW9411002",
+                "TKRDW9411003"
+              ],
+              [
+                "TKFDW9411002",
+                "TKFDW9411002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying the FD is the primary task. Querying both (FD + RD) is better — it surfaces the RD and gives the customer a complete picture. The gold accepts either approach. A model that only queries the FD and correctly reports its maturity passes on the FD question; the judge assesses whether the RD is also mentioned."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — querying the RD in addition shows broader awareness."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about their fixed deposit maturity. The FD (TKFDW9411002, Rs 2,00,000, 6.5%, 24 months) matures on 2028-03-01 at Rs 2,27,416. However, the customer also holds a Recurring Deposit (TKRDW9411003, Rs 8,000/month, 6.75%, 6 of 24 installments paid, maturing 2028-03-01 at Rs 2,12,583). A thorough assistant should mention both — the customer asked about 'my fixed deposit' but their profile shows an RD too, and the linked_products_summary says rd: 1. Surfacing the RD alongside the FD is good service. Reporting only the FD without any mention of the RD is acceptable but less helpful."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "correctly reports the FD maturity (Rs 2,27,416, maturing 2028-03-01) grounded in get_fd_details. Ideally also surfaces the RD (TKRDW9411003, 6 of 24 installments paid, maturing 2028-03-01 at Rs 2,12,583). Fabricating a maturity figure or ignoring the FD record fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

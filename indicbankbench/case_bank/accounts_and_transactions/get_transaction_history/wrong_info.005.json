@@ -1,0 +1,205 @@
+{
+  "case_id": "acct.get_transaction_history.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'all transactions above Rs 5,000' looking for a disputed charge. The disputed charge was Rs 4,850 (just under the threshold). An amount_min=5000 filter hides the critical transaction. Broad query finds it.",
+  "setup": {
+    "persona": "24-year-old male, Well Digger Helper, rural Dhar, Madhya Pradesh",
+    "current_date": "2026-08-03",
+    "current_time": "16:00",
+    "login_context": {
+      "customer_id": "SCN0251",
+      "full_name": "Balveer Soni",
+      "date_of_birth": "2002-10-19",
+      "gender": "male",
+      "customer_since": "2021-10-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7889",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Dhar",
+        "state": "Madhya Pradesh",
+        "pincode": "777889",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Dhar",
+        "state": "Madhya Pradesh",
+        "pincode": "777889",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5437X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAMF9402001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCAMF9402002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm tracking a disputed online payment — show me all transactions above Rs 5,000 from the last month."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the disputed charge (TXN-9402003) is Rs 4,850 — just under the Rs 5,000 the customer asked for. An amount_min=5000 filter returns only TXN-9402002 (Rs 7,200) and TXN-9402001 (Rs 22,000), hiding the very transaction the customer needs. Broad query returns all four.",
+      "records": [
+        {
+          "date": "2026-08-02T19:30:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9402005",
+          "transaction_note": "UPI - GROCERY STORE",
+          "status": "success",
+          "running_balance": 64150
+        },
+        {
+          "date": "2026-07-28T14:15:00",
+          "amount": 4850,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9402003",
+          "transaction_note": "POS PURCHASE - FLICKZ ELECTRONICS",
+          "status": "success",
+          "running_balance": 65350
+        },
+        {
+          "date": "2026-07-22T10:45:00",
+          "amount": 7200,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-9402002",
+          "transaction_note": "NEFT - INSURANCE PREMIUM",
+          "status": "success",
+          "running_balance": 70200
+        },
+        {
+          "date": "2026-07-15T08:30:00",
+          "amount": 22000,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-9402001",
+          "transaction_note": "NEFT - SCHOOL FEES Q3",
+          "status": "success",
+          "running_balance": 77400
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKAMF9402001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKAMF9402001"
+        },
+        "_comment": "Broad query without amount_min filter — an amount_min=5000 filter hides the Rs 4,850 disputed charge (TXN-9402003), which sits just below the threshold. The model must query without an amount filter and identify it."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for transactions above Rs 5,000 to find a disputed online payment. The disputed POS charge (TXN-9402003, FLICKZ ELECTRONICS) is Rs 4,850 — just under the threshold. The assistant must query broadly and surface the Rs 4,850 charge, noting it falls below the customer's stated threshold. Reporting only the above-5000 transactions and missing the actual disputed charge fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "locates and surfaces the Rs 4,850 POS charge (TXN-9402003, FLICKZ ELECTRONICS, 2026-07-28), noting it falls just below the stated Rs 5,000 threshold. Reporting only above-5000 transactions without surfacing the disputed charge fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,268 @@
+{
+  "case_id": "cards.get_card_details.contradicting_info.003",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 FILTER TRAP across two cards: the customer blames their credit card's international ATM for foreign fees. The credit card's international ATM is actually DISABLED; it is the DEBIT card's international ATM that is enabled. The evidence is reachable only via a broad card query — a credit-card-only query shows the disabled setting and the assistant concludes 'it's already off' while the real source goes unfound. Careless failure mode: querying only the credit card and never identifying the debit card as the enabled one.",
+  "setup": {
+    "persona": "27-year-old male, Civil Engineer, Irrigation, urban Hyderabad, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0196",
+      "full_name": "Chandrappa Ots",
+      "date_of_birth": "1999-10-22",
+      "gender": "male",
+      "customer_since": "2021-11-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3829",
+      "registered_email": "c*****@gmail.com",
+      "communication_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "pincode": "753829",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Hyderabad",
+        "state": "Telangana",
+        "pincode": "753829",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5939X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDCT9200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKGDCT9202731",
+          "card_type": "credit",
+          "masked_number": "****2731",
+          "status": "active"
+        },
+        {
+          "card_id": "TKGDCT9209682",
+          "card_type": "debit",
+          "masked_number": "****9682",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "request_duplicate_statement",
+    "create_rd"
+  ],
+  "user_turns": [
+    {
+      "content": "I keep getting charged foreign ATM fees. My credit card's international ATM must still be enabled — check my cards."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: credit card international ATM is DISABLED; the DEBIT card's is ENABLED. Only a broad (both-cards) query reveals the debit card's setting.",
+      "records": [
+        {
+          "card_id": "TKGDCT9202731",
+          "masked_number": "****2731",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 161300,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKGDCT9209682",
+          "masked_number": "****9682",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 15000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKGDCT9202731",
+            "TKGDCT9209682"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Both cards must be checked (broad query) — the evidence lives on the debit card, judged at R."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer believes their credit card's international ATM is still enabled. The card data shows the opposite: the credit card (ending 2731) has international ATM DISABLED, while the debit card (ending 9682) has international ATM ENABLED with a Rs 10,000 daily limit. The assistant must correct the belief and identify the debit card as the actual source of any foreign ATM fees. Answering 'your credit card international ATM is already off' without flagging the enabled debit card fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "corrects the customer's belief — the credit card's international ATM is disabled — and identifies the DEBIT card as the one with international ATM enabled. Failing to surface the debit card's enabled setting fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

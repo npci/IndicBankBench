@@ -1,0 +1,230 @@
+{
+  "case_id": "cards.get_card_details.long_context.005",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale card (bank froze it overnight). Prior round: get_card_details showed debit card active, all controls enabled. Since then the bank's fraud system auto-froze it after detecting an unusual POS attempt at 2 AM. Live status is 'frozen (reversible)', all controls disabled. The customer now asks 'why did my debit card decline at the store today? Is everything okay?' — a model that trusts the stale prior and checks other things without re-reading fails A1. A model that re-fetches discovers the freeze → explains → PASS.",
+  "setup": {
+    "persona": "38-year-old female, Cook, Institutional, rural Bahraich, Uttar Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0278",
+      "full_name": "Choti Bharatiya",
+      "date_of_birth": "1988-04-04",
+      "gender": "female",
+      "customer_since": "2015-09-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9239",
+      "registered_email": "c*****@gmail.com",
+      "communication_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Bahraich",
+        "state": "Uttar Pradesh",
+        "pincode": "209239",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Bahraich",
+        "state": "Uttar Pradesh",
+        "pincode": "209239",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2668X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD68990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD68990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Can you check my debit card — I want to make sure everything's fine before I go shopping."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "dc1",
+            "type": "function",
+            "function": {
+              "name": "get_card_details",
+              "arguments": {
+                "card_ids": [
+                  "TKCOD68990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "dc1",
+        "content": "{\"cards\":[{\"card_id\":\"TKCOD68990002\",\"masked_number\":\"****4681\",\"card_type\":\"debit\",\"network\":\"rupay\",\"status\":\"active\",\"expiry\":\"06/28\",\"controls\":{\"atm\":{\"domestic\":{\"enabled\":true,\"daily_limit\":25000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":true,\"daily_limit\":40000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"pos\":{\"domestic\":{\"enabled\":true,\"daily_limit\":30000},\"international\":{\"enabled\":false,\"daily_limit\":0}}}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your RuPay debit card ending 4681 is active with no issues. All domestic channels are enabled — ATM Rs 25,000, online Rs 40,000, POS Rs 30,000 daily limits."
+      },
+      {
+        "role": "user",
+        "content": "Great, heading out now!"
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "get_account_balance",
+    "get_transaction_history",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "My card just got declined at the supermarket. I checked at the ATM and it didn't work either. What's going on?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The bank's fraud system auto-froze the card overnight after detecting a suspicious POS attempt at 2:14 AM. The live status is 'frozen (reversible)', all controls disabled. A model that trusts stale prior and diagnoses the wrong problem without re-reading fails A1.",
+      "records": [
+        {
+          "card_id": "TKCOD68990002",
+          "masked_number": "****4681",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "frozen (reversible)",
+          "expiry": "06/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCOD68990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "THE GATE. The model MUST re-read the card live. Prior shows 'active' but the fraud system auto-froze it overnight — live shows 'frozen (reversible)'. Any diagnosis made without re-reading is based on stale data."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — model may check if balance is the issue."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — model may check for declined transactions."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed the debit card as active with all domestic channels enabled. The customer went shopping but the card declined at POS and ATM. Between the prior round and now, the bank's fraud system auto-froze the card after detecting a suspicious POS attempt at 2:14 AM from an unrecognised terminal. The live card status is now 'frozen (reversible)' with all controls disabled.\n\nThe correct move is to re-fetch get_card_details live, discover the card is frozen, and explain to the customer that the bank's fraud system triggered a protective freeze. Simply diagnosing the decline as a balance issue or a merchant problem without re-reading is the stale-context failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_card_details live, discovers the card is now 'frozen (reversible)' (not the stale 'active'), and explains the fraud freeze to the customer. Diagnosing the decline as a balance issue or other cause without re-reading the card fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

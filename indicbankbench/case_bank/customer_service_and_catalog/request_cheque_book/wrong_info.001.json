@@ -1,0 +1,173 @@
+{
+  "case_id": "csc.request_cheque_book.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer asks for 200 leaves — an unreasonable value outside standard options. Tool returns failed. Model must flag the rejection.",
+  "setup": {
+    "persona": "25-year-old female, Market-Oriented Crop and Animal Producers, rural Anand, Gujarat",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0502",
+      "full_name": "Manguben Hirva",
+      "date_of_birth": "2001-04-05",
+      "gender": "female",
+      "customer_since": "2019-11-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9827",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Anand",
+        "state": "Gujarat",
+        "pincode": "749827",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Anand",
+        "state": "Gujarat",
+        "pincode": "749827",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5017X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQB9000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQB9000002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "request_cheque_book",
+    "get_all_requests",
+    "get_request_status",
+    "get_gold_rate",
+    "get_loan_foreclosure_quote",
+    "search_knowledge_base",
+    "get_products_and_offers"
+  ],
+  "user_turns": [
+    {
+      "content": "I write a lot of cheques every month. Send me a chequebook with 200 leaves for my savings account."
+    },
+    {
+      "content": "OK, 50 leaves then. Go ahead."
+    }
+  ],
+  "mock": {
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "_comment": "200 leaves rejected. 50 leaves succeeds. account_id auto-echoed.",
+      "output": {
+        "request_id": "REQ-CB-75650",
+        "status": "success",
+        "message": "Cheque book request placed for 50 leaves."
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKRQB9000001",
+          "leaves": 50
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKRQB9000001",
+          "leaves": 50
+        },
+        "_comment": "Must use 50 leaves (the corrected value) after the unreasonable 200-leaf request is resolved. Confirmation must precede the write (S2)."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for a 200-leaf chequebook — an unreasonable quantity well beyond standard options (typically 25, 50 or 100 leaves). The assistant should note that the maximum standard is typically 100 leaves and suggest 50 or 100 leaves instead. After the customer selects 50 leaves and confirms, the assistant calls request_cheque_book with leaves=50. Calling with leaves=200 without flagging the issue, or calling before confirmation, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "flags the unreasonable 200-leaf request, suggests standard options, confirms, and books 50 leaves. Calling with 200 leaves without questioning, or calling before confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "case_id": "csc.raise_request.long_context.001",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Prior showed REQ-100 as open. Now resolved. Model must fetch fresh status.",
+  "setup": {
+    "persona": "57-year-old female, No Occupation / Retired / Homemaker, rural Junagadh, Gujarat",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0231",
+      "full_name": "Bulbul Bhoi",
+      "date_of_birth": "1969-10-14",
+      "gender": "female",
+      "customer_since": "2021-07-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5845",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "46 College Road",
+        "line2": "Indiranagar",
+        "city": "Junagadh",
+        "state": "Gujarat",
+        "pincode": "905845",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "46 College Road",
+        "line2": "Indiranagar",
+        "city": "Junagadh",
+        "state": "Gujarat",
+        "pincode": "905845",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9433X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQR9900011",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQR9900012",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_request_status",
+              "arguments": {
+                "request_id": "REQ-100"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"request_id\":\"REQ-100\",\"status\":\"open\",\"raised_date\":\"2026-08-01T10:00:00\",\"last_update\":\"2026-08-01T10:00:00\",\"remarks\":\"Dispute logged and awaiting review.\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your dispute REQ-100 is currently open and awaiting review."
+      },
+      {
+        "role": "user",
+        "content": "OK, let me know when it's resolved."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_account_details",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "Has my dispute REQ-100 been resolved yet?"
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Now resolved.",
+      "output": {
+        "status": "resolved",
+        "raised_date": "2026-08-01T10:00:00",
+        "last_update": "2026-08-16T15:00:00",
+        "remarks": "Dispute resolved: Rs 500 refund processed. Amount credited to savings account on 2026-08-15."
+      }
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-100"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-100"
+        }
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior conversation said REQ-100 was open. Customer asks if resolved. Assistant must call get_request_status and report it's now resolved (Rs 500 refunded Aug 15). NOT repeat the stale 'open' status. Saying it's still open fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches fresh status, reports REQ-100 resolved (Rs 500 refunded). Repeating stale 'open' status fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

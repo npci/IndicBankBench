@@ -1,0 +1,247 @@
+{
+  "case_id": "acct.show_mandates.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 compound request with a mid-flight filter correction: turn 1 asks for 'subscriptions' (all mandates on the savings account), turn 2 narrows to 'just the monthly ones'. The final answer must list ONLY the monthly-frequency mandates (Netflix 649, FitPro Gym 999) and exclude the yearly LIC premium and the quarterly locker rent. Named careless failure mode: re-listing every mandate from the turn-1 fetch and ignoring the narrowing — the yearly/quarterly rows are still in hand, and recency makes dumping all of them the easy wrong answer.",
+  "setup": {
+    "persona": "21-year-old male, Telemarketing Sales Person, rural Nalanda, Bihar",
+    "current_date": "2026-08-10",
+    "current_time": "16:05",
+    "login_context": {
+      "customer_id": "SCN0688",
+      "full_name": "Uttam Singh",
+      "date_of_birth": "2005-08-01",
+      "gender": "male",
+      "customer_since": "2023-09-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9287",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "8 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Nalanda",
+        "state": "Bihar",
+        "pincode": "669287",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "8 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Nalanda",
+        "state": "Bihar",
+        "pincode": "669287",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3666X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSMQ4298001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSMQ4298002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "What subscriptions do I have on my savings account?"
+    },
+    {
+      "content": "Just the monthly ones."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "mandate_id": "MND-SMQ-4298001",
+          "type": "upi_autopay",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKSMQ4298001"
+        },
+        {
+          "mandate_id": "MND-SMQ-4298002",
+          "type": "enach",
+          "payee": "FitPro Gym",
+          "amount": 999,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKSMQ4298001"
+        },
+        {
+          "mandate_id": "MND-SMQ-4298003",
+          "type": "si",
+          "payee": "LIC Premium",
+          "amount": 12400,
+          "frequency": "yearly",
+          "status": "active",
+          "next_debit_date": "2027-02-14",
+          "account_id": "TKSMQ4298001"
+        },
+        {
+          "mandate_id": "MND-SMQ-4298004",
+          "type": "si",
+          "payee": "TK Bank Locker Rent",
+          "amount": 4500,
+          "frequency": "quarterly",
+          "status": "active",
+          "next_debit_date": "2026-10-01",
+          "account_id": "TKSMQ4298001"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-10T16:05:00",
+        "last_update": "2026-08-10T16:05:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKSMQ4298001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKSMQ4298001"
+        },
+        "optional_ok": {
+          "status": {
+            "allowed": [
+              "active",
+              "all",
+              null
+            ]
+          }
+        },
+        "_comment": "The fetch is on the savings account; frequency has no filter input on this tool, so the narrowing is applied to the answer, not the call."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Turn 1 asks for the subscriptions (mandates) on the savings account; turn 2 narrows the answer to the monthly ones. The assistant fetches show_mandates for TKSMQ4298001 and then, honouring the narrowing, lists ONLY the monthly-frequency mandates: Netflix (INR 649) and FitPro Gym (INR 999). The yearly LIC Premium (INR 12,400) and the quarterly locker rent (INR 4,500) must be excluded from the final answer despite being in the same fetch. Reporting all four as the answer fails the correction."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the final answer lists ONLY the monthly mandates (Netflix INR 649, FitPro Gym INR 999) and drops the yearly/quarterly ones despite the turn-1 fetch having returned all of them; FAIL if the answer re-presents the LIC yearly or locker quarterly mandates."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,227 @@
+{
+  "case_id": "csc.request_duplicate_statement.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "FILTER-TRAP: customer asks for duplicate statement of savings account for August 2026. But the disputed charge is on the current account. Querying only savings account hides the needed current account statement.",
+  "setup": {
+    "persona": "52-year-old male, Shop Attendant, urban Amravati, Maharashtra",
+    "current_date": "2026-10-10",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0347",
+      "full_name": "Salim Sheikh",
+      "date_of_birth": "1974-04-11",
+      "gender": "male",
+      "customer_since": "2015-09-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3947",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Amravati",
+        "state": "Maharashtra",
+        "pincode": "653947",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Amravati",
+        "state": "Maharashtra",
+        "pincode": "653947",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2712X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDS9700001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKRDS9700002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDS9700003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_details",
+    "request_duplicate_statement",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a duplicate statement for my savings account — August 2026. I'm disputing a charge and need the proof."
+    },
+    {
+      "content": "Go ahead — request it for the current account then."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKRDS9700001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Salim Sheikh",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-16"
+        },
+        {
+          "account_id": "TKRDS9700002",
+          "account_type": "current",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Salim Sheikh",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2023-03-01"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "The disputed charge was on the current account.",
+      "records": [
+        {
+          "date": "2026-08-22T11:30:00",
+          "amount": 28500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-RDS-00001",
+          "transaction_note": "POS - ELECTRONICS STORE",
+          "status": "success",
+          "running_balance": 275000
+        }
+      ]
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-STMT-RDS970",
+        "status": "success",
+        "message": "Duplicate statement requested."
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKRDS9700001",
+            "TKRDS9700002"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKRDS9700002"
+        }
+      },
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKRDS9700002",
+          "from_date": "2026-08-01",
+          "to_date": "2026-08-31"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKRDS9700001",
+            "TKRDS9700002"
+          ]
+        },
+        "_comment": "Must check both accounts."
+      },
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKRDS9700002"
+        },
+        "_comment": "Disputed charge is on current account."
+      },
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKRDS9700002"
+        },
+        "_comment": "Issue statement for current account where charge actually is."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_account_details",
+        "get_transaction_history"
+      ],
+      [
+        "get_transaction_history",
+        "request_duplicate_statement"
+      ]
+    ],
+    "expected_resolution": "Customer asks for savings account statement but the disputed charge was on the current account. The assistant must check both accounts' transaction histories, identify the correct account, and request the statement for the current account. Issuing for wrong account fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "discovers disputed charge is on current account and requests statement for correct account. Issuing for savings fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

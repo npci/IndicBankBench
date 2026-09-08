@@ -1,0 +1,198 @@
+{
+  "case_id": "acct.get_transaction_history.contradicting_info.006",
+  "axis": "5_contradicting_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'show me NEFT transactions from August' looking for a vendor payment. The Rs 45,000 vendor payment they're looking for was made via IMPS in August — NOT NEFT. A channel=NEFT + from_date/to_date=Aug filter hides the IMPS payment entirely. But the same vendor also debited Rs 12,000 via NEFT in August — a different transaction that looks like the vendor payment but isn't. Broad query (all channels) reveals the actual IMPS payment.",
+  "setup": {
+    "persona": "32-year-old male, Door to Door and Telephone Sales Persons, rural Tirunelveli, Tamil Nadu",
+    "current_date": "2026-09-05",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0242",
+      "full_name": "Magesh Kumar",
+      "date_of_birth": "1994-10-15",
+      "gender": "male",
+      "customer_since": "2021-01-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2641",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "82 College Road",
+        "line2": "Koregaon Park",
+        "city": "Tirunelveli",
+        "state": "Tamil Nadu",
+        "pincode": "692641",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "82 College Road",
+        "line2": "Koregaon Park",
+        "city": "Tirunelveli",
+        "state": "Tamil Nadu",
+        "pincode": "692641",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0755X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9691001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9691002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I paid my vendor Rs 45,000 in August. It was an online transfer — show me the NEFT transactions from August so I can confirm it went through."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP (channel+date combo): customer asks for 'NEFT transactions from August'. The actual vendor payment (Rs 45,000, Aug 18) was via IMPS — NOT NEFT. A channel=NEFT + Aug date range filter returns only the Rs 12,000 NEFT to the same vendor (a partial amount) and misses the main Rs 45,000 IMPS payment. The customer would see the Rs 12,000 and think it's wrong. Broad query (all channels) reveals the actual IMPS payment of Rs 45,000.",
+      "records": [
+        {
+          "date": "2026-08-28T10:00:00",
+          "amount": 15000,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9690004",
+          "transaction_note": "UPI - AMAZON PURCHASE",
+          "status": "success",
+          "running_balance": 76000
+        },
+        {
+          "date": "2026-08-22T15:00:00",
+          "amount": 12000,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-9690003",
+          "transaction_note": "NEFT - DIGITAL SOLUTIONS PVT LTD - ADVANCE",
+          "status": "success",
+          "running_balance": 91000
+        },
+        {
+          "date": "2026-08-18T11:00:00",
+          "amount": 45000,
+          "type": "debit",
+          "channel": "imps",
+          "reference_id": "TXN-9690002",
+          "transaction_note": "IMPS - DIGITAL SOLUTIONS PVT LTD - INVOICE #4521",
+          "status": "success",
+          "running_balance": 103000
+        },
+        {
+          "date": "2026-08-05T09:00:00",
+          "amount": 92000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-9690001",
+          "transaction_note": "NEFT - SALARY AUGUST 2026 TECHSYS INDIA",
+          "status": "success",
+          "running_balance": 148000
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFTB9691001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFTB9691001"
+        },
+        "_comment": "Broad query (no channel filter) returns all August transactions including the IMPS payment of Rs 45,000 (TXN-9690002). A channel=NEFT + Aug date range filter hides the IMPS payment — only showing the Rs 12,000 NEFT advance which is a different payment to the same vendor."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks to see 'NEFT transactions from August' to confirm a Rs 45,000 vendor payment. The actual payment (TXN-9690002) was made via IMPS on Aug 18 — NOT NEFT. There IS an NEFT debit to the same vendor (TXN-9690003, Rs 12,000 on Aug 22) which is a different advance payment. A NEFT+August filter shows only the Rs 12,000 — making it look like the Rs 45,000 payment failed. The assistant must query broadly and identify the Rs 45,000 IMPS payment as the one the customer is looking for, correcting the channel assumption. Showing only the Rs 12,000 NEFT without finding the IMPS payment fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries transactions broadly (no channel filter) and identifies the Rs 45,000 vendor payment (TXN-9690002, Aug 18, IMPS), correcting the customer's assumption that it was via NEFT. Showing only the NEFT-filtered results without finding the IMPS payment fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,427 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.long_context.001",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 key evidence buried in long prior history among distractor products. The customer holds a Rs 5,00,000 FD (the 'flat downpayment'), a Rs 1,00,000 FD (travel) and an RD. Early in the conversation the customer identified the downpayment FD as the Rs 5 lakh one; six turns of unrelated chatter follow. The live ask is 'if I closed the downpayment FD today, what would I get?' The model must recall which FD was the downpayment one (Rs 5 lakh, by amount), pull the quote for only that FD, and ignore the two distractor products. The careless failure: quoting the most recently mentioned FD (the travel one, discussed last) or quoting both as if the question were ambiguous.",
+  "setup": {
+    "persona": "28-year-old male, Sub-Inspector, Police, rural Gaya, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0489",
+      "full_name": "Shankar Paswan",
+      "date_of_birth": "1998-08-17",
+      "gender": "male",
+      "customer_since": "2019-11-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1463",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Gaya",
+        "state": "Bihar",
+        "pincode": "901463",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Gaya",
+        "state": "Bihar",
+        "pincode": "901463",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4630X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDQL001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDDQL003",
+          "type": "fd",
+          "label": "TK Fixed Deposit"
+        },
+        {
+          "product_id": "TKFDDQL004",
+          "type": "fd",
+          "label": "TK Fixed Deposit"
+        },
+        {
+          "product_id": "TKRDDQL005",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCDQL002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I'm saving for a flat downpayment — the Rs 5,00,000 FD. When does it mature?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p0",
+            "type": "function",
+            "function": {
+              "name": "get_fd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKFDDQL003"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p0",
+        "content": "{\"deposits\": [{\"deposit_id\": \"TKFDDQL003\", \"principal_amount\": 500000, \"interest_rate\": 6.5, \"tenure_months\": 24, \"start_date\": \"2025-06-01\", \"maturity_date\": \"2027-06-01\", \"maturity_amount\": 568819, \"payout_type\": \"cumulative\", \"status\": \"active\", \"maturity_instruction\": \"no_renewal\", \"payout_account\": \"TKDQL001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your Rs 5,00,000 FD (TKFDDQL003) matures on 2027-06-01, with a projected value of Rs 5,68,819."
+      },
+      {
+        "role": "user",
+        "content": "And what rate is the other one getting?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_fd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKFDDQL004"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"deposits\": [{\"deposit_id\": \"TKFDDQL004\", \"principal_amount\": 100000, \"interest_rate\": 6.5, \"tenure_months\": 12, \"start_date\": \"2026-01-10\", \"maturity_date\": \"2027-01-10\", \"maturity_amount\": 106660, \"payout_type\": \"cumulative\", \"status\": \"active\", \"maturity_instruction\": \"no_renewal\", \"payout_account\": \"TKDQL001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "The Rs 1,00,000 FD earns 6.5% and matures 2027-01-10 at Rs 1,06,735."
+      },
+      {
+        "role": "user",
+        "content": "Can I extend that one?"
+      },
+      {
+        "role": "assistant",
+        "content": "You can set a renewal instruction on it, or close it and re-book at the current rate. Update_deposit_renewal would let you choose to renew the principal at maturity."
+      },
+      {
+        "role": "user",
+        "content": "And the recurring deposit — how's that going?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p2",
+            "type": "function",
+            "function": {
+              "name": "get_rd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKRDDQL005"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p2",
+        "content": "{\"deposits\": [{\"deposit_id\": \"TKRDDQL005\", \"monthly_installment\": 5000, \"installments_paid\": 6, \"total_deposited\": 30000, \"interest_rate\": 6.75, \"tenure_months\": 24, \"start_date\": \"2026-02-05\", \"next_debit_date\": \"2026-09-05\", \"maturity_date\": \"2028-02-05\", \"maturity_amount\": 128762, \"status\": \"active\", \"maturity_instruction\": \"no_renewal\", \"payout_account\": \"TKDQL001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your RD of Rs 5,000/month is on track — 6 of 24 installments paid (Rs 30,000 saved), and the next debit is on 5 September."
+      },
+      {
+        "role": "user",
+        "content": "Good, leave the RD alone. I'm thinking about the travel fund — the Rs 1,00,000 one — but I won't touch it either."
+      },
+      {
+        "role": "assistant",
+        "content": "Understood — both the downpayment FD and the travel FD are untouched."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "If I closed the downpayment FD today, what would I actually get back?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDDQL003",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-06-01",
+          "maturity_date": "2027-06-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDQL001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDQL004",
+          "principal_amount": 100000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2026-01-10",
+          "maturity_date": "2027-01-10",
+          "maturity_amount": 106660,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDQL001"
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Downpayment FD (TKFDDQL003): 14m16d run Jun 2025–Aug 2026, 1-3y slab 6.5% -> accrued 39341, penalty 1% of 500000 = 5000, payout 534341, effective 5.67.",
+      "records": [
+        {
+          "deposit_id": "TKFDDQL003",
+          "principal_amount": 500000,
+          "accrued_interest": 39341,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "effective_rate": 5.67,
+          "estimated_payout": 534341
+        },
+        {
+          "deposit_id": "TKFDDQL004",
+          "principal_amount": 100000,
+          "accrued_interest": 3615,
+          "penalty_rate": 1.0,
+          "penalty_amount": 1000,
+          "effective_rate": 4.36,
+          "estimated_payout": 102615
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDDQL005",
+          "monthly_installment": 5000,
+          "installments_paid": 6,
+          "total_deposited": 30000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2026-02-05",
+          "next_debit_date": "2026-09-05",
+          "maturity_date": "2028-02-05",
+          "maturity_amount": 128762,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDQL001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDDQL003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional safety net. The recency trap (right deposit) is enforced on the get_deposit_closure_quote args (pinned to TKFDDQL003), so the state read is NOT a required pipeline step — a model that goes straight to the quote with the right id is not failing the axis-8 trap."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDDQL003"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer's long history identified the Rs 5,00,000 FD as the 'downpayment' one and the Rs 1,00,000 FD as the 'travel' one, with the travel FD discussed most recently. The live turn asks to close the DOWNPAYMENT FD. The assistant must recall that the downpayment FD is the Rs 5,00,000 one (TKFDDQL003), fetch the closure quote (surfacing the FD state first is fine but not required), and report the payout: about Rs 5,34,341 (Rs 5,00,000 principal + Rs 39,341 interest earned to date − Rs 5,000 premature-closure charge). Quoting the travel FD (Rs 1,00,000, Rs 1,02,615 payout) — the most recently discussed one — is the careless recency failure; quoting the RD is the distractor failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant identifies the downpayment FD as the Rs 5,00,000 one (TKFDDQL003) from the history, fetches its quote, and reports the payout (about Rs 5,34,341) — not the travel FD or the RD. Quoting the wrong deposit or reporting a payout from the stale conversation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

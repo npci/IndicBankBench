@@ -1,0 +1,201 @@
+{
+  "case_id": "acct.get_account_details.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks 'check my salary account details — I want to confirm the IFSC for an incoming wire'. The salary account is active with IFSC TKBK0001234. But the SAVINGS account (not queried) is DORMANT — a critical status the customer should know about. An account_ids filter for only the salary account hides the dormant savings account. Broad query reveals the dormancy risk.",
+  "setup": {
+    "persona": "41-year-old female, No Occupation / Retired / Homemaker, urban Yavatmal, Maharashtra",
+    "current_date": "2026-08-10",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0156",
+      "full_name": "Dhuri Ahire",
+      "date_of_birth": "1985-04-01",
+      "gender": "female",
+      "customer_since": "2015-01-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9475",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Yavatmal",
+        "state": "Maharashtra",
+        "pincode": "219475",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Yavatmal",
+        "state": "Maharashtra",
+        "pincode": "219475",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0585X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9453001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9453002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9453003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to give someone my IFSC for a wire transfer — check my salary account details and tell me the IFSC and branch."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about salary account details. The salary account (TKFTB9453001, IFSC TKBK0001234) is active and fine. But the SAVINGS account (TKFTB9453002) has status DORMANT — a critical issue the customer should know about. An account_ids filter for only the salary account hides the dormant savings account. Broad query reveals the dormancy warning.",
+      "records": [
+        {
+          "account_id": "TKFTB9453001",
+          "account_type": "salary",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Dhuri Ahire",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2020-01-20"
+        },
+        {
+          "account_id": "TKFTB9453002",
+          "account_type": "savings",
+          "status": "dormant",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Dhuri Ahire",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2019-06-15"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKFTB9453001",
+            "TKFTB9453002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFTB9453001",
+                "TKFTB9453002"
+              ],
+              [
+                "TKFTB9453002",
+                "TKFTB9453001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both accounts — filtering only the salary account hides the dormant savings account that needs the customer's attention."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for salary account IFSC. The salary account (TKFTB9453001) is active with IFSC TKBK0001234 — that part is straightforward. But the savings account (TKFTB9453002) is DORMANT — a critical status the customer should be warned about. The assistant must query both accounts, provide the IFSC, and flag the dormant savings account. Reporting only the salary account details without surfacing the dormant savings account fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "provides the salary account IFSC (TKBK0001234) AND surfaces the dormant savings account (TKFTB9453002) as a matter requiring attention. Answering only the IFSC question without flagging the dormant account fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

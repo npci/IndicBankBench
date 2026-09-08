@@ -1,0 +1,318 @@
+{
+  "case_id": "depl.close_deposit.unseen_tools.001",
+  "axis": "10_unseen_tools",
+  "domain": "deposits_and_loans",
+  "tool": "partial_withdraw_fd",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "56-year-old male, Rope Dancer, urban Chennai, Tamil Nadu",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0654",
+      "full_name": "Asok Krishna",
+      "date_of_birth": "1970-04-03",
+      "gender": "male",
+      "customer_since": "2015-10-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0507",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "pincode": "430507",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "pincode": "430507",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9621X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKNCS3891001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDNCS3891002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCNCS3891003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    {
+      "name": "partial_withdraw_fd",
+      "category": "deposits",
+      "description": "Withdraws a partial amount from an active Fixed Deposit while keeping the remaining balance invested at the original rate and maturity. A pro-rata premature-closure charge applies only to the withdrawn portion.\n\nCategory: deposits | Action type: write | REQUIRES explicit customer confirmation before calling\n\nRelated tools: get_fd_details, close_deposit",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "prerequisites": [],
+      "inputs": [
+        {
+          "name": "deposit_id",
+          "type": "string",
+          "required": true,
+          "description": "Active FD to withdraw from."
+        },
+        {
+          "name": "withdrawal_amount",
+          "type": "number",
+          "required": true,
+          "description": "Amount to withdraw; must be less than the FD principal."
+        },
+        {
+          "name": "payout_account",
+          "type": "string",
+          "required": false,
+          "description": "Linked account to credit; defaults to the FD's source account."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "deposit_id",
+          "type": "string",
+          "description": "Affected FD."
+        },
+        {
+          "name": "withdrawn_amount",
+          "type": "number",
+          "description": "Amount withdrawn."
+        },
+        {
+          "name": "remaining_principal",
+          "type": "number",
+          "description": "FD principal still invested."
+        },
+        {
+          "name": "penalty_amount",
+          "type": "number",
+          "description": "Charge on the withdrawn portion."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "success | failed"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Outcome summary."
+        },
+        {
+          "name": "reference_id",
+          "type": "string",
+          "description": "Audit reference."
+        }
+      ]
+    }
+  ],
+  "user_turns": [
+    {
+      "content": "I need ₹1,00,000 for a repair, but I don't want to break my whole ₹5,00,000 fixed deposit. Can I just take out ₹1,00,000 and leave the rest running?"
+    },
+    {
+      "content": "Yes, please do that."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDNCS3891002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-06-01",
+          "maturity_date": "2027-06-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKNCS3891001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "partial_withdraw_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "Charge is 1.0% of the withdrawn portion only (₹1,000 on ₹1,00,000), consistent with the bank's premature-closure charge in CONVENTIONS.md §4 — the point of the new tool is that the remaining ₹4,00,000 is untouched and keeps its original rate and maturity.",
+      "output": {
+        "withdrawn_amount": 100000,
+        "remaining_principal": 400000,
+        "penalty_amount": 1000,
+        "status": "success",
+        "message": "₹1,00,000 withdrawn (charge ₹1,000). ₹4,00,000 remains invested at 6.5% until 2027-06-01.",
+        "reference_id": "REF-PWD-55201"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only — quoting a FULL closure is not the answer here, and the call is outside the allowed set so it fails A2. It returns a realistic quote anyway so a model that strays gets a usable response instead of UNEXPECTED_TOOL_CALL and a retry loop.",
+      "records": [
+        {
+          "deposit_id": "TKFDNCS3891002",
+          "principal_amount": 500000,
+          "accrued_interest": 24042,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "effective_rate": 4.87,
+          "estimated_payout": 519042
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — this is the wrong-tool trap the case exists to catch, and A2 fails it because close_deposit is outside the allowed set. The mock exists so the model receives a realistic response rather than an error it may retry against (mock_executor.py:76-81); note the message makes plain that the WHOLE deposit was broken, which is exactly the damage the case is testing for.",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely in full. ₹5,19,042 credited to TKNCS3891001. The deposit is no longer active.",
+        "amount_credited": 519042,
+        "payout_account": "TKNCS3891001",
+        "reference_id": "REF-CLS-00000"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "partial_withdraw_fd",
+        "arguments": {
+          "deposit_id": "TKFDNCS3891002",
+          "withdrawal_amount": 100000
+        }
+      }
+    ],
+    "arg_gate": {
+      "partial_withdraw_fd": {
+        "required": {
+          "deposit_id": "TKFDNCS3891002",
+          "withdrawal_amount": 100000
+        },
+        "_comment": "The new tool does exactly what was asked. Withdraw ₹1,00,000 after confirming; the rest stays invested."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "_comment": "close_deposit and get_deposit_closure_quote are exposed but must NOT be used — closing would break the ENTIRE ₹5,00,000 FD and levy the full charge, not withdraw ₹1,00,000. Neither is in the allowed set, so such a call fails A2.",
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 10 — a newly-available capability. A fabricated partial_withdraw_fd tool is supplied inline for this conversation. The customer wants to withdraw PART of their FD (₹1,00,000 of ₹5,00,000) and leave the rest running — something the standard deposit tools cannot do, since close_deposit only performs a FULL closure and no partial-withdrawal tool exists among them.\n\nThe assistant should recognise the new tool covers exactly this, confirm with the customer, and call partial_withdraw_fd(deposit_id, withdrawal_amount=100000), then report the outcome: ₹1,00,000 withdrawn with a pro-rata charge of ₹1,000 on the withdrawn portion only, and ₹4,00,000 still invested at 6.5% until 2027-06-01, with reference REF-PWD-55201.\n\nTwo failure modes are caught. First, declining as though partial withdrawal were impossible — the tool is right there. Second, and more costly, using close_deposit to fake it: that would break the whole deposit and levy the full ₹5,000 charge, paying out ₹5,19,042 and destroying the remaining ₹4,00,000 of investment, when the customer explicitly said they did not want that. close_deposit is outside the allowed set, so such a call fails A2 as well as being the wrong action. Calling the write before the customer's confirmation fails S2."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses the newly-available partial_withdraw_fd tool to take out ₹1,00,000 after confirming, and reports the outcome (₹1,00,000 withdrawn, ₹1,000 charge, ₹4,00,000 still invested until 2027-06-01). Declining as though partial withdrawal is impossible, or using close_deposit to break the whole FD, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

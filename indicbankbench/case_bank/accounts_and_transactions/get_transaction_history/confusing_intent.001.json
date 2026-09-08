@@ -1,0 +1,197 @@
+{
+  "case_id": "acct.get_transaction_history.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: 'Did my salary come in this month?' never says 'transaction history' — it maps to get_transaction_history on the salary account, looking for the credit. 'My salary' implies the salary account (TKKZJ9782001). The model should infer, query (ideally filtered to credits or scanned), find the salary credit, and answer yes with the amount/date — without over-clarifying.",
+  "setup": {
+    "persona": "44-year-old female, No Occupation / Retired / Homemaker, rural Amreli, Gujarat",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0615",
+      "full_name": "Mira Khokhar",
+      "date_of_birth": "1982-12-12",
+      "gender": "female",
+      "customer_since": "2023-10-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4127",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "48 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Amreli",
+        "state": "Gujarat",
+        "pincode": "224127",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "48 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Amreli",
+        "state": "Gujarat",
+        "pincode": "224127",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4047X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKZJ9782001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKKZJ9782002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKZJ9782003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "block_card",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Hey, did my salary actually come through this month?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "If the model filters type=credit, the executor returns only the credit row (the salary). If it passes type=all/omitted, it gets all and must pick out the salary itself. Either path should find the INR 85,000 salary credit on 2026-03-12. All entries `status: success` — settled historical transactions. `status` is promised in get_transaction_history's description but is newer than every fixture, and S3 cannot enforce it (transactions.items has no `required` list), so it is mandatory by convention and test only (CONVENTIONS.md §13).",
+      "records": [
+        {
+          "date": "2026-03-14T19:20:00",
+          "amount": 1240,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI884210",
+          "transaction_note": "SWIGGY ORDER 8842",
+          "status": "success",
+          "running_balance": 88612
+        },
+        {
+          "date": "2026-03-12T10:05:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT770021",
+          "transaction_note": "SALARY MAR26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 89852
+        },
+        {
+          "date": "2026-03-11T08:30:00",
+          "amount": 2499,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI773310",
+          "transaction_note": "AIRTEL POSTPAID BILL",
+          "status": "success",
+          "running_balance": 4852
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKKZJ9782001",
+          "type": "credit"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKKZJ9782001"
+        },
+        "forbidden_ids": [
+          "TKKZJ9782002"
+        ],
+        "optional_ok": {
+          "type": {
+            "allowed": [
+              "credit",
+              "all",
+              null
+            ]
+          }
+        },
+        "_comment": "'My salary' -> the salary account TKKZJ9782001. Filtering to credits is ideal but scanning all is acceptable. Must not query the Business Current account."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks whether their salary came through this month, without naming a tool or the word 'transactions'. The assistant should infer this is a transaction-history lookup on the salary account (TKKZJ9782001), find the salary credit — INR 85,000 credited on 2026-03-12 via NEFT ('SALARY MAR26 ACME CORP PAYROLL') — and answer directly: yes, it came in, with the amount and date. It should NOT over-clarify ('which account / what do you mean by salary?') — the mapping is clear — and must not invent a figure; the amount and date must match the tool output. Reporting the salary as anything other than a credit, or querying the wrong account, are failures."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the yes/no directly (salary DID come in) with the correct amount (INR 85,000) and date (2026-03-12); does not over-clarify and does not invent/misstate the figure."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_clarify"
+    ]
+  }
+}

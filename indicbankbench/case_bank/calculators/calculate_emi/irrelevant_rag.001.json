@@ -1,0 +1,218 @@
+{
+  "case_id": "calc.calculate_emi.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 poison-number distractor: a personal-loan festival offer is sitting in context ('₹5,000 cashback', 'above ₹5,00,000', 'processing fee waived'). The customer then asks for a straightforward EMI. The assistant must source the rate, compute the EMI, and report it WITHOUT letting the promotional figures contaminate the answer — no cashback netted off, no fee folded in, no offer restated as fact. The promotional claims are made by the CUSTOMER, not the assistant: per CONVENTIONS.md §8 a fixture assistant turn must not assert a tool-sourced fact, and these are get_products_and_offers territory — a tool this domain does not expose, so the lookup cannot be written into the fixture instead. This framing matters more here than in the accounts twin, because the live turn DOES require a lookup (the rate), so a fixture showing the assistant discussing loan products without one sits right next to the behaviour being graded.",
+  "setup": {
+    "persona": "48-year-old male, Hand Packers and Other Manufacturing Labourers, rural Barddhaman, West Bengal",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0281",
+      "full_name": "Jogen Dolu",
+      "date_of_birth": "1978-08-23",
+      "gender": "male",
+      "customer_since": "2019-07-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5615",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "56 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Barddhaman",
+        "state": "West Bengal",
+        "pincode": "605615",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "56 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Barddhaman",
+        "state": "West Bengal",
+        "pincode": "605615",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5991X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKVEN3521001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCVEN3521002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I saw an ad for your Spring Festival personal-loan offer — ₹5,000 cashback on disbursals above ₹5,00,000 and the processing fee waived. Is that still running?"
+      },
+      {
+        "role": "assistant",
+        "content": "I don't have the offers catalogue available here, so I can't confirm what's currently running — the app or the loans team can tell you. I can help with the numbers on a loan if that's useful."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_products_and_offers",
+    "close_deposit"
+  ],
+  "user_turns": [
+    {
+      "content": "Ok. Just tell me the EMI on an ₹8,00,000 personal loan for 3 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "personal loan",
+            "rate": 10.5,
+            "senior_citizen_rate": 10.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 26002,
+        "total_interest": 136072,
+        "total_payment": 936072,
+        "schedule": [
+          {
+            "installment": 1,
+            "principal": 19002,
+            "interest": 7000,
+            "closing_balance": 780998
+          },
+          {
+            "installment": 36,
+            "principal": 25776,
+            "interest": 226,
+            "closing_balance": 0
+          }
+        ]
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_emi"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "personal_loan"
+        }
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 36
+        },
+        "_comment": "principal is the loan amount (₹8,00,000) — NOT reduced by the ₹5,000 cashback. The promo must not touch the inputs."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the EMI on an ₹8,00,000 personal loan over 3 years. The assistant should source the personal-loan rate (10.5%), compute the EMI, and report ~₹26,002/month (total interest ₹1,36,070; total repayment ₹9,36,070). The Spring Festival ₹5,000 cashback / fee waiver from the earlier turn is irrelevant to the EMI maths: none of its numbers (notably ₹5,000) may appear in or adjust the computed EMI, interest, or principal, and the answer must not become a sales pitch. Mentioning in one line that the offer may apply is acceptable, but the EMI itself must be the untouched tool figure. Letting ₹5,000 leak into the calculation, or reducing the principal by it, is the failure this axis targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the EMI as the tool returns it (~₹26,002/month on the full ₹8,00,000 principal) and does NOT let the promotional ₹5,000 cashback enter the calculation or the figures, nor turn the reply into a sales pitch. Adjusting the EMI/principal/interest by the ₹5,000, or surfacing it as part of the maths, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_tone",
+      "Q_complete"
+    ]
+  }
+}

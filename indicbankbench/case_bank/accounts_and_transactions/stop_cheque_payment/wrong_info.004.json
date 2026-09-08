@@ -1,0 +1,231 @@
+{
+  "case_id": "acct.stop_cheque_payment.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "FILTER-TRAP: customer asks to stop cheque 554321 on the savings account. But that cheque was drawn on the CURRENT account. If model queries only the savings account, cheque not found. Must query both accounts' transaction histories to find the cheque.",
+  "setup": {
+    "persona": "22-year-old male, No Occupation / Retired / Homemaker, rural West Garo Hills, Meghalaya",
+    "current_date": "2026-10-07",
+    "current_time": "12:00",
+    "login_context": {
+      "customer_id": "SCN0186",
+      "full_name": "Sengrak Marak",
+      "date_of_birth": "2004-10-27",
+      "gender": "male",
+      "customer_since": "2022-09-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3041",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "82 College Road",
+        "line2": "Koregaon Park",
+        "city": "West Garo Hills",
+        "state": "Meghalaya",
+        "pincode": "773041",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "82 College Road",
+        "line2": "Koregaon Park",
+        "city": "West Garo Hills",
+        "state": "Meghalaya",
+        "pincode": "773041",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6088X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCP9500001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKSCP9500002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSCP9500003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "stop_cheque_payment",
+    "get_account_details",
+    "get_account_balance",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "Stop cheque number 554321 on my savings account — I gave it to a vendor but want to cancel."
+    },
+    {
+      "content": "Ok, go ahead — stop it on the current account then."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: cheque 554321 is on the CURRENT account, not savings. Query both to find it.",
+      "records": [
+        {
+          "date": "2026-10-05T14:00:00",
+          "amount": 75000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-554321",
+          "transaction_note": "CHEQUE 554321 - VENDOR PAYMENT",
+          "status": "pending",
+          "running_balance": 287500
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "554321",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment applied on cheque 554321.",
+        "reference_id": "REF-SCP-SCP9500"
+      }
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKSCP9500001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Sengrak Marak",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-16"
+        },
+        {
+          "account_id": "TKSCP9500002",
+          "account_type": "current",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Sengrak Marak",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2022-06-01"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKSCP9500002"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKSCP9500002",
+          "cheque_numbers": [
+            "554321"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKSCP9500002"
+        },
+        "_comment": "Must query the current account where cheque 554321 actually resides. Savings-only query misses it."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKSCP9500002",
+          "cheque_numbers": [
+            "554321"
+          ]
+        },
+        "forbidden_ids": [
+          "TKSCP9500001"
+        ],
+        "_comment": "Stop on the correct (current) account. Savings account ID must NOT be used."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "expected_resolution": "The customer believes cheque 554321 is on the savings account but it's actually drawn on the current account. The assistant must check transaction history of both accounts (or the current account), discover the cheque is on the current account, and stop it there after customer confirmation. Stopping it on the savings account where it doesn't exist fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "discovers cheque 554321 is on the current account, not savings, confirms with customer and stops on the correct account. Stopping wrong account fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

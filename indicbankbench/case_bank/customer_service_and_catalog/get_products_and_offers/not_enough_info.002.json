@@ -1,0 +1,164 @@
+{
+  "case_id": "csc.get_products_and_offers.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'show me credit card offers — I want a new card'. A type=card filter returns only card products. But there's a pre-approved LOAN offer with better immediate value and a deposit offer. Broad query surfaces all relevant financial options. The model that only queries cards misses the broader financial picture.",
+  "setup": {
+    "persona": "35-year-old female, No Occupation / Retired / Homemaker, urban Kanpur Nagar, Uttar Pradesh",
+    "current_date": "2026-08-25",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0440",
+      "full_name": "Geeta Singh",
+      "date_of_birth": "1991-10-04",
+      "gender": "female",
+      "customer_since": "2021-09-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0349",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Kanpur Nagar",
+        "state": "Uttar Pradesh",
+        "pincode": "960349",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "70 College Road",
+        "line2": "Alkapuri",
+        "city": "Kanpur Nagar",
+        "state": "Uttar Pradesh",
+        "pincode": "960349",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5331X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9479001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9479002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a new credit card — what card offers do you have for me?"
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for card offers. A type=card filter returns only the credit card product. But a pre-approved personal loan (OFF-PL-7901, up to Rs 3,00,000) and a deposit offer exist — the customer may benefit from these alternatives. Narrow query hides the loan and deposit opportunities. Broad query surfaces all options.",
+      "records": [
+        {
+          "id": "PRD-CC-5001",
+          "title": "TK Platinum Credit Card",
+          "type": "card",
+          "description": "Premium credit card with airport lounge access, 2% cashback on all spends."
+        },
+        {
+          "id": "OFF-PL-7901",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Pre-approved personal loan up to Rs 3,00,000. Instant disbursal to savings account.",
+          "valid_till": "2026-10-15"
+        }
+      ]
+    },
+    "get_insurance_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Broad query without type filter. A type=card filter returns only the credit card, hiding the pre-approved personal loan. The model must query broadly and surface all relevant financial products."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for credit card offers. The bank offers the TK Platinum Credit Card. The assistant should query broadly and ALSO surface the pre-approved personal loan offer (OFF-PL-7901, up to Rs 3,00,000, valid till Oct 15) as a relevant financial option. Reporting only the credit card without the pre-approved loan fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports credit card product AND surfaces the pre-approved loan offer (OFF-PL-7901) as a relevant financial option. Reporting only the card without the loan offer fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

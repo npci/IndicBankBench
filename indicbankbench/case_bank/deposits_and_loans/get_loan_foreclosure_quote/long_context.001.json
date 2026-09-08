@@ -1,0 +1,234 @@
+{
+  "case_id": "depl.get_loan_foreclosure_quote.long_context.001",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale foreclosure quote (EMI paid since prior, outstanding reduced). Prior round: get_loan_foreclosure_quote returned total_payoff Rs 32,71,540 on outstanding Rs 32,00,000. Since then one EMI of Rs 31,847 auto-debited — live outstanding is now Rs 31,75,743, so live total_payoff is lower (roughly Rs 32,46,500). The customer now asks 'what's the payoff to close my loan?' — a model that trusts stale prior says Rs 32,71,540 fails A1. A model that re-fetches gets the lower payoff → PASS.",
+  "setup": {
+    "persona": "25-year-old female, Physiotherapist, rural Banswara, Rajasthan",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0655",
+      "full_name": "Leela Bai",
+      "date_of_birth": "2001-10-13",
+      "gender": "female",
+      "customer_since": "2021-08-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2809",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Banswara",
+        "state": "Rajasthan",
+        "pincode": "812809",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Banswara",
+        "state": "Rajasthan",
+        "pincode": "812809",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3866X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD65990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLN65990002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD65990003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I'm thinking about foreclosing my home loan. What would it cost as of today?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "fq1",
+            "type": "function",
+            "function": {
+              "name": "get_loan_foreclosure_quote",
+              "arguments": {
+                "loan_ids": [
+                  "TKLN65990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "fq1",
+        "content": "{\"quotes\":[{\"loan_id\":\"TKLN65990002\",\"outstanding_principal\":3200000,\"accrued_interest\":7540,\"foreclosure_charges\":64000,\"total_payoff\":3271540}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "The total payoff to close your home loan today would be Rs 32,71,540. That breaks down into Rs 32,00,000 outstanding, Rs 7,540 accrued interest since the last EMI, and Rs 64,000 foreclosure charges (2% of outstanding)."
+      },
+      {
+        "role": "user",
+        "content": "That's steep. I want to wait until after August EMI clears — that should bring it down a bit."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_loan_foreclosure_quote",
+    "get_loan_details",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Has the August EMI gone through? What's the new foreclosure payoff?"
+    }
+  ],
+  "mock": {
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "The August EMI of Rs 31,847 auto-debited on 5 August, reducing outstanding from Rs 32,00,000 to Rs 31,75,743. Accrued interest since the 5 Aug EMI (15 days): 3175743 x 8.6% x 15/365 = 11222. Foreclosure charges 2% of Rs 31,75,743 = 63515. Total payoff = 3175743 + 11222 + 63515 = 3250480.",
+      "records": [
+        {
+          "loan_id": "TKLN65990002",
+          "outstanding_principal": 3175743,
+          "accrued_interest": 11222,
+          "foreclosure_charges": 63515,
+          "total_payoff": 3250480
+        }
+      ]
+    },
+    "get_loan_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0,
+        "schedule": []
+      },
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "TKLN65990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_foreclosure_quote": {
+        "required": {
+          "loan_ids": [
+            "TKLN65990002"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-fetch the foreclosure quote live. Prior showed total_payoff Rs 32,71,540 but the August EMI auto-debited — live shows Rs 32,50,480."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — model may also read loan details to confirm the outstanding change."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior foreclosure quote showed total_payoff Rs 32,71,540 based on the pre-August-EMI outstanding of Rs 32,00,000. Since then the August EMI of Rs 31,847 was auto-debited on 5 August, reducing the outstanding to Rs 31,75,743. The live quote now shows a lower total payoff of about Rs 32,50,480.\n\nThe correct move is to re-fetch get_loan_foreclosure_quote live and present the updated payoff. Quoting the stale Rs 32,71,540 without a live call is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_loan_foreclosure_quote live, discovers the updated payoff of about Rs 32,50,480 (not the stale Rs 32,71,540), and reports the new figures. Quoting old numbers without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

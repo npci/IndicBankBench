@@ -1,0 +1,407 @@
+{
+  "case_id": "acct.get_account_details.long_context.001",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-extraction across a long multi-round history. The prior conversation covered balances on both accounts, a salary-account transaction dig, and the SALARY account's branch/IFSC details (Alkapuri, no nominee). The live turn finally asks for the SAVINGS account's branch, IFSC, nominee and opening date. The trap is reusing the salary account's details from context instead of fetching the savings account fresh — the figures differ (MG Road vs Alkapuri, nominee vs none). Gold stays tight: one get_account_details call pinned to the savings account id.",
+  "setup": {
+    "persona": "26-year-old male, Tool Makers and Related Workers, urban West Tripura, Tripura",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0588",
+      "full_name": "Zabed Konu",
+      "date_of_birth": "2000-07-14",
+      "gender": "male",
+      "customer_since": "2018-05-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5954",
+      "registered_email": "z*****@gmail.com",
+      "communication_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "West Tripura",
+        "state": "Tripura",
+        "pincode": "895954",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "West Tripura",
+        "state": "Tripura",
+        "pincode": "895954",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8444X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKADS8200",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKKADS8201",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKADS8202",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Good morning. I'm budgeting for the month — what are my account balances right now?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_account_balance",
+              "arguments": {
+                "account_ids": [
+                  "TKKADS8200",
+                  "TKKADS8201"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"balances\":[{\"account_id\":\"TKKADS8200\",\"available_balance\":42350.75,\"hold_amount\":0},{\"account_id\":\"TKKADS8201\",\"available_balance\":118420.1,\"hold_amount\":5000}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "You have Rs 42,350.75 available in your savings account. The salary account has Rs 1,18,420.10 available, with Rs 5,000 held."
+      },
+      {
+        "role": "user",
+        "content": "Why would my salary account have a hold on it?"
+      },
+      {
+        "role": "assistant",
+        "content": "A hold usually corresponds to a pending transaction or a lien the bank has placed. I can check your recent salary account transactions to see what might be behind it."
+      },
+      {
+        "role": "user",
+        "content": "Please do. Past two weeks is fine."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p2",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_history",
+              "arguments": {
+                "account_id": "TKKADS8201",
+                "limit": 3
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p2",
+        "content": "{\"transactions\":[{\"date\":\"2026-08-09T19:42:00\",\"amount\":2499,\"type\":\"debit\",\"channel\":\"upi\",\"reference_id\":\"UPIKADS820001\",\"transaction_note\":\"FLIPKART RECHARGE\",\"running_balance\":123420.1,\"status\":\"success\"},{\"date\":\"2026-08-07T08:15:00\",\"amount\":4599,\"type\":\"debit\",\"channel\":\"upi\",\"reference_id\":\"UPIKADS820002\",\"transaction_note\":\"CULTFIT MEMBERSHIP\",\"running_balance\":125919.1,\"status\":\"success\"},{\"date\":\"2026-08-05T14:03:00\",\"amount\":2500,\"type\":\"credit\",\"channel\":\"upi\",\"reference_id\":\"UPIKADS820003\",\"transaction_note\":\"REFUND AIRLINE CANCELLATION\",\"running_balance\":130518.1,\"status\":\"success\"}],\"total_count\":3}"
+      },
+      {
+        "role": "assistant",
+        "content": "The three most recent salary entries are a Rs 2,499 Flipkart recharge on 9 Aug, a Rs 4,599 CultFit membership debit on 7 Aug, and a Rs 2,500 credit for an airline-cancellation refund on 5 Aug. Nothing visible there explains the hold itself — that is normal, since holds often relate to a transaction that has not posted yet."
+      },
+      {
+        "role": "user",
+        "content": "Oh, the refund thing. Fine. While you're at it — which branch do my accounts sit in these days? The salary one especially."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p3",
+            "type": "function",
+            "function": {
+              "name": "get_account_details",
+              "arguments": {
+                "account_ids": [
+                  "TKKADS8201"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p3",
+        "content": "{\"accounts\":[{\"account_id\":\"TKKADS8201\",\"account_type\":\"salary\",\"status\":\"active\",\"branch_name\":\"Alkapuri\",\"ifsc\":\"TKBK0005678\",\"holders\":[{\"name\":\"Zabed Konu\",\"role\":\"primary\"}],\"open_date\":\"2021-06-02\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your salary account is at the Alkapuri branch, IFSC TKBK0005678. It was opened on 2 Jun 2021 and has no nominee registered against it."
+      },
+      {
+        "role": "user",
+        "content": "No nominee — I should fix that someday. And my debit card got declined at a fuel pump this morning, is the card okay?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p4",
+            "type": "function",
+            "function": {
+              "name": "get_card_details",
+              "arguments": {
+                "card_ids": [
+                  "TKCKADS8202"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p4",
+        "content": "{\"cards\":[{\"card_id\":\"TKCKADS8202\",\"masked_number\":\"****8202\",\"card_type\":\"debit\",\"network\":\"rupay\",\"status\":\"active\",\"expiry\":\"09/28\",\"controls\":{\"atm\":{\"domestic\":{\"enabled\":true,\"daily_limit\":25000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":true,\"daily_limit\":40000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"pos\":{\"domestic\":{\"enabled\":true,\"daily_limit\":40000},\"international\":{\"enabled\":false,\"daily_limit\":0}}}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your RuPay debit card is active, and in-store POS usage is enabled with a Rs 40,000 daily limit — nothing in its status would block a fuel pump transaction. If it happens again I can look at the individual transaction."
+      },
+      {
+        "role": "user",
+        "content": "Weird. Okay, I have to take a call — give me a second."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Back. Where were we? I wanted my SAVINGS account details — the branch, the IFSC, whether it has a nominee, and when it was opened."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Savings = MG Road / TKBK0001234 / nominee Vivek Gupta / opened 2020-01-16. Salary = Alkapuri / TKBK0005678 / no nominee — only shown in prior context, and the model must not reuse it for the savings account.",
+      "records": [
+        {
+          "account_id": "TKKADS8200",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Zabed Konu",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2020-01-16"
+        },
+        {
+          "account_id": "TKKADS8201",
+          "account_type": "salary",
+          "status": "active",
+          "branch_name": "Alkapuri",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Zabed Konu",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2021-06-02"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKKADS8200",
+          "available_balance": 42350.75,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKKADS8201",
+          "available_balance": 118420.1,
+          "hold_amount": 5000
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-09T19:42:00",
+          "amount": 2499,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPIKADS820001",
+          "transaction_note": "FLIPKART RECHARGE",
+          "status": "success",
+          "running_balance": 123420.1
+        },
+        {
+          "date": "2026-08-07T08:15:00",
+          "amount": 4599,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPIKADS820002",
+          "transaction_note": "CULTFIT MEMBERSHIP",
+          "status": "success",
+          "running_balance": 125919.1
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCKADS8202",
+          "masked_number": "****8202",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "09/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKKADS8200"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKKADS8200"
+          ]
+        },
+        "_comment": "Must fetch the SAVINGS account specifically. account_ids is pinned to the single-element list so a model that queries both accounts, or wrongly answers from the salary account only, fails deterministically."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The long earlier conversation covered balances, salary transactions, and the SALARY account's details (Alkapuri branch, IFSC TKBK0005678, no nominee, opened 2021-06-02). The customer now asks specifically for the SAVINGS account: branch, IFSC, nominee, opening date. The assistant must call get_account_details for the savings account and report the savings-account facts — MG Road branch, IFSC TKBK0001234, nominee Vivek Gupta (Spouse), opened 2020-01-16. Repeating the salary account's Alkapuri details, or claiming the savings account has no nominee, fails: those belong to the other account. Inventing any detail fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches get_account_details for the SAVINGS account and reports MG Road branch, IFSC TKBK0001234, nominee Vivek Gupta (Spouse), opened 2020-01-16. Reusing the salary account's details (Alkapuri / no nominee) or inventing details fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

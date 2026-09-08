@@ -1,0 +1,265 @@
+{
+  "case_id": "acct.agentic.missing_refund_dispute.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history+raise_request",
+  "target_behavior": "answer",
+  "_axis_note": "GENERAL EVAL — read-then-write pipeline where the write's argument derives from the read's output. The customer believes a merchant refund never arrived. get_transaction_history must locate the original Rs 4,499 Croma purchase (TXN-6603201, 2026-02-12) and confirm no refund credit follows it; raise_request then needs that row's reference_id as related_transaction_id (category failed_transaction — the category is conditionally mandatory for it). Exercises A4 (locate before escalate), S1 (the transaction reference must be tool-sourced, never invented) and S2 (confirm before the write). Distinct from csc.agentic.dispute_unauthorized: that is an unauthorized_debit; this is a missing merchant refund, and the disputed row is stated by the customer, not a ~number to be fished out.",
+  "setup": {
+    "persona": "27-year-old female, No Occupation / Retired / Homemaker, rural Saharsa, Bihar",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0620",
+      "full_name": "Prabhavati Praveen",
+      "date_of_birth": "1999-12-20",
+      "gender": "female",
+      "customer_since": "2023-11-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9039",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Saharsa",
+        "state": "Bihar",
+        "pincode": "459039",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Saharsa",
+        "state": "Bihar",
+        "pincode": "459039",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6708X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMDR4481001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMDR4481002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "I returned a juicer to Croma last month — Rs 4,499 I'd paid from my savings account. Croma keeps saying the refund went through, but I've seen nothing land. Can you check, and raise a failed transaction complaint with the bank if the money never arrived?"
+    },
+    {
+      "content": "Yes, please raise it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "The Rs 4,499 Croma purchase (TXN-6603201, 2026-02-12) is present; no refund/credit from Croma appears anywhere after it, so the refund genuinely never arrived. running_balance chains across all five rows (see CONVENTIONS.md §13).",
+      "records": [
+        {
+          "date": "2026-03-14T19:20:00",
+          "amount": 1299,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI884210",
+          "transaction_note": "UPI PAYMENT - SWIGGY ORDER 8842",
+          "status": "success",
+          "running_balance": 105400
+        },
+        {
+          "date": "2026-03-12T10:05:00",
+          "amount": 62000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT770021",
+          "transaction_note": "SALARY MAR26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 106699
+        },
+        {
+          "date": "2026-03-02T08:30:00",
+          "amount": 1450,
+          "type": "debit",
+          "channel": "imps",
+          "reference_id": "IMPS771122",
+          "transaction_note": "IMPS RECHARGE - JIO FIBER",
+          "status": "success",
+          "running_balance": 44699
+        },
+        {
+          "date": "2026-02-12T13:45:00",
+          "amount": 4499,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-6603201",
+          "transaction_note": "POS PURCHASE - CROMA ELECTRONICS",
+          "status": "success",
+          "running_balance": 46149
+        },
+        {
+          "date": "2026-02-05T11:20:00",
+          "amount": 750,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-6551780",
+          "transaction_note": "POS PURCHASE - BIG BASKET",
+          "status": "success",
+          "running_balance": 50648
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-FT-77140",
+        "status": "open",
+        "message": "Missing merchant refund complaint logged for TXN-6603201 and routed to the merchant refunds team for verification."
+      },
+      "_comment": "category is echoed by the executor (input ∩ output name). Deliberately no promise of a refund — the message says routed for verification."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKMDR4481001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "failed_transaction",
+          "related_transaction_id": "TXN-6603201",
+          "description": "Customer reports the Rs 4,499 refund for a returned juicer (Croma, purchase TXN-6603201 on 2026-02-12) never arrived in their account.",
+          "account_id": "TKMDR4481001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKMDR4481001"
+        },
+        "_comment": "Must inspect the savings account's statement to find the purchase and confirm there is no incoming refund."
+      },
+      "raise_request": {
+        "required": {
+          "related_transaction_id": "TXN-6603201",
+          "category": "failed_transaction"
+        },
+        "_comment": "The customer asks to raise it as a failed transaction, so category is stated in the conversation and pinned. related_transaction_id stays pinned: it is knowable only via the history call, so A4 orders query-before-raise. description/account_id are unpinned — natural wording varies."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer believes the Rs 4,499 refund for the returned juicer never arrived. The assistant must pull the savings account's transaction history: the Rs 4,499 Croma purchase is there (TXN-6603201, 2026-02-12, POS) and no Croma credit appears after it, so the refund genuinely never landed. It should tell the customer that, explain it will escalate, and after their confirmation raise a failed_transaction request with related_transaction_id TXN-6603201 — that ID must come from the history record, never be invented — then report the logged request (REQ-FT-77140, open, routed to the merchant refunds team) WITHOUT promising the money back. Failing to locate the purchase first, raising without the transaction reference, disputing the wrong row, promising a refund, or raising before confirmation are failures. (Note: category failed_transaction is the diagnosis of 'the money I was told would come never arrived'; charges_dispute would be for a fee already taken.)"
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant locates the Rs 4,499 Croma purchase (TXN-6603201) via get_transaction_history, states the refund does not appear, and after confirmation raises a failed_transaction request referencing TXN-6603201 — reporting it as logged/open WITHOUT promising a refund. Not locating the transaction, raising a vague reference-less dispute, disputing the wrong row, promising the money back, or raising before confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

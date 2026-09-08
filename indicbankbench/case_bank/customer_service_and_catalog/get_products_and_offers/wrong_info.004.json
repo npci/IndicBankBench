@@ -1,0 +1,176 @@
+{
+  "case_id": "csc.get_products_and_offers.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks 'what loan products do you have?' after closing an FD. type=loan filter shows only loan products, hiding a pre-approved insurance offer (health insurance with lifetime renewability) that the customer would value. type=all reveals both loan products AND the insurance offer. Narrow type filter deprives the customer of a relevant recommendation.",
+  "setup": {
+    "persona": "55-year-old female, Checker, urban Bangalore, Karnataka",
+    "current_date": "2026-09-10",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0386",
+      "full_name": "Vimala Katakol",
+      "date_of_birth": "1971-10-05",
+      "gender": "female",
+      "customer_since": "2021-02-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0889",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "540889",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "540889",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3202X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9491001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9491002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_products_and_offers",
+    "get_deposit_loan_rates",
+    "search_knowledge_base",
+    "get_insurance_details",
+    "raise_request",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I just closed an FD and have Rs 5,00,000 sitting idle. What loan products do you offer — show me all of them? I might want to borrow against this."
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for 'loan products' → type=loan filter shows only PL-009 (personal loan) and HL-005 (home loan). Hidden behind the filter: INS-PA-003, a pre-approved health insurance with lifetime renewability at locked-in premium — exactly the kind of financial product the customer should consider alongside a loan. An 'all' or 'insurance' type query reveals this.",
+      "records": [
+        {
+          "id": "PL-009",
+          "title": "Personal Loan - Pre-approved",
+          "type": "loan",
+          "description": "Up to Rs 10,00,000 at competitive rates, pre-approved for you."
+        },
+        {
+          "id": "HL-005",
+          "title": "Home Loan Top-Up",
+          "type": "loan",
+          "description": "Top-up on existing home loan at the same rate."
+        },
+        {
+          "id": "INS-PA-003",
+          "title": "TK HealthGuard - Pre-approved",
+          "type": "insurance",
+          "description": "Health insurance with lifetime renewability, pre-approved. Locked-in premium for 3 years."
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_insurance_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "all"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "optional_ok": {
+          "type": {
+            "allowed": [
+              "all"
+            ]
+          }
+        },
+        "_comment": "Broad query (type=all or no filter) reveals both loan products AND the pre-approved health insurance offer. A type=loan filter hides the insurance product the customer would value."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks for 'loan products' after closing an FD with Rs 5,00,000 proceeds. The bank offers a Personal Loan and Home Loan Top-Up. But the catalog also has a pre-approved health insurance product (TK HealthGuard) with lifetime renewability — a valuable recommendation for someone who just received cash and is thinking about financial planning. The assistant should query broadly and surface both the loan products AND the health insurance offer. Answering with only loan products and missing the insurance recommendation fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries the catalog broadly and surfaces both loan products (Personal Loan, Home Loan Top-Up) AND the pre-approved health insurance product (TK HealthGuard), recommending it as a relevant financial product alongside the loan options. Listing only loan products without the insurance recommendation fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

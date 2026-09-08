@@ -1,0 +1,195 @@
+{
+  "case_id": "csc.get_all_requests.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap prototype: customer asks 'show me my charges disputes' because they remember disputing a fee. The charges dispute was actually filed as unauthorized_debit (the bank re-categorized it). A category=charges_dispute filter returns an unrelated old complaint but hides the actual Rs 8,500 dispute under unauthorized_debit. Broad query shows all requests including the real one. Weak model applies the filter, reports only the irrelevant charge, misses the value they need.",
+  "setup": {
+    "persona": "45-year-old female, Labourer, Agriculture, rural Dibrugarh, Assam",
+    "current_date": "2026-07-03",
+    "current_time": "09:45",
+    "login_context": {
+      "customer_id": "SCN0425",
+      "full_name": "Tarali Barbhuiya",
+      "date_of_birth": "1981-08-13",
+      "gender": "female",
+      "customer_since": "2019-10-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0455",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "56 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Dibrugarh",
+        "state": "Assam",
+        "pincode": "750455",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "56 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Dibrugarh",
+        "state": "Assam",
+        "pincode": "750455",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0603X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRF9293001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRF9293002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I disputed a big charge last month — they took Rs 8,500 from my account. Show me my charges disputes so I can find the reference number."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the Rs 8,500 dispute was actually filed as unauthorized_debit (REQ-UD-92931), NOT charges_dispute. A category=charges_dispute filter returns only an old cheque-book request that was incorrectly categorized — both are still visible, but only one is the actual dispute. The real unauthorized_debit request IS present in the full list.",
+      "static_output": {
+        "total_count": 3
+      },
+      "records": [
+        {
+          "request_id": "REQ-UD-92931",
+          "category": "unauthorized_debit",
+          "status": "in_progress",
+          "raised_date": "2026-06-18",
+          "last_updated_date": "2026-06-25",
+          "description": "Unauthorized debit of Rs 8,500 at Lenskart Online — under investigation"
+        },
+        {
+          "request_id": "REQ-CHQ-92932",
+          "category": "cheque_book",
+          "status": "resolved",
+          "raised_date": "2026-06-01",
+          "last_updated_date": "2026-06-05",
+          "description": "50-leaf cheque book — delivered"
+        },
+        {
+          "request_id": "REQ-APP-92933",
+          "category": "app_issue",
+          "status": "open",
+          "raised_date": "2026-07-01",
+          "last_updated_date": "2026-07-02",
+          "description": "Biometric login not working on new phone"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — noise tool.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Broad query — a category=charges_dispute filter returns no actual charges disputes (there are none) and hides the Rs 8,500 unauthorized_debit dispute the customer actually needs. The model must query all categories and identify the correct request."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer remembers disputing a Rs 8,500 charge under charges_dispute, but the bank filed it as unauthorized_debit (REQ-UD-92931, raised 2026-06-18, in progress). There are NO charges_dispute requests on file. The assistant must query all requests, find the Rs 8,500 dispute under unauthorized_debit, and correct the category — the request exists and is under investigation, just not under the category they assumed. Reporting 'no charges disputes found' without surfacing the unauthorized_debit one fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces the Rs 8,500 dispute (REQ-UD-92931) under unauthorized_debit, correcting that no charges_dispute exists but the actual dispute IS on file as unauthorized_debit, in progress since 2026-06-18. Saying 'nothing found' without surfacing the dispute fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,252 @@
+{
+  "case_id": "csc.agentic.dispute_wrong_category.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_transaction_history+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'dispute txn UPI-5001 as failed_transaction.' get_transaction_history shows UPI-5001 is a successful debit — not failed. It's actually an unauthorized merchant charge. Corrected category: unauthorized_debit, not failed_transaction.",
+  "setup": {
+    "persona": "31-year-old male, No Occupation / Retired / Homemaker, rural Badgam, Jammu & Kashmir",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0133",
+      "full_name": "Shabham Shamar",
+      "date_of_birth": "1995-04-09",
+      "gender": "male",
+      "customer_since": "2015-12-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2467",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Badgam",
+        "state": "Jammu & Kashmir",
+        "pincode": "722467",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "28 Nehru Street",
+        "line2": "Model Town",
+        "city": "Badgam",
+        "state": "Jammu & Kashmir",
+        "pincode": "722467",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6012X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSD9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSD9600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_card_details",
+    "get_products_and_offers",
+    "get_request_status",
+    "get_transaction_history",
+    "raise_request",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "Dispute transaction UPI-5001 — it's a failed transaction. The money was debited but the merchant says they never received it."
+    },
+    {
+      "content": "Yes, raise it as unauthorized debit — go ahead."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-23T18:30:00",
+          "amount": 28000,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI-5001",
+          "transaction_note": "PAYTM ONLINE FURNITURE — unrecognized merchant",
+          "status": "success",
+          "running_balance": 142000
+        },
+        {
+          "date": "2026-08-22T10:00:00",
+          "amount": 30000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT-88012",
+          "transaction_note": "Salary credit",
+          "status": "success",
+          "running_balance": 170000
+        }
+      ],
+      "static_output": {
+        "total_count": 2
+      },
+      "_comment": "UPI-5001 status=success (NOT failed). The txn is unauthorized (unrecognized merchant)."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-UD-96020",
+        "status": "success",
+        "message": "Unauthorized debit dispute logged for UPI-5001 (₹28,000).",
+        "category": "unauthorized_debit"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCSD9600001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "UPI-5001",
+          "description": "Customer disputes unauthorized PAYTM ONLINE FURNITURE debit (UPI-5001, ₹28,000 on 2026-08-23)."
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKCSD9600001"
+        },
+        "_comment": "Must fetch transactions — reveals UPI-5001 was successful, not failed."
+      },
+      "raise_request": {
+        "required": {},
+        "optional_ok": {
+          "category": {
+            "allowed": [
+              "unauthorized_debit",
+              "failed_transaction"
+            ]
+          },
+          "related_transaction_id": {
+            "allowed": [
+              "UPI-5001"
+            ]
+          }
+        },
+        "forbidden_ids": [
+          "failed_transaction"
+        ],
+        "_comment": "CORRECTED category. Customer said failed_transaction but txn is success/unauthorized. R judge verifies the correction."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'dispute UPI-5001 as failed_transaction — money debited but merchant says no payment received.' get_transaction_history shows UPI-5001 = success (not failed), ₹28,000 to PAYTM ONLINE FURNITURE — an unrecognized merchant. The transaction DID succeed, so failed_transaction is wrong. The correct category is unauthorized_debit. The assistant must correct: 'UPI-5001 shows as successful, not failed. It appears to be an unauthorized debit from an unrecognized merchant. I'll raise it as an unauthorized debit dispute.' After confirmation, calls raise_request with category=unauthorized_debit. A weak model may use failed_transaction. forbidden_ids blocks failed_transaction in the gate."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches transaction history, identifies UPI-5001 is not failed but is unauthorized, communicates the category correction, and after confirmation raises an unauthorized_debit dispute. FAIL if raise_request is called with category=failed_transaction."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

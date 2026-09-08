@@ -1,0 +1,215 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.irrelevant_rag.003",
+  "axis": "9_irrelevant_rag",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Prior conversation quoted FD at 7.5% (old rate card, effective 2026-01-01). Current rate card (effective 2026-03-01) shows 6.5%. Model must use current data.",
+  "setup": {
+    "persona": "48-year-old female, News Paper Boy, rural Mandsaur, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0523",
+      "full_name": "Nirmala Bai",
+      "date_of_birth": "1978-01-08",
+      "gender": "female",
+      "customer_since": "2012-07-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7268",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Mandsaur",
+        "state": "Madhya Pradesh",
+        "pincode": "417268",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Mandsaur",
+        "state": "Madhya Pradesh",
+        "pincode": "417268",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3240X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRCM9900001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRCM9900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "fd",
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"rates\":[{\"slab\":\"1 year to < 3 years\",\"rate\":7.5,\"senior_citizen_rate\":8.0}],\"effective_date\":\"2026-01-01\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The 2-year FD rate is currently 7.5%. You can earn excellent returns."
+      },
+      {
+        "role": "user",
+        "content": "I'll come back to that. First let me check something else."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "get_gold_rate",
+    "block_card",
+    "show_mandates",
+    "calculate_rd_maturity",
+    "calculate_emi"
+  ],
+  "user_turns": [
+    {
+      "content": "OK, I'm ready now. What's the current 2-year FD rate?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Current rate card effective 2026-03-01 shows 6.5%, not the old 7.5%.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Must fetch current rate. 6.5% effective 2026-03-01, not the 7.5% from stale prior conversation."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior conversation quoted FD at 7.5% from an old rate card (effective 2026-01-01). The customer now asks again. The assistant must call get_deposit_loan_rates — the current rate card (effective 2026-03-01) shows 6.5%. The assistant must quote 6.5%, NOT repeat the stale 7.5% from the prior context. Reusing the old rate fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches current rate (6.5% effective 2026-03-01), NOT the stale 7.5% from prior context. Repeating old rate fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

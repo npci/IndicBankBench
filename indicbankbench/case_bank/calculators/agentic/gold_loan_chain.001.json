@@ -1,0 +1,221 @@
+{
+  "case_id": "calc.agentic.gold_loan_chain.001",
+  "axis": "general_agentic_multitool",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Agentic: complete gold loan eligibility chain. get_gold_rate -> calculate_gold_loan_ltv. A4 dependency ordering tested.",
+  "setup": {
+    "persona": "37-year-old female, No Occupation / Retired / Homemaker, rural South Twenty Four Parganas, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0747",
+      "full_name": "Sajali Pal",
+      "date_of_birth": "1989-04-08",
+      "gender": "female",
+      "customer_since": "2015-09-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6455",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "South Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "656455",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "South Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "656455",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0840X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCAG8800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCAG8800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "toggle_card_freeze",
+    "set_card_controls",
+    "calculate_rd_maturity",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I have 60 grams of 22-carat gold jewellery. How much of a gold loan can I get against it?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 376290,
+        "eligible_loan_amount": 282217,
+        "ltv_percent_used": 75
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 60,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        }
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 60,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        },
+        "_comment": "Must use rate from get_gold_rate at same purity."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for gold loan eligibility on 60g of 22K jewellery. The assistant must source the current gold rate from get_gold_rate (Rs 6,271.50/g at 22K), then call calculate_gold_loan_ltv with the sourced rate. Result: gold value Rs 3,76,290, eligible loan Rs 2,82,217 at 75% LTV. Skipping get_gold_rate and using an assumed customer-supplied rate fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources gold rate first, then calculates eligibility. Reports gold value and eligible loan as returned. Skipping get_gold_rate or using wrong rate/purity fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

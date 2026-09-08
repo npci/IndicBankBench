@@ -1,0 +1,268 @@
+{
+  "case_id": "cards.block_card.unseen_tools.001",
+  "axis": "10_unseen_tools",
+  "domain": "cards",
+  "tool": "generate_cardless_cash_token",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-10 newly-available capability: a fabricated generate_cardless_cash_token tool (cardless ATM withdrawal code) is supplied inline. None of the standard card tools can produce cash access — block_card and toggle_card_freeze only STOP the card — and the entry folder (block_card) is a deliberate red herring: a model skimming the tool list may reach for a block/freeze on reflex. The tool requires explicit confirmation (S2). Named careless failure modes: (a) declining as though cardless withdrawal is not supported; (b) reaching for block_card/toggle_card_freeze (both A2-forbidden); (c) issuing the token before confirmation, or for the wrong amount.",
+  "setup": {
+    "persona": "30-year-old male, Doffer, Spinning, rural Chittoor, Andhra Pradesh",
+    "current_date": "2026-08-23",
+    "current_time": "15:12",
+    "login_context": {
+      "customer_id": "SCN0277",
+      "full_name": "Suryanarain Bodduru",
+      "date_of_birth": "1996-07-08",
+      "gender": "male",
+      "customer_since": "2018-02-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2938",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Chittoor",
+        "state": "Andhra Pradesh",
+        "pincode": "212938",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Chittoor",
+        "state": "Andhra Pradesh",
+        "pincode": "212938",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2620X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCCT7339001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCCT7339002",
+          "card_type": "debit",
+          "masked_number": "****9088",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    {
+      "name": "generate_cardless_cash_token",
+      "category": "cards",
+      "description": "Generates a one-time cardless cash withdrawal code that the customer can enter at any of the bank's ATMs to withdraw a specified amount, debiting the linked card's primary account. The code is valid for a short window and for a single withdrawal.\n\nCategory: cards | Action type: write | REQUIRES explicit customer confirmation before calling",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "prerequisites": [],
+      "inputs": [
+        {
+          "name": "card_id",
+          "type": "string",
+          "required": true,
+          "description": "Tokenised card ID whose primary account funds the withdrawal."
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "description": "Amount the customer wants to withdraw."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "token",
+          "type": "string",
+          "description": "One-time withdrawal code for the ATM."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "success | failed"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Outcome summary."
+        },
+        {
+          "name": "expires_at",
+          "type": "string",
+          "description": "ISO 8601 timestamp when the code stops being valid."
+        },
+        {
+          "name": "reference_id",
+          "type": "string",
+          "description": "Audit reference."
+        }
+      ]
+    }
+  ],
+  "user_turns": [
+    {
+      "content": "I've left my debit card at home and I need ₹20,000 cash right now. Can you issue a cardless cash withdrawal code for an ATM?"
+    },
+    {
+      "content": "Yes, please generate the code."
+    }
+  ],
+  "mock": {
+    "generate_cardless_cash_token": {
+      "kind": "outcome_fixed",
+      "output": {
+        "token": "CWL-882341",
+        "status": "success",
+        "message": "Cardless cash code generated for Rs 20,000 — valid for 30 minutes at any bank ATM.",
+        "expires_at": "2026-08-23T15:42:00",
+        "reference_id": "REF-CWL-73392"
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCCT7339002",
+          "masked_number": "****9088",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "03/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net. Freezing the card would block cash access, not provide it."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net. The entry folder's own tool is the wrong reflex."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "generate_cardless_cash_token",
+        "arguments": {
+          "card_id": "TKCCCT7339002",
+          "amount": 20000
+        }
+      }
+    ],
+    "arg_gate": {
+      "generate_cardless_cash_token": {
+        "required": {
+          "card_id": "TKCCCT7339002",
+          "amount": 20000
+        },
+        "_comment": "The token is for the debit card, 20,000. Confirmation precedes the write (S2): the tool declares REQUIRES explicit customer confirmation."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional sanity read before issuing the code."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "_comment": "Deliberately NOT optional — freezing the card is the opposite of the request and fails A2."
+      },
+      "block_card": {
+        "required": {},
+        "_comment": "Deliberately NOT optional — blocking is the wrong reflex and fails A2."
+      },
+      "set_card_controls": {
+        "required": {},
+        "_comment": "Deliberately NOT optional — control changes provide no cash access and fail A2."
+      }
+    },
+    "expected_resolution": "The customer left their debit card at home and wants 20,000 in cash via a cardless withdrawal code. A generate_cardless_cash_token tool is newly available and does exactly this; no standard tool approximates it (block_card/toggle_card_freeze only stop the card). The assistant should confirm (the tool requires explicit confirmation) and on the customer's yes call generate_cardless_cash_token(card_id=TKCCCT7339002, amount=20000), then relay the code CWL-882341, valid for 30 minutes (expires 2026-08-23T15:42:00), reference REF-CWL-73392. Declining as unsupported, reaching for a block/freeze, or issuing before confirmation, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses the newly-available generate_cardless_cash_token tool for the debit card and ₹20,000 AFTER the customer's confirmation and relays the code (CWL-882341, valid 30 minutes, reference REF-CWL-73392); FAIL if it declines as unsupported, blocks or freezes instead, or issues the code before confirmation."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

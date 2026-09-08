@@ -1,0 +1,163 @@
+{
+  "case_id": "calc.calculate_emi.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks for 'personal loan EMI for home renovation — Rs 8,00,000 for 10 years'. get_deposit_loan_rates filtered by product_type=personal_loan returns 10.5%. But the customer's stated purpose (home renovation) may qualify for a home loan at 8.6% — significantly cheaper. Broad query surfaced the cheaper option.",
+  "setup": {
+    "persona": "33-year-old female, No Occupation / Retired / Homemaker, rural Meerut, Uttar Pradesh",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0700",
+      "full_name": "Kamla Devi",
+      "date_of_birth": "1993-06-16",
+      "gender": "female",
+      "customer_since": "2017-03-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3529",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Meerut",
+        "state": "Uttar Pradesh",
+        "pincode": "533529",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Meerut",
+        "state": "Uttar Pradesh",
+        "pincode": "533529",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1219X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5E9505001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5E9505002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm renovating my home — show me the EMI for a Rs 8,00,000 personal loan over 10 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for personal loan rate. A product_type=personal_loan filter returns 10.5%. But the home loan rate at 8.6% (for home renovation) is significantly cheaper. EMI: personal 8L/120mo at 10.5% = Rs 10,710. Home 8L/120mo at 8.6% = Rs 9,968. Saving Rs 742/month.",
+      "records": [
+        {
+          "slab": "personal loan all amounts",
+          "rate": 10.5
+        },
+        {
+          "slab": "home loan all amounts",
+          "rate": 8.6
+        }
+      ]
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 10710,
+        "total_interest": 485200,
+        "total_payment": 1285200,
+        "schedule": []
+      },
+      "_comment": "EMI: i=10.5/1200=0.00875, n=120. EMI=800000*0.00875/(1-1.00875^-120)=10710."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 120
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "personal_loan"
+        },
+        "_comment": "Must query personal loan rate. Filter trap is on reporting: model should note home loan at 8.6% may apply for renovation."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 120
+        },
+        "_comment": "EMI ~Rs 10,710/month. A thorough response also notes home loan at 8.6% would be ~Rs 9,968 — Rs 742 less per month."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants a personal loan for home renovation at Rs 8,00,000 / 10 years. EMI at 10.5% = ~Rs 10,710/month (total Rs 12,85,200). But a home loan for renovation at 8.6% would give ~Rs 9,968/month (total Rs 11,96,160) — saving ~Rs 742/month. Assistant should present both, noting the home loan option for the stated renovation purpose."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes personal loan EMI correctly and proactively surfaces home loan at 8.6% as a cheaper option for home renovation. Reporting only personal loan EMI without mentioning home loan alternative fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

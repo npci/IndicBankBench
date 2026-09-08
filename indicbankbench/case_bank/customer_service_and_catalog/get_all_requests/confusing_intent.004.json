@@ -1,0 +1,233 @@
+{
+  "case_id": "csc.get_all_requests.confusing_intent.004",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Tier-2 filter-trap (time-to-status implication): customer says 'I filed some over the past few days … haven't gotten a response to' — IMPLIES status=open or in_progress without saying so. The model that infers a status filter from the implication gets trapped: the evidence (a fraud-related note) sits on a resolved request that the filter excludes. The model that queries broadly (no status filter) finds all three and passes.",
+  "setup": {
+    "persona": "50-year-old female, No Occupation / Retired / Homemaker, urban Bijapur, Karnataka",
+    "current_date": "2026-08-20",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0766",
+      "full_name": "Shashikala Nayika",
+      "date_of_birth": "1976-11-04",
+      "gender": "female",
+      "customer_since": "2022-06-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9822",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Bijapur",
+        "state": "Karnataka",
+        "pincode": "389822",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Bijapur",
+        "state": "Karnataka",
+        "pincode": "389822",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2147X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKTSR04001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCTSR04002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "I filed some requests over the past few days — can you check on them? I want to take a look at the ones I haven't gotten a response to."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "Three requests: one open (REQ-TS-01), one in_progress (REQ-TS-02), one resolved (REQ-TS-03). The resolved one carries a fraud-warning note the customer needs to see. A status filter will hide it.",
+      "records": [
+        {
+          "request_id": "REQ-TS-01",
+          "category": "charges_dispute",
+          "status": "open",
+          "raised_date": "2026-08-18T09:15:00",
+          "last_updated_date": "2026-08-18T09:15:00",
+          "description": "Dispute for annual maintenance charge of Rs 750 on savings account"
+        },
+        {
+          "request_id": "REQ-TS-02",
+          "category": "duplicate_statement",
+          "status": "in_progress",
+          "raised_date": "2026-08-16T14:20:00",
+          "last_updated_date": "2026-08-19T11:30:00",
+          "description": "Duplicate statement for June-July 2026 period"
+        },
+        {
+          "request_id": "REQ-TS-03",
+          "category": "unauthorized_debit",
+          "status": "resolved",
+          "raised_date": "2026-08-10T16:45:00",
+          "last_updated_date": "2026-08-17T10:00:00",
+          "description": "Unauthorised debit of Rs 12,500 via UPI — flagged as potential fraud by bank investigation team; reversal credited on 17 Aug. Customer should monitor account."
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "delivery_address": "Registered address"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "forbidden_ids": [],
+        "_comment": "One unfiltered fetch returns all three. The trap is applying a status=open or status=in_progress filter that hides the resolved fraud-flagged request. optional_ok permits status=all/null but status=open or in_progress alone strands the evidence."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer wants to see requests they 'haven't gotten a response to' — conversational phrasing that does not name a status filter. The assistant should call get_all_requests without a status filter to fetch all three requests. The key evidence is REQ-TS-03 (unauthorised debit, resolved with a fraud-flag note): although technically resolved, the bank investigation findings about the potential fraud and the reversal credit are critical information the customer should see. A reply that filters to only open and in_progress requests and omits the fraud-flagged resolved one fails — the assistant inferred a filter the customer never explicitly stated."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "calls get_all_requests and reports on ALL requests including the resolved fraud-flagged one (REQ-TS-03: unauthorised debit of Rs 12,500 resolved with a fraud alert). Omitting REQ-TS-03 because of an inferred status filter fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

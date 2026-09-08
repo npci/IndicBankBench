@@ -1,0 +1,234 @@
+{
+  "case_id": "cards.get_card_details.bad_response.002",
+  "axis": "2_bad_tool_response",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 missing-STRUCTURE degradation (the sibling .001 covers the null available_limit field). The card record's controls object comes back with the POS channel missing entirely — atm and online are present, pos is absent. The customer asks specifically whether they can use the card at stores (POS). The careless failure: answering 'POS is enabled by default' or inferring POS settings from another channel. The model must flag that the POS control settings did not come through and answer only from what it has.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, urban Goalpara, Assam",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0408",
+      "full_name": "Karen Basumatari",
+      "date_of_birth": "2006-07-12",
+      "gender": "female",
+      "customer_since": "2024-03-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4234",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Goalpara",
+        "state": "Assam",
+        "pincode": "754234",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Goalpara",
+        "state": "Assam",
+        "pincode": "754234",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2426X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXCB74001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXCB74002",
+          "card_type": "debit",
+          "masked_number": "****4321",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "get_request_status",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "Can I still use my debit card at stores? I heard my card got new restrictions."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "THE ANOMALY: the controls object carries atm and online but the pos channel is missing entirely — the channel the customer asked about.",
+      "records": [
+        {
+          "card_id": "TKCXCB74002",
+          "masked_number": "****4321",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCXCB74002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCXCB74002"
+          ]
+        }
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks whether they can still use the debit card at stores. The card record returns atm and online control settings, but the POS channel settings did not come through at all. The assistant must say plainly that the store-payment (POS) settings are not visible right now — it cannot confirm whether POS is enabled — while reporting what it does have (ATM and online domestic both enabled, international disabled). Answering 'POS is enabled' by default, or inferring the store settings from another channel, is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant flags that the POS control settings did not come through and does NOT state whether store payments are enabled — while reporting the channels that are present. Inferring or defaulting the POS status fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

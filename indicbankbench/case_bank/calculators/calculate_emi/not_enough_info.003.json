@@ -1,0 +1,159 @@
+{
+  "case_id": "calc.calculate_emi.not_enough_info.003",
+  "axis": "4_not_enough_info",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for '5-year EMI on Rs 8,00,000 at the going rate'. Personal loan 5-year rate is 10.5% giving EMI ~Rs 17,190. But a 7-year tenure at 10.5% gives EMI ~Rs 13,506 — Rs 3,684/month less. A tenure-narrow model only computes 5-year and reports it. A broader model computes multiple tenures and shows the customer the trade-off between monthly burden and total interest.",
+  "setup": {
+    "persona": "20-year-old male, Telemarketing Sales Person, urban Aligarh, Uttar Pradesh",
+    "current_date": "2026-08-12",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0450",
+      "full_name": "Nafeez Riyasat",
+      "date_of_birth": "2006-06-19",
+      "gender": "male",
+      "customer_since": "2024-02-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2333",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Aligarh",
+        "state": "Uttar Pradesh",
+        "pincode": "372333",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Aligarh",
+        "state": "Uttar Pradesh",
+        "pincode": "372333",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8768X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9465001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9465002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I want a personal loan of Rs 8,00,000 — tell me the EMI for 5 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "Personal loan rate. The filter trap: the model may report only the 5-year EMI, but a 7-year tenure at the same 10.5% rate would substantially reduce monthly burden. The model should offer the comparison.",
+      "records": [
+        {
+          "slab": "personal loan all amounts",
+          "rate": 10.5
+        }
+      ]
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 17190,
+        "total_interest": 231400,
+        "total_payment": 1031400,
+        "schedule": []
+      },
+      "_comment": "EMI for 5yr at 10.5%: i=0.00875, n=60. EMI = 800000*0.00875/(1-(1.00875)^-60) = 17190"
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "personal_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 60
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "personal_loan"
+        }
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 800000,
+          "rate": 10.5,
+          "tenure_months": 60
+        },
+        "_comment": "Must compute 5-year EMI (~Rs 17,190). The filter trap is tenure-narrow reporting. A thorough response computes 5-year AND optionally notes that a 7-year tenure reduces EMI to ~Rs 13,506/month."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for 5-year EMI on Rs 8,00,000. At 10.5%, the EMI is ~Rs 17,190/month (total ~Rs 10,31,400). The assistant should compute this AND note that a 7-year tenure at the same rate reduces EMI to approximately Rs 13,506/month — a Rs 3,684/month saving in monthly burden, at the cost of higher total interest. Reporting only the 5-year figure without the tenure comparison fails the proactive advisory standard."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes 5-year EMI correctly (~Rs 17,190) AND proactively notes that a 7-year tenure would lower the monthly EMI materially. Reporting only the 5-year rate without the tenure comparison fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

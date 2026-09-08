@@ -1,0 +1,251 @@
+{
+  "case_id": "acct.agentic.mandate_cheque_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates+get_transaction_history+stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'stop cheque #8891 on my SIP mandate account.' show_mandates reveals SIP mandate on savings_01. get_transaction_history shows cheque #8891 on savings_02. Correction: stop_cheque_payment on savings_02.",
+  "setup": {
+    "persona": "34-year-old male, Checker, urban Jalandhar, Punjab",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0248",
+      "full_name": "Kailash Singh",
+      "date_of_birth": "1992-03-08",
+      "gender": "male",
+      "customer_since": "2014-02-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5590",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "111 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Jalandhar",
+        "state": "Punjab",
+        "pincode": "625590",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "111 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Jalandhar",
+        "state": "Punjab",
+        "pincode": "625590",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7958X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACM9600001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKACM9600002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCACM9600003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_card_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Stop cheque 8891 — it's the one issued from my account where the SIP mandate runs. Stop it immediately."
+    },
+    {
+      "content": "Yes, stop it on that account — go ahead."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "mandate_id": "MND-SIP-99001",
+          "type": "sip",
+          "payee": "Axis Mutual Fund",
+          "amount": 15000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKACM9600001"
+        }
+      ],
+      "_comment": "SIP mandate on TKACM9600001."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-22T11:00:00",
+          "amount": 55000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-8891",
+          "transaction_note": "Cheque #8891 — School Fees",
+          "status": "pending",
+          "running_balance": 195000
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Cheque #8891 is actually not on the mandate account. It's on this other account."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "TKACM9600002",
+        "results": [
+          {
+            "cheque_number": "8891",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop payment placed on cheque 8891.",
+        "reference_id": "REF-CHQ-96003"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKACM9600001"
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKACM9600002"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKACM9600002",
+          "cheque_numbers": [
+            "8891"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "show_mandates",
+        "stop_cheque_payment"
+      ],
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Reveals SIP mandate on TKACM9600001."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKACM9600001",
+              "TKACM9600002"
+            ]
+          }
+        },
+        "_comment": "Checks both accounts — cheque #8891 on TKACM9600002, not the mandate account."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKACM9600002",
+          "cheque_numbers": [
+            "8891"
+          ]
+        },
+        "_comment": "CORRECTED account_id=TKACM9600002. Customer said 'SIP mandate account' (TKACM9600001) but cheque #8891 is on TKACM9600002."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'stop cheque #8891 on my SIP mandate account.' show_mandates reveals the SIP mandate runs on TKACM9600001. The assistant checks transaction history on that account — cheque #8891 is NOT there. Checking the other linked account TKACM9600002 reveals cheque #8891 pending (₹55,000 School Fees). The assistant must correct: 'Your SIP mandate is on account TKACM9600001, but cheque #8891 is actually on your other savings account TKACM9600002. I'll stop it there.' After confirmation, calls stop_cheque_payment on TKACM9600002."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches mandates and transaction history for both accounts, identifies the cheque is not on the mandate account, communicates the correction, and after confirmation stops the cheque on the correct account. FAIL if stop_cheque_payment is called on the wrong account."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

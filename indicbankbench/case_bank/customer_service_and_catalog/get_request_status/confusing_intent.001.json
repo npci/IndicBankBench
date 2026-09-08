@@ -1,0 +1,265 @@
+{
+  "case_id": "csc.get_request_status.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 two-step disambiguation: 'my dispute — the unauthorised debit one' names no id and there are TWO disputes. The assistant must list requests to resolve WHICH dispute, then status only that one. Dependency: get_all_requests -> get_request_status.",
+  "setup": {
+    "persona": "55-year-old male, Bandroll and Levelling Machine Operator, rural Sangli, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0203",
+      "full_name": "Namdev Pathare",
+      "date_of_birth": "1971-10-09",
+      "gender": "male",
+      "customer_since": "2021-03-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4105",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "Sangli",
+        "state": "Maharashtra",
+        "pincode": "754105",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "Sangli",
+        "state": "Maharashtra",
+        "pincode": "754105",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0744X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKADRK1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCDRK3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the status of my dispute — the unauthorised debit one?"
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "delivery_address": "Registered address"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "Two disputes exist; only the unauthorized_debit one answers the question.",
+      "records": [
+        {
+          "request_id": "REQ-DRK-9101",
+          "category": "failed_transaction",
+          "status": "resolved",
+          "raised_date": "2026-08-05T14:20:00",
+          "last_updated_date": "2026-08-09T10:00:00",
+          "description": "Failed IMPS transfer of Rs 3200 refunded"
+        },
+        {
+          "request_id": "REQ-DRK-9102",
+          "category": "unauthorized_debit",
+          "status": "in_progress",
+          "raised_date": "2026-08-12T18:45:00",
+          "last_updated_date": "2026-08-16T09:30:00",
+          "description": "Unauthorised debit of Rs 2400 on savings account"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "in_progress",
+        "raised_date": "2026-08-12",
+        "last_update": "2026-08-16",
+        "remarks": "Dispute under review by the transaction team."
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "dependencies": [
+      [
+        "get_all_requests",
+        "get_request_status"
+      ]
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Needed to disambiguate 'the dispute'."
+      },
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-DRK-9102"
+        },
+        "optional": true,
+        "_comment": "The UNAUTHORIZED debit dispute (in_progress), not the resolved failed-transaction one. The list itself already carries each request's status, so answering from get_all_requests alone is fine; if the model does run the documented two-step, the status call must target REQ-DRK-9102 (A3) and only after listing (A4)."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks about 'the dispute — the unauthorised debit one'. The request list holds two disputes (REQ-DRK-9101 failed_transaction, resolved; REQ-DRK-9102 unauthorized_debit, in_progress). The assistant must identify the unauthorised debit one and report ITS status — in_progress, last updated 16 August — not the resolved failed-transaction dispute, and not a merged summary of both. Status-checking the wrong dispute fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "disambiguates to the unauthorized_debit dispute (REQ-DRK-9102) and reports its status in_progress. Reporting the failed-transaction dispute's resolved status, or merging both, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

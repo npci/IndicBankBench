@@ -1,0 +1,268 @@
+{
+  "case_id": "depl.create_rd.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-6 filter-trap: customer says 'start an RD of Rs 6,000/month for 3 years from my savings account'. get_account_balance filtered to the savings account shows Rs 14,500 — barely covering 2 installments. But the salary account has Rs 78,000 — a much more sustainable funding source. An account_ids filter for only savings hides the salary balance that reveals the better source. Broad query across both accounts surfaces the sustainability concern.",
+  "setup": {
+    "persona": "33-year-old male, Model, urban South West, Delhi",
+    "current_date": "2026-08-24",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0336",
+      "full_name": "Sanjeev Lal",
+      "date_of_birth": "1993-05-16",
+      "gender": "male",
+      "customer_since": "2016-10-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2632",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "942632",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "942632",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9263X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDC9604001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKRDC9604002",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRC9604003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Start an RD of Rs 6,000 a month from my savings account — 3 years should do it."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "product_type": "rd",
+        "rates": [
+          {
+            "slab": "1 year to less than 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          },
+          {
+            "slab": "3 years to less than 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "36 months falls in the 3-5yr slab at 7.0%."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: Customer says 'from my savings account'. Savings has Rs 14,500 — barely 2 installments of Rs 6,000. But the salary account has Rs 78,000 — a far more sustainable source. An account_ids filter for only savings hides the salary balance. Broad query reveals the better funding source.",
+      "records": [
+        {
+          "account_id": "TKRDC9604001",
+          "available_balance": 14500,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKRDC9604002",
+          "available_balance": 78000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 287597,
+        "interest_earned": 71597,
+        "total_principal_invested": 216000
+      },
+      "_comment": "RD 36mo/6000 at 7.0% quarterly compounding."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRDR9604004",
+        "status": "success",
+        "message": "RD opened for 36 months at 7.0% from TKRDC9604001.",
+        "interest_rate": 7.0,
+        "maturity_date": "2029-08-24",
+        "maturity_amount": 287597,
+        "monthly_debit_date": "1",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-96041"
+      }
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd"
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKRDC9604001",
+            "TKRDC9604002"
+          ]
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 6000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "36 months is the 3-5yr slab at 7.0%."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKRDC9604001",
+                "TKRDC9604002"
+              ],
+              [
+                "TKRDC9604002",
+                "TKRDC9604001"
+              ]
+            ]
+          }
+        },
+        "_comment": "FILTER TRAP: customer says savings account but salary account is the better funding source. Broad query reveals both balances and the sustainability concern."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 6000,
+          "rate": 7.0,
+          "tenure_months": 36
+        },
+        "_comment": "Maturity at Rs 2,87,597."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — booking needs confirmation and ideally the salary account should be proposed."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants 36-month RD at Rs 6,000/month from savings account. At 7.0%, maturity is Rs 2,87,597. But the savings account has only Rs 14,500 — barely 2 installments. The salary account has Rs 78,000 — far more sustainable. The assistant must query both accounts, flag the sustainability concern, and suggest the salary account as a better funding source. Computing maturity without flagging the low savings balance fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes RD maturity correctly AND surfaces the savings account's insufficient balance (Rs 14,500) for Rs 6,000/month installments, suggesting the salary account (Rs 78,000) as a more sustainable source. Computing maturity without flagging the sustainability concern fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

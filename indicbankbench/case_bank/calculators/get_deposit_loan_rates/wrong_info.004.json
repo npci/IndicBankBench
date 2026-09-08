@@ -1,0 +1,155 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'show me the FD rates for 2 years' to plan a new deposit. Model queries product_type=fd → gets FD rates at 6.5%. But the customer should consider an RD at 6.75% (RD gets +25bp) — and an RD is more appropriate for their monthly saving pattern. A product_type=fd filter hides the RD rate information that would lead to a better recommendation. Broad query (or sequential queries) reveals both.",
+  "setup": {
+    "persona": "55-year-old female, Budder, rural Thrissur, Kerala",
+    "current_date": "2026-09-01",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0552",
+      "full_name": "Nadiya Beevi",
+      "date_of_birth": "1971-04-09",
+      "gender": "female",
+      "customer_since": "2015-03-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3875",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Thrissur",
+        "state": "Kerala",
+        "pincode": "953875",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Thrissur",
+        "state": "Kerala",
+        "pincode": "953875",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1603X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9481001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9481002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "create_fd",
+    "create_rd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to start saving Rs 10,000 every month for the next 2 years. Show me the FD rates for 2 years so I can decide what to do."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for FD rates per product_type=fd (6.5% for 2-year slab). But the customer's actual need — monthly saving of Rs 10,000 — fits an RD much better, and RD rate is 6.75% (+25bp). A product_type=fd filter hides the RD rate entirely. Broad query (all rates) or sequential product_type queries reveal the RD rate advantage.",
+      "records": [
+        {
+          "slab": "1 year to < 3 years",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        }
+      ],
+      "static_output": {
+        "product_type": "fd",
+        "effective_date": "2026-03-01"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "optional_ok": {
+          "tenure_months": {
+            "allowed": [
+              24
+            ]
+          }
+        },
+        "_comment": "Customer explicitly asked for FD rates — the FD rate (6.5%) is the literal answer. The trap is that the model stops here. A strong model also fetches RD rates (product_type=rd) and recommends RD as better suited for monthly saving at 6.75%. But the customer EXPLICITLY named FD, and the filter operates at the tool-call level. This tests whether the model broadens beyond the explicit filter."
+      }
+    },
+    "expected_resolution": "The customer asks for FD rates for a 2-year plan of Rs 10,000/month. The FD rate for 2 years is 6.5%. But the customer's monthly saving pattern is a perfect fit for an RD, which earns 6.75% (+25bp over FD). The assistant should return the FD rate but also recommend the RD as a better product for recurring monthly savings, noting the higher rate. Simply showing the FD rate without suggesting the RD alternative fails to meet the customer's actual need."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces the FD 2-year rate (6.5%) AND recommends the RD as a better fit for monthly savings, noting the 6.75% rate and explaining why an RD suits recurring deposits better than a lump-sum FD. Answering with only the FD rate and no RD recommendation fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

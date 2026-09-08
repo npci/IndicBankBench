@@ -1,0 +1,221 @@
+{
+  "case_id": "calc.agentic.gold_loan_tiers.001",
+  "axis": "general_agentic_multitool",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "_variant_note": "Numerical reasoning: customer has 22K (50g) and 24K (50g) gold. Model must fetch rates at both purities, compute both LTV values, sum total.",
+  "setup": {
+    "persona": "31-year-old female, Blower Helper (Glass), rural Jaipur, Rajasthan",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0118",
+      "full_name": "Lata Bai",
+      "date_of_birth": "1995-01-14",
+      "gender": "female",
+      "customer_since": "2013-06-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0012",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "13 MG Road",
+        "line2": "Model Town",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "550012",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "13 MG Road",
+        "line2": "Model Town",
+        "city": "Jaipur",
+        "state": "Rajasthan",
+        "pincode": "550012",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7315X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCGL9300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCGL9300002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "raise_request",
+    "get_all_requests",
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I have 50 grams of 22-carat jewellery and 50 grams of 24-carat coins. What's the maximum gold loan I can get against both together?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Called twice: 22K and 24K.",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "Both batches are 50g at Rs 6,271.50/g: 50 * 6271.50 = 313575, 75% LTV = trunc(313575*0.75) = trunc(235181.25) = 235181. The single fixed reply is correct for both the 22K and the 24K call.",
+      "output": {
+        "gold_value": 313575,
+        "eligible_loan_amount": 235181,
+        "ltv_percent_used": 75
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        }
+      },
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 24
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 50,
+          "purity_karat": 24,
+          "gold_rate_per_gram": 6271.5
+        }
+      }
+    ],
+    "arg_gate": {
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional_ok": {
+          "gold_grams": {
+            "allowed": [
+              50
+            ]
+          },
+          "purity_karat": {
+            "allowed": [
+              22,
+              24
+            ]
+          }
+        },
+        "_comment": "Must compute for both batches: 22K 50g + 24K 50g. Either order accepted."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer has two batches of gold at different purities (50g 22K + 50g 24K). The assistant must source rates at both purities (the mock returns Rs 6,271.50/g at each — one flat rate per purity query), compute both eligibility figures, and sum them. 22K: 50g * Rs 6,271.50 = Rs 3,13,575 * 75% = Rs 2,35,181. 24K: requires a separate rate query, then 50g * Rs 6,271.50 = Rs 3,13,575 * 75% = Rs 2,35,181. Combined eligibility: Rs 2,35,181 + Rs 2,35,181 = Rs 4,70,362. The assistant must report the total eligibility across both batches, not just one result. Computing only one batch, or conflating the purities, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes eligibility for both batches (22K 50g → Rs 2,35,181 and 24K 50g → Rs 2,35,181) and reports the combined total of Rs 4,70,362. Computing only one batch, or conflating purities, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

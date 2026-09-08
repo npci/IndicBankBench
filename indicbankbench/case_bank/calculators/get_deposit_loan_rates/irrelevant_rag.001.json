@@ -1,0 +1,222 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9: prior_messages inject a RAG snippet about NRI account rules — completely irrelevant to the FD rate question. Model must ignore the clutter.",
+  "setup": {
+    "persona": "48-year-old female, No Occupation / Retired / Homemaker, rural Patna, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0119",
+      "full_name": "Sihanta Devi",
+      "date_of_birth": "1978-02-11",
+      "gender": "female",
+      "customer_since": "2013-05-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4473",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Patna",
+        "state": "Bihar",
+        "pincode": "984473",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Patna",
+        "state": "Bihar",
+        "pincode": "984473",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8574X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCIR9000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCIR9000002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "NRI account opening rules and documentation"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"results\":[{\"chunk\":\"NRI accounts require: valid passport, overseas address proof, PAN card, visa copy. PIO/OCI card holders have additional documentation requirements. FEMA regulations apply to all NRI account transactions.\",\"source\":\"NRI Account Opening Guide\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "NRI accounts require a valid passport, overseas address proof, PAN card, and visa copy. PIO/OCI card holders have additional requirements under FEMA regulations."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "get_gold_rate",
+    "raise_request",
+    "request_duplicate_statement",
+    "calculate_emi",
+    "calculate_gold_loan_ltv"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the current FD rate for a 1-year deposit?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 12
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Must answer about FD rates only. The prior NRI context is irrelevant clutter."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The conversation has prior context about NRI account documentation (from a previous search_knowledge_base call). The customer now asks about FD rates. The assistant must ignore the NRI clutter and flatly answer the FD rate question: 6.5% for the 1-3 year slab. Leaking NRI documentation details into the FD rate answer, or confusing NRI account rules with FD rates, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers with the FD rate (6.5%) ignoring the prior NRI context entirely. Leaking NRI documentation into the rate answer fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

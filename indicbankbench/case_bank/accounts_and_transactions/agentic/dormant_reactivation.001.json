@@ -1,0 +1,247 @@
+{
+  "case_id": "acct.agentic.dormant_reactivation.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details+search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — verify-then-explain chain: the customer has an SMS claiming an account is dormant; the assistant must CHECK the actual status via get_account_details (the record says dormant) and then ground the reactivation steps in the knowledge base instead of asserting them from memory (the system prompt forbids ungrounded policy claims). Named careless failure modes: (a) agreeing the account is dormant on the strength of the customer's SMS without checking; (b) asserting reactivation steps without the search_knowledge_base lookup. The arg_gate pins the current account (forbidden savings) so checking the wrong account fails A3.",
+  "setup": {
+    "persona": "27-year-old male, Operator, Impregnation Plant (Telephone Equipment Manufacturing), rural Rajouri, Jammu & Kashmir",
+    "current_date": "2026-08-16",
+    "current_time": "12:10",
+    "login_context": {
+      "customer_id": "SCN0096",
+      "full_name": "Wali Salim",
+      "date_of_birth": "1999-06-28",
+      "gender": "male",
+      "customer_since": "2017-03-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4329",
+      "registered_email": "w*****@gmail.com",
+      "communication_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Rajouri",
+        "state": "Jammu & Kashmir",
+        "pincode": "604329",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Rajouri",
+        "state": "Jammu & Kashmir",
+        "pincode": "604329",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6902X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDRA5410001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKDRA5410002",
+          "account_type": "current",
+          "status": "dormant"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCDRA5410003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "search_knowledge_base",
+    "raise_request",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "I got an SMS that my old current account has gone dormant. Is it really dormant, and what do I do to make it active again?"
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKDRA5410001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Wali Salim",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2020-01-15"
+        },
+        {
+          "account_id": "TKDRA5410002",
+          "account_type": "current",
+          "status": "dormant",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Wali Salim",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2021-06-10"
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "chunk": "To reactivate a dormant account: (1) complete one customer-initiated transaction, such as a funds transfer into the account, and (2) complete KYC re-verification with updated documents. Both can be initiated through the bank's service request channel (raise_request) or at any branch with valid identity proof. Reactivation is subject to RBI guidelines on inactive accounts.",
+          "source": "Account Reactivation Policy v4.2"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-16T12:10:00",
+        "last_update": "2026-08-16T12:10:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKDRA5410002"
+          ]
+        }
+      },
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "how to reactivate a dormant bank account"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKDRA5410002"
+          ]
+        },
+        "forbidden_ids": [
+          "TKDRA5410001"
+        ],
+        "_comment": "The status question is about the CURRENT account — checking the savings account instead misses the point."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "The reactivation steps must be grounded in the knowledge corpus, not asserted from memory (system prompt rule)."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks whether their current account is really dormant and how to reactivate it. The assistant must verify the status itself via get_account_details — the record shows the current account (TKDRA5410002) IS dormant, while the savings account is active — and then ground the reactivation steps in search_knowledge_base: perform a customer-initiated transaction plus KYC re-verification, available via raise_request or a branch visit. Confirming dormancy purely on the SMS's say-so, or asserting reactivation steps from memory without the knowledge-base lookup, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant confirms from get_account_details that the current account is dormant and grounds the reactivation steps (a customer-initiated transaction plus KYC re-verification, via raise_request or branch) in the knowledge base; FAIL if it agrees with the SMS without checking, checks the wrong account, or asserts steps from memory."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

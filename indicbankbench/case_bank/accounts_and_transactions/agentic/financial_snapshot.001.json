@@ -1,0 +1,256 @@
+{
+  "case_id": "acct.agentic.financial_snapshot.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "_variant_note": "Agentic: single user message requests savings balance, FD maturity date, and home loan EMI — 3 independent tool calls across 3 domains. Tests multi-task handling.",
+  "setup": {
+    "persona": "26-year-old female, No Occupation / Retired / Homemaker, urban Thrissur, Kerala",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0631",
+      "full_name": "Naseema Beevi",
+      "date_of_birth": "2000-05-15",
+      "gender": "female",
+      "customer_since": "2018-04-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6812",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Thrissur",
+        "state": "Kerala",
+        "pincode": "366812",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Thrissur",
+        "state": "Kerala",
+        "pincode": "366812",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3745X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFSN9100001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDN9100002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKLNN9100003",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFSN9100004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_fd_details",
+    "get_loan_details",
+    "get_transaction_history",
+    "request_cheque_book",
+    "block_card",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a quick financial overview: how much is in my savings, when does my FD mature, and what's my home loan EMI?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKFSN9100001",
+          "available_balance": 156000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDN9100002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-11-01",
+          "maturity_date": "2027-05-01",
+          "maturity_amount": 330464,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFSN9100001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKLNN9100003",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKFSN9100001"
+        }
+      ]
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFSN9100001"
+          ]
+        }
+      },
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDN9100002"
+          ]
+        }
+      },
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNN9100003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "_comment": "Must check savings balance: Rs 1,56,000."
+      },
+      "get_fd_details": {
+        "required": {},
+        "_comment": "Must check FD: mature 2027-05-01, Rs 3,30,464."
+      },
+      "get_loan_details": {
+        "required": {},
+        "_comment": "Must check loan: EMI Rs 34,885 on the 5th."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for three pieces of information in one message: savings balance, FD maturity, and home loan EMI. The assistant must make all three tool calls and report all three answers: savings Rs 1,56,000, FD matures 2027-05-01 at Rs 3,30,464, home loan EMI Rs 34,885. Dropping any of the three, or mixing up the figures across tools, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports all three: savings Rs 1,56,000, FD maturity 2027-05-01, loan EMI Rs 34,885. Missing any of the three, or mixing up figures, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

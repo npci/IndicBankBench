@@ -1,0 +1,191 @@
+{
+  "case_id": "calc.calculate_fd_maturity.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: customer asks 'what will I get if I put Rs 3 lakh for 18 months at the bank rate?' Must infer this is a calculate_fd_maturity call, source the rate from get_deposit_loan_rates first (it's a prerequisite), then compute.",
+  "setup": {
+    "persona": "20-year-old male, Poultry Farm Worker, General, rural Krishna, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0169",
+      "full_name": "Suresh Ramanji",
+      "date_of_birth": "2006-06-12",
+      "gender": "male",
+      "customer_since": "2024-03-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2809",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Krishna",
+        "state": "Andhra Pradesh",
+        "pincode": "712809",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Krishna",
+        "state": "Andhra Pradesh",
+        "pincode": "712809",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5730X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCFM8300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCFM8300002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "create_rd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I have Rs 3,00,000 I want to park in a fixed deposit for about 18 months. What will I get at maturity if I go with your bank's standard rate?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Rs 3,00,000 at 6.5% for 18 months, quarterly compounding.",
+      "output": {
+        "maturity_amount": 330464,
+        "interest_earned": 30464,
+        "total_principal_invested": 300000
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 300000,
+          "rate": 6.5,
+          "tenure_months": 18
+        }
+      }
+    ],
+    "arg_gate": {
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 300000,
+          "rate": 6.5,
+          "tenure_months": 18
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Rate sourced from rate card is the disclosed prerequisite. Calling it first is correct behavior."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks what maturity they'd get for Rs 3,00,000 over 18 months at the bank's standard rate. The assistant should recognise this as an FD maturity calculation. It should source the rate (6.5% for 1-3 year slab) from get_deposit_loan_rates and then call calculate_fd_maturity, reporting the result: Rs 3,30,464 at maturity. It must not assume a rate without checking, and must not compute at a wrong rate or tenure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports maturity of Rs 3,30,464 at 6.5% over 18 months. Using a wrong rate, wrong tenure, or computing without sourcing the rate fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

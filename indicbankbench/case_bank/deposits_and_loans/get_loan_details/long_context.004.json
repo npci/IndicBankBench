@@ -1,0 +1,240 @@
+{
+  "case_id": "depl.get_loan_details.long_context.004",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale loan (foreclosed overnight). Prior round: get_loan_details showed a personal loan with status 'active', outstanding Rs 2,10,000, 14 EMIs remaining. The customer was contemplating foreclosure. Since then the foreclosure was processed by the bank's backend after a branch visit — the live status is now 'foreclosed'. The customer now asks 'what's my outstanding on the personal loan?' — a model that trusts stale prior says Rs 2,10,000 fails A1. A model that re-fetches live sees status 'foreclosed' with outstanding Rs 0 → PASS.",
+  "setup": {
+    "persona": "25-year-old female, No Occupation / Retired / Homemaker, rural Bhopal, Madhya Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0705",
+      "full_name": "Munni Bai",
+      "date_of_birth": "2001-02-19",
+      "gender": "female",
+      "customer_since": "2019-04-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1033",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "pincode": "491033",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Bhopal",
+        "state": "Madhya Pradesh",
+        "pincode": "491033",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2434X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD62990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLN62990002",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD62990003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's my outstanding on the personal loan? I'm thinking about closing it early."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "l1",
+            "type": "function",
+            "function": {
+              "name": "get_loan_details",
+              "arguments": {
+                "loan_ids": [
+                  "TKLN62990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "l1",
+        "content": "{\"loans\":[{\"loan_id\":\"TKLN62990002\",\"type\":\"personal\",\"principal\":400000,\"outstanding\":210000,\"emi_amount\":18509,\"interest_rate\":10.5,\"emi_day_of_month\":5,\"tenure_remaining\":14,\"status\":\"active\",\"next_due_date\":\"2026-09-05\",\"emi_account_id\":\"TKOD62990001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your personal loan has Rs 2,10,000 outstanding with 14 EMIs of Rs 18,509 remaining. The next EMI is due 5 September. Would you like a foreclosure quote?"
+      },
+      {
+        "role": "user",
+        "content": "I actually visited the branch yesterday and submitted the foreclosure payment. Let me confirm that went through — I'll check online and come back."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you confirm my personal loan was closed? What's the current status and outstanding?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The branch-processed foreclosure completed overnight. Live status is 'foreclosed', outstanding is Rs 0, tenure_remaining is 0. A model that trusts the stale prior and says Rs 2,10,000 outstanding fails A1.",
+      "records": [
+        {
+          "loan_id": "TKLN62990002",
+          "type": "personal",
+          "principal": 400000,
+          "outstanding": 0,
+          "emi_amount": 18509,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 0,
+          "status": "foreclosed",
+          "next_due_date": null,
+          "emi_account_id": "TKOD62990001"
+        }
+      ]
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0,
+        "schedule": []
+      },
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLN62990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLN62990002"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-read the loan live. Prior shows status 'active' with Rs 2,10,000 outstanding, but the branch-processed foreclosure completed overnight — live shows 'foreclosed' with Rs 0 outstanding."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed the personal loan as active with Rs 2,10,000 outstanding and 14 EMIs remaining. The customer visited the branch and submitted a foreclosure payment, which the bank processed overnight. The live status is now 'foreclosed' with Rs 0 outstanding.\n\nThe correct move is to re-fetch get_loan_details live, discover the loan is foreclosed, and confirm the closure to the customer. Quoting the stale Rs 2,10,000 or saying the loan is still active without a live call is the stale-context failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_loan_details live, discovers the loan status is 'foreclosed' with Rs 0 outstanding (not the stale Rs 2,10,000), and confirms the foreclosure. Quoting old figures without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

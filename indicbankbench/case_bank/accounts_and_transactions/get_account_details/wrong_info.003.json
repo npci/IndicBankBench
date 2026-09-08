@@ -1,0 +1,218 @@
+{
+  "case_id": "acct.get_account_details.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks 'show my active account details — need to confirm the IFSC for an incoming wire'. Savings is active with correct IFSC TKBK0001234. Salary is FROZEN with a stale IFSC TKBK0009998. A status=active filter hides the frozen salary account that has the wrong IFSC — the very account where the wire would bounce.",
+  "setup": {
+    "persona": "44-year-old female, No Occupation / Retired / Homemaker, rural Rohtas, Bihar",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0785",
+      "full_name": "Pramila Devi",
+      "date_of_birth": "1982-02-08",
+      "gender": "female",
+      "customer_since": "2013-03-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1125",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "86 Station Road",
+        "line2": "Civil Lines",
+        "city": "Rohtas",
+        "state": "Bihar",
+        "pincode": "591125",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "86 Station Road",
+        "line2": "Civil Lines",
+        "city": "Rohtas",
+        "state": "Bihar",
+        "pincode": "591125",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7865X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT3D9503001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFT3D9503002",
+          "account_type": "salary",
+          "status": "frozen"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT3D9503003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my active account details — an employer is wiring money in and I need to confirm the IFSC."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: salary account (TKFT3D9503002, frozen) has IFSC TKBK0009998 which is stale/wrong. Savings (TKFT3D9503001, active) has correct IFSC TKBK0001234. A status=active filter hides the frozen salary account with the wrong IFSC — the one the employer would use for salary credit.",
+      "records": [
+        {
+          "account_id": "TKFT3D9503001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road Branch",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Pramila Devi",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-03-15",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "account_id": "TKFT3D9503002",
+          "account_type": "salary",
+          "status": "frozen",
+          "branch_name": "Civil Lines Branch",
+          "ifsc": "TKBK0009998",
+          "holders": [
+            {
+              "name": "Pramila Devi",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2019-06-12"
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKFT3D9503001",
+            "TKFT3D9503002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFT3D9503001",
+                "TKFT3D9503002"
+              ],
+              [
+                "TKFT3D9503002",
+                "TKFT3D9503001"
+              ],
+              [
+                "TKFT3D9503001"
+              ],
+              [
+                "TKFT3D9503002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must query both accounts. Filtering by active hides the frozen salary account with TKBK0009998 — the IFSC the employer needs. Model must surface both and flag the salary account's frozen status + stale IFSC."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants active account IFSC for an incoming wire. Savings account (TKFT3D9503001): active, IFSC TKBK0001234 (MG Road). Salary account (TKFT3D9503002): FROZEN, IFSC TKBK0009998 — stale/wrong IFSC that would cause the wire to bounce. Assistant must query broadly, report both accounts, and flag that the salary account is frozen with a potentially incorrect IFSC. Reporting only the savings account as the only 'active' one fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both accounts and surfaces the frozen salary account (TKFT3D9503002) with IFSC TKBK0009998, flagging both the frozen status and the stale IFSC that could cause a wire bounce. Reporting only the active savings account fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

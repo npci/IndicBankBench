@@ -1,0 +1,240 @@
+{
+  "case_id": "cards.toggle_card_freeze.long_context.002",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale card (already blocked). Prior round: get_card_details showed card status 'active'. The customer discussed freezing it. Since then the customer called the bank's phone-banking line and had the card blocked permanently for theft. The live status is now 'blocked (permanent)'. The customer now says 'freeze my card, I still can't find it' — a request that made sense when the card was active but is moot now. A model that trusts the stale prior and calls toggle_card_freeze(state=freeze) on a blocked card fails A1. A model that re-fetches get_card_details live → discovers it's already blocked → reports this → PASS.",
+  "setup": {
+    "persona": "22-year-old female, Electrical and Electronic Equipment Mechanics and Fitters and Related Workers, rural Washim, Maharashtra",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0573",
+      "full_name": "Namrata Raut",
+      "date_of_birth": "2004-02-18",
+      "gender": "female",
+      "customer_since": "2022-11-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9469",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "110 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Washim",
+        "state": "Maharashtra",
+        "pincode": "739469",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "110 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Washim",
+        "state": "Maharashtra",
+        "pincode": "739469",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3980X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD69990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD69990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I can't find my wallet — can you check my debit card? If it's still active, maybe I should freeze it temporarily."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "tf1",
+            "type": "function",
+            "function": {
+              "name": "get_card_details",
+              "arguments": {
+                "card_ids": [
+                  "TKCOD69990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "tf1",
+        "content": "{\"cards\":[{\"card_id\":\"TKCOD69990002\",\"masked_number\":\"****7723\",\"card_type\":\"debit\",\"network\":\"visa\",\"status\":\"active\",\"expiry\":\"11/27\",\"controls\":{\"atm\":{\"domestic\":{\"enabled\":true,\"daily_limit\":20000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":true,\"daily_limit\":35000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"pos\":{\"domestic\":{\"enabled\":true,\"daily_limit\":25000},\"international\":{\"enabled\":false,\"daily_limit\":0}}}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your debit card ending 7723 is still active — no transactions since you noticed it missing. I strongly recommend freezing it immediately via toggle_card_freeze. If it's confirmed stolen, we can block it permanently."
+      },
+      {
+        "role": "user",
+        "content": "Let me check the car one more time — I'll decide in five minutes."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "toggle_card_freeze",
+    "get_card_details",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Still can't find it. Go ahead and freeze my debit card."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Between rounds the customer called the phone-banking helpline and had the card permanently blocked as stolen. The live status is now 'blocked (permanent)'. Freezing a blocked card is invalid (tool says 'cannot unfreeze a card whose status is blocked'). A model that trusts stale prior and calls toggle_card_freeze(state=freeze) without re-reading fails A1 and A2.",
+      "records": [
+        {
+          "card_id": "TKCOD69990002",
+          "masked_number": "****7723",
+          "card_type": "debit",
+          "network": "visa",
+          "status": "blocked (permanent)",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCOD69990002",
+        "card_status": "blocked",
+        "status": "failed",
+        "message": "Cannot freeze/unfreeze — card is blocked and cannot be modified.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "A model that skips the re-read and calls toggle_card_freeze gets this failure. But A2 catches it first — toggle_card_freeze is not in gold."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCOD69990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCOD69990002"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-read the card live. Prior shows 'active' but the customer had it blocked via phone banking — live status is now 'blocked (permanent)'. toggle_card_freeze on a blocked card fails."
+      },
+      "toggle_card_freeze": {
+        "_comment": "toggle_card_freeze is deliberately absent from gold and arg_gate. The card is already blocked — freezing is impossible and unnecessary. The correct move is to re-read and report the current state."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Allow raise_request — the model may offer a card replacement."
+      }
+    },
+    "expected_resolution": "The prior round showed the debit card as active and the assistant recommended freezing it. The customer said they'd check the car and decide. Between then and now, the customer called the bank's phone-banking helpline and had the card permanently blocked as stolen. The live card status is now 'blocked (permanent)' — all controls disabled, the card is permanently deactivated.\n\nThe correct move is to re-fetch get_card_details live (a mandatory prerequisite for toggle_card_freeze), discover the card is already blocked, and report that the card has been permanently disabled — the freeze step is not needed. Calling toggle_card_freeze without re-reading is the stale-context failure — the assistant is acting on an active card that no longer exists. If the customer wants a replacement, the model may offer raise_request."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_card_details live, discovers the card is now 'blocked (permanent)' (not the stale 'active'), and reports the card has already been blocked. Attempting to freeze without re-reading fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

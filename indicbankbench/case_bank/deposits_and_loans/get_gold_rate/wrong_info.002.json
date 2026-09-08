@@ -1,0 +1,132 @@
+{
+  "case_id": "depl.get_gold_rate.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks for '22 karat rate for my gold loan — I have 50 grams'. Customer assumes all gold is 22k. But purity_karat=22 query returns only 22k rate (Rs 5,800/g), hiding the 24k rate (Rs 6,250/g). If some of the gold is 24k, the customer gets a lower valuation. A broader answer notes rates for all purities.",
+  "setup": {
+    "persona": "44-year-old female, No Occupation / Retired / Homemaker, rural Fatehgarh Sahib, Punjab",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0207",
+      "full_name": "Taar Kanr",
+      "date_of_birth": "1982-05-15",
+      "gender": "female",
+      "customer_since": "2016-08-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0844",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "5 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Fatehgarh Sahib",
+        "state": "Punjab",
+        "pincode": "580844",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "5 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Fatehgarh Sahib",
+        "state": "Punjab",
+        "pincode": "580844",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2432X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT7G9507001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT7G9507002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "What's today's 22 karat gold rate? I want to pledge about 50 grams of jewellery for a loan."
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "FILTER TRAP: customer asks for 22k rate. Querying only 22k returns Rs 5,800/g but hides the 24k rate of Rs 6,250/g. If customer's jewellery includes 24k items, they get undervalued. Gold loan LTV: 50g x 22k x Rs 5,800 x 0.75 = Rs 2,17,500. With 24k mixed: could be higher.",
+      "output": {
+        "purity_karat": 22,
+        "rate_per_gram": 5800,
+        "rate_date": "2026-08-15"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Must query 22k rate. Filter trap: querying only 22k hides 24k rate. Model should note rates vary by purity and offer to check other purities."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "22k gold rate today: Rs 5,800 per gram. For 50 grams, estimated gold loan LTV = ~Rs 2,17,500 (75% LTV). Assistant should note that 24k gold has a higher rate (typically ~Rs 6,200-6,300/g) and recommend the customer get all items assessed by purity at the branch. Reporting only the 22k rate without mentioning purity variation fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports 22k gold rate (Rs 5,800/g) and proactively notes that rates vary by purity — 24k gold carries a higher rate — and the customer should get all items purity-assessed. Reporting only 22k figure without the purity-variation caveat fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

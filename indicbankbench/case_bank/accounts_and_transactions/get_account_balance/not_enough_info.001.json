@@ -1,0 +1,160 @@
+{
+  "case_id": "acct.get_account_balance.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer says 'my balance' singular but has 2 accounts. The existing happy.001 queries both for 'my accounts' plural; singular is genuinely ambiguous.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, urban West Godavari, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0318",
+      "full_name": "Sheshamma Mardana",
+      "date_of_birth": "2008-11-04",
+      "gender": "female",
+      "customer_since": "2026-06-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9742",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "West Godavari",
+        "state": "Andhra Pradesh",
+        "pincode": "439742",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "West Godavari",
+        "state": "Andhra Pradesh",
+        "pincode": "439742",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0086X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAB8200001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKGAB8200002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAB8200003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "get_request_status",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you tell me my account balance?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only.",
+      "records": [
+        {
+          "account_id": "TKGAB8200001",
+          "available_balance": 56000,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKGAB8200002",
+          "available_balance": 234000,
+          "hold_amount": 2500
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Querying both accounts is an acceptable resolution for ambiguous singular phrasing. The model must still identify both accounts."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer has two accounts (salary and savings) and asks for 'my account balance' without specifying which. The assistant must ask ONE focused question to identify which account and must NOT call get_account_balance yet. The clarification is the complete answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which account (salary or savings) rather than guessing or calling get_account_balance. Calling the tool without knowing which account fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

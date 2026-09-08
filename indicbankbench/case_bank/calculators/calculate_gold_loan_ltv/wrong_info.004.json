@@ -1,0 +1,173 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer provides their own gold rate from a newspaper quote (Rs 5,950/g for 22K) and asks the model to calculate LTV directly. The actual get_gold_rate for 22K returns Rs 6,200/g. A model that uses the customer-supplied rate instead of calling get_gold_rate gets the wrong LTV (Rs 2,23,125 instead of Rs 2,32,500). The tool description says get_gold_rate is the sole authoritative source.",
+  "setup": {
+    "persona": "21-year-old female, No Occupation / Retired / Homemaker, urban Gurgaon, Haryana",
+    "current_date": "2026-09-12",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0791",
+      "full_name": "Palo Rani",
+      "date_of_birth": "2005-03-26",
+      "gender": "female",
+      "customer_since": "2023-12-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7022",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "63 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Gurgaon",
+        "state": "Haryana",
+        "pincode": "137022",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "63 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Gurgaon",
+        "state": "Haryana",
+        "pincode": "137022",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5738X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9671001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9671002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "get_deposit_loan_rates",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I checked the newspaper — gold rate is Rs 5,950 per gram for 22K. I have 50 grams of 22K gold. How much loan can I get against it?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "purity_karat": 22,
+        "rate_per_gram": 6200,
+        "rate_date": "2026-09-12"
+      },
+      "_comment": "Bank rate for 22K gold."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 310000,
+        "eligible_loan_amount": 232500,
+        "ltv_percent_used": 75.0
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6200
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Must call get_gold_rate — the customer's newspaper rate of Rs 5,950/g is wrong. The actual bank rate is Rs 6,200/g."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 50,
+          "purity_karat": 22
+        },
+        "optional_ok": {
+          "gold_rate_per_gram": {
+            "allowed": [
+              6200
+            ]
+          }
+        },
+        "_comment": "gold_rate_per_gram must be from get_gold_rate (Rs 6,200), not the customer's newspaper quote (Rs 5,950)."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer provides a newspaper gold rate of Rs 5,950/g for 22K and wants to calculate their LTV. The actual bank rate from get_gold_rate is Rs 6,200/g — significantly higher. Using the customer's rate gives a lower LTV (Rs 2,23,125) than the correct rate (Rs 2,32,500). The assistant must fetch the authoritative rate via get_gold_rate and use it, correcting the customer. Using the customer-supplied rate without verifying against get_gold_rate fails.",
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches the bank's gold rate via get_gold_rate (Rs 6,200/g, not the customer's Rs 5,950/g) and uses it in the LTV calculation. Using the customer-supplied rate without calling get_gold_rate fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,209 @@
+{
+  "case_id": "depl.get_loan_foreclosure_quote.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior conversation fetched foreclosure quote showing outstanding Rs 28,00,000 with total payoff Rs 28,55,000. Since then one EMI was paid, reducing outstanding. Customer asks again — model must re-fetch for updated figure.",
+  "setup": {
+    "persona": "34-year-old female, No Occupation / Retired / Homemaker, urban Thrissur, Kerala",
+    "current_date": "2026-10-10",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0524",
+      "full_name": "Anju Jacob",
+      "date_of_birth": "1992-11-15",
+      "gender": "female",
+      "customer_since": "2022-02-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0514",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "35 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Thrissur",
+        "state": "Kerala",
+        "pincode": "370514",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "35 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Thrissur",
+        "state": "Kerala",
+        "pincode": "370514",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7157X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TGLFQ9600P01",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "LN-LFQ9600001",
+          "type": "loan",
+          "label": "Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCLFQ9600P02",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What would it cost to close my home loan today?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "f1",
+            "type": "function",
+            "function": {
+              "name": "get_loan_foreclosure_quote",
+              "arguments": {
+                "loan_id": "LN-LFQ9600001"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "f1",
+        "content": "{\"quotes\":[{\"loan_id\":\"LN-LFQ9600001\",\"quote_id\":\"Q-LFQ9600001\",\"outstanding_principal\":2800000,\"accrued_interest\":5400,\"foreclosure_charges\":56000,\"total_payoff\":2861400,\"last_emi_date\":\"2026-09-05\",\"message\":\"Foreclosure quote generated as of 2026-09-20.\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "To close your home loan, you'd need Rs 28,61,400 — that's Rs 28,00,000 outstanding principal, Rs 5,400 accrued interest, and Rs 56,000 foreclosure charges."
+      },
+      {
+        "role": "user",
+        "content": "That's quite a bit. Let me wait for one more EMI to go through."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_loan_foreclosure_quote",
+    "get_loan_details",
+    "get_deposit_loan_rates",
+    "get_account_balance",
+    "close_deposit"
+  ],
+  "user_turns": [
+    {
+      "content": "I just paid my October EMI — can you give me an updated foreclosure quote now? The outstanding should be lower."
+    }
+  ],
+  "mock": {
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "EMI paid on Oct 5 reduced outstanding. Now: outstanding 27,55,000, accrued interest (5 days) = 2755000 * 8.6% * 5/365 = 3245, charges 2% = 55100, total = 2755000 + 3245 + 55100 = 28,13,345.",
+      "records": [
+        {
+          "loan_id": "LN-LFQ9600001",
+          "outstanding_principal": 2755000,
+          "accrued_interest": 3245,
+          "foreclosure_charges": 55100,
+          "total_payoff": 2813345
+        }
+      ]
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "FD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "amount_credited": 0,
+        "payout_account": "TGLFQ9600P01",
+        "reference_id": "REF-CLS-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "LN-LFQ9600001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_foreclosure_quote": {
+        "required": {
+          "loan_ids": [
+            "LN-LFQ9600001"
+          ]
+        },
+        "_comment": "Must re-fetch live. Prior was Rs 28,61,400; now Rs 28,13,345 after EMI payment."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The prior quote was Rs 28,61,400 based on Rs 28,00,000 outstanding. After the October EMI, outstanding is now Rs 27,55,000 with total payoff Rs 28,13,345. The assistant must re-fetch get_loan_foreclosure_quote live and report the updated lower payoff. Quoting the stale Rs 28,61,400 fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches foreclosure quote live and reports updated Rs 28,13,345. Using stale Rs 28,61,400 fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

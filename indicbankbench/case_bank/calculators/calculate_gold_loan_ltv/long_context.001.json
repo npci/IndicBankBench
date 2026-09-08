@@ -1,0 +1,230 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.long_context.001",
+  "axis": "8_long_context",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 numeric-correction recall (long-conversation mechanism). Early on the customer says 40 grams, then corrects it to 38 grams two turns later (she reweighed). Several turns of unrelated chatter follow, during which 40 is NOT repeated — but it was the first, most salient figure. When she finally asks to run the numbers, the assistant must use the CORRECTED 38 grams, not the original 40. We know this failure mode bites at the small-model tier (a card case saw a small model block the wrong card by anchoring on a stale value); here anchoring on 40g over-quotes the loan by ~₹9,000. Caught deterministically: arg_gate pins gold_grams=38 and treating 40 as the weight (via the mock) yields the wrong number, but the gate itself keys on 38.",
+  "setup": {
+    "persona": "32-year-old female, Digger (Mine & Quarry), rural Nandurbar, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0213",
+      "full_name": "Priya Jaykumar",
+      "date_of_birth": "1994-02-23",
+      "gender": "female",
+      "customer_since": "2013-11-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3033",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Nandurbar",
+        "state": "Maharashtra",
+        "pincode": "293033",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Nandurbar",
+        "state": "Maharashtra",
+        "pincode": "293033",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7767X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKEKF3882001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCEKF3882002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I'm thinking of taking a gold loan against some jewellery — about 40 grams of 22-carat gold. Can you tell me roughly what I'd be eligible for?"
+      },
+      {
+        "role": "assistant",
+        "content": "Happy to help with that. To give you an accurate figure I'll use today's 22-carat gold rate. Shall I go ahead and calculate the eligibility on 40 grams?"
+      },
+      {
+        "role": "user",
+        "content": "Actually hold on — let me put it on the kitchen scale properly. ... Right, it's 38 grams, not 40. I was going off memory earlier. Use 38."
+      },
+      {
+        "role": "assistant",
+        "content": "Thanks for checking — I'll use 38 grams of 22-carat gold. Before I run it, was there anything else you wanted to know?"
+      },
+      {
+        "role": "user",
+        "content": "Yes — if I take this loan, roughly what interest rate do gold loans carry these days?"
+      },
+      {
+        "role": "assistant",
+        "content": "Gold loans are among the lower-rate secured loans; the exact rate depends on the scheme and tenure, and I can pull the current gold-loan rate card for you if you'd like to see the slabs."
+      },
+      {
+        "role": "user",
+        "content": "Maybe later. And how long does disbursal usually take?"
+      },
+      {
+        "role": "assistant",
+        "content": "For gold loans, once the gold is valued at the branch, disbursal is typically same-day — often within a couple of hours of pledging."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_transaction_history",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Ok, that's fine. Now go ahead and calculate what I'd be eligible for on the gold."
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6000,
+        "rate_date": "2026-03-15"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "Correct result for the CORRECTED 38 grams: value 228000, eligible 171000 at 75%. If a model anchors on 40g it would over-quote (~180000).",
+      "output": {
+        "gold_value": 228000,
+        "eligible_loan_amount": 171000,
+        "ltv_percent_used": 75
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T10:00:00",
+          "amount": 100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-NOISE",
+          "transaction_note": "Noise entry",
+          "status": "success",
+          "running_balance": 100
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 38,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6000
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        }
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 38,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6000
+        },
+        "_comment": "THE GATE. gold_grams MUST be the corrected 38, not the original 40 the customer first stated. Using 40 is the anchoring/stale-value failure this case targets, caught deterministically here."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Across the conversation the customer first said 40 grams, then corrected it to 38 grams after weighing, and never went back to 40. When she asks to run the eligibility, the assistant must use the corrected 38 grams: source the 22K rate (₹6,000/g) and call calculate_gold_loan_ltv with gold_grams 38, reporting gold value ₹2,28,000 and eligible loan ₹1,71,000 at 75% LTV. Using the original 40 grams — anchoring on the first, more salient figure — over-quotes the eligibility by ~₹9,000 and is the failure this case targets. Re-asking the weight when the customer already corrected it clearly is weak but not fatal."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses the CORRECTED weight of 38 grams (not the originally-stated 40) and reports the eligibility for 38g — ₹1,71,000 on a gold value of ₹2,28,000. Using 40 grams, or quoting a figure based on it, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

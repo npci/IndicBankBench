@@ -1,0 +1,225 @@
+{
+  "case_id": "acct.get_transaction_history.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer asks for salary account UPI transactions, detours to ask current account balance, then comes back asking for salary account cheque transactions. Model must keep accounts and transaction types separate.",
+  "setup": {
+    "persona": "22-year-old male, Cook, Ship, rural Kaushambi, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0352",
+      "full_name": "Hoshiyar Kumar",
+      "date_of_birth": "2004-10-24",
+      "gender": "male",
+      "customer_since": "2022-12-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0317",
+      "registered_email": "h*****@gmail.com",
+      "communication_address": {
+        "line1": "118 College Road",
+        "line2": "Model Town",
+        "city": "Kaushambi",
+        "state": "Uttar Pradesh",
+        "pincode": "710317",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "118 College Road",
+        "line2": "Model Town",
+        "city": "Kaushambi",
+        "state": "Uttar Pradesh",
+        "pincode": "710317",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6574X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGTH8400001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKGTH8400002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGTH8400003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "get_gold_rate",
+    "set_card_controls"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me the recent UPI transactions from my salary account."
+    },
+    {
+      "content": "Actually, let me also check — what's the balance on my current account?"
+    },
+    {
+      "content": "Right, and going back to the salary account — show me any cheque transactions there."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Two separate calls expected: salary/UPI then salary/cheque. Current account balance call in between.",
+      "records": [
+        {
+          "date": "2026-08-16T10:15:00",
+          "amount": 2400,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-8503001",
+          "transaction_note": "UPI - BESCOM ELECTRICITY BILL",
+          "status": "success",
+          "running_balance": 31750
+        },
+        {
+          "date": "2026-08-15T18:00:00",
+          "amount": 850,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-8503002",
+          "transaction_note": "UPI - SWIGGY PAYMENT",
+          "status": "success",
+          "running_balance": 34150
+        },
+        {
+          "date": "2026-08-10T09:00:00",
+          "amount": 15000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-8503003",
+          "transaction_note": "CHQ 100345 - LIC PREMIUM",
+          "status": "success",
+          "running_balance": 35000
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKGTH8400002",
+          "available_balance": 118420,
+          "hold_amount": 5000
+        }
+      ]
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKGTH8400001",
+          "channel": "upi",
+          "limit": 10
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKGTH8400002"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKGTH8400001",
+          "channel": "cheque",
+          "limit": 10
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {},
+        "_comment": "Must query salary account for UPI (then later cheque). Both calls are expected; order is sequential across turns."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKGTH8400002"
+          ]
+        },
+        "_comment": "Must query the CURRENT account, not the salary account. Crossing accounts is the bleed this case tests."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer starts by requesting UPI transactions from their salary account. The assistant calls get_transaction_history for the salary account with channel=UPI and reports them. The customer then detours to ask the current account balance — the assistant must call get_account_balance for the CURRENT account (TKGTH8400002, Rs 1,18,420.10 available with Rs 5,000 on hold), not the salary account. Finally, the customer returns to the salary account asking for cheque transactions — the assistant must call get_transaction_history again for the salary account with channel=cheque, reporting the Rs 15,000 LIC cheque. Bleeding data between accounts, or querying the wrong account on any call, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "keeps salary and current account data separate across the detour — fetches salary account UPI txns, current account balance, then salary account cheque txns. Querying the wrong account on any call, or mixing data between accounts, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,254 @@
+{
+  "case_id": "cards.get_card_details.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer asks about credit card details, detours to freeze question, then returns to credit card question. Model must keep card state separate from freeze/pause advice.",
+  "setup": {
+    "persona": "26-year-old female, No Occupation / Retired / Homemaker, rural Paschim Medinipur, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0234",
+      "full_name": "Karuna Portya",
+      "date_of_birth": "2000-11-21",
+      "gender": "female",
+      "customer_since": "2022-06-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8154",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "35 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Paschim Medinipur",
+        "state": "West Bengal",
+        "pincode": "988154",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "35 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Paschim Medinipur",
+        "state": "West Bengal",
+        "pincode": "988154",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2489X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRD8500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRD8500002",
+          "card_type": "credit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCCRD8500003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "calculate_rd_maturity",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the available credit limit on my credit card? I want to make sure I have enough room for a purchase."
+    },
+    {
+      "content": "Actually, before that — I'm travelling next week. Should I freeze any cards while I'm away?"
+    },
+    {
+      "content": "Right, so back to the credit card — what was the available limit again?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCRD8500002",
+          "masked_number": "****9876",
+          "card_type": "credit",
+          "network": "Visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 215000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2027-11"
+        },
+        {
+          "card_id": "TKCCRD8500003",
+          "masked_number": "****4321",
+          "card_type": "debit",
+          "network": "RuPay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2028-06"
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCRD8500002",
+            "TKCCRD8500003"
+          ]
+        }
+      },
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCRD8500002",
+            "TKCCRD8500003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Must be called to check card details. Called twice is acceptable (first for limits, then after detour to recall limits). Or called once and recalled from memory."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for their credit card limit (Rs 3,00,000 limit, Rs 2,15,000 available). The assistant calls get_card_details and reports. The customer then detours to ask about freezing cards while travelling — the assistant should advise based on the card controls (international usage is already disabled, so no action needed) — and then the customer returns to ask for the available limit again. The assistant must recall the correct figure (Rs 2,15,000) from the earlier call without confusing it with the debit card data. Forgetting the number or mixing it with debit card details fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "accurately recalls the credit card available limit (Rs 2,15,000) after the freeze detour. Forgetting the number, confusing it with debit card data, or asking the customer to repeat fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

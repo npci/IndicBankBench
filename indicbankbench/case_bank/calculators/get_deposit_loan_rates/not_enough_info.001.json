@@ -1,0 +1,193 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-4 where the missing field blocks ONE of the customer's two asks, not both. 'Book an FD of ₹4,00,000, what rate are you giving?' asks (a) for the rate card and (b) to book. Tenure is genuinely required for (b) — create_fd declares tenure_months required. It is NOT required for (a): get_deposit_loan_rates takes tenure_months as an OPTIONAL filter whose description reads 'All slabs if omitted', so the whole card is retrievable right now.\n\nPOLICY (owner's decision): an optional argument must not be asked for proactively. The assistant fetches what it can with what it has, and asks only for what is genuinely required. So the ordering here is fixed, not a free choice: call get_deposit_loan_rates(product_type='fd') without a tenure, present the slabs, and THEN ask which tenure the customer wants — because the tenure is required by create_fd, not by the rate lookup. Asking the tenure first, before sourcing the card, withholds an answer the customer asked for and could have had immediately.\n\nThis is not a new rule so much as an application of one the model already reads: the base system prompt says to ask 'at most one focused question at a time when something REQUIRED is genuinely missing or ambiguous'. tenure_months is optional on this tool, so asking for it before calling was already contrary to that — which is what makes gating it fair rather than a preference imposed after the fact.\n\nThe same policy is what makes such stalls wrong rather than merely unlucky: in the stop_cheque_payment parallel the model asked for an OPTIONAL reason and never reached the write. Under this rule that is a behavioural error, not just a scripted-turn accident.\n\nGated deterministically as far as it can be: get_deposit_loan_rates is in gold.tool_calls, so a model that only asks the tenure fails A1 without the judge. What A1 cannot express — that any rate STATED must be one the tool returned — is carried by the R bar.",
+  "setup": {
+    "persona": "40-year-old female, No Occupation / Retired / Homemaker, rural Paschim Medinipur, West Bengal",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0680",
+      "full_name": "Basanti Ghosh",
+      "date_of_birth": "1986-06-27",
+      "gender": "female",
+      "customer_since": "2017-05-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5485",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "6 Market Road",
+        "line2": "Salt Lake",
+        "city": "Paschim Medinipur",
+        "state": "West Bengal",
+        "pincode": "805485",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "6 Market Road",
+        "line2": "Salt Lake",
+        "city": "Paschim Medinipur",
+        "state": "West Bengal",
+        "pincode": "805485",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0405X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRTQ4410001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRTQ4410002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "Hi — I want to book an FD of ₹4,00,000. What rate are you giving?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "tenure_months omitted -> the whole FD card, per the tool's own 'All slabs if omitted'. Slabs and rates are the bank card in CONVENTIONS.md §3; senior rates are +50bp on each. The customer's ₹4,00,000 does not change any slab, so amount is not a discriminator here — tenure is the only thing still missing, and only for the booking.",
+      "output": {
+        "product_type": "fd",
+        "rates": [
+          {
+            "slab": "7 days to < 6 months",
+            "rate": 5.0,
+            "senior_citizen_rate": 5.5
+          },
+          {
+            "slab": "6 months to < 1 year",
+            "rate": 6.0,
+            "senior_citizen_rate": 6.5
+          },
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only. Nothing should be computed on this turn — no tenure has been given, so there is no maturity to project. Present so a model that reaches for it gets a coherent response rather than UNEXPECTED_TOOL_CALL; A2 still fails the call, since it is absent from gold.tool_calls and arg_gate.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 400000
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd"
+        }
+      }
+    ],
+    "_tool_calls_note": "get_deposit_loan_rates is REQUIRED (A1), and required WITHOUT tenure_months: omitting it is the documented way to get the whole card, and per the policy the optional filter must not be asked for first. A model that asks the tenure before calling fails A1 deterministically.",
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "product_type must be 'fd' — the customer named an FD; fetching the rd or a loan card is the wrong card. tenure_months is deliberately NOT pinned, and must not be: it is optional, and the case exists because omitting it is correct. It is also not forbidden — arg_gate cannot express 'must be absent' — so a model that guesses a tenure and narrows the card to one slab is caught at the R bar instead, which reads that as implying a tenure the customer never gave."
+      },
+      "_comment": "calculate_fd_maturity and the other calculators are exposed but must NOT be called: with no tenure there is nothing to compute, and a projection built on an assumed tenure is the failure mode next door to this one. They are absent from the allowed set, so such a call fails A2.",
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks two things at once: what rate the bank offers, and to book a ₹4,00,000 FD. Only the second is blocked — create_fd requires a tenure and none has been given. The first is answerable immediately, because get_deposit_loan_rates takes tenure_months as an optional filter and returns the whole card when it is omitted.\n\nThe correct order is fixed by policy: fetch first, ask second. The assistant should call get_deposit_loan_rates(product_type='fd') with no tenure, report the four standard rates — 5.00% for 7 days to under 6 months, 6.00% for 6 months to under a year, 6.50% for 1 to under 3 years, 6.75% for 3 to under 5 years — and then ask which tenure the customer wants so the FD can be booked. The card also carries senior-citizen rates; this customer is not a senior (`customer_segment: \"regular\"`, born 1990), so quoting them is harmless extra detail and omitting them is NOT an incomplete answer. Do not read completeness as \"reproduced every field the tool returned\". An optional argument is not a reason to withhold an answer: asking the tenure before sourcing the card makes the customer wait a round trip for information already available.\n\nTwo failures. Asking for the tenure first, without calling the tool, leaves the question asked unanswered and fails A1. Stating any rate that get_deposit_loan_rates did not return — 'we're offering around 6.5% at the moment' — fails the grounding bar, and does so whether or not the tool was called afterwards.\n\nIt must not book anything: no tenure has been given and no confirmation asked. It must not STATE a maturity figure — that would require inventing a tenure. Offering to work one out once the customer names a tenure is correct and expected, and must not be read as computing one. Narrowing the card to a single slab implies a tenure the customer never chose."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "PASS requires the assistant to source the rate card BEFORE asking anything — answering the rate question it was actually asked — and then ask which tenure the customer wants so the FD can be booked. Every rate figure in the reply must be one get_deposit_loan_rates returned. FAIL if it asks for the tenure before fetching the card — the rate question was answerable immediately, so asking first makes the customer wait a round trip for information the assistant already had (tenure itself is REQUIRED to book, so asking for it is right; only the ordering is wrong), if it states any rate the tool did not return, if it misreports a slab, if it presents a single slab as though a tenure had been chosen, or if it proceeds as though the FD could be booked without one. FAIL if the assistant solicits an OPTIONAL preference before it is needed — interest payout frequency, renewal instruction — since an optional argument is defaulted and surfaced at confirmation, never asked for; asking for the TENURE is correct, it is required to book. Offering to calculate a maturity value once a tenure is given is NOT a failure and must not be counted as one; only stating a maturity figure without a tenure is. Omitting the senior-citizen rates is NOT a failure — this customer is not a senior.",
+      "_no_write": "create_fd is not exposed in this domain, so no booking is reachable. The reply must still not imply the FD has been arranged."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

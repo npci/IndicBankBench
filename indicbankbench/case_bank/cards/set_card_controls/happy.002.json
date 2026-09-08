@@ -1,0 +1,249 @@
+{
+  "case_id": "cards.set_card_controls.happy.002",
+  "axis": "1_happy_path",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 for a request that CANNOT be one tool call. The customer wants international ATM withdrawals switched off AND the international ATM daily limit capped at ₹5,000. set_card_controls' description forbids combining them — 'do not make changes to a channel's enable/disable status and daily limit in the same tool call... if required do sequential tool calls' — so the correct execution is two calls, and the ORDER is forced by a second disclosed rule: changing a limit requires 'check if the channel is enabled', so the cap must be set while international ATM is still on and the disable comes second. The customer's own phrasing ('capped if I ever turn it back on') makes that the meaningful order.\n\nThe gold path involves no bad tool response at all — the trap is the sequencing rule alone (cards keeps axis-2 coverage through get_card_details/bad_response.001 and toggle_card_freeze/bad_response.001).\n\nDeterministic catches: a single call carrying both fields is REFUSED by the backend (status failed), and S3 still rejects a malformed or out-of-enum payload. The ordering itself is judge-gated — gold.dependencies expresses ordering BETWEEN tools, not between two calls to the same tool.",
+  "setup": {
+    "persona": "20-year-old male, Transport Service Operator, urban Medak, Telangana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0460",
+      "full_name": "Nageshwar Kumar",
+      "date_of_birth": "2006-09-02",
+      "gender": "male",
+      "customer_since": "2024-12-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8836",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "117 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Medak",
+        "state": "Telangana",
+        "pincode": "988836",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "117 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Medak",
+        "state": "Telangana",
+        "pincode": "988836",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8180X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TK3T545001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKC3T5459123",
+          "card_type": "credit",
+          "masked_number": "****9123",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_fd_details",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "Switch off international ATM withdrawals on my credit card, and set the international ATM daily limit to ₹5,000 while you're at it so it's capped if I ever turn it back on."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKC3T5459123",
+          "masked_number": "****9123",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "_comment": "Returned controls are computed from the card's current state plus this call's payload, so each call in the sequence shows its own effect and the second sees the first. A single call carrying BOTH enabled and daily_limit for a channel is refused with status=failed, exactly as the tool's description says it must be — a fake success there would leave the model no signal it had broken a documented rule.",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-31044"
+      },
+      "reject_when": {
+        "payload_has_all_of": [
+          "enabled",
+          "daily_limit"
+        ],
+        "output": {
+          "status": "failed",
+          "message": "A channel's enable/disable status and its daily_limit cannot be changed in the same request. Send them as sequential calls.",
+          "reference_id": "REF-CTL-REJECT"
+        }
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKC3T5459123"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKC3T5459123",
+          "atm": {
+            "international": {
+              "daily_limit": 5000
+            }
+          }
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKC3T5459123",
+          "atm": {
+            "international": {
+              "enabled": false
+            }
+          }
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Required, and disclosed: this tool's description says \"Call get_card_details before this tool\". Without the read the assistant can only act on the customer's stated premise, and in cards that premise is wrong often enough to cause unnecessary or doomed state changes — a freeze on an already-frozen card, an unfreeze on a blocked one, a block on a card that has already expired. card_ids is deliberately NOT pinned: `required` compares by exact equality (grader.py:216) and for a list that is order-sensitive, so pinning it would fail a model that reads all of the customer's cards — a natural and correct move, especially where more than one card is in play. A1 enforces that the read happens, A4 that it happens first, and S1 that the ids are real."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKC3T5459123"
+        },
+        "_comment": "Only card_id is pinned. Two calls are required and their order matters, but arg_gate can express neither: `required` is checked against EVERY call to the tool, so anything channel-specific pinned here would fail one of the two legitimate calls. The refusal mock catches the combined call deterministically; the ordering is the judge's to check, from the tool-call arguments visible in the transcript."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for two changes to international ATM on their credit card: switch it off, and cap its daily limit at ₹5,000. Both are legitimate, but they cannot go in one call — set_card_controls' description states that a channel's enable/disable status and its daily limit must not be changed together, and that sequential calls should be used instead.\n\nThe order is not arbitrary. The same description says a limit change requires the channel to be enabled, so the cap must be applied FIRST, while international ATM is still on, and the disable second. That also matches what the customer actually wants: the cap is for when they turn the channel back on.\n\nSo: read the card (a disclosed prerequisite), confirm, then call set_card_controls twice — daily_limit 5,000 on atm.international, then enabled false on the same channel — and report both outcomes. The limit is valid on its own terms: ₹5,000 is below the ₹2,00,000 credit limit, differs from the current ₹15,000, and is not negative.\n\nFailures: sending both changes in one call, which the backend refuses — and a model that then reports success anyway is inventing an outcome; doing them in the wrong order, which sets a limit on a channel it has just disabled; silently dropping one of the two changes; and writing before the customer confirms (S2).",
+    "dependencies": [
+      [
+        "get_card_details",
+        "set_card_controls"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant makes TWO separate set_card_controls calls rather than one — the daily_limit change first, while international ATM is still enabled, then the disable — and reports both outcomes: international ATM withdrawals are off, and a ₹5,000 cap is in place for if it is re-enabled. Combining both changes into a single call fails (the backend refuses it, and claiming success after that refusal is worse). Doing them in the reverse order fails. Dropping either change fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

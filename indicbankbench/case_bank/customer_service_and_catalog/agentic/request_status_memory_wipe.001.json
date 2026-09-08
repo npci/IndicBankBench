@@ -1,0 +1,178 @@
+{
+  "case_id": "csc.agentic.request_status_memory_wipe.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — MULTI-TURN MEMORY-WIPE trap. Turn 1 asks for open complaints; the model calls get_all_requests with status=open, gets 2. Turn 2 reveals the assumption was wrong — 'one might have been resolved — check everything.' A weak model keeps the status=open filter from turn 1, missing the resolved/completed requests. A strong model drops the filter entirely, retrieving all 3 requests. Gap-widening: a small model drops the filter; another model carries it forward. The arg_gate is permissive; the R bar discriminates based on whether all 3 requests are reported.",
+  "setup": {
+    "persona": "23-year-old male, Caretaker, Building, urban Bangalore, Karnataka",
+    "current_date": "2026-08-20",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0810",
+      "full_name": "Malik Momin",
+      "date_of_birth": "2003-08-04",
+      "gender": "male",
+      "customer_since": "2021-01-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5467",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "225467",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Bangalore",
+        "state": "Karnataka",
+        "pincode": "225467",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0792X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRMW8700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRMW8700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_all_requests",
+    "get_request_status",
+    "raise_request",
+    "search_knowledge_base",
+    "get_transaction_history",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_products_and_offers"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my open complaints — what's still pending?"
+    },
+    {
+      "content": "Wait, one might have been resolved already — check everything, I want to see all of them, not just the open ones."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 3
+      },
+      "_comment": "Three requests: 2 open, 1 resolved. The mock returns ALL records regardless of status-filter args (record_set_filtered can't vary by args). The discrimination is in the R bar — does the model report all 3 after the customer says 'check everything' or does it keep filtering to open only?",
+      "records": [
+        {
+          "request_id": "REQ-RMW-40001",
+          "category": "charges_dispute",
+          "status": "open",
+          "raised_date": "2026-08-05",
+          "last_updated_date": "2026-08-12",
+          "description": "Disputed annual maintenance charge of ₹850 debited on 2026-08-01."
+        },
+        {
+          "request_id": "REQ-RMW-40002",
+          "category": "failed_transaction",
+          "status": "open",
+          "raised_date": "2026-08-10",
+          "last_updated_date": "2026-08-14",
+          "description": "ATM withdrawal of ₹5,000 failed but amount debited from account."
+        },
+        {
+          "request_id": "REQ-RMW-40003",
+          "category": "cheque_book",
+          "status": "resolved",
+          "raised_date": "2026-07-18",
+          "last_updated_date": "2026-07-25",
+          "description": "25-leaf cheque book request — delivered."
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — the customer didn't name a specific request ID."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "optional_ok": {
+          "status": {
+            "allowed": [
+              "open",
+              "all",
+              null
+            ]
+          }
+        },
+        "_comment": "Gotcha #8 — do NOT require any specific filter. The model may call with status=open in turn 1 and no args in turn 2. The R bar verifies the FINAL report includes all 3 requests."
+      },
+      "get_request_status": {
+        "required": {},
+        "_comment": "Wrong tool — requires request_id the customer never gave. A2 catches it if called."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Multi-turn memory-wipe trap. Turn 1: customer asks for open complaints. The assistant calls get_all_requests, returns 3 records (2 open, 1 resolved from July), and reports only the 2 open ones (REQ-RMW-40001 charges dispute, REQ-RMW-40002 failed ATM withdrawal). Turn 2: customer corrects — 'check everything, not just the open ones.' The assistant must NOW re-call get_all_requests WITHOUT a status filter (or with status=all) and report ALL 3 requests, including the resolved cheque-book request (REQ-RMW-40003). A weak model keeps the status=open filter from turn 1 and reports only the 2 open complaints again. A strong model drops the filter and surfaces all 3. The arg_gate is permissive — no required filters — so the discrimination is through the R bar."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "in turn 1 the assistant reports the open complaints. After turn 2's correction, the assistant re-queries get_all_requests WITHOUT a status filter (or with status=all) and reports ALL 3 requests — the two pending ones AND the resolved cheque-book request REQ-RMW-40003 from July. FAIL if the assistant only reports open requests after the customer explicitly asked for everything, or if it omits the resolved request from the final report."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

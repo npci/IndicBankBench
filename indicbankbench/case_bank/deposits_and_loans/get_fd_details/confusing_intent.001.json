@@ -1,0 +1,252 @@
+{
+  "case_id": "depl.get_fd_details.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: two FDs, customer says 'the one that pays me interest every month' -> must map to payout_type=monthly. Monthly FD maturity = principal only (interest paid out).",
+  "setup": {
+    "persona": "45-year-old male, Supervisor and Foreman, Printing and Related Work, rural Araria, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0580",
+      "full_name": "Pankaj Kumar",
+      "date_of_birth": "1981-12-28",
+      "gender": "male",
+      "customer_since": "2023-01-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0831",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Araria",
+        "state": "Bihar",
+        "pincode": "270831",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Araria",
+        "state": "Bihar",
+        "pincode": "270831",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6379X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "loan": 0,
+        "rd": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDL741200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDEFDE7412002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDEFDE7412003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDL741200004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I have one fixed deposit that pays me interest every month. How much will I get back when that one ends?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FD-2002 cumulative (maturity 568819), FD-2003 MONTHLY (maturity=principal 300000, per CONVENTIONS §2).",
+      "records": [
+        {
+          "deposit_id": "TKFDEFDE7412002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2024-09-01",
+          "maturity_date": "2026-09-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKGDL741200001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDEFDE7412003",
+          "principal_amount": 300000,
+          "interest_rate": 6.75,
+          "tenure_months": 18,
+          "start_date": "2025-11-01",
+          "maturity_date": "2027-05-01",
+          "maturity_amount": 300000,
+          "payout_type": "monthly",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKGDL741200001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDEFDE7412002",
+            "TKFDEFDE7412003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDEFDE7412002",
+                "TKFDEFDE7412003"
+              ],
+              [
+                "TKFDEFDE7412003",
+                "TKFDEFDE7412002"
+              ],
+              [
+                "TKFDEFDE7412003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Monthly FD must be identified. Querying only the cumulative one means model picked wrong FD."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer refers to 'the FD that pays me interest every month' — maps to payout_type=monthly. The assistant must identify TKFDEFDE7412003 (monthly payout, Rs 3,00,000 principal) and report its maturity amount: Rs 3,00,000 on 2027-05-01. Because interest is paid out monthly, maturity amount is the principal itself. Confusing the two FDs or asking 'which FD?' fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies the monthly-payout FD (TKFDEFDE7412003) from 'pays me every month' and reports its maturity amount (Rs 3,00,000). Answering about the cumulative FD, asking which FD, or reporting an interest-inclusive maturity fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

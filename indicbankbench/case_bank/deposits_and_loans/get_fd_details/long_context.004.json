@@ -1,0 +1,432 @@
+{
+  "case_id": "depl.get_fd_details.long_context.004",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Buried-in-noise: 8 FDs returned. Two FDs mature in January 2027. The bait at position 1 (Rs 1,00,000 maturing Jan 15) is the first record scanned and matches 'January maturity'. The key at position 6 (Rs 5,00,000 maturing Jan 28) is the significant one the customer means. A weak model stops scanning at position 1-2 and reports the small FD. A strong model scans all 8, finds both January-maturing FDs, and identifies the Rs 5L one. Differs from the existing long_context.001 (first-to-mature) and .003 (start-date vs maturity-date trap) this is a POSITIONAL scan-depth test.",
+  "setup": {
+    "persona": "55-year-old male, Hotel and Restaurant Keeper, urban Krishna, Andhra Pradesh",
+    "current_date": "2026-08-22",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0394",
+      "full_name": "Koteswararao Divvala",
+      "date_of_birth": "1971-10-27",
+      "gender": "male",
+      "customer_since": "2021-02-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0561",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "82 College Road",
+        "line2": "Koregaon Park",
+        "city": "Krishna",
+        "state": "Andhra Pradesh",
+        "pincode": "370561",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "82 College Road",
+        "line2": "Koregaon Park",
+        "city": "Krishna",
+        "state": "Andhra Pradesh",
+        "pincode": "370561",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5354X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 8,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDB81001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDDDB81002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDDB81003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDDB81004",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDDB81005",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDDB81006",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDDB81007",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDDB81008",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDDB81009",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFDB81010",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "When does my FD maturing in January mature exactly, and what's the payout?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "8 FDs. Bait = position 1 (TKFDDDB81002, Rs 1,00,000, maturing 2027-01-15) is the first January maturity scanned. Key = position 6 (TKFDDDB81007, Rs 5,00,000, maturing 2027-01-28) is the significant January maturity the customer means. Maturity amounts computed per CONVENTIONS.md sec 2 quarterly compounding: 100000@6.5x18m = 100000*(1+6.5/400)^(4*18/12) = 100000*1.01625^6 = 110109; 500000@6.75x12m = 500000*(1+6.75/400)^(4*12/12) = 500000*1.016875^4 = 534693. Other records for noise.",
+      "records": [
+        {
+          "deposit_id": "TKFDDDB81002",
+          "principal_amount": 100000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-07-15",
+          "maturity_date": "2027-01-15",
+          "maturity_amount": 110109,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDB81001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDDB81003",
+          "principal_amount": 250000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-04-10",
+          "maturity_date": "2027-04-10",
+          "maturity_amount": 284410,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDB81001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDDB81004",
+          "principal_amount": 450000,
+          "interest_rate": 6.75,
+          "tenure_months": 12,
+          "start_date": "2025-12-05",
+          "maturity_date": "2026-12-05",
+          "maturity_amount": 481224,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDB81001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDDB81005",
+          "principal_amount": 75000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-09-20",
+          "maturity_date": "2026-09-20",
+          "maturity_amount": 79995,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDB81001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDDB81006",
+          "principal_amount": 320000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2025-05-12",
+          "maturity_date": "2027-05-12",
+          "maturity_amount": 365387,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDB81001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDDB81007",
+          "principal_amount": 500000,
+          "interest_rate": 6.75,
+          "tenure_months": 12,
+          "start_date": "2026-01-28",
+          "maturity_date": "2027-01-28",
+          "maturity_amount": 534693,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDB81001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDDB81008",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-08-01",
+          "maturity_date": "2027-08-01",
+          "maturity_amount": 227528,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDB81001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDDB81009",
+          "principal_amount": 60000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-11-03",
+          "maturity_date": "2026-11-03",
+          "maturity_amount": 63996,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDB81001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-22"
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDDDB81002",
+            "TKFDDDB81003",
+            "TKFDDDB81004",
+            "TKFDDDB81005",
+            "TKFDDDB81006",
+            "TKFDDDB81007",
+            "TKFDDDB81008",
+            "TKFDDDB81009"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "_comment": "deposit_ids deliberately not pinned order-sensitive list. The model must fetch all 8 FDs. Two mature in January 2027: bait at position 1 (TKFDDDB81002 Rs 1,00,000 Jan 15) and key at position 6 (TKFDDDB81007 Rs 5,00,000 Jan 28). A weak model stops at position 1. A strong model scans all 8 and finds both."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite optional."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      }
+    },
+    "expected_resolution": "The customer asks when the FD maturing in January matures and what the payout is. get_fd_details returns 8 FDs. Two mature in January 2027: the bait at position 1 (TKFDDDB81002 Rs 1,00,000 maturing 2027-01-15 worth Rs 1,10,109) and the key at position 6 (TKFDDDB81007 Rs 5,00,000 maturing 2027-01-28 worth Rs 5,34,693). A weak model that stops scanning early lands on position 1 and reports only the small Rs 1L FD. A strong model scans all 8 finds both January-maturing FDs and either (a) notes there are two and reports the significant Rs 5L FD maturing 28 Jan with payout Rs 5,34,693 or (b) reports both and notes the ambiguity. Reporting only the Rs 1L FD at position 1 with no mention of the Rs 5L FD fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies the Rs 5,00,000 FD maturing 2027-01-28 with payout Rs 5,34,693 as the correct January-maturing FD the customer means NOT the Rs 1,00,000 FD maturing 2027-01-15 at position 1. Reporting only the small FD and ignoring the significant one at position 6 fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

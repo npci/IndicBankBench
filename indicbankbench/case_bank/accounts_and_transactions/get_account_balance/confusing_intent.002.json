@@ -1,0 +1,230 @@
+{
+  "case_id": "acct.get_account_balance.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 compound request with a mid-flight narrowing correction. Turn 1 asks for BOTH account balances ('each of my accounts'), which forces a two-account fetch; turn 2 corrects the scope to just the current account. The final answer must reflect the correction: report only the current account's figures (2,18,420.10 available, 10,000 on hold) and not re-present the salary balance as the answer. Named careless failure mode: answering turn 2 by restating both balances (recency/ignoring the narrowing) or reporting the salary figure as the resolved answer.",
+  "setup": {
+    "persona": "47-year-old male, Stockist, urban Madurai, Tamil Nadu",
+    "current_date": "2026-08-10",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0173",
+      "full_name": "Paul Dathu",
+      "date_of_birth": "1979-03-20",
+      "gender": "male",
+      "customer_since": "2014-05-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8966",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "pincode": "618966",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Madurai",
+        "state": "Tamil Nadu",
+        "pincode": "618966",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2389X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBIC4096001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKBIC4096002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBIC4096003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "How much do I have in each of my accounts right now?"
+    },
+    {
+      "content": "Actually, never mind the full picture — just my current account balance, I'm paying a vendor today."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKBIC4096001",
+          "available_balance": 84350.5,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKBIC4096002",
+          "available_balance": 218420.1,
+          "hold_amount": 10000
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-10T11:20:00",
+        "last_update": "2026-08-10T11:20:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKBIC4096001",
+            "TKBIC4096002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKBIC4096001",
+                "TKBIC4096002"
+              ],
+              [
+                "TKBIC4096002"
+              ],
+              [
+                "TKBIC4096001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Turn 1 asks for BOTH accounts; the correct fetch covers both. A single-account call is accepted (the narrowed answer is judged on the final reply), but a wrong third ID is not possible — there is no other account."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Turn 1 asks for the balance of each account; turn 2 narrows the request to the current account only (a vendor payment is coming). The assistant must honour the narrowing in its final answer: report the CURRENT account (TKBIC4096002) available balance of INR 2,18,420.10, noting INR 10,000 is on hold and therefore not spendable. It must NOT re-present the salary account's INR 84,350.50 as the answer to the narrowed request, and must not answer turn 2 with the full two-account picture. The corrected scope must be carried into the final reply."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the final answer honours the mid-flight narrowing: it reports ONLY the current account's balance (INR 2,18,420.10 available, INR 10,000 on hold) as the resolved figure; FAIL if it answers with both balances as if the narrowing never happened, or presents the salary account figure as the answer to the corrected request."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

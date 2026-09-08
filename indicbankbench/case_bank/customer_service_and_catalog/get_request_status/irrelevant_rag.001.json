@@ -1,0 +1,172 @@
+{
+  "case_id": "csc.get_request_status.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Prior already showed REQ-500 as resolved. Customer forgot and asks again. Must note it's resolved, not re-fetch unnecessarily (or fetch and confirm resolved).",
+  "setup": {
+    "persona": "32-year-old female, Painter, Building, urban Y.S.R., Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0786",
+      "full_name": "Karri Seerapu",
+      "date_of_birth": "1994-07-09",
+      "gender": "female",
+      "customer_since": "2018-11-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1654",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Y.S.R.",
+        "state": "Andhra Pradesh",
+        "pincode": "331654",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Y.S.R.",
+        "state": "Andhra Pradesh",
+        "pincode": "331654",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8161X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQ9900001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQ9900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_request_status",
+              "arguments": {
+                "request_id": "REQ-500"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"request_id\":\"REQ-500\",\"status\":\"resolved\",\"raised_date\":\"2026-08-01T10:00:00\",\"last_update\":\"2026-08-15T14:00:00\",\"remarks\":\"Dispute resolved. Rs 750 refund processed.\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "REQ-500 is resolved — Rs 750 refund was processed on August 15."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "block_card",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "What's happening with my refund request REQ-500? Has it gone through yet?"
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Already resolved in prior context. Fetching again returns same resolved status.",
+      "output": {
+        "status": "resolved",
+        "raised_date": "2026-08-01T10:00:00",
+        "last_update": "2026-08-15T14:00:00",
+        "remarks": "Dispute resolved. Rs 750 refund processed."
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Answering from prior context is acceptable; re-fetching to confirm is also fine."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior conversation already showed REQ-500 as resolved (Rs 750 refund processed Aug 15). The customer asks again (forgot). The assistant can either confirm from the prior context or re-fetch to confirm. Either is acceptable. The key: must NOT claim it's still pending/open when prior shows it's resolved."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "confirms REQ-500 is resolved (Rs 750 refunded), whether from prior context or fresh fetch. Claiming it's still pending/open fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

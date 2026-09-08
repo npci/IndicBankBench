@@ -1,0 +1,283 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.not_enough_info.004",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "clarify",
+  "_variant_note": "Wave-4 asymmetric failure: customer says 'what's the penalty if I break my FD early?' without identifying WHICH FD (they have two). Two distinct failure modes: a small model over-clarifies asking for account numbers/more info without ever calling tools (A1); stronger model calls get_fd_details but narrows to ONE FD and quotes it, missing the ambiguity (R — answered but for wrong FD). Correct path: query BOTH FDs, surface both, ask which one. One clear path, two different failure modes.",
+  "setup": {
+    "persona": "55-year-old male, Wholesale Dealer, urban Kolkata, West Bengal",
+    "current_date": "2026-07-01",
+    "current_time": "16:00",
+    "login_context": {
+      "customer_id": "SCN0724",
+      "full_name": "Amit Ray",
+      "date_of_birth": "1971-07-22",
+      "gender": "male",
+      "customer_since": "2018-09-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9906",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "67 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "289906",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "67 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "289906",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3910X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAFG9388001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDAFG9388002",
+          "type": "fd",
+          "label": "TK SmartFD 12M"
+        },
+        {
+          "product_id": "TKFDAFG9388003",
+          "type": "fd",
+          "label": "TK FlexiFD 18M"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCAFG9388004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the penalty if I break my FD early?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two FDs: a 12-month FD (Rs 2,00,000 at 6.0%) and an 18-month FD (Rs 3,50,000 at 6.5%). Both have different closure penalties. Asking which FD is the correct move — not guessing one.",
+      "records": [
+        {
+          "deposit_id": "TKFDAFG9388002",
+          "principal_amount": 200000,
+          "interest_rate": 6.0,
+          "tenure_months": 12,
+          "start_date": "2026-02-15",
+          "maturity_date": "2027-02-15",
+          "maturity_amount": 212304,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKAFG9388001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDAFG9388003",
+          "principal_amount": 350000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2026-03-20",
+          "maturity_date": "2027-09-20",
+          "maturity_amount": 385818,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKAFG9388001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Different quotes for each FD. FD-388002: 4.53 months at 6.0% (step-down <6mo): 200000 x 5.0% x 4.53/12 = 3775...wait, <6mo slab is 5.0%. Actually the rate step-down depends on completed tenure. 4.53 months falls below 6 months → 5.0% slab. Accrued: 200000 x 5.0% x 4.53/12 = 3775. Penalty 1% = 2000. Payout: 200000+3775-2000=201775. FD-388003: 3.37 months → also <6mo slab at 5.0%. Accrued: 350000 x 5.0% x 3.37/12 = 4915. Penalty 1% = 3500. Payout: 350000+4915-3500=351415.",
+      "records": [
+        {
+          "deposit_id": "TKFDAFG9388002",
+          "principal_amount": 200000,
+          "accrued_interest": 3775,
+          "penalty_rate": 1.0,
+          "penalty_amount": 2000,
+          "effective_rate": 4.49,
+          "estimated_payout": 201775
+        },
+        {
+          "deposit_id": "TKFDAFG9388003",
+          "principal_amount": 350000,
+          "accrued_interest": 4915,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3500,
+          "effective_rate": 4.13,
+          "estimated_payout": 351415
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDAFG9388002",
+            "TKFDAFG9388003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDAFG9388002",
+                "TKFDAFG9388003"
+              ],
+              [
+                "TKFDAFG9388002"
+              ],
+              [
+                "TKFDAFG9388003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying both FDs is best — but the real correct move is clarifying which FD. The model may call get_fd_details (tool-then-clarify). Either way, the key is NOT answering with one FD's penalty as if it's the only one."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — pulling quotes is fine but the model must still ask which FD."
+      },
+      "close_deposit": {
+        "required": {},
+        "_comment": "Must NOT be called without clarification."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about the penalty for breaking 'their FD' early, but they hold two FDs — a Rs 2,00,000 12-month FD (TK SmartFD 12M) and a Rs 3,50,000 18-month FD (TK FlexiFD 18M). The premature closure penalty and payout differ between them. The assistant must query both FDs and ask which one the customer means — not quote the penalty for just one as if it's the only FD. Quoting one FD's penalty without surfacing the other is a wrong answer; not calling any tools at all (over-clarifying without data) is the weaker failure mode but still fails A1."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant queries the FDs and asks which one the customer means — OR surfaces both and asks which penalty they want. Answering with just one FD's details as if it's the only one, or proceeding to a quote without clarifying which FD, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

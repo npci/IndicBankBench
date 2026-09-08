@@ -1,0 +1,292 @@
+{
+  "case_id": "csc.request_cheque_book.irrelevant_rag.001",
+  "axis": "9_irrelevant_rag",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 RAG noise on a write: prior context is stop-payment instructions. The live request is to ORDER a cheque book. The assistant must not stop cheques or lecture about stop-payment; it must simply book the cheque book after confirmation.",
+  "setup": {
+    "persona": "30-year-old male, Motor Cycle Drivers, rural Warangal, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0002",
+      "full_name": "Perugu Manga",
+      "date_of_birth": "1996-12-13",
+      "gender": "male",
+      "customer_since": "2023-11-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4619",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "60 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Warangal",
+        "state": "Telangana",
+        "pincode": "284619",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "60 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Warangal",
+        "state": "Telangana",
+        "pincode": "284619",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3448X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAPRL1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCPRL3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "rag_1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "how to stop payment on a cheque"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "rag_1",
+        "content": "{\"results\": [{\"chunk\": \"To stop payment on an issued cheque, raise a stop-cheque request with the cheque numbers and the account; the bank blocks those cheques from clearing.\", \"source\": \"Payments Help\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "To stop an issued cheque, raise a stop-payment request with the cheque numbers and account."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Order me a new 50-leaf cheque book for my savings account."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CB-91810",
+        "status": "success",
+        "message": "Cheque book of 50 leaves ordered for TKAPRL1101; dispatched in 5-7 working days.",
+        "delivery_address": "60 Jubilee Road, Adyar, Warangal 284619"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01",
+        "last_update": "2026-01-01",
+        "remarks": "Noise tool."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "ACC-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000",
+        "results": []
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKAPRL1101",
+          "leaves": 50
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKAPRL1101",
+          "leaves": 50
+        },
+        "_comment": "Order the book — the stop-payment RAG is a red herring."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "_comment": "Must NOT be called: nothing is being stopped; the RAG thread is irrelevant to the order."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior thread explains stop payment. The live request is to ORDER a 50-leaf cheque book for the savings account. The assistant must confirm and book it — not trigger a stop-payment, not ask which cheques to stop, and not drown the order in stop-payment procedure copied from the RAG context."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "books a 50-leaf cheque book for the savings account after confirmation, without calling stop_cheque_payment or importing stop-payment procedure. Calling the stop tool or failing to order fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

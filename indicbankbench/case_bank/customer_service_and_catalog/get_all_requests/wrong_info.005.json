@@ -1,0 +1,165 @@
+{
+  "case_id": "csc.get_all_requests.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks to 'show me my dispute requests — I raised one about a failed ATM transaction.' The only request with category=charges_dispute is a fee complaint from January (resolved). The actual ATM withdrawal failure was raised as a service_quality request (REQ-SQ-96102, in_progress). A category filter for 'charges_dispute' or 'dispute'-type categories hides the real request. Broad query or no category filter reveals the service_quality request.",
+  "setup": {
+    "persona": "57-year-old male, Salesman, Wholesale Trade, urban Kalahandi, Odisha",
+    "current_date": "2026-09-01",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0701",
+      "full_name": "Shishir Patel",
+      "date_of_birth": "1969-05-12",
+      "gender": "male",
+      "customer_since": "2016-07-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6024",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Kalahandi",
+        "state": "Odisha",
+        "pincode": "686024",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Kalahandi",
+        "state": "Odisha",
+        "pincode": "686024",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2181X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9611001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9611002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_all_requests",
+    "get_request_status",
+    "raise_request",
+    "search_knowledge_base",
+    "get_transaction_history",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I raised a dispute about a failed ATM transaction last week — Rs 5,000 debited but no cash from the machine. Show me my dispute requests so I can check the status."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for 'dispute requests'. The charges_dispute request (REQ-CH-96101) is an old resolved fee complaint — not the ATM failure. The actual ATM withdrawal failure was raised as service_quality (REQ-SQ-96102, in_progress). A category=charges_dispute filter finds only the resolved fee case, not the ATM issue. Broad query (no category filter) reveals the service_quality request that's actually in progress.",
+      "records": [
+        {
+          "request_id": "REQ-SQ-96102",
+          "category": "service_quality",
+          "status": "in_progress",
+          "raised_date": "2026-08-25",
+          "last_updated_date": "2026-08-28",
+          "description": "ATM withdrawal failed — Rs 5,000 debited, no cash dispensed at HDFC ATM Banjara Hills"
+        },
+        {
+          "request_id": "REQ-CH-96101",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-01-10",
+          "last_updated_date": "2026-01-18",
+          "description": "Non-maintenance fee dispute — resolved, fee waived"
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Broad query catches both requests. The customer's 'dispute' is actually at service_quality, not charges_dispute. A category=charges_dispute filter hides the real ATM failure request."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks to see their 'dispute requests' about a failed ATM transaction. The charges_dispute request (REQ-CH-96101) is an old resolved fee complaint — not the ATM issue. The ATM withdrawal failure was actually raised as a service_quality request (REQ-SQ-96102, in_progress since Aug 25). The assistant must query all requests and surface the ATM failure request, correcting the customer's assumption about which category it's under. Showing only the charges_dispute and saying no ATM request exists fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries all requests and surfaces the ATM withdrawal failure request (REQ-SQ-96102, service_quality, in_progress since Aug 25), correcting the customer that the ATM issue was filed under service_quality, not a dispute category. Reporting only the charges_dispute without finding the ATM request fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

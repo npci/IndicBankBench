@@ -1,0 +1,185 @@
+{
+  "case_id": "depl.get_gold_rate.bad_response.001",
+  "axis": "2_bad_tool_response",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2: the call succeeds structurally (well-formed object, rate_date present) but rate_per_gram is null — the one field the customer actually needs.",
+  "setup": {
+    "persona": "26-year-old male, Driver, Railway Engine (Electrical), rural Chittaurgarh, Rajasthan",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0525",
+      "full_name": "Thakur Sih",
+      "date_of_birth": "2000-08-13",
+      "gender": "male",
+      "customer_since": "2019-12-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1271",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "32 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Chittaurgarh",
+        "state": "Rajasthan",
+        "pincode": "931271",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "32 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Chittaurgarh",
+        "state": "Rajasthan",
+        "pincode": "931271",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1620X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDL7402001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDL7402002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "toggle_card_freeze",
+    "get_loan_foreclosure_quote",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the 22 carat gold rate right now?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "THE ANOMALY: rate_per_gram is null despite a valid rate_date.",
+      "output": {
+        "rate_per_gram": null,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        }
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the 22K gold rate. get_gold_rate returns a well-formed response with rate_date=2026-08-17 but rate_per_gram=null. The assistant must recognise that the rate value is missing and say so plainly — the rate could not be retrieved right now — rather than presenting a number it does not have. It must not fabricate a rate, must not print the raw 'null' as though it were a value, and must not silently substitute the 18K or 24K rate."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "flags that the 22K rate value did not come through and does not present any per-gram figure. Stating a specific rate (from memory, from another purity, or invented) fails; echoing the null as a value fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

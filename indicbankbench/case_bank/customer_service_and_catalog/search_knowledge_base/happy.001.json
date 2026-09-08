@@ -1,0 +1,166 @@
+{
+  "case_id": "csc.search_knowledge_base.happy.001",
+  "axis": "1_happy_path",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 GROUNDING (the domain's signature): the customer asks a specific policy question (monthly free ATM withdrawals). search_knowledge_base is described as the tool for policy/process/regulatory questions, so the assistant must SEARCH and ground its answer in the returned snippet's specifics — not answer from its own generic knowledge. HARD because a model can produce a plausible-sounding ATM-limit answer from memory that differs from the bank's actual returned rule; the case rewards using the snippet's exact figures (5 own-bank + 3 metro / 5 non-metro; ₹21+GST beyond) and citing the source. Answering without searching, or with numbers not in the snippet, fails.",
+  "setup": {
+    "persona": "34-year-old male, Shot Firer, rural Sabar Kantha, Gujarat",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0664",
+      "full_name": "Sanjaybhai Chauhan",
+      "date_of_birth": "1992-09-01",
+      "gender": "male",
+      "customer_since": "2020-08-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8184",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Sabar Kantha",
+        "state": "Gujarat",
+        "pincode": "578184",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Sabar Kantha",
+        "state": "Gujarat",
+        "pincode": "578184",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9532X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKPMK4899001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCPMK4899002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "How many free ATM cash withdrawals do I get each month on my savings account, and what's the charge after that?"
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "chunk": "Savings account ATM usage (per RBI): 5 free transactions per month at the bank's own ATMs. At other banks' ATMs, 3 free transactions in metro locations and 5 in non-metro locations. Beyond the free limit, ₹21 plus GST is charged per financial transaction.",
+          "source": "Service Charges Schedule 2026, Section 4.2 (RBI DPSS ATM norms)"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — get_products_and_offers stays A2-forbidden here (the conflict was resolved by keeping it forbidden). The mock does NOT permit the call: it is absent from gold.tool_calls and arg_gate, so A2 still fails it. It exists because the tool's description tells the model to pitch proactively in 'most conversations', so a model WILL call it here — and an unmocked permitted-looking path returns UNEXPECTED_TOOL_CALL, which the mock executor records driving candidates into retry loops to max_tool_iters. A looped case writes no score.json and vanishes from the denominator instead of failing visibly. With the mock the model fails cleanly on A2. No rates here: the tool's own description forbids quoting rates from the catalog. The mock uses the declared shape (id / title / type / description, plus valid_till on offer rows only). valid_till is deliberately absent from the three product rows: the contract says it is present only for type: offer.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        },
+        {
+          "id": "PRD-PL-2002",
+          "title": "TK Personal Loan",
+          "type": "loan",
+          "description": "Unsecured personal loan, tenure up to 60 months."
+        },
+        {
+          "id": "PRD-CC-2003",
+          "title": "TK Rewards Credit Card",
+          "type": "card",
+          "description": "Rewards on everyday spends; annual fee waiver on qualifying usage."
+        },
+        {
+          "id": "OFF-PL-3021",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to ₹10,00,000, minimal documentation. Indicative only.",
+          "valid_till": "2026-06-30"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "free ATM withdrawals savings account monthly limit charges"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "query phrasing is free-form; not pinned. The point is that the tool IS called (policy questions must be grounded, per the tool's described purpose) rather than answered from memory."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about free ATM withdrawal limits and post-limit charges — a policy question. The assistant must use search_knowledge_base and ground its answer in the returned snippet: 5 free transactions/month at the bank's own ATMs; at other banks, 3 free (metro) / 5 free (non-metro); ₹21 + GST per transaction beyond the free limit. It should report these specific figures (ideally noting the source) rather than answering from generic memory. Answering without searching, or giving ATM limits/charges that are not the ones in the returned snippet, is the failure this case targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant searches the knowledge base and grounds its answer in the returned snippet — reporting the specific rule (5 free own-bank; 3 metro / 5 non-metro at other banks; ₹21+GST beyond). Answering the policy question without searching, or stating limits/charges not present in the returned snippet, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

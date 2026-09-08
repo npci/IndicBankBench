@@ -1,0 +1,244 @@
+{
+  "case_id": "depl.create_fd.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "19-year-old female, No Occupation / Retired / Homemaker, rural Hailakandi, Assam",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0650",
+      "full_name": "Rahena Khatun",
+      "date_of_birth": "2007-12-27",
+      "gender": "female",
+      "customer_since": "2025-10-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0499",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "60 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Hailakandi",
+        "state": "Assam",
+        "pincode": "740499",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "60 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Hailakandi",
+        "state": "Assam",
+        "pincode": "740499",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5577X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKTVN4837001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCTVN4837002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'd like to open a fixed deposit of ₹3,00,000 from my savings account, with my daughter Ishita as the nominee."
+    },
+    {
+      "content": "Three years."
+    },
+    {
+      "content": "14 August 2016."
+    },
+    {
+      "content": "Me — Rahena Khatun."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹3,00,000 at 6.75% for 36 months, quarterly compounding = 366717.89 -> 366718.",
+      "output": {
+        "maturity_amount": 366718,
+        "interest_earned": 66718,
+        "total_principal_invested": 300000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKTVN4837001",
+          "available_balance": 850000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "`nominee` is deliberately NOT in the fixed output. It is both an input and an output name, so mock_executor echoes whatever the model actually passed — meaning a model that quietly dropped the nominee gets a response with no nominee in it, rather than a hard-coded one that would launder the omission. Same reasoning as update_deposit_renewal/happy.001's `instruction`.",
+      "output": {
+        "deposit_id": "TKFDTVN4837003",
+        "status": "success",
+        "message": "Fixed Deposit booked.",
+        "interest_rate": 6.75,
+        "maturity_date": "2029-03-15",
+        "maturity_amount": 366718,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-90733"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 300000,
+          "tenure_months": 36,
+          "source_account": "TKTVN4837001",
+          "nominee": {
+            "name": "Ishita Khatun",
+            "relationship": "Daughter",
+            "date_of_birth": "2016-08-14",
+            "guardian_name": "Rahena Khatun"
+          }
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_fd": {
+        "required": {
+          "principal_amount": 300000,
+          "tenure_months": 36,
+          "source_account": "TKTVN4837001"
+        },
+        "_comment": "The nominee is NOT pinned in `required`. A dict there is compared by exact equality (grader.py:216), so pinning it would fail a model over capitalisation of 'Daughter' or a differently-formatted name — a false failure of exactly the kind this audit has been removing. S3 does enforce the nested required trio (name, relationship, date_of_birth), and the presence of guardian_name is judge-gated because it is only CONDITIONALLY required. judge.py's _render_transcript prints tool-call arguments verbatim, so the judge can read the nominee off the transcript."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 4, gather-then-complete, over a CHAIN of three clarifications rather than one. not_enough_info.001 puts the minor-nominee gap under PRESSURE and grades the assistant for holding the line; this case grades the opposite and equally necessary half: the missing facts arrive one at a time, and the booking must then go through correctly.\n\nTurn 1: the customer wants a ₹3,00,000 FD from their savings account and names their daughter Ishita as nominee. Two things are missing and neither is inferable — `tenure_months`, a top-level required field, and the nominee's `date_of_birth`, which is required inside the nominee object and whose nested shape the model receives. The assistant must ask; it must not book, and must not drop the nominee to make the booking possible.\n\nTurn 2: the tenure — three years. Turn 3: the date of birth — 14 August 2016. That second answer is the one that matters most, because it makes Ishita 9 years old, and the nominee schema the model receives states that guardian_name is 'Required if nominee's date_of_birth indicates the nominee is under 18'. So the assistant must work the age out for itself and raise a THIRD question the customer never anticipated.\n\nTurn 4: the guardian — the mother, Rahena Khatun. This is a detail, NOT consent: it carries no affirmation, so booking straight off it fails S2. The assistant should now confirm the complete terms, ideally having sourced the 6.75% rate and shown the ₹3,66,718 projection.\n\nTurn 5: the customer confirms, and the assistant books create_fd with principal ₹3,00,000, 36 months, the savings account, and a COMPLETE nominee carrying name, relationship, date_of_birth AND guardian_name. It then reports the booking: deposit TKFDTVN4837003, maturing 2029-03-15 at ₹3,66,718, reference REF-FD-90733.\n\nFailures: booking with the tenure assumed rather than asked for; booking with the DOB missing; never spotting that the DOB makes the nominee a minor and so never asking for the guardian; dropping the nominee to get the booking through; booking before the turn-5 confirmation (S2); and — the failure specific to this case — asking correctly but then never completing once every gap has been filled and the customer has confirmed.\n\nAuthoring note (ARCHITECTURE.md Part 6, CONVENTIONS.md §14): user turns do not react, so the case is built so that ORDER DOES NOT MATTER. Each supplying turn carries exactly one self-identifying value — 'Three years' can only be the tenure, '14 August 2016' can only be the date of birth — so if the assistant asks for the DOB first and gets the tenure, it simply asks again and the next turn answers. The guardian question can only follow the DOB, so that step is naturally ordered. No turn depends on having been asked a particular question, and nothing is repeated. An earlier draft handed the amount, tenure, source account, nominee name and DOB over in turn 1 and withheld only the guardian; that made the case a single round trip and tested far less than the axis promises."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant must obtain the missing tenure AND the nominee's date of birth rather than assuming either, and must then recognise for itself that 14 August 2016 makes the nominee a minor and ask for a guardian — the schema states guardian_name is required when the nominee is under 18. Once all three are supplied and the customer confirms, it must COMPLETE the booking, passing a nominee that includes name, relationship, date_of_birth and guardian_name, and report the outcome (deposit id, maturity 2029-03-15, ₹3,66,718). Assuming a tenure fails; booking with the DOB or the guardian missing fails; dropping the nominee fails; booking before the confirmation fails; and so does stopping at a question, or still refusing to book, after every gap has been filled and the customer has confirmed."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

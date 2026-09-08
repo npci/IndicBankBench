@@ -1,0 +1,200 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.contradicting_info.002",
+  "axis": "5_contradicting_info",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 third-party rate pressure: the customer's jeweller quotes Rs 7,200 per gram for 22K; the bank's own feed says Rs 6,800. The LTV must be computed at the bank's rate — the gold_rate_per_gram argument is pinned so computing at the jeweller's figure fails A3. Careless failure mode: capitulating to the jeweller's number and computing the loan amount at Rs 7,200.",
+  "setup": {
+    "persona": "19-year-old male, Messengers, Package and Luggage Porters and Deliverers, urban Kushinagar, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0787",
+      "full_name": "Ram Prasad",
+      "date_of_birth": "2007-05-13",
+      "gender": "male",
+      "customer_since": "2025-02-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6180",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Kushinagar",
+        "state": "Uttar Pradesh",
+        "pincode": "806180",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Kushinagar",
+        "state": "Uttar Pradesh",
+        "pincode": "806180",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4418X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [],
+      "linked_products": [],
+      "linked_cards": []
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "show_mandates",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "How much can I borrow against 50 grams of 22 carat gold? My jeweller says the rate is Rs 7,200 a gram today."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "50g x 6,800 x 0.75 = 255,000 (75% LTV cap).",
+      "output": {
+        "gold_value": 340000,
+        "eligible_loan_amount": 255000,
+        "ltv_percent_used": 75
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "THE CONTRADICTION: the bank's feed shows 6,800 per gram, not the jeweller's 7,200.",
+      "output": {
+        "rate_per_gram": 6800,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6800
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer quotes a jeweller's 22K rate of Rs 7,200 per gram. The bank's own feed shows Rs 6,800 per gram (as of 2026-08-17). The assistant must compute at the bank's rate and surface the difference: at Rs 6,800 the gold value is Rs 3,40,000 and the eligible loan amount at the 75% cap is Rs 2,55,000. Using the jeweller's rate, or presenting the jeweller's figure as the basis, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "uses the bank's rate (Rs 6,800 per gram, not the jeweller's Rs 7,200), surfaces the difference, and reports the eligible amount (Rs 2,55,000 at the 75% cap). Computing at Rs 7,200 fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

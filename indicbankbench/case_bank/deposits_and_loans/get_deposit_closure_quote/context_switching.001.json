@@ -1,0 +1,268 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 read/read recency bleed with NO write anchor. The customer asks for a premature-closure quote on their FD, detours to an unrelated read (today's 24k gold rate), then returns to the quote. Three figures are in play and only one is the answer to the return question: ₹3,60,983 (the closure payout — the number they actually asked for), ₹3,85,542 (the FD's maturity value — the tempting bigger number), and ₹6,000 (the gold rate just discussed — the recency trap). A model that loses the thread answers with the last number it discussed (₹6,000) or the salience number (₹3,85,542). This is the pure-tracking companion to the write+detour cases: get_deposit_closure_quote is a READ, so there is no S2 confirmation to anchor the two sub-tasks — the only thing holding them apart is the model's own bookkeeping. The closure fixture reuses the close_deposit.context_switching.001 canonical figures (₹3,50,000 FD, 18 months at 6.5%, premature at ~8 months → ₹3,60,983), and the gold rate is the bank's ₹6,000/g.",
+  "setup": {
+    "persona": "31-year-old male, No Occupation / Retired / Homemaker, rural West Godavari, Andhra Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0585",
+      "full_name": "Raaj Karri",
+      "date_of_birth": "1995-08-03",
+      "gender": "male",
+      "customer_since": "2019-01-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0783",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "West Godavari",
+        "state": "Andhra Pradesh",
+        "pincode": "470783",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "West Godavari",
+        "state": "Andhra Pradesh",
+        "pincode": "470783",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9671X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCQQ9111001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDCQQ9111002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCQQ9111003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm considering closing my fixed deposit early. How much would I get if I did?"
+    },
+    {
+      "content": "Completely unrelated — what's today's rate for 24k gold? My mother-in-law is selling some jewellery."
+    },
+    {
+      "content": "Right, that helps. So back to the FD — how much did you say I'd get if I closed it?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Active FD, 18 months at 6.5% from 2025-07-10, maturing 2027-01-10. maturity_amount 385542 is exact quarterly compounding (CONVENTIONS §2). This is the SALIENCE trap — the bigger number the model might reach for.",
+      "records": [
+        {
+          "deposit_id": "TKFDCQQ9111002",
+          "principal_amount": 350000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-07-10",
+          "maturity_date": "2027-01-10",
+          "maturity_amount": 385542,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCQQ9111001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Premature closure at ~8 months run. Interest at the 6-months-to-<1-year card rate of 6.0% = 14483; premature-closure charge 1.0% of principal = 3500; estimated_payout 350000 + 14483 - 3500 = 360983 (CONVENTIONS §4). This is the figure the customer asked for.",
+      "records": [
+        {
+          "deposit_id": "TKFDCQQ9111002",
+          "principal_amount": 350000,
+          "accrued_interest": 14483,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3500,
+          "effective_rate": 4.65,
+          "estimated_payout": 360983
+        }
+      ]
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "The detour — the bank's ₹6,000/g 24k rate. This is the RECENCY trap: the last number discussed before the return question.",
+      "output": {
+        "purity_karat": 24,
+        "rate_per_gram": 6000,
+        "rate_date": "2026-03-15"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCQQ9111002"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCQQ9111002"
+          ]
+        }
+      },
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDCQQ9111002"
+          ]
+        }
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDCQQ9111002"
+          ]
+        }
+      },
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 24
+        },
+        "_comment": "The detour is a real sub-task — the gold rate is not in login_context, so this call is the only way to answer it."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 6 — a read/read recency bleed with no write anchor. The customer asks for a premature-closure quote on their FD, detours to ask the 24k gold rate, then returns to the FD question. The assistant must keep the three figures distinct: the closure payout (₹3,60,983 — principal ₹3,50,000 + ₹14,483 interest − ₹3,500 premature-closure charge), the FD's maturity value (₹3,85,542 — the tempting bigger number), and the gold rate (₹6,000/g).\n\nOn the return, it must restate the closure payout — ₹3,60,983 — NOT the gold rate it just quoted, and NOT the maturity value. Answering the gold-rate detour correctly (₹6,000/g) and still returning the right FD figure is the test. Reporting ₹6,000 or ₹3,85,542 as the closure payout, or dropping the FD thread, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant answers the gold-rate detour correctly (₹6,000/g) AND, on returning to the FD, restates the closure payout correctly — ₹3,60,983 — not the gold rate or the maturity value (₹3,85,542). Reporting the wrong figure on the return, or dropping the FD thread, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

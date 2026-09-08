@@ -1,0 +1,245 @@
+{
+  "case_id": "depl.agentic.maturity_payout_switch.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_axis_note": "GENERAL EVAL — a change-of-instruction write whose prerequisite read is disclosed in the tool description (get_fd_details before update_deposit_renewal: 'surface the current instruction and maturity date before changing it'). The FD is currently set to renew principal+interest; the customer wants it paid out instead. The write's deposit_id comes from the read, and the read is what proves the CURRENT instruction differs from the requested one — changing to the same value would be a no-op call. Also a small trap: payout_type is cumulative, so no_renewal is legally valid here (the non-cumulative restriction in the notes does not bite).",
+  "setup": {
+    "persona": "22-year-old female, No Occupation / Retired / Homemaker, rural Basti, Uttar Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0803",
+      "full_name": "Rekha Rana",
+      "date_of_birth": "2004-09-16",
+      "gender": "female",
+      "customer_since": "2022-03-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8908",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "69 Temple Road",
+        "line2": "Boring Road",
+        "city": "Basti",
+        "state": "Uttar Pradesh",
+        "pincode": "238908",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "69 Temple Road",
+        "line2": "Boring Road",
+        "city": "Basti",
+        "state": "Uttar Pradesh",
+        "pincode": "238908",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5523X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRNW7288001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFRNW7288002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCRNW7288003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "get_deposit_closure_quote",
+    "update_deposit_renewal",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "When my fixed deposit matures, I want the full amount paid into my savings account instead of it rolling over again. Please set it to no renewal — pay me out in full, don't renew."
+    },
+    {
+      "content": "Yes, please set it to pay out."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "24-month FD at 6.5%, booked 2025-09-01, maturing 2027-09-01. maturity_instruction is currently renew_principal_interest — the bulk-renewal default the customer wants switched off. maturity_amount 341,292 is exact quarterly compounding.",
+      "records": [
+        {
+          "deposit_id": "TKFRNW7288002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-09-01",
+          "maturity_date": "2027-09-01",
+          "maturity_amount": 341292,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "renew_principal_interest",
+          "payout_account": "TKRNW7288001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFRNW7288002",
+        "instruction": "no_renewal",
+        "maturity_date": "2027-09-01",
+        "status": "success",
+        "message": "Maturity instruction updated — the deposit will pay out on maturity.",
+        "reference_id": "REF-RNW-77310"
+      },
+      "_comment": "deposit_id/instruction are echoed by the executor too; the fixed output keeps the message realistic."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFRNW7288002"
+          ]
+        }
+      },
+      {
+        "tool": "update_deposit_renewal",
+        "arguments": {
+          "deposit_id": "TKFRNW7288002",
+          "instruction": "no_renewal"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "update_deposit_renewal"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFRNW7288002"
+          ]
+        },
+        "_comment": "Disclosed prerequisite: update_deposit_renewal's description says to surface the current instruction and maturity date first. The record also proves the requested change is a real change (currently renew_principal_interest)."
+      },
+      "update_deposit_renewal": {
+        "required": {
+          "deposit_id": "TKFRNW7288002",
+          "instruction": "no_renewal"
+        },
+        "_comment": "'Paid out instead of renewing' = no_renewal. The instruction is valid for this deposit: payout_type is cumulative (the renew_principal_interest prohibition applies only to non-cumulative deposits). Confirmation precedes the write (S2)."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants their FD to pay out on maturity instead of renewing. The assistant must first read get_fd_details: the FD TKFRNW7288002 matures 2027-09-01 and is currently set to renew_principal_interest. It should then — after the customer confirms — call update_deposit_renewal(deposit_id=TKFRNW7288002, instruction=no_renewal), and report that the instruction now pays the full maturity amount into the savings account on 2027-09-01, with reference REF-RNW-77310. The change takes effect at maturity, not immediately — saying that is good practice.\n\nFailures: updating without reading the current instruction first (the tool's description discloses the read-before-write), setting the wrong instruction (e.g. renew_principal, which would still roll the principal over), acting on a different deposit, or writing before confirmation (S2)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads the FD state (currently renew_principal_interest), then after confirmation sets instruction=no_renewal via update_deposit_renewal and reports the payout-on-maturity outcome (2027-09-01, REF-RNW-77310). Updating without the read, choosing the wrong instruction, or writing before confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

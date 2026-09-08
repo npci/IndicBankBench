@@ -1,0 +1,243 @@
+{
+  "case_id": "acct.get_transaction_history.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 compound request: ONE turn carries two independent questions ('did my salary come in' AND 'did the electricity bill go out'), both answerable from a single statement fetch. The customer never says 'transaction history'. Named careless failure mode: answering only the first sub-question (salary) and dropping the electricity-bill half, even though both rows sit in the same fetch.",
+  "setup": {
+    "persona": "35-year-old male, Laboratory Assistant, Clinical, rural Saharsa, Bihar",
+    "current_date": "2026-08-10",
+    "current_time": "09:45",
+    "login_context": {
+      "customer_id": "SCN0391",
+      "full_name": "Ved Maanjhi",
+      "date_of_birth": "1991-05-11",
+      "gender": "male",
+      "customer_since": "2016-04-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5644",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "5 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Saharsa",
+        "state": "Bihar",
+        "pincode": "795644",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "5 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Saharsa",
+        "state": "Bihar",
+        "pincode": "795644",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1314X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKTHC4197001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKTHC4197002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCTHC4197003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "Did my salary come in this month, and did the electricity bill go out?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-05T19:20:00",
+          "amount": 1240,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI419710",
+          "transaction_note": "SWIGGY ORDER 8842",
+          "status": "success",
+          "running_balance": 124950
+        },
+        {
+          "date": "2026-08-03T08:30:00",
+          "amount": 2340,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI419720",
+          "transaction_note": "BESCOM ELECTRICITY BILL",
+          "status": "success",
+          "running_balance": 126190
+        },
+        {
+          "date": "2026-08-01T10:05:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT419730",
+          "transaction_note": "SALARY AUG26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 128530
+        },
+        {
+          "date": "2026-07-28T18:40:00",
+          "amount": 1800,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS419740",
+          "transaction_note": "GREENGROCER MALL",
+          "status": "success",
+          "running_balance": 43530
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-10T09:45:00",
+        "last_update": "2026-08-10T09:45:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKTHC4197001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKTHC4197001"
+        },
+        "forbidden_ids": [
+          "TKTHC4197002"
+        ],
+        "_comment": "Both questions are about the salary account. Filtering by type or channel is unnecessary — one unfiltered fetch answers both."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks two independent questions about the salary account: whether the salary arrived this month and whether the electricity bill was paid. One get_transaction_history call on the salary account TKTHC4197001 answers both: the salary of INR 85,000 arrived on 2026-08-01 (NEFT credit), and the BESCOM electricity bill of INR 2,340 was debited on 2026-08-03. The assistant must answer BOTH sub-questions — a reply that covers only the salary arrival and omits the electricity bill is incomplete."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the salary credit (INR 85,000 on 2026-08-01) AND the electricity-bill debit (INR 2,340 on 2026-08-03) from the salary account's history; FAIL if either half of the compound request is left unanswered."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

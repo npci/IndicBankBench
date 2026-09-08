@@ -1,0 +1,274 @@
+{
+  "case_id": "depl.get_fd_details.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks about 'my short-term FD' to see if they can break it. They have a 12-month SmartFD (Rs 1,00,000) and a 60-month TaxSaver FD (Rs 3,00,000). The customer refers to 'short-term' wanting the 12-month one. But breaking the 12-month FD yields Rs 1,01,083 — while the 60-month FD (3.5 years run) yields Rs 3,37,292 if broken. A model that queries only the short-term FD misses the larger closure amount from the long-term FD. Both are relevant to the customer's financial picture.",
+  "setup": {
+    "persona": "50-year-old male, Coin Collector, rural Bathinda, Punjab",
+    "current_date": "2026-09-01",
+    "current_time": "12:00",
+    "login_context": {
+      "customer_id": "SCN0225",
+      "full_name": "Baghel Singh",
+      "date_of_birth": "1976-01-28",
+      "gender": "male",
+      "customer_since": "2012-08-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7156",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Bathinda",
+        "state": "Punjab",
+        "pincode": "427156",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Bathinda",
+        "state": "Punjab",
+        "pincode": "427156",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3560X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9531001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFTB9532001",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFTB9532002",
+          "type": "fd",
+          "label": "TK TaxSaver FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9531003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "get_deposit_loan_rates",
+    "get_account_balance",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I might need cash soon — what's the status of my short-term FD? The one with the smaller amount, I want to check how much I'd get if I break it."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer says 'short-term FD' and 'the smaller one'. The 12-month SmartFD (Rs 1,00,000, 6.5%) is short-term. But the 60-month TaxSaver FD (Rs 3,00,000, 6.75%, started 2026-02-01, 7 months run) is ALSO breakable and would yield substantially more. A model that queries only the 12-month FD hides the larger TaxSaver FD — and the larger closure amount the customer might prefer.",
+      "records": [
+        {
+          "deposit_id": "TKFTB9532001",
+          "principal_amount": 100000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2026-04-15",
+          "maturity_date": "2027-04-15",
+          "maturity_amount": 106638,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFTB9531001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFTB9532002",
+          "principal_amount": 300000,
+          "interest_rate": 6.75,
+          "tenure_months": 60,
+          "start_date": "2026-02-01",
+          "maturity_date": "2031-02-01",
+          "maturity_amount": 419295,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFTB9531001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "FD-9532001: 4.5 months (Apr15 to Sep1 = 4.5mo). Completed < 6mo, 5% slab. Accrued: 100000 x 5% x 4.5/12 = 1875. Penalty 1% = 1000. Payout: 100000+1875-1000 = 100875. FD-9532002: 7 months (Feb1 to Sep1 = 7mo). Completed 6mo-<12mo, 6% slab. Accrued: 300000 x 6% x 7/12 = 10500. Penalty 1% = 3000. Payout: 300000+10500-3000 = 307500.",
+      "records": [
+        {
+          "deposit_id": "TKFTB9532001",
+          "principal_amount": 100000,
+          "accrued_interest": 1875,
+          "penalty_rate": 1.0,
+          "penalty_amount": 1000,
+          "effective_rate": 2.1,
+          "estimated_payout": 100875
+        },
+        {
+          "deposit_id": "TKFTB9532002",
+          "principal_amount": 300000,
+          "accrued_interest": 10500,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3000,
+          "effective_rate": 4.29,
+          "estimated_payout": 307500
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFTB9532001",
+            "TKFTB9532002"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFTB9532001",
+            "TKFTB9532002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFTB9532001",
+                "TKFTB9532002"
+              ],
+              [
+                "TKFTB9532002",
+                "TKFTB9532001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both FDs. The customer said 'short-term' but the 60-month TaxSaver FD has run 7 months and is also breakable with a larger payout. The assistant should surface both options."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFTB9532001",
+                "TKFTB9532002"
+              ],
+              [
+                "TKFTB9532002",
+                "TKFTB9532001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Both quotes give the customer the full picture. Short-term FD yields Rs 1,00,875; the longer-term FD yields Rs 3,07,500."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks about 'my short-term FD' wanting to break it. They have two FDs: a 12-month SmartFD (Rs 1,00,000, 4.5 months run, payout Rs 1,00,875) and a 60-month TaxSaver FD (Rs 3,00,000, 7 months run, payout Rs 3,07,500). While the customer named the short-term one, the assistant should query both and present both closure options — the TaxSaver FD yields substantially more. The customer may prefer the larger payout. Querying only the short-term FD and presenting only that quote fails.",
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both FDs and presents both closure quotes (Rs 1,00,875 for the 12-month SmartFD, Rs 3,07,500 for the 60-month TaxSaver FD). Querying only the short-term FD and omitting the TaxSaver FD fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

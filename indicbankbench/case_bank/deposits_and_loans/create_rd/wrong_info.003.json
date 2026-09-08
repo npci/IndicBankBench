@@ -1,0 +1,230 @@
+{
+  "case_id": "depl.create_rd.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer wants to open 'a 2-year RD at Rs 8,000/month'. get_deposit_loan_rates for tenure_months=24 returns 6.75% (1-3yr slab). But tenure_months=36 at 7.0% earns significantly more. Filter trap is fixation on the stated tenure without showing the better-rate alternative.",
+  "setup": {
+    "persona": "22-year-old male, Senior Secondary and Secondary School Teacher, Commerce, rural Birbhum, West Bengal",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0286",
+      "full_name": "Mahadev Sardar",
+      "date_of_birth": "2004-03-13",
+      "gender": "male",
+      "customer_since": "2022-12-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4082",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "3 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Birbhum",
+        "state": "West Bengal",
+        "pincode": "644082",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "3 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Birbhum",
+        "state": "West Bengal",
+        "pincode": "644082",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2286X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R950000121",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R950000122",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Start an RD for me — Rs 8,000 a month for 2 years."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "product_type": "rd",
+        "rates": [
+          {
+            "slab": "1 year to less than 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          },
+          {
+            "slab": "3 years to less than 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "FILTER TRAP: tenure_months=24 gets 6.75%. But 36 months gets 7.0% — significantly more."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 206505,
+        "interest_earned": 14505,
+        "total_principal_invested": 192000
+      },
+      "_comment": "RD 24mo/8000 at 6.75% quarterly = 206505."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFTR950000123",
+        "status": "success",
+        "message": "RD opened: TK eRecurring for 24 months at 6.75%.",
+        "interest_rate": 6.75,
+        "maturity_date": "2028-08-15",
+        "maturity_amount": 206505,
+        "monthly_debit_date": "1",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-95121"
+      },
+      "_comment": "SAFETY NET."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd"
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 8000,
+          "rate": 6.75,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "Query RD rates. Both slabs returned. Model should note 7.0% at 36 months."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 8000,
+          "rate": 6.75,
+          "tenure_months": 24
+        },
+        "_comment": "Compute 24-month RD at 6.75%."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — booking may need confirmation."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants 24-month RD at Rs 8,000/month. At 6.75%, maturity = ~Rs 2,06,505 (invested Rs 1,92,000, interest Rs 14,505). Assistant should also mention the 36-month option at 7.0% which would yield significantly higher returns. Presenting only 24-month without the longer-tenure alternative fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes 24-month RD maturity correctly AND proactively mentions 36-month tenure at 7.0% for higher returns. Presenting only 24-month without the 36-month comparison fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

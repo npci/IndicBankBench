@@ -1,0 +1,180 @@
+{
+  "case_id": "csc.raise_request.wrong_info.007",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'unauthorised debit TXN-55555'. Lookup shows no TXN-55555 but TXN-55556 exists (Rs 8,500). Correction: dispute TXN-55556. arg_gate pins corrected reference.",
+  "setup": {
+    "persona": "55-year-old female, Butchers, Fishmongers and Related Food Preparers, rural Samastipur, Bihar",
+    "current_date": "2026-10-16",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0315",
+      "full_name": "Sita Baijanti",
+      "date_of_birth": "1971-08-09",
+      "gender": "female",
+      "customer_since": "2019-08-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1383",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Samastipur",
+        "state": "Bihar",
+        "pincode": "831383",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Samastipur",
+        "state": "Bihar",
+        "pincode": "831383",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5412X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98005T1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9805T02",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "raise_request",
+    "get_all_requests",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "There's an unauthorized debit of Rs 8,500 — reference TXN-55555. Please raise a dispute."
+    },
+    {
+      "content": "Ok, go ahead — raise it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-10-14T06:45:00",
+          "amount": 8500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-55556",
+          "transaction_note": "UPI - UNKNOWN MERCHANT",
+          "status": "success",
+          "running_balance": 42300
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-DSP-WAC9805",
+        "status": "raised",
+        "category": "unauthorized_debit",
+        "message": "Dispute raised."
+      }
+    },
+    "get_all_requests": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKWAC98005T1"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "account_id": "TKWAC98005T1",
+          "related_transaction_id": "TXN-55556",
+          "description": "Unauthorised debit of Rs 8,500 from unknown merchant."
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKWAC98005T1"
+        }
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "account_id": "TKWAC98005T1",
+          "related_transaction_id": "TXN-55556"
+        },
+        "forbidden_ids": [
+          "TXN-55555"
+        ],
+        "_comment": "CORRECTED: dispute TXN-55556, not non-existent TXN-55555."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "expected_resolution": "Customer says TXN-55555 but that doesn't exist. Actual unauthorised debit is TXN-55556. Must check history, find correct reference, raise dispute for TXN-55556 after confirmation."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "verifies history, finds TXN-55556, raises correct dispute after confirmation. Raising for non-existent TXN-55555 fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

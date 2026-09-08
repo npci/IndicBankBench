@@ -1,0 +1,216 @@
+{
+  "case_id": "csc.search_knowledge_base.long_context.002",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior conversation queried KB about FD early closure and got old penalty rate of 0.5%. Bank updated policy — penalty is now 1.0%. Customer asks about closing FD and model must re-fetch KB, not rely on stale result.",
+  "setup": {
+    "persona": "32-year-old male, Stock Verifier, rural Raigarh, Maharashtra",
+    "current_date": "2026-09-20",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0149",
+      "full_name": "Manohar Bhandarkar",
+      "date_of_birth": "1994-10-27",
+      "gender": "male",
+      "customer_since": "2021-04-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2689",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Raigarh",
+        "state": "Maharashtra",
+        "pincode": "152689",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Raigarh",
+        "state": "Maharashtra",
+        "pincode": "152689",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4737X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSKB9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "FD-SKB9500001",
+          "type": "fd",
+          "label": "Tax Saver FD"
+        },
+        {
+          "product_id": "FD-SKB9500002",
+          "type": "fd",
+          "label": "Growth FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCSKB9500003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "If I close my FD early, what's the penalty?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "k1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "FD early closure penalty rate premature withdrawal"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "k1",
+        "content": "{\"articles\":[{\"title\":\"FD Premature Withdrawal Policy\",\"summary\":\"Early closure of an FD incurs a penalty of 0.5% of the principal amount. Interest is recalculated at the step-down slab rate for the completed tenure.\",\"last_updated\":\"2025-01-01\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "As per the current policy, early closure of an FD attracts a penalty of 0.5% of the principal amount, and interest is recalculated at the step-down slab rate."
+      },
+      {
+        "role": "user",
+        "content": "Alright, I'll keep that in mind. Let me decide which FD to close."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "get_fd_details",
+    "get_account_balance",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to close my Tax Saver FD today. Can you confirm what the penalty would be again?"
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "_comment": "Policy updated: penalty is now 1.0%, not 0.5% as shown in prior. Model must re-fetch.",
+      "records": [
+        {
+          "chunk": "FD Premature Withdrawal Policy",
+          "source": "2026-08-15"
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net — the model should first verify the policy via KB.",
+      "records": [
+        {
+          "deposit_id": "FD-SKB9500001",
+          "principal_amount": 500000,
+          "accrued_interest": 15000,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "estimated_payout": 510000,
+          "effective_rate": 6.0
+        }
+      ]
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": ""
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "FD early closure penalty rate premature withdrawal"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "Must re-fetch KB. Prior showed 0.5% penalty but policy updated to 1.0%. Quoting 0.5% from stale context fails."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "_comment": "Not required — case tests whether model re-fetches KB, not whether it computes a quote."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The prior conversation quoted a 0.5% penalty from an old KB search. The bank's policy has since been updated to 1.0%. The customer asks for penalty confirmation. The assistant must re-fetch search_knowledge_base live, discover the updated 1.0% penalty, and report it. Quoting the stale 0.5% without re-fetching KB fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches KB live and reports the updated 1.0% penalty (not stale 0.5%). Using stale KB result from prior context fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

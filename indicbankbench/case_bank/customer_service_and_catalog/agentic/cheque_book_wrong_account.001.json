@@ -1,0 +1,240 @@
+{
+  "case_id": "csc.agentic.cheque_book_wrong_account.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_account_details+request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'order a cheque book for my current account.' Model calls get_account_details, finds only a savings account (no current account). Customer is wrong about the account type. Model must correct the customer in prose AND propagate the correction into request_cheque_book — using the savings account_id. arg_gate pins account_id=TKCSB9500001; forbidden_ids blocks the wrong type assumption.",
+  "setup": {
+    "persona": "42-year-old female, No Occupation / Retired / Homemaker, rural Barnala, Punjab",
+    "current_date": "2026-08-21",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0219",
+      "full_name": "Salma Khatun",
+      "date_of_birth": "1984-08-15",
+      "gender": "female",
+      "customer_since": "2019-09-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9007",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "8 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Barnala",
+        "state": "Punjab",
+        "pincode": "409007",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "8 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Barnala",
+        "state": "Punjab",
+        "pincode": "409007",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0212X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSB9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSB9500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_details",
+    "get_account_balance",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_transaction_history",
+    "get_request_status",
+    "get_products_and_offers",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a new cheque book for my current account — 25 leaves, standard delivery."
+    },
+    {
+      "content": "Ok, order it for the savings account."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Only savings account exists. No current account — customer is wrong about the account type.",
+      "records": [
+        {
+          "account_id": "TKCSB9500001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "Anna Nagar",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Salma Khatun",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2020-01-15"
+        }
+      ]
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CB-95001",
+        "status": "success",
+        "message": "Cheque book ordered. 25 leaves will be delivered to your registered address.",
+        "delivery_address": "8 Park Avenue, Anna Nagar, Barnala, Punjab, 409007, India"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE-00000",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKCSB9500001"
+          ]
+        }
+      },
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKCSB9500001",
+          "leaves": 25
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_account_details",
+        "request_cheque_book"
+      ]
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKCSB9500001"
+          ]
+        },
+        "_comment": "Must fetch account details — reveals only savings, no current."
+      },
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKCSB9500001"
+        },
+        "_comment": "CORRECTED account_id=TKCSB9500001 (savings). Customer said 'current account' but only savings exists. The correction manifests as using the savings account_id (the only one available). The R judge verifies the account-type correction in prose."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'order cheque book for my current account.' get_account_details shows only one account: TKCSB9500001 (savings, active). There is no current account. The assistant must correct: 'You don't have a current account. Your only linked account is savings TKCSB9500001. I'll order the cheque book for your savings account.' After confirmation, calls request_cheque_book with account_id=TKCSB9500001. A weak model might acknowledge the type mismatch in prose but fail to correct the write. arg_gate pins account_id=TKCSB9500001 (the savings account)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches account details, identifies the customer has only a savings account (no current), communicates this correction and that the cheque book will be ordered for the savings account, and after confirmation calls request_cheque_book with account_id=TKCSB9500001. FAIL if the prose does not correct the account type or the customer is left confused about which account was used."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

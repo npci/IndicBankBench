@@ -1,0 +1,223 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.long_context.003",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior conversation fetched closure quote for FD at 5 months run (in 6-month slab boundary). Since then deposit crossed into 6 months — now qualifies for the 6-12 month step-down slab with higher accrued interest. Customer asks for updated quote — model must re-fetch.",
+  "setup": {
+    "persona": "28-year-old male, Petrol Pump Salesman, urban Jammu, Jammu & Kashmir",
+    "current_date": "2026-10-05",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0657",
+      "full_name": "Itlak Chan",
+      "date_of_birth": "1998-08-15",
+      "gender": "male",
+      "customer_since": "2019-01-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0191",
+      "registered_email": "i*****@gmail.com",
+      "communication_address": {
+        "line1": "32 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Jammu",
+        "state": "Jammu & Kashmir",
+        "pincode": "570191",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "32 Park Avenue",
+        "line2": "Sector 17",
+        "city": "Jammu",
+        "state": "Jammu & Kashmir",
+        "pincode": "570191",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9581X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDCQ9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "FD-DCQ9500001",
+          "type": "fd",
+          "label": "Growth FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCDCQ9500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What would I get if I closed my Growth FD today? It's been running about 5 months."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "q1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_closure_quote",
+              "arguments": {
+                "deposit_id": "FD-DCQ9500001"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "q1",
+        "content": "{\"quotes\":[{\"deposit_id\":\"FD-DCQ9500001\",\"quote_id\":\"Q-DCQ9500001\",\"deposit_type\":\"fd\",\"principal_amount\":300000,\"accrued_interest\":7500,\"penalty_rate\":1.0,\"penalty_amount\":3000,\"estimated_payout\":304500,\"effective_rate\":5.0,\"maturity_amount_if_held\":330750,\"months_run\":5,\"message\":\"Quote for premature closure. Deposit has not yet completed 6 months — 5.0% step-down applies.\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "At 5 months, you'd get approximately Rs 3,04,500 — principal Rs 3,00,000 plus Rs 7,500 interest minus Rs 3,000 penalty. You're still in the sub-6-month slab with the lower rate."
+      },
+      {
+        "role": "user",
+        "content": "Hmm, I'd lose quite a bit. Let me wait a bit longer."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "get_fd_details",
+    "get_account_balance",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "It's been a month — can you give me a fresh closure quote for my Growth FD? I think I might have passed the 6 month mark."
+    }
+  ],
+  "mock": {
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "FD crossed 6-month mark. Now qualifies for 6-12 month slab at 6.0%. Prior was at 5 months with 5.0% slab. Accrued interest: 300000 * 6.0% * 6/12 = 9000. Penalty: 300000 * 1.0% = 3000. Payout: 300000 + 9000 - 3000 = 306000.",
+      "records": [
+        {
+          "deposit_id": "FD-DCQ9500001",
+          "principal_amount": 300000,
+          "accrued_interest": 9000,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3000,
+          "estimated_payout": 306000,
+          "effective_rate": 6.0
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "FD-DCQ9500001",
+        "status": "success",
+        "amount_credited": 306000,
+        "payout_account": "TKDCQ9500001",
+        "reference_id": "REF-CLS-DCQ9500",
+        "message": "Deposit closed. Rs 3,06,000 credited to savings account."
+      },
+      "_comment": "Safety net for premature closure."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "FD-DCQ9500001",
+          "principal_amount": 300000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2026-04-05",
+          "maturity_date": "2029-04-05",
+          "maturity_instruction": "renew principal and interest",
+          "payout_account": "TKDCQ9500001",
+          "nominee": {
+            "name": "Rajesh Gupta",
+            "relationship": "brother"
+          }
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "FD-DCQ9500001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "FD-DCQ9500001"
+          ]
+        },
+        "_comment": "Must re-fetch live. Prior was at 5 months (Rs 3,04,500); now at 6 months (Rs 3,06,000)."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "A month ago the quote was Rs 3,04,500 at 5 months (sub-6-month slab). The FD has now crossed the 6-month boundary — the new step-down slab is 6.0%, yielding Rs 9,000 accrued interest, netting Rs 3,06,000. The assistant must re-fetch get_deposit_closure_quote live and report the updated figure. Quoting the stale 5-month figure of Rs 3,04,500 fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches closure quote live and reports the updated Rs 3,06,000 payout. Using stale 5-month quote of Rs 3,04,500 fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,222 @@
+{
+  "case_id": "acct.get_account_details.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer needs the branch name and IFSC for a NEFT form but holds TWO accounts at different branches (salary at MG Road, savings at Boring Road) and names neither. Branch/IFSC is a per-account fact, so guessing one is a wrong fact on a form the customer will win or lose on. Call-then-clarify is acceptable: querying both accounts to offer the two branch/IFSC pairs and asking which form they are filling is a fine move.",
+  "setup": {
+    "persona": "50-year-old female, No Occupation / Retired / Homemaker, rural Ariyalur, Tamil Nadu",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0641",
+      "full_name": "Usha Vani",
+      "date_of_birth": "1976-09-20",
+      "gender": "female",
+      "customer_since": "2020-08-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7948",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "69 Temple Road",
+        "line2": "Boring Road",
+        "city": "Ariyalur",
+        "state": "Tamil Nadu",
+        "pincode": "477948",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "69 Temple Road",
+        "line2": "Boring Road",
+        "city": "Ariyalur",
+        "state": "Tamil Nadu",
+        "pincode": "477948",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8856X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKADA4800001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKADA4800002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCADA4800003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_details",
+    "get_account_balance",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "request_cheque_book",
+    "calculate_gold_loan_ltv"
+  ],
+  "user_turns": [
+    {
+      "content": "I have to fill in a NEFT form for my company. What's my branch name and IFSC?"
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Both accounts, different branches. Calling the tool and offering both (branch, IFSC) pairs while asking which account the form is for is acceptable.",
+      "records": [
+        {
+          "account_id": "TKADA4800001",
+          "account_type": "salary",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Usha Vani",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-15"
+        },
+        {
+          "account_id": "TKADA4800002",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "Boring Road",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Usha Vani",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2021-06-10"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "ACCT-NOISE",
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Querying both accounts to offer their branch/IFSC pairs and asking which the customer needs is an acceptable resolution. The model must still end by asking, not by answering for one account."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for their branch name and IFSC but holds two accounts at two different branches: the salary account at MG Road (IFSC TKBK0001234) and the savings account at Boring Road (IFSC TKBK0005678). A NEFT form needs the branch of the account being remitted to/from, so guessing is a wrong fact placed on a form. The assistant must ask ONE focused question to identify which account the form is for. It may look up both accounts and offer the two (branch, IFSC) pairs while asking, but it must not answer for one account unilaterally. The clarification is the complete answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant ends by asking which account (salary at MG Road or savings at Boring Road) the NEFT details are for, rather than stating one account's branch and IFSC as the answer. Tool calls to look up the accounts are EXPECTED and acceptable — judge only the final turn's move: answering for one account unilaterally fails; offering both pairs and asking which is preferred passes."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

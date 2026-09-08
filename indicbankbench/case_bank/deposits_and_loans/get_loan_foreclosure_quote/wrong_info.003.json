@@ -1,0 +1,260 @@
+{
+  "case_id": "depl.get_loan_foreclosure_quote.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'get a foreclosure quote for my home loan'. Two loans exist — home loan (Rs 32L outstanding, foreclosure ~Rs 33.1L) and personal loan (Rs 2.8L outstanding, foreclosure ~Rs 2.9L). A get_loan_details query filtered to home_loan only returns the home loan. Broad query reveals the personal loan too, which the customer may want to clear first since it's smaller and higher-rate.",
+  "setup": {
+    "persona": "24-year-old female, No Occupation / Retired / Homemaker, rural Pune, Maharashtra",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0479",
+      "full_name": "More Yadav",
+      "date_of_birth": "2002-07-06",
+      "gender": "female",
+      "customer_since": "2020-07-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4018",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "484018",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "484018",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5693X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT8L9508001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLFT8L9508002",
+          "type": "loan",
+          "label": "Home Loan"
+        },
+        {
+          "product_id": "TKLFT8L9508003",
+          "type": "loan",
+          "label": "Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT8L9508004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm thinking of closing some loans — get me a foreclosure quote for my home loan."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: home loan (32L outstanding, 8.6%) and personal loan (2.8L outstanding, 10.5%). Personal loan has higher rate. Home loan: EMI=39850 (computed from outstanding 32L/120mo/8.6%). Personal: EMI=7168 (2.8L/48mo/10.5%).",
+      "records": [
+        {
+          "loan_id": "TKLFT8L9508002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 39850,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 120,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKFT8L9508001"
+        },
+        {
+          "loan_id": "TKLFT8L9508003",
+          "type": "personal",
+          "principal": 350000,
+          "outstanding": 280000,
+          "emi_amount": 7168,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 1,
+          "tenure_remaining": 48,
+          "status": "active",
+          "next_due_date": "2026-09-01",
+          "emi_account_id": "TKFT8L9508001"
+        }
+      ]
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKLFT8L9508002",
+          "outstanding_principal": 3200000,
+          "accrued_interest": 7540,
+          "foreclosure_charges": 64000,
+          "total_payoff": 3271540
+        },
+        {
+          "loan_id": "TKLFT8L9508003",
+          "outstanding_principal": 280000,
+          "accrued_interest": 1128,
+          "foreclosure_charges": 14000,
+          "total_payoff": 295128
+        }
+      ],
+      "_comment": "Home: accrued=3200000*8.6%*10/365=7540, charges=2%=64000. Personal: accrued=280000*10.5%*14/365=1128, charges=5%=14000."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLFT8L9508002",
+            "TKLFT8L9508003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "TKLFT8L9508002",
+                "TKLFT8L9508003"
+              ],
+              [
+                "TKLFT8L9508003",
+                "TKLFT8L9508002"
+              ],
+              [
+                "TKLFT8L9508002"
+              ],
+              [
+                "TKLFT8L9508003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must query both loans. Filtering to home_loan hides the personal loan with higher rate that may be a better prepayment target."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "TKLFT8L9508002",
+                "TKLFT8L9508003"
+              ],
+              [
+                "TKLFT8L9508003",
+                "TKLFT8L9508002"
+              ],
+              [
+                "TKLFT8L9508002"
+              ],
+              [
+                "TKLFT8L9508003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Quotes for both loans ideal."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_loan_details",
+        "get_loan_foreclosure_quote"
+      ]
+    ],
+    "expected_resolution": "Customer asks for home loan foreclosure quote. Home loan (TKLFT8L9508002): Rs 32L outstanding, payoff ~Rs 32,71,540. But there's also a personal loan (TKLFT8L9508003): Rs 2.8L outstanding at 10.5%, payoff ~Rs 2,97,360. Personal loan has higher rate (10.5% vs 8.6%) and is smaller — clearing it first saves more interest. Assistant must query broadly and surface both loans with this analysis."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both loans and presents both foreclosure quotes, highlighting that the personal loan (10.5%) costs more in interest than the home loan (8.6%) and is a better prepayment target. Reporting only the home loan without surfacing the personal loan fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,313 @@
+{
+  "case_id": "cards.block_card.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-6 filter-trap: customer says 'block my credit card — I lost my wallet at the mall yesterday'. get_card_details queried only for the credit card (card_type filter) shows the credit card is fine. But get_transaction_history shows a suspicious Rs 24,500 POS debit on the DEBIT card at the same mall yesterday — the debit card is the one with fraudulent activity. Filtering to only the credit card hides the debit card compromise. Broad query of both cards reveals the real threat.",
+  "setup": {
+    "persona": "24-year-old female, No Occupation / Retired / Homemaker, rural Saharanpur, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0690",
+      "full_name": "Sonam Jahan",
+      "date_of_birth": "2002-06-07",
+      "gender": "female",
+      "customer_since": "2020-12-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3069",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Saharanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "963069",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Saharanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "963069",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0922X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBLC9606001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBC9606002",
+          "card_type": "credit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCBC9606003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "set_card_controls",
+    "block_card",
+    "toggle_card_freeze",
+    "get_transaction_history",
+    "get_account_details",
+    "get_account_balance",
+    "raise_request",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "I lost my wallet at the Forum Mall yesterday — block my credit card immediately."
+    },
+    {
+      "content": "Ok, go ahead and block it."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer says credit card. Credit card looks normal — no suspicious activity directly. But the DEBIT card shows an unusual POS transaction pattern at the same mall. Card_ids filter for only credit hides the debit card. Broad query across both cards is needed to check both for any suspicious activity.",
+      "records": [
+        {
+          "card_id": "TKCBC9606002",
+          "masked_number": "****8092",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 258000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2029-06-30"
+        },
+        {
+          "card_id": "TKCBC9606003",
+          "masked_number": "****6251",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2027-03-31"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Transaction history for the debit card shows the suspicious Rs 24,500 POS transaction at Forum Mall on 2026-08-23 — the same day the customer says they lost their wallet. The credit card has no similar transaction.",
+      "records": [
+        {
+          "date": "2026-08-23T18:30:00",
+          "amount": 24500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-POS-96001",
+          "transaction_note": "POS purchase — Forum Mall Electronics",
+          "status": "success",
+          "running_balance": 58800
+        },
+        {
+          "date": "2026-08-22T14:00:00",
+          "amount": 3200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-UPI-96002",
+          "transaction_note": "UPI — Cafe Coffee Day",
+          "status": "success",
+          "running_balance": 83300
+        },
+        {
+          "date": "2026-08-21T09:00:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-NEF-96003",
+          "transaction_note": "Salary credit",
+          "status": "success",
+          "running_balance": 86500
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCBC9606002",
+        "status": "success",
+        "message": "Card blocked. Any linked recurring payments will fail.",
+        "reference_id": "REF-BLK-96061"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBC9606002",
+            "TKCBC9606003"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCBC9606002",
+          "reason": "lost"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCBC9606002",
+                "TKCBC9606003"
+              ],
+              [
+                "TKCBC9606003",
+                "TKCBC9606002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both cards. Filtering only the credit card hides the debit card with suspicious POS activity."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Checking transaction history surfaces the Rs 24,500 POS transaction on the debit card — optional but highly recommended."
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCBC9606002",
+          "reason": "lost"
+        },
+        "_comment": "Block the credit card as requested. But ALSO should flag the debit card's suspicious POS transaction."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants their credit card blocked after losing their wallet. The assistant should query both cards, block the credit card (TKCBC9606002, Visa, ending 8092), AND check transaction history — which reveals a Rs 24,500 POS purchase on the DEBIT card (TKCBC9606003, RuPay, ending 6251) at Forum Mall on Aug 23rd, the same day the wallet was lost. The assistant MUST flag this suspicious debit card transaction and advise the customer to also block/freeze the debit card. Blocking only the credit card without flagging the debit card's suspicious transaction fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "blocks the credit card AND flags the suspicious Rs 24,500 POS transaction on the debit card from Aug 23rd at Forum Mall, advising the customer to also secure the debit card. Blocking only the credit card without mentioning the debit card compromise fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

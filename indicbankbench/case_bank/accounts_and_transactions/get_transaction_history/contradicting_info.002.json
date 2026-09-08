@@ -1,0 +1,285 @@
+{
+  "case_id": "acct.get_transaction_history.contradicting_info.002",
+  "axis": "5_contradicting_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 in the civics recurring form (the sibling .001 was Netflix double-debit): the customer claims August salary never landed, 'same as June'. The salary account history shows the August AND June credits both landed on the first. The assistant must surface the credits with dates and references, not validate the missing-salary story.",
+  "setup": {
+    "persona": "18-year-old male, No Occupation / Retired / Homemaker, rural Puruliya, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0009",
+      "full_name": "Pod Bera",
+      "date_of_birth": "2008-04-07",
+      "gender": "male",
+      "customer_since": "2026-08-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4251",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "52 Nehru Street",
+        "line2": "Koregaon Park",
+        "city": "Puruliya",
+        "state": "West Bengal",
+        "pincode": "524251",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "52 Nehru Street",
+        "line2": "Koregaon Park",
+        "city": "Puruliya",
+        "state": "West Bengal",
+        "pincode": "524251",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5727X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAMRV1101",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKAMRV1102",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMRV3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "create_rd",
+    "get_loan_details",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "My salary didn't land this month AGAIN — the same thing happened in June. Check what's going on."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Both salaries landed: Aug 1 and Jul 1 credits of 92000 (plus the Jun 25 row shows June salary too). Chain: 4000 + 92000 = 96000 - 4500 = 91500 + 92000 = 183500.",
+      "records": [
+        {
+          "date": "2026-08-01T09:00:00",
+          "amount": 92000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-MRV9701",
+          "transaction_note": "SALARY AUG 2026 - VISTA TECHNOLOGIES PVT LTD",
+          "status": "success",
+          "running_balance": 183500
+        },
+        {
+          "date": "2026-07-25T17:30:00",
+          "amount": 4500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-MRV9702",
+          "transaction_note": "UPI - HOUSE RENT PAYMENT",
+          "status": "success",
+          "running_balance": 91500
+        },
+        {
+          "date": "2026-07-01T09:00:00",
+          "amount": 92000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-MRV9703",
+          "transaction_note": "SALARY JUL 2026 - VISTA TECHNOLOGIES PVT LTD",
+          "status": "success",
+          "running_balance": 96000
+        },
+        {
+          "date": "2026-06-25T20:05:00",
+          "amount": 2600,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-MRV9704",
+          "transaction_note": "POS PURCHASE - BIGBASKET",
+          "status": "success",
+          "running_balance": 4000
+        }
+      ]
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "ACC-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000",
+        "results": []
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01",
+        "last_update": "2026-01-01",
+        "remarks": "Noise tool."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKAMRV1101"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKAMRV1101"
+        },
+        "forbidden_ids": [
+          "TKAMRV1102"
+        ],
+        "_comment": "Check the SALARY account — the credits are there. The savings account is a decoy."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer claims the August salary did not land, 'same as June'. The salary account history shows the salary credited both months: ₹92,000 on 2026-08-01 and ₹92,000 on 2026-07-01 (plus the June salary was likewise credited). The assistant must check the right account and surface the credits with dates and references rather than agreeing the salary is missing. It should offer a next step (e.g. check whether the customer is looking at the other account, or raise_request if they truly expected a different amount). Accepting the missing-salary premise, or checking the savings account instead, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks the salary account and surfaces that the August and June salary credits both landed (with dates and references), instead of agreeing the salary is missing. Fabricating a problem, or checking the wrong account, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

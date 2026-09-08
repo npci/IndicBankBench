@@ -1,0 +1,236 @@
+{
+  "case_id": "cards.get_card_details.contradicting_info.004",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'my credit card is up for renewal — check the details'. The credit card IS active and fine. But the DEBIT card has status 'blocked (permanent)' — a critical fact the customer doesn't know about. A card_ids filter for only the credit card hides the blocked debit card. Broad query reveals the conflict between the customer's calm assumption and the blocked debit card emergency.",
+  "setup": {
+    "persona": "23-year-old male, Director, Storage and Warehousing, rural Bid, Maharashtra",
+    "current_date": "2026-08-15",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0734",
+      "full_name": "Vitthal Jain",
+      "date_of_birth": "2003-10-18",
+      "gender": "male",
+      "customer_since": "2021-07-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6613",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "94 College Road",
+        "line2": "T Nagar",
+        "city": "Bid",
+        "state": "Maharashtra",
+        "pincode": "606613",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "94 College Road",
+        "line2": "T Nagar",
+        "city": "Bid",
+        "state": "Maharashtra",
+        "pincode": "606613",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2170X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9463001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9463002",
+          "card_type": "credit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCFTB9463003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_transaction_history",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I think my credit card is expiring soon — check its details and tell me the status and expiry."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about the credit card. It's active with expiry 12/28 — fine. But the DEBIT card (TKCFTB9463003) has status 'blocked (permanent)' — a devastating fact. A card_ids filter for only the credit card hides the blocked debit card. Broad query reveals the blocked debit while also answering the credit card question.",
+      "records": [
+        {
+          "card_id": "TKCFTB9463002",
+          "masked_number": "****9876",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 215000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "12/28"
+        },
+        {
+          "card_id": "TKCFTB9463003",
+          "masked_number": "****2345",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "blocked (permanent)",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "08/27"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFTB9463002",
+            "TKCFTB9463003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCFTB9463002",
+                "TKCFTB9463003"
+              ],
+              [
+                "TKCFTB9463003",
+                "TKCFTB9463002"
+              ],
+              [
+                "TKCFTB9463002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both cards. Querying only the credit card answers the question but hides the blocked debit card — a critical status the customer should be told about. The ideal response answers the credit question AND flags the blocked debit."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about their credit card. The credit card (TKCFTB9463002) is active with expiry 12/28 — no issues. But the DEBIT card (TKCFTB9463003) is 'blocked (permanent)' — a critical status. The assistant must query both cards, answer the credit card question, and proactively flag the blocked debit card as an urgent matter contradicting the customer's assumption everything is fine. Answering only the credit card question without surfacing the blocked debit fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports credit card as active (expiry 12/28) AND surfaces the blocked (permanent) debit card — contradicting the customer's calm assumption. Reporting only credit details without the blocked debit fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

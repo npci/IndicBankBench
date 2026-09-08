@@ -1,0 +1,267 @@
+{
+  "case_id": "csc.get_all_requests.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 compound request: two questions in one turn, answered from the same fetch. Q1: is the cheque book request still pending (in_progress)? Q2: how many requests are open (status=open)? The trap is answering Q2 by summing open + in_progress, or answering Q1 with the wrong request.",
+  "setup": {
+    "persona": "43-year-old female, No Occupation / Retired / Homemaker, rural Maldah, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0403",
+      "full_name": "Basanti Bauri",
+      "date_of_birth": "1983-08-23",
+      "gender": "female",
+      "customer_since": "2019-03-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5119",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "80 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Maldah",
+        "state": "West Bengal",
+        "pincode": "765119",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "80 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Maldah",
+        "state": "West Bengal",
+        "pincode": "765119",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3134X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACLR1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCLR3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "Is my cheque book request still pending? And how many requests do I have open right now?"
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "delivery_address": "Registered address"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "cheque_book in_progress; exactly ONE request with status open (the duplicate statement). charges_dispute is resolved.",
+      "records": [
+        {
+          "request_id": "REQ-CLR-9001",
+          "category": "cheque_book",
+          "status": "in_progress",
+          "raised_date": "2026-08-11T10:00:00",
+          "last_updated_date": "2026-08-14T16:30:00",
+          "description": "25-leaf cheque book for savings account"
+        },
+        {
+          "request_id": "REQ-CLR-9002",
+          "category": "duplicate_statement",
+          "status": "open",
+          "raised_date": "2026-08-15T12:10:00",
+          "last_updated_date": "2026-08-15T12:10:00",
+          "description": "Duplicate statement for July 2026"
+        },
+        {
+          "request_id": "REQ-CLR-9003",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-07-30T09:20:00",
+          "last_updated_date": "2026-08-02T11:00:00",
+          "description": "Dispute for quarterly maintenance charge"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01",
+        "last_update": "2026-01-01",
+        "remarks": "Noise tool."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "One fetch answers both questions; filtering to just one status would strand the other question."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Two questions in one turn, both from the request list. Q1: the cheque book request (REQ-CLR-9001) is in_progress — still being processed, not yet shipped. Q2: exactly ONE request currently has status open (the duplicate statement REQ-CLR-9002); the other two are in_progress and resolved. Answering 'two open' by lumping in_progress + open together, or claiming the cheque book is already resolved, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the cheque book request as in_progress AND counts exactly one open-status request (the duplicate statement). Counting in_progress as open, or misreporting the cheque book request, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

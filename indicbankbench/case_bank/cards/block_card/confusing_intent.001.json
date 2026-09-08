@@ -1,0 +1,220 @@
+{
+  "case_id": "cards.block_card.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 enum synonym mapping (adapted from a validated earlier case): 'worn out completely' is customer vocabulary for the 'damaged' enum value. The assistant should INFER reason='damaged' rather than making the customer pick from a list.\n\nThe tool's confirmation_note reads: 'REQUIRES explicit customer confirmation before calling and also ask for a reason to block the card'. Taken literally that instructs the very behaviour this case targets. The two are not actually in conflict once the distinction is drawn precisely: the assistant works the reason out itself and states it back for agreement — 'that sounds like a damaged card; shall I block it as damaged?'. That raises and agrees the reason, satisfying the tool, while preserving the inference this case exists to test. What still fails is dumping the enum on the customer and making them choose. Contrast not_enough_info.001, where 'expired' maps to NO enum value and asking IS correct.",
+  "setup": {
+    "persona": "50-year-old male, Bulldozer Operator, urban Dharwad, Karnataka",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0116",
+      "full_name": "Javed Sanadi",
+      "date_of_birth": "1976-06-03",
+      "gender": "male",
+      "customer_since": "2017-10-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0349",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Dharwad",
+        "state": "Karnataka",
+        "pincode": "380349",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Dharwad",
+        "state": "Karnataka",
+        "pincode": "380349",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2536X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUN25N001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCUN25N5678",
+          "card_type": "debit",
+          "masked_number": "****5678",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "raise_request",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "My debit card has worn out completely — the chip won't read at any machine any more. I want to block it and get a new one."
+    },
+    {
+      "content": "Yes, that's right. Please block it."
+    }
+  ],
+  "mock": {
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card blocked permanently. Please raise a replacement request.",
+        "reference_id": "REF-BLK-55044"
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "A DEBIT card, so no credit_limit/available_limit (CONVENTIONS §12). Status is active: the chip failing to read is a physical fault, not a status the backend knows about, so nothing here hands the assistant the reason — it must infer 'damaged' from what the customer said.",
+      "records": [
+        {
+          "card_id": "TKCUN25N5678",
+          "masked_number": "****5678",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCUN25N5678"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCUN25N5678",
+          "reason": "damaged"
+        }
+      }
+    ],
+    "arg_gate": {
+      "block_card": {
+        "required": {
+          "card_id": "TKCUN25N5678",
+          "reason": "damaged"
+        },
+        "_comment": "'worn out / chip won't read' maps unambiguously to the 'damaged' enum value; anything outside the enum fails S3 deterministically. The reason must be the assistant's inference, agreed with the customer — not one the customer was made to pick off a list (see _variant_note)."
+      },
+      "get_card_details": {
+        "required": {},
+        "_comment": "Required, and disclosed: this tool's description says \"Call get_card_details before this tool\". Without the read the assistant can only act on the customer's stated premise, and in cards that premise is wrong often enough to cause unnecessary or doomed state changes — a freeze on an already-frozen card, an unfreeze on a blocked one, a block on a card that has already expired. card_ids is deliberately NOT pinned: `required` compares by exact equality (grader.py:216) and for a list that is order-sensitive, so pinning it would fail a model that reads all of the customer's cards — a natural and correct move, especially where more than one card is in play. A1 enforces that the read happens, A4 that it happens first, and S1 that the ids are real."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer says their card is 'worn out' with an unreadable chip — natural-language vocabulary that maps unambiguously to the enum value 'damaged'. The assistant should read the card first (a disclosed prerequisite of block_card), infer reason='damaged' itself, and state that inference back for agreement in the same turn as the confirmation: 'that sounds like a damaged card — shall I block it as damaged?'. That satisfies block_card's own instruction to ask for a reason while still doing the inference this case tests.\n\nIt must also convey that blocking is permanent and a replacement card with a new number will be needed, then call block_card(reason='damaged') after the customer agrees.\n\nThe failure is offering the customer the enum and making them choose — 'is it lost, stolen, fraud or damaged?' — when the wording already settles it. Confirming an inferred reason is NOT that failure. Blocking before any confirmation fails S2, and any reason outside the enum fails S3. There is no fraud or theft here, so no fraud advisory is warranted.",
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant INFERS 'damaged' from 'worn out / chip won't read' and puts that inference to the customer for agreement (e.g. 'that sounds like a damaged card — shall I block it as damaged?') before blocking, conveying that the block is permanent. Presenting the enum for the customer to choose from, rather than proposing the reason itself, fails. Blocking before confirming fails. Mentioning a replacement card is ideal."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

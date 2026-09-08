@@ -1,0 +1,272 @@
+{
+  "case_id": "depl.agentic.fd_balance_standalone_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_loan_rates+get_account_balance+create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'book FD for ₹6,00,000 for 1 year.' Balance check reveals only ₹4,20,000. The full chain is rates → balance → create_fd. Correction: principal_amount=420000. arg_gate pins 420000 in create_fd.",
+  "setup": {
+    "persona": "30-year-old female, No Occupation / Retired / Homemaker, urban Thane, Maharashtra",
+    "current_date": "2026-08-24",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0260",
+      "full_name": "Gite Pramod",
+      "date_of_birth": "1996-10-21",
+      "gender": "female",
+      "customer_since": "2021-09-19",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1705",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "811705",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "811705",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4884X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDS9300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFDS9300002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "get_account_balance",
+    "create_fd",
+    "create_rd",
+    "get_fd_details",
+    "get_rd_details",
+    "get_card_details",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "Book a new 1-year FD for ₹6,00,000 from my savings account."
+    },
+    {
+      "content": "Yes, go ahead — book it for ₹4,20,000."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "1-year tenure falls in 1yr-<3yr slab: FD 6.50%.",
+      "output": {
+        "product_type": "fd",
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Only ₹4,20,000 available — ₹1,80,000 less than the customer's ₹6,00,000 request.",
+      "records": [
+        {
+          "account_id": "TKFDS9300001",
+          "available_balance": 420000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "P x (1+r/400)^(4*12/12) = 420000 x (1.01625)^4 = 420000 x 1.0666 = 447972. Interest: 27972.",
+      "output": {
+        "deposit_id": "TKFDS9300101",
+        "principal_amount": 420000,
+        "status": "success",
+        "message": "Fixed Deposit booked. ₹4,20,000 debited from TKFDS9300001.",
+        "interest_rate": 6.5,
+        "maturity_date": "2027-08-24",
+        "maturity_amount": 447972,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-93001"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹4,20,000 at 6.5% for 12mo quarterly compounded. (1+0.01625)^4=1.066602 => 420000*1.066602=447972.",
+      "output": {
+        "maturity_amount": 447972,
+        "interest_earned": 27972,
+        "total_principal_invested": 420000
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — optional."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — optional."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — optional."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — optional."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 12
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 420000,
+          "rate": 6.5,
+          "tenure_months": 12
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFDS9300001"
+          ]
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 420000,
+          "tenure_months": 12,
+          "source_account": "TKFDS9300001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ],
+      [
+        "calculate_fd_maturity",
+        "create_fd"
+      ],
+      [
+        "get_account_balance",
+        "create_fd"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Fetch FD rates for 1yr tenure."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional maturity calculator. R judge verifies the model shows corrected maturity."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKFDS9300001"
+          ]
+        },
+        "_comment": "Must check balance — reveals only ₹4,20,000 available, not ₹6,00,000."
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 420000,
+          "tenure_months": 12,
+          "source_account": "TKFDS9300001"
+        },
+        "_comment": "CORRECTED principal_amount=420000 pinned. Customer said 600000. Balance check corrected to 420000."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'book FD for ₹6,00,000 for 1 year.' The assistant fetches the FD rate (6.5%), then checks balance — only ₹4,20,000 available. The assistant must correct: 'Your savings account has ₹4,20,000, not enough for ₹6,00,000. I can book the FD for ₹4,20,000 instead — projected maturity ₹4,47,972.' After confirmation, calls create_fd with principal_amount=420000."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant runs the FD booking workflow, discovers the ₹4,20,000 balance is less than the requested ₹6,00,000, communicates the shortfall, and after confirmation books create_fd with principal_amount=420000. FAIL if create_fd is called with 600000."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,226 @@
+{
+  "case_id": "calc.calculate_rd_maturity.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer wants RD calculated at 7.5% rate. Rate card returns 6.75% (RD=FD+25bp). Model must use correct rate.",
+  "setup": {
+    "persona": "26-year-old male, Elected Officials, other, rural Muzaffarpur, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0068",
+      "full_name": "Abhay Bhuian",
+      "date_of_birth": "2000-08-02",
+      "gender": "male",
+      "customer_since": "2019-02-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6115",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Muzaffarpur",
+        "state": "Bihar",
+        "pincode": "616115",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Muzaffarpur",
+        "state": "Bihar",
+        "pincode": "616115",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0102X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRM8200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRM8200002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_rd_maturity",
+    "get_deposit_loan_rates",
+    "get_transaction_history",
+    "close_deposit",
+    "calculate_gold_loan_ltv",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "If I save Rs 5,000 every month in an RD for 2 years, what will I get at maturity? Use the bank's rate — my friend said it's around 7.5% for RDs."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 128762,
+        "interest_earned": 8762,
+        "total_principal_invested": 120000
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T10:00:00",
+          "amount": 100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-NOISE",
+          "transaction_note": "Noise entry",
+          "status": "success",
+          "running_balance": 100
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "Must check RD rate. RD is FD+25bp = 6.75%, not 7.5%."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        },
+        "_comment": "Must use 6.75% from rate card. Computing at 7.5% fails."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "expected_resolution": "The customer asks for RD maturity on Rs 5,000/month for 2 years, mentioning 'around 7.5%' based on a friend's claim. The assistant must check get_deposit_loan_rates for RD products, which returns 6.75% (1-3 year slab, RD = FD + 25bp per CONVENTIONS §3). The assistant must use 6.75% — not the customer's 7.5% — and compute maturity. Computing at the customer's claimed rate, or skipping the rate check, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources RD rate from rate card (6.75%), corrects customer's 7.5% claim, computes at correct rate. Computing at customer's rate or skipping rate check fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

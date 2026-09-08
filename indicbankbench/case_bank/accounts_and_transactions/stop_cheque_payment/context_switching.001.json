@@ -1,0 +1,218 @@
+{
+  "case_id": "acct.stop_cheque_payment.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 WRITE + switch: the customer starts a stop-cheque (a write needing confirmation), detours to check recent transactions on the same account, then returns to confirm the stop. The assistant must handle both sub-tasks cleanly (no data bleed), keep the pending stop open across the detour, and only execute stop_cheque_payment after the final affirmation (S2).",
+  "setup": {
+    "persona": "51-year-old male, Sewers, Embroiderers and Related Workers, rural Balangir, Odisha",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0022",
+      "full_name": "Niranjan Jena",
+      "date_of_birth": "1975-06-01",
+      "gender": "male",
+      "customer_since": "2017-01-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3317",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "78 Market Road",
+        "line2": "Andheri West",
+        "city": "Balangir",
+        "state": "Odisha",
+        "pincode": "763317",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "78 Market Road",
+        "line2": "Andheri West",
+        "city": "Balangir",
+        "state": "Odisha",
+        "pincode": "763317",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8285X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKNHC3042001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKNHC3042002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCNHC3042003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_deposit_closure_quote",
+    "close_deposit"
+  ],
+  "user_turns": [
+    {
+      "content": "I lost cheque number 100234 from my salary account — please put a stop on it."
+    },
+    {
+      "content": "Actually, before that — show me my last few transactions on that account."
+    },
+    {
+      "content": "OK thanks. Yes, go ahead and stop the cheque."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-03-13T13:40:00",
+          "amount": 2200,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-9917624",
+          "transaction_note": "CREDIT CARD BILL PAYMENT",
+          "status": "success",
+          "running_balance": 86140
+        },
+        {
+          "date": "2026-03-12T06:30:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-9914088",
+          "transaction_note": "SALARY MAR 2026 - TECHNOVA SOLUTIONS PVT LTD",
+          "status": "success",
+          "running_balance": 88340
+        }
+      ],
+      "_comment": "Migrated to the CONVENTIONS.md §13 record shape: `description` renamed to `transaction_note` with rail-style narration, the invented `account_id` dropped, and `channel` / `reference_id` / `status` / `running_balance` added. Balances chain newest-first; reference ids are a per-case series so no two cases share one."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Stop payment placed on cheque 100234.",
+        "reference_id": "REF-STP-77120"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKNHC3042001"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKNHC3042001",
+          "cheque_numbers": [
+            "100234"
+          ],
+          "reason": "lost"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKNHC3042001"
+        },
+        "forbidden_ids": [
+          "TKNHC3042002"
+        ],
+        "_comment": "Detour: report the salary account's recent transactions."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKNHC3042001",
+          "cheque_numbers": [
+            "100234"
+          ]
+        },
+        "forbidden_ids": [
+          "TKNHC3042002"
+        ],
+        "optional_ok": {
+          "reason": {
+            "allowed": [
+              "lost",
+              null
+            ]
+          }
+        },
+        "_comment": "The original task, resumed: stop cheque 100234 on the salary account. Must only run AFTER the customer's final 'yes' (S2)."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks to stop cheque 100234 (lost) on the salary account, detours to check recent transactions, then returns and confirms the stop. The assistant must: (1) surface the stop and ask to confirm before acting; (2) on the detour, answer the transaction question for TKNHC3042001 (e.g. the ₹85,000 salary credit and ₹2,200 debit) without mixing it into the cheque task; (3) keep the pending stop open — not lose it or re-ask which cheque; (4) after the customer's final 'yes', call stop_cheque_payment for cheque 100234 and report the reference. It must not execute the stop before the final affirmation, must not act on the wrong account, and must not let cheque/transaction data bleed between the two answers."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the final answer confirms cheque 100234 was stopped (with the reference); the transaction detour was answered correctly and separately for TKNHC3042001; the pending stop was not lost or re-asked; and the stop was executed only after the final confirmation. No data bleed between the two sub-tasks; no action on the other account."
+    },
+    "judge_advisory": [
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

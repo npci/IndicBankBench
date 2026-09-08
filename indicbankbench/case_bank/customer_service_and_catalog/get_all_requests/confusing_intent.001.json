@@ -1,0 +1,161 @@
+{
+  "case_id": "csc.get_all_requests.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: customer references a request by description ('complaint about wrong charges') rather than by request_id. Model must call get_all_requests and identify the charges_dispute request by matching the description.",
+  "setup": {
+    "persona": "25-year-old female, Priest, rural Birbhum, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0329",
+      "full_name": "Munmun Khatoon",
+      "date_of_birth": "2001-09-05",
+      "gender": "female",
+      "customer_since": "2020-01-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4744",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Birbhum",
+        "state": "West Bengal",
+        "pincode": "804744",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Birbhum",
+        "state": "West Bengal",
+        "pincode": "804744",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5285X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAR8200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAR8200002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_card_details",
+    "calculate_emi"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the status of my complaint? The one about the wrong charges on my account."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "Two requests — one about wrong charges, one about address update. Model must identify or ask which.",
+      "records": [
+        {
+          "request_id": "REQ-GAR-001",
+          "category": "charges_dispute",
+          "status": "in_progress",
+          "raised_date": "2026-08-10T09:30:00",
+          "last_updated_date": "2026-08-14T14:00:00",
+          "description": "Dispute for incorrect maintenance charge of Rs 500 on savings account"
+        },
+        {
+          "request_id": "REQ-GAR-002",
+          "category": "address_update",
+          "status": "open",
+          "raised_date": "2026-08-15T11:00:00",
+          "last_updated_date": "2026-08-15T11:00:00",
+          "description": "Request to update communication address to new residence"
+        }
+      ]
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must fetch requests to identify the complaint. Asking 'which request?' without calling is acceptable; calling and then identifying the right one is also acceptable."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks about 'the complaint about wrong charges' — a vague descriptor. The assistant should call get_all_requests to retrieve the customer's requests. Among them, REQ-GAR-001 (charges_dispute, in_progress) matches the description. The assistant must report that request's status (in_progress, last updated 14 Aug) rather than simply asking 'which request?' without looking. Calling the tool to ground the answer is expected; answering without the call or reporting the wrong request fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "calls get_all_requests, identifies the charges_dispute request (REQ-GAR-001, in_progress) from the description, and reports its status. Answering without the tool call, or reporting the wrong request, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

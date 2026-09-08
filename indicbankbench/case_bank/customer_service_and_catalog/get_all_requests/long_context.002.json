@@ -1,0 +1,185 @@
+{
+  "case_id": "csc.get_all_requests.long_context.002",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Prior showed 2 open requests. Both now resolved. Fresh fetch required.",
+  "setup": {
+    "persona": "20-year-old male, Tindal, Deck, rural Mainpuri, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0299",
+      "full_name": "Saunveer Ram",
+      "date_of_birth": "2006-12-17",
+      "gender": "male",
+      "customer_since": "2024-08-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3947",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "108 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Mainpuri",
+        "state": "Uttar Pradesh",
+        "pincode": "373947",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "108 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Mainpuri",
+        "state": "Uttar Pradesh",
+        "pincode": "373947",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2189X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAQ9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAQ9800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_all_requests",
+              "arguments": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"requests\":[{\"request_id\":\"REQ-AQ-001\",\"category\":\"charges_dispute\",\"status\":\"open\",\"raised_date\":\"2026-08-10T10:00:00\",\"last_updated_date\":\"2026-08-10T10:00:00\",\"description\":\"Charges dispute\"},{\"request_id\":\"REQ-AQ-002\",\"category\":\"address_update\",\"status\":\"open\",\"raised_date\":\"2026-08-12T09:00:00\",\"last_updated_date\":\"2026-08-12T09:00:00\",\"description\":\"Address change\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "You have 2 open requests: a charges dispute and an address update."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_loan_details",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "Any update on my pending requests?"
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "Both resolved now.",
+      "records": [
+        {
+          "request_id": "REQ-AQ-001",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-08-10T10:00:00",
+          "last_updated_date": "2026-08-16T15:00:00",
+          "description": "Charges dispute — Rs 250 refund processed"
+        },
+        {
+          "request_id": "REQ-AQ-002",
+          "category": "address_update",
+          "status": "resolved",
+          "raised_date": "2026-08-12T09:00:00",
+          "last_updated_date": "2026-08-14T11:00:00",
+          "description": "Address change — updated to MG Road"
+        }
+      ]
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Both resolved. Must NOT repeat stale 'open' status."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior showed 2 open requests. Both resolved now. The assistant must call get_all_requests and report both as resolved — charges dispute (Rs 250 refunded) and address update (updated to MG Road). Repeating the stale 'open' status fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches fresh data, reports both requests resolved, NOT open. Repeating stale status fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,327 @@
+{
+  "case_id": "cards.agentic.card_controls_wrong_card.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'raise online limit on card ending 4402 to ₹1,50,000.' Two cards: 4402 (debit, domestic-only, max online limit ₹50,000) and 5502 (credit, current online limit ₹75,000). Customer named the debit card but wants a limit that only the credit card can handle. Correction: set_card_controls on TKCBW5502, not TKCBW4402. arg_gate pins card_id=TKCBW5502; forbidden_ids blocks TKCBW4402.",
+  "setup": {
+    "persona": "43-year-old male, Supply and Distribution Department Managers, rural Malappuram, Kerala",
+    "current_date": "2026-08-22",
+    "current_time": "10:30",
+    "login_context": {
+      "customer_id": "SCN0253",
+      "full_name": "Amal Rafi",
+      "date_of_birth": "1983-07-24",
+      "gender": "male",
+      "customer_since": "2018-10-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8794",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Malappuram",
+        "state": "Kerala",
+        "pincode": "218794",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Malappuram",
+        "state": "Kerala",
+        "pincode": "218794",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5858X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCW9500020",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW4402",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCBW5502",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "set_card_controls",
+    "toggle_card_freeze",
+    "block_card",
+    "get_account_balance",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Raise the online spending limit on my card ending 4402 to ₹1,50,000. I'm making a big online purchase."
+    },
+    {
+      "content": "Yes, set it on the credit card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRONG-CARD CONTROLS TRAP: Customer names 4402 (debit, online domestic limit ₹25,000) but wants ₹1,50,000. The credit card 5502 has credit_limit=₹2,00,000 and current online limit of ₹75,000. The customer's request points to the credit card.",
+      "records": [
+        {
+          "card_id": "TKCBW4402",
+          "masked_number": "****4402",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "05/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCBW5502",
+          "masked_number": "****5502",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 165000,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 30000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-95020"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW4402",
+            "TKCBW5502"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCBW5502",
+          "online": {
+            "domestic": {
+              "daily_limit": 150000
+            }
+          }
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "set_card_controls"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCBW4402",
+                "TKCBW5502"
+              ],
+              [
+                "TKCBW4402"
+              ],
+              [
+                "TKCBW5502"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must surface card details. Customer named 4402 (debit) but ₹1,50,000 limit only makes sense on credit card 5502."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCBW5502"
+        },
+        "optional_ok": {
+          "online": {
+            "allowed": [
+              {
+                "domestic": {
+                  "daily_limit": 150000
+                }
+              }
+            ]
+          }
+        },
+        "forbidden_ids": [
+          "TKCBW4402"
+        ],
+        "_comment": "CORRECTED card_id=TKCBW5502 (credit card) pinned. Customer named debit card 4402 but it has no credit_limit. The credit card 5502 has credit_limit ₹2,00,000 — the only card that can support ₹1,50,000 online limit."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'raise online limit on card ending 4402 to ₹1,50,000.' get_card_details shows: 4402 is a debit card (rupay, domestic-only, online limit ₹25,000 — has no credit_limit field at all). 5502 is a credit card (visa, credit_limit ₹2,00,000, current online limit ₹75,000). The customer NAMED the debit card but a ₹1,50,000 online limit is only possible on the credit card 5502 (below its ₹2,00,000 credit_limit). The assistant must correct: 'Card 4402 is a debit card and doesn't support limits that high. Your credit card 5502 has a ₹2,00,000 credit_limit and can be raised to ₹1,50,000.' After confirmation, calls set_card_controls on TKCBW5502 with online.domestic.daily_limit=150000. A weak model might set controls on the named debit card 4402."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads both card details, identifies that the named debit card 4402 cannot support ₹1,50,000 online limit while the credit card 5502 can (credit_limit ₹2,00,000), communicates this correction, and after confirmation calls set_card_controls on TKCBW5502 with daily_limit=150000. FAIL if set_card_controls is called on TKCBW4402."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

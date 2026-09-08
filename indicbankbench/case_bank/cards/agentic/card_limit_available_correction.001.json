@@ -1,0 +1,269 @@
+{
+  "case_id": "cards.agentic.card_limit_available_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'set my online spending limit to ₹4,00,000.' get_card_details shows available_limit=₹2,40,000. The requested limit not only exceeds credit_limit but also exceeds available_limit. Correction: daily_limit=240000 (max = credit_limit 300000 but customer says they want to spend available amount). Actually the rule is daily_limit must be below credit_limit. credit_limit=₹3,00,000. So max is ₹3,00,000. Let me use available_limit which is even lower — ₹2,40,000. Customer says ₹4,00,000 which exceeds credit_limit. Corrected to ₹3,00,000.",
+  "setup": {
+    "persona": "37-year-old male, Building Construction Labourers, urban North Twenty Four Parganas, West Bengal",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0420",
+      "full_name": "Ranjat Mudi",
+      "date_of_birth": "1989-11-23",
+      "gender": "male",
+      "customer_since": "2022-09-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7346",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "107 Mill Road",
+        "line2": "Sector 17",
+        "city": "North Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "757346",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "107 Mill Road",
+        "line2": "Sector 17",
+        "city": "North Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "757346",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1175X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCF9500203",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW7701",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "block_card",
+    "get_account_balance",
+    "get_card_details",
+    "get_transaction_history",
+    "set_card_controls",
+    "toggle_card_freeze"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to make an urgent online payment — hike my card's online spending limit to ₹4,00,000 for today. It's for a travel booking."
+    },
+    {
+      "content": "Ok, set it to ₹3,00,000 — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCBW7701",
+          "masked_number": "****7701",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 240000,
+          "expiry": "12/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "credit_limit=₹3,00,000 — maximum possible daily_limit. Customer asked ₹4,00,000 which exceeds it."
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-95030"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW7701"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCBW7701",
+          "online": {
+            "domestic": {
+              "daily_limit": 300000
+            }
+          }
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "set_card_controls"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCBW7701"
+          ]
+        },
+        "_comment": "Must fetch card details — reveals credit_limit=₹3,00,000."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCBW7701"
+        },
+        "optional_ok": {
+          "online": {
+            "allowed": [
+              {
+                "domestic": {
+                  "daily_limit": 300000
+                }
+              }
+            ]
+          }
+        },
+        "forbidden_ids": [
+          400000
+        ],
+        "_comment": "CORRECTED limit=300000. Customer asked ₹4,00,000 exceeding credit_limit ₹3,00,000. Writing 400000 fails A3."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'hike my online spending limit to ₹4,00,000.' get_card_details shows credit_limit=₹3,00,000 — the requested ₹4,00,000 exceeds it. The assistant must correct: 'Your credit limit is ₹3,00,000, so that's the maximum I can set. I'll set it to ₹3,00,000.' After confirmation, calls set_card_controls with daily_limit=300000. A weak model may mention the ceiling in prose but still write 400000. arg_gate has forbidden_ids=[400000]."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads card details, identifies ₹4,00,000 exceeds the ₹3,00,000 credit_limit, communicates the correction, and after confirmation calls set_card_controls with daily_limit=300000. FAIL if daily_limit=400000 is used."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,258 @@
+{
+  "case_id": "csc.get_products_and_offers.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Tier-2 filter-trap (category-to-type implication): customer says 'I could use some extra funds — what borrowing options does the bank have right now?' — IMPLIES type=loan. The model that passes type=loan gets only the loan offer and misses the pre-approved credit card (type=card) with zero-fee balance-transfer which is arguably better for the customer. The model that queries broadly (type=all or unset) finds both.",
+  "setup": {
+    "persona": "29-year-old male, Telemarketing Sales Person, urban Bilaspur, Chhattisgarh",
+    "current_date": "2026-08-20",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0656",
+      "full_name": "Narendra Kumar",
+      "date_of_birth": "1997-10-13",
+      "gender": "male",
+      "customer_since": "2021-10-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7369",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Bilaspur",
+        "state": "Chhattisgarh",
+        "pincode": "397369",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Bilaspur",
+        "state": "Chhattisgarh",
+        "pincode": "397369",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2218X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKPOR04001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCPOR04002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_card_details",
+    "calculate_emi"
+  ],
+  "user_turns": [
+    {
+      "content": "I could use some extra funds this quarter — what borrowing options does the bank have for me right now?"
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "Two relevant offers: a personal loan (type=loan) and a pre-approved credit card with zero-fee balance transfer (type=card). Filtering type=loan hides the credit card.",
+      "records": [
+        {
+          "id": "PROD-TP-01",
+          "title": "Personal Loan — Quick Disbursal",
+          "type": "loan",
+          "description": "Unsecured personal loan up to Rs 10,00,000 with same-day disbursal for existing customers. Interest rate starting from 10.5% p.a., tenure up to 60 months.",
+          "valid_till": "2026-10-15"
+        },
+        {
+          "id": "PROD-TP-02",
+          "title": "Pre-approved Platinum Credit Card",
+          "type": "card",
+          "description": "Zero-fee balance transfer for 6 months, Rs 2,00,000 pre-approved credit limit, no joining fee, complimentary airport lounge access twice per quarter.",
+          "valid_till": "2026-09-30"
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "delivery_address": "Registered address"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": null,
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "optional_ok": {
+          "type": {
+            "allowed": [
+              "all",
+              "card",
+              "deposit",
+              "insurance",
+              "loan",
+              "offer",
+              null
+            ]
+          }
+        },
+        "_comment": "The customer says 'borrowing options' which implies type=loan, but a broad query (type=all or no type filter) surfaces both. Narrow type=loan hides the credit card. Any single value for type is permitted by optional_ok because the trap is in the model's answer not its call; models that filter but still get the answer right via a follow-up call can pass the judge."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about 'borrowing options' — conversational language that implies loans but does not name a type filter. The assistant should call get_products_and_offers and surface both relevant offers: the Personal Loan (type=loan, up to ₹10 lakh, 10.5% interest) AND the Pre-approved Platinum Credit Card (type=card, ₹2 lakh limit, zero-fee balance transfer for 6 months, no joining fee). The credit card is a legitimate borrowing alternative (credit line + balance transfer) that the customer should know about. Presenting only the loan offer because the customer said 'borrowing' fails — the assistant inferred a type filter the customer never stated."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "calls get_products_and_offers and presents the Personal Loan offer AND the Platinum Credit Card offer as relevant borrowing options. Presenting only the loan and omitting the credit card because the customer said 'borrowing' fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

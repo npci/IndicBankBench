@@ -1,0 +1,303 @@
+{
+  "case_id": "depl.update_deposit_renewal.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7 wrong MATURITY-DATE belief that must be corrected to a write's ARGS (the siblings covered the phantom-deposit case and a wrong-premise write). The customer says 'my fixed deposit matures June 30, right? Set it to renew principal interest.' The FD actually matures 2026-09-10; June 30 belongs to their RECURRING DEPOSIT — and update_deposit_renewal is FD-only, so writing on the RD is impossible. The correction must land in the write: deposit_id = the FD (not the RD), with the real maturity date surfaced. The careless failure: repeating the customer's wrong maturity date, or attempting the renewal against the RD.",
+  "setup": {
+    "persona": "46-year-old female, No Occupation / Retired / Homemaker, rural Paschim Medinipur, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0167",
+      "full_name": "Seema Karmakar",
+      "date_of_birth": "1980-10-10",
+      "gender": "female",
+      "customer_since": "2021-05-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0357",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "118 College Road",
+        "line2": "Model Town",
+        "city": "Paschim Medinipur",
+        "state": "West Bengal",
+        "pincode": "340357",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "118 College Road",
+        "line2": "Model Town",
+        "city": "Paschim Medinipur",
+        "state": "West Bengal",
+        "pincode": "340357",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9180X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXUR80001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDXUR80003",
+          "type": "fd",
+          "label": "TK Fixed Deposit"
+        },
+        {
+          "product_id": "TKRDXUR80004",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXUR80002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "My fixed deposit matures June 30, right? Set it to renew principal interest."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDXUR80003",
+          "principal_amount": 500000,
+          "interest_rate": 6.0,
+          "tenure_months": 6,
+          "start_date": "2026-03-10",
+          "maturity_date": "2026-09-10",
+          "maturity_amount": 515113,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXUR80001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDXUR80004",
+          "monthly_installment": 8000,
+          "installments_paid": 2,
+          "total_deposited": 16000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2026-06-30",
+          "next_debit_date": "2026-08-30",
+          "maturity_date": "2028-06-30",
+          "maturity_amount": 206018,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXUR80001"
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "instruction": "renew_principal_interest",
+        "maturity_date": "2026-09-10",
+        "status": "success",
+        "message": "Maturity instruction updated.",
+        "reference_id": "REF-UR-80120"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDXUR80003"
+          ]
+        }
+      },
+      {
+        "tool": "update_deposit_renewal",
+        "arguments": {
+          "deposit_id": "TKFDXUR80003",
+          "instruction": "renew_principal_interest"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "update_deposit_renewal"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDXUR80003"
+          ]
+        },
+        "_comment": "Surface the FD state so the wrong date belief can be corrected."
+      },
+      "update_deposit_renewal": {
+        "required": {
+          "deposit_id": "TKFDXUR80003",
+          "instruction": "renew_principal_interest"
+        },
+        "forbidden_ids": [
+          "TKRDXUR80004"
+        ],
+        "_comment": "THE GATE: the renewal must land on the FD (maturing 2026-09-10), not the RD (the June-30 product — which update_deposit_renewal cannot touch anyway). The corrected deposit_id reaches the write's args."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer believes their fixed deposit matures on June 30 and asks to set it to renew principal interest. The records show the FD matures 2026-09-10 (it is a 6-month deposit started 2026-03-10); June 30 is the RD's maturity date (2028-06-30). The assistant must surface the FD state, correct the belief, and after confirmation apply renew_principal_interest to the FD (TKFDXUR80003) — the corrected deposit must reach the write's arguments. Repeating the wrong maturity date, or attempting the renewal against the RD, is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant surfaces the FD state, corrects the wrong June-30 belief (the FD matures 2026-09-10; June 30 is the RD), and after confirmation applies renew_principal_interest to the FD — not the RD. Writing on the RD or echoing the wrong maturity date fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

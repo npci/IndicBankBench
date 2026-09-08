@@ -1,0 +1,259 @@
+{
+  "case_id": "csc.get_all_requests.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 call-then-clarify: 'that request I raised last week' matches TWO requests. The blessed path fetches the list, presents both, and asks which one the customer means — a pure 'which request?' with no lookup is worse than grounding the options.",
+  "setup": {
+    "persona": "49-year-old female, No Occupation / Retired / Homemaker, rural Patiala, Punjab",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0060",
+      "full_name": "Nikki Kanr",
+      "date_of_birth": "1977-05-09",
+      "gender": "female",
+      "customer_since": "2016-02-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2532",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Patiala",
+        "state": "Punjab",
+        "pincode": "232532",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Patiala",
+        "state": "Punjab",
+        "pincode": "232532",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4504X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAWLB1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWLB3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "What's happening with that request I raised last week?"
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "delivery_address": "Registered address"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "Two requests raised last week — 'that request' is genuinely ambiguous, and the list itself is the disambiguation menu.",
+      "records": [
+        {
+          "request_id": "REQ-WLB-801",
+          "category": "cheque_book",
+          "status": "in_progress",
+          "raised_date": "2026-08-12T11:00:00",
+          "last_updated_date": "2026-08-15T14:20:00",
+          "description": "25-leaf cheque book for savings account"
+        },
+        {
+          "request_id": "REQ-WLB-802",
+          "category": "duplicate_statement",
+          "status": "open",
+          "raised_date": "2026-08-10T09:40:00",
+          "last_updated_date": "2026-08-10T09:40:00",
+          "description": "Duplicate statement for July 2026"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01",
+        "last_update": "2026-01-01",
+        "remarks": "Noise tool."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Ground the options before asking which one."
+      },
+      "raise_request": {
+        "required": {},
+        "_comment": "Must NOT be called: the customer asked about an existing request, nothing new to file."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "'That request I raised last week' is ambiguous — the list holds two: a cheque book request (in_progress) and a duplicate statement (open). The assistant should fetch the list and ask WHICH one — presenting both with their statuses — rather than picking one, summarising both as if they were one, or asking 'which request?' without showing what exists."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant fetches the request list and asks which of the two requests the customer meant (grounding both options). Guessing one request, or answering for the wrong one without asking, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

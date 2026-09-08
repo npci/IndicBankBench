@@ -1,0 +1,309 @@
+{
+  "case_id": "cards.agentic.card_block_suffix_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+block_card",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'block card ending 2297.' There are two cards in linked_cards: ****2297 (debit, the one the customer explicitly named) and ****5970 (credit, the one that was actually compromised — the customer says 'someone used it online last night — I think it was stolen at the mall'). The model must map the customer's FULL story (stolen at the mall, fraudulent online usage) to the RIGHT card. The credit card ****5970 is the risky one — credit cards are far more likely targets for online fraud. The debit card ****2297, while named, is not the card the customer's story implicates. A weak model blocks the named debit card (****2297). A strong model blocks the credit card (****5970) that matches the fraud story. The arg_gate pins card_id=TKCBW5970 (CORRECTED) on block_card; forbidden_ids blocks TKCBW2297.",
+  "setup": {
+    "persona": "32-year-old female, No Occupation / Retired / Homemaker, rural Janjgir, Chhattisgarh",
+    "current_date": "2026-08-20",
+    "current_time": "09:15",
+    "login_context": {
+      "customer_id": "SCN0397",
+      "full_name": "Ajuddi Bee",
+      "date_of_birth": "1994-08-25",
+      "gender": "female",
+      "customer_since": "2019-08-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0103",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Janjgir",
+        "state": "Chhattisgarh",
+        "pincode": "460103",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "104 Park Avenue",
+        "line2": "Bandra East",
+        "city": "Janjgir",
+        "state": "Chhattisgarh",
+        "pincode": "460103",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0080X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCF8500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW2297",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCBW5970",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Someone used my card online last night — I think it was stolen when I left my wallet at the mall food court. Block the card ending 2297 immediately."
+    },
+    {
+      "content": "Yes, block the credit card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRONG-CARD NAMING TRAP: Two cards. ****2297 is a DEBIT card with domestic-only usage (all international disabled, low daily limits) — this is the card the customer NAMED. ****5970 is a CREDIT card with ALL channels enabled including international — far more likely to be the target of online fraud and matching the 'stolen at the mall' story. The customer named the WRONG card suffix. The correct card to block is the credit card ****5970.",
+      "records": [
+        {
+          "card_id": "TKCBW2297",
+          "masked_number": "****2297",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "03/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCBW5970",
+          "masked_number": "****5970",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 164200,
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 50000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 40000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card permanently blocked and hotlisted across all payment networks.",
+        "reference_id": "REF-BLK-85001"
+      },
+      "_comment": "card_id is echoed by the executor. The CORRECT blocked card is TKCBW5970 (credit)."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW2297",
+            "TKCBW5970"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCBW5970",
+          "reason": "stolen"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCBW2297",
+                "TKCBW5970"
+              ],
+              [
+                "TKCBW2297"
+              ],
+              [
+                "TKCBW5970"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must surface current card states. The customer named ****2297 but the fraud story (stolen wallet at mall, online fraud) points to the credit card ****5970."
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCBW5970",
+          "reason": "stolen"
+        },
+        "forbidden_ids": [
+          "TKCBW2297"
+        ],
+        "_comment": "The CORRECTED card_id is pinned. The customer said 'end 2297' but that's the debit card — the fraud story (stolen wallet, online misuse) implicates the credit card ****5970 (international online enabled, high limits, credit type). Blocking the named debit card (TKCBW2297) fails A3 via forbidden_ids. Reason is stolen per the customer's own claim."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. The customer says 'block the card ending 2297 — someone used it online last night, I think it was stolen from my wallet at the mall food court.' get_card_details returns two cards: ****2297 (debit, rupay, domestic-only — all international channels disabled, low limits) and ****5970 (credit, visa, ALL channels enabled internationally, high online limit of ₹2,00,000). The customer NAMED the debit card (2297), but the STORY — 'stolen at the mall,' 'used online' — points to the credit card (5970), which is the far more likely target for mall-theft followed by online fraud. A weak model blocks the named card (****2297, debit) based on the suffix alone. A strong model connects the story to the RIGHT card — the credit card with international online access and a ₹2L limit — and blocks TKCBW5970 with reason=stolen. The arg_gate pins card_id=TKCBW5970 and forbidden_ids=['TKCBW2297'], catching the weak-model failure deterministically via A3. The customer's confirmation turn explicitly says 'the credit card' which further confirms the correction was communicated."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads both card details, identifies that the fraud story (stolen wallet at mall, online misuse) matches the CREDIT card ****5970 (international online enabled, high limits) not the named debit card ****2297 (domestic-only, low limits), communicates this correction to the customer, and after confirmation blocks TKCBW5970 with reason=stolen. FAIL if the debit card TKCBW2297 is blocked (the named card), even if the prose mentions the credit card. Freezing instead of blocking fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

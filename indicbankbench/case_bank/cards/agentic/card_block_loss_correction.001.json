@@ -1,0 +1,308 @@
+{
+  "case_id": "cards.agentic.card_block_loss_correction.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+block_card",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'block 7301 — I lost it at the gym.' Model looks up cards via get_card_details. Two cards: TKCBW7301 (debit, rupay, domestic-only, active) — the one the customer NAMED — and TKCBW8401 (credit, visa, international enabled, status=active) — the one that fits the 'lost' story better for replacement urgency. But the customer's story is about LOSS, not fraud. The debit card 7301 IS the lost one per the customer's story. Wait — we need the correction. Let me flip: Customer says 'block 8401, I lost it at the airport' but investigation shows 8401 is the credit card with recent international usage 2 hours ago (not lost), while 7301 (debit) is the one unused for 3 days. The correction is that 7301 might be the lost one. But write-after-correction means the model MUST write the corrected card_id. Hmm, that's unnatural for loss claims. Let me change to: Customer says 'block my card ending 7301 — someone used it fraudulently in Dubai.' Model checks cards — 7301 is debit domestic-only (international disabled, impossible for Dubai fraud), 8401 is credit with all channels enabled internationally. The fraud story MATCHES 8401, not 7301. Customer named the wrong suffix. Model corrects and blocks 8401.",
+  "setup": {
+    "persona": "56-year-old male, Teaching Associate Professionals, rural Patan, Gujarat",
+    "current_date": "2026-08-22",
+    "current_time": "16:00",
+    "login_context": {
+      "customer_id": "SCN0717",
+      "full_name": "Patel Vasava",
+      "date_of_birth": "1970-02-13",
+      "gender": "male",
+      "customer_since": "2013-03-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3217",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Patan",
+        "state": "Gujarat",
+        "pincode": "523217",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Patan",
+        "state": "Gujarat",
+        "pincode": "523217",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1780X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCF8500010",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW7301",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCBW8401",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Block my card ending 7301 — there's fraud on it. Someone just used it in Dubai, I got an SMS alert for an AED transaction. Block it immediately."
+    },
+    {
+      "content": "Yes, block the credit card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRONG-CARD NAMING TRAP: Two cards. TKCBW7301 is DEBIT rupay domestic-only (all international disabled) — impossible for Dubai (AED) fraud. TKCBW8401 is CREDIT visa with ALL international channels enabled — the card capable of international (Dubai/AED) fraud. Customer named 7301 (wrong card). The fraud story matches 8401.",
+      "records": [
+        {
+          "card_id": "TKCBW7301",
+          "masked_number": "****7301",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "06/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCBW8401",
+          "masked_number": "****8401",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 250000,
+          "available_limit": 182500,
+          "expiry": "03/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 40000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 30000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card permanently blocked and hotlisted across all payment networks.",
+        "reference_id": "REF-BLK-85010"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW7301",
+            "TKCBW8401"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCBW8401",
+          "reason": "fraud"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCBW7301",
+                "TKCBW8401"
+              ],
+              [
+                "TKCBW7301"
+              ],
+              [
+                "TKCBW8401"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must surface card details. Customer named 7301 but the fraud story (Dubai/AED international) points to the credit card 8401."
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCBW8401",
+          "reason": "fraud"
+        },
+        "forbidden_ids": [
+          "TKCBW7301"
+        ],
+        "_comment": "CORRECTED card_id=TKCBW8401 pinned. Customer named 7301 but its domestic-only rupay card can't do Dubai fraud. The credit visa card 8401 with all international channels enabled is the one. Blocking 7301 fails A3 via forbidden_ids."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'block card ending 7301 — someone used it fraudulently in Dubai.' get_card_details returns two cards: ****7301 (debit, rupay, ALL international channels disabled — impossible for AED transactions) and ****8401 (credit, visa, ALL international channels enabled — capable of international fraud). The customer NAMED 7301 but the STORY (Dubai/AED international fraud) implicates 8401. A weak model blocks the named card (7301, debit) based on suffix alone. A strong model connects the fraud story to the right card and blocks TKCBW8401 with reason=fraud. arg_gate pins card_id=TKCBW8401 and forbidden_ids=['TKCBW7301']. The customer's confirmation 'the credit card' confirms the correction was communicated."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads both card details, identifies that the international fraud story (Dubai, AED) matches the credit card 8401 (visa, international enabled) not the named debit card 7301 (rupay, domestic-only), communicates this correction, and after confirmation blocks TKCBW8401 with reason=fraud. FAIL if the debit card TKCBW7301 is blocked."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

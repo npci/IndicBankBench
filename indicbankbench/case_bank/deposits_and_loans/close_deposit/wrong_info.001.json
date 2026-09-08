@@ -1,0 +1,236 @@
+{
+  "case_id": "depl.close_deposit.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer asks to close TKFD9999999 — not in linked_products. Verify, report not found.",
+  "setup": {
+    "persona": "41-year-old female, No Occupation / Retired / Homemaker, rural Deoria, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0241",
+      "full_name": "Geeta Baranwal",
+      "date_of_birth": "1985-06-28",
+      "gender": "female",
+      "customer_since": "2017-02-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9129",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Deoria",
+        "state": "Uttar Pradesh",
+        "pincode": "789129",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Deoria",
+        "state": "Uttar Pradesh",
+        "pincode": "789129",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0885X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCLS8100001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDCLS8100002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCLS8100003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to close my FD TKFD9999999 — I need the money urgently."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Only TKFDCLS8100002 exists.",
+      "records": [
+        {
+          "deposit_id": "TKFDCLS8100002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2024-09-01",
+          "maturity_date": "2026-09-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCLS8100001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD9999999",
+        "status": "failed",
+        "message": "Deposit not found.",
+        "amount_credited": 0,
+        "payout_account": "TKCLS8100001",
+        "reference_id": "REF-CLS-00000"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCLS8100002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDCLS8100002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Model may call get_fd_details with its linked FD to verify. TKFD9999999 won't be in records. The model must report that TKFD9999999 was not found."
+      },
+      "close_deposit": {
+        "required": {},
+        "_comment": "Must NOT be called: deposit ID not in linked_products."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to close FD TKFD9999999. The assistant must verify via get_fd_details, which returns only TKFDCLS8100002. The assistant must report TKFD9999999 not found and offer the actual FD instead. Calling close_deposit with a non-existent ID fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks linked deposits, reports TKFD9999999 not found, surfaces actual FD. Calling close_deposit with non-existent ID fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

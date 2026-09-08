@@ -1,0 +1,162 @@
+{
+  "case_id": "csc.get_products_and_offers.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'what loan offers do I have?' looking for pre-approved borrowing. type=offer filter shows pre-approved card upgrade offers only — no loan offers exist in the offer type. But there's a pre-approved personal LOAN product (not offer type) with a pre-approved status in its description. And there's a credit card offer too. A type=offer filter hides the loan product. Broad query reveals the pre-approved loan.",
+  "setup": {
+    "persona": "30-year-old male, Hut Maker, urban Pathanamthitta, Kerala",
+    "current_date": "2026-09-15",
+    "current_time": "13:00",
+    "login_context": {
+      "customer_id": "SCN0486",
+      "full_name": "Ratheesh Vaidyar",
+      "date_of_birth": "1996-01-05",
+      "gender": "male",
+      "customer_since": "2014-02-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0880",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "1 MG Road",
+        "line2": "Indiranagar",
+        "city": "Pathanamthitta",
+        "state": "Kerala",
+        "pincode": "270880",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "1 MG Road",
+        "line2": "Indiranagar",
+        "city": "Pathanamthitta",
+        "state": "Kerala",
+        "pincode": "270880",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8286X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9701001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9701002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_products_and_offers",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm planning a home renovation and need funds. What loan offers do I have — anything pre-approved? Show me all available options."
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for 'loan offers' implying type=offer or type=loan. A type=offer filter shows card upgrade offer (OFF-CC-005) — no loan offers. But there's a pre-approved Personal Loan (PL-010) as a LOAN product. A type=loan+offer or all filter reveals the actual pre-approved loan the customer wants. An offer-only filter misses the loan product entirely.",
+      "records": [
+        {
+          "id": "OFF-CC-005",
+          "title": "Credit Card Upgrade - Pre-approved",
+          "type": "offer",
+          "description": "Upgrade to TK Platinum Card with no annual fee for the first year. Pre-approved.",
+          "valid_till": "2026-12-31"
+        },
+        {
+          "id": "PL-010",
+          "title": "Personal Loan - Pre-approved",
+          "type": "loan",
+          "description": "Up to Rs 8,00,000, pre-approved at your current profile. Tenure up to 60 months."
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "all"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "optional_ok": {
+          "type": {
+            "allowed": [
+              "all"
+            ]
+          }
+        },
+        "_comment": "Broad query (type=all or no filter) reveals both the card upgrade offer AND the pre-approved personal loan product. A type=offer filter shows only the card upgrade — missing the loan the customer actually needs."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks for 'loan offers' needing funds for a home renovation. The bank's offers section has a credit card upgrade (OFF-CC-005, type=offer). But the pre-approved Personal Loan (PL-010, up to Rs 8,00,000) is classified as a LOAN product, not an offer — a type=offer filter hides it. The assistant must query broadly and surface both the card offer AND the pre-approved personal loan. Reporting only the card upgrade offer and saying no loan offers exist fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries the catalog broadly and surfaces both the credit card upgrade offer AND the pre-approved Personal Loan (PL-010, up to Rs 8,00,000), noting it's the relevant loan product. Reporting only offers without surfacing the pre-approved loan fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

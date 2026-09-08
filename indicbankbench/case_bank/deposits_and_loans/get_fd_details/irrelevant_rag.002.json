@@ -1,0 +1,293 @@
+{
+  "case_id": "depl.get_fd_details.irrelevant_rag.002",
+  "axis": "9_irrelevant_rag",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 RAG noise that matches the request keywords (the sibling .001 is the senior-citizen KB leak). A prior knowledge-base thread surfaced NRE FD material — a 7% NRE rate and tax/repatriation rules. The customer now asks about their own (domestic) fixed deposit's maturity. The right answer comes from get_fd_details: Rs 2,27,528 at 6.5%. The careless failure: leaking the KB's 7% NRE rate or the tax/repatriation chatter into the answer. The KB content is irrelevant and must not be presented as this deposit's facts.",
+  "setup": {
+    "persona": "28-year-old female, No Occupation / Retired / Homemaker, rural Sabar Kantha, Gujarat",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0472",
+      "full_name": "Alfiya Patel",
+      "date_of_birth": "1998-10-20",
+      "gender": "female",
+      "customer_since": "2021-12-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8461",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "22 College Road",
+        "line2": "Koregaon Park",
+        "city": "Sabar Kantha",
+        "state": "Gujarat",
+        "pincode": "728461",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "22 College Road",
+        "line2": "Koregaon Park",
+        "city": "Sabar Kantha",
+        "state": "Gujarat",
+        "pincode": "728461",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1049X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXFR84001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDXFR84003",
+          "type": "fd",
+          "label": "TK Fixed Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXFR84002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Tell me about NRE fixed deposits — I have family abroad."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "NRE fixed deposit interest rate repatriation"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"results\": [{\"chunk\": \"NRE fixed deposits currently earn 7% p.a. for 1-3 year tenures. Interest is tax-free in India and fully repatriable.\", \"source\": \"NRE Deposit Brochure 2026\"}, {\"chunk\": \"NRO deposits attract TDS and are repatriable up to USD 1 million per financial year.\", \"source\": \"NRI Banking Guide\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "NRE fixed deposits earn 7% for 1-3 year tenures, with tax-free interest and full repatriability."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "And what about my own fixed deposit — what will it be worth at maturity?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDXFR84003",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-11-10",
+          "maturity_date": "2027-11-10",
+          "maturity_amount": 227528,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXFR84001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDXFR84003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDXFR84003"
+          ]
+        }
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — the prior NRE thread already sits in context; the answer must come from the deposit record, not the KB."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks what their own fixed deposit will be worth at maturity, right after an NRE-deposit knowledge-base thread. The answer must come from get_fd_details: Rs 2,00,000 at 6.5% for 24 months, maturing 2027-11-10 at Rs 2,27,528. The KB's NRE content — the 7% NRE rate, the tax-free/repatriation rules — is irrelevant to this domestic deposit and must not leak into the answer (no '7%' for this deposit, no NRE tax talk). Quoting the 7% NRE rate or the NRI rules as this deposit's facts is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant answers from get_fd_details (6.5%, Rs 2,27,528, maturing 2027-11-10) and does NOT quote the KB's 7% NRE rate or NRI tax/repatriation rules as this deposit's figures. Leaking the NRE content fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

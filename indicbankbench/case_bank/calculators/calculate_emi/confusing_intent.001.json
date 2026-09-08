@@ -1,0 +1,200 @@
+{
+  "case_id": "calc.calculate_emi.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 AND the deliberate contrast to calculate_fd_maturity/contradicting_info.001. Here the customer supplies a rate for an explicitly HYPOTHETICAL 'what-if' EMI ('just hypothetically, if the rate were 8%...'). Unlike an actual booking, a customer-supplied rate IS acceptable for exploratory what-if EMI calculations — so the assistant should compute with the 8% as asked, while it's good practice to note this is illustrative and the actual rate on a real loan would come from the bank. The discriminator vs the FD case: real transaction -> must source the rate; hypothetical exploration -> customer's rate is fine. A model that rigidly refuses the customer's rate here (over-applying the sourcing rule) is over-cautious; a model that presents an 8% what-if as a firm quote is over-claiming. The licence to use the customer's rate is carried in the USER PHRASING ('just hypothetically'), not in undisclosed schema text.",
+  "setup": {
+    "persona": "53-year-old female, No Occupation / Retired / Homemaker, rural Thane, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0187",
+      "full_name": "Ashi Lokhande",
+      "date_of_birth": "1973-06-16",
+      "gender": "female",
+      "customer_since": "2017-08-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9561",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "42 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "519561",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "42 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "519561",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9211X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMKB7310001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMKB7310002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_duplicate_statement",
+    "set_card_controls"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm just playing with numbers, not applying for anything yet. Purely hypothetically — if I took a ₹10,00,000 loan at 8% for 5 years, what would the monthly EMI come to?"
+    }
+  ],
+  "mock": {
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Computed for the customer's hypothetical 8% — acceptable here because it is an explicit what-if, not a booking.",
+      "output": {
+        "emi": 20276,
+        "total_interest": 216584,
+        "total_payment": 1216584,
+        "schedule": [
+          {
+            "installment": 1,
+            "principal": 13609,
+            "interest": 6667,
+            "closing_balance": 986391
+          },
+          {
+            "installment": 60,
+            "principal": 20142,
+            "interest": 134,
+            "closing_balance": 0
+          }
+        ]
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "personal loan",
+            "rate": 10.5,
+            "senior_citizen_rate": 10.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 1000000,
+          "rate": 8,
+          "tenure_months": 60
+        }
+      }
+    ],
+    "arg_gate": {
+      "calculate_emi": {
+        "required": {
+          "principal": 1000000,
+          "tenure_months": 60
+        },
+        "_comment": "principal (₹10,00,000) and tenure (60mo) are pinned. `rate` is deliberately NOT pinned: for an explicit hypothetical, using the customer's 8% is correct (the intended contrast with the FD contradicting_info case), but a model that ALSO computes at the real 10.5% (showing both) is going above and beyond and must not fail A3 on the second call. That the 8% was used for the hypothetical is verified by the R bar (judge), not deterministically. (A model that instead pins its call to 10.5% and ignores the 8% is caught by the R bar, which requires the hypothetical to use the customer's rate.)"
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Optional — the customer framed this as a pure what-if, so sourcing the live rate is not required; noting the actual rate would differ is a nice-to-have.",
+        "optional": true
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer explicitly frames this as a hypothetical 'what-if' — not a real application — and supplies their own rate of 8%. For an exploratory calculation like this, using the customer's rate is appropriate: the assistant should compute the EMI with principal 10,00,000, rate 8%, tenure 60 months, and report the ₹20,276 monthly EMI (total interest ₹2,16,584; total repayment ₹12,16,584). It is good practice to note this is illustrative and that an actual loan's rate would be set by the bank, but it should NOT refuse to run the number or insist on sourcing a live rate before answering — that would be over-applying the rate-sourcing rule to a scenario the customer explicitly scoped as hypothetical. Presenting the 8% figure as a firm, guaranteed quote would be over-claiming."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant treats this as the explicit hypothetical it is: it computes the EMI using the customer's 8% and reports ~₹20,276/month, ideally noting the figure is illustrative and a real loan's rate would be set by the bank. Refusing to compute without sourcing a live rate (over-caution), or presenting 8% as a firm quote (over-claim), fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

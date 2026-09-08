@@ -1,0 +1,230 @@
+{
+  "case_id": "csc.search_knowledge_base.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 dropped referent across two policy lookups: FD penalty asked, then RD penalty asked, then 'the first one again'. Both chunks come back on every query, so the model must select the right one per ask; the final answer must be the FD penalty rule — recency bias pulls careless models to the RD rule. Careless failure mode: answering the final ask with the RD penalty rule.",
+  "setup": {
+    "persona": "46-year-old male, Pneumatic Chipper, rural Giridih, Jharkhand",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0072",
+      "full_name": "Umar Ansari",
+      "date_of_birth": "1980-09-04",
+      "gender": "male",
+      "customer_since": "2020-09-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2300",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Giridih",
+        "state": "Jharkhand",
+        "pincode": "942300",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Giridih",
+        "state": "Jharkhand",
+        "pincode": "942300",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8019X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSKB2070001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSKB2070002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the penalty for breaking an FD before maturity?"
+    },
+    {
+      "content": "And what about breaking an RD?"
+    },
+    {
+      "content": "The first one again — just remind me."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "_comment": "Both chunks returned for any query; the model must select the right one per thread.",
+      "records": [
+        {
+          "chunk": "Premature FD closure: interest is credited at the card rate applicable to the period the deposit has actually run, and a separate charge of 1.0% of the principal applies.",
+          "source": "Deposit Terms - Circular 44"
+        },
+        {
+          "chunk": "Premature RD closure: the deposit is closed permanently and all future monthly debits stop; interest is credited at the card rate for the period run with a separate charge of 1.0% of the amount deposited.",
+          "source": "Deposit Terms - Circular 45"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool."
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "FD premature closure penalty"
+        }
+      },
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "RD premature closure penalty"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "Query strings are free-form; the final answer's content is judged at R."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for the FD early-closure penalty, then the RD's, then 'the first one again'. The assistant must answer the final ask with the FD rule (interest at the card rate for the period run plus a 1.0% charge of principal). Answering with the RD rule — the most recently discussed — fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the final ask with the FD premature-closure rule (card-rate interest for the period run plus a 1.0% charge of principal), not the RD rule. Answering with the RD rule fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

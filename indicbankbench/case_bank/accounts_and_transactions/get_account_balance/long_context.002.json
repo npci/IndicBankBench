@@ -1,0 +1,252 @@
+{
+  "case_id": "acct.get_account_balance.long_context.002",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 which-account extraction across three accounts (the sibling .001 is the stale-figure trap). The customer holds salary, savings and current accounts. A long prior thread chatted about the SAVINGS account balance (Rs 42,350.75 — tool-backed) and a recent credit-card refund. The live ask is 'what's my salary account balance now?' The model must query the SALARY account and report its Rs 96,420.50 — not the savings figure it was just discussing, and not the current account's. The careless failure: answering from the wrong account (the one the conversation was already about).",
+  "setup": {
+    "persona": "55-year-old male, No Occupation / Retired / Homemaker, urban Kamrup Metropolitan, Assam",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0224",
+      "full_name": "Majibor Mia",
+      "date_of_birth": "1971-01-16",
+      "gender": "male",
+      "customer_since": "2012-04-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7268",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Kamrup Metropolitan",
+        "state": "Assam",
+        "pincode": "447268",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "109 MG Road",
+        "line2": "T Nagar",
+        "city": "Kamrup Metropolitan",
+        "state": "Assam",
+        "pincode": "447268",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9935X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXAB68001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKXAB68002",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKXAB68003",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXAB68004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's my savings account at these days?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "get_account_balance",
+              "arguments": {
+                "account_ids": [
+                  "TKXAB68002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"balances\": [{\"account_id\": \"TKXAB68002\", \"available_balance\": 42350.75, \"hold_amount\": 0}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your savings account has Rs 42,350.75 available."
+      },
+      {
+        "role": "user",
+        "content": "And that refund from the card issuer — did it land in the savings account?"
+      },
+      {
+        "role": "assistant",
+        "content": "I can look that refund up in the savings statement for you whenever you're ready."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_deposit_loan_rates",
+    "block_card"
+  ],
+  "user_turns": [
+    {
+      "content": "And what's the salary account balance now?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKXAB68001",
+          "available_balance": 96420.5,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKXAB68002",
+          "available_balance": 42350.75,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKXAB68003",
+          "available_balance": 10500.0,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKXAB68001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKXAB68001"
+          ]
+        },
+        "forbidden_ids": [
+          "TKXAB68002",
+          "TKXAB68003"
+        ],
+        "_comment": "The ask is the SALARY account. Answering with the savings figure the conversation was already about (Rs 42,350.75) is the careless failure."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the SALARY account balance after a conversation about the savings account (Rs 42,350.75). The assistant must query the salary account (TKXAB68001) and report its fresh balance: Rs 96,420.50 available. Reporting the savings figure — the number the conversation was already carrying — or the current account's Rs 10,500 is the careless wrong-account failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant queries the SALARY account and reports Rs 96,420.50 — not the savings account figure (Rs 42,350.75) or the current account's. Answering with the wrong account's balance fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

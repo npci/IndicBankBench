@@ -1,0 +1,184 @@
+{
+  "case_id": "csc.request_duplicate_statement.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'duplicate statement for March 2026'. Lookup shows disputed transaction is from June 2026. Correction: request June 2026 statement.",
+  "setup": {
+    "persona": "27-year-old male, Sole Presser, rural Sant Ravidas Nagar, Uttar Pradesh",
+    "current_date": "2026-10-14",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0216",
+      "full_name": "Manoj Kumar",
+      "date_of_birth": "1999-06-05",
+      "gender": "male",
+      "customer_since": "2017-02-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4069",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Sant Ravidas Nagar",
+        "state": "Uttar Pradesh",
+        "pincode": "234069",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Sant Ravidas Nagar",
+        "state": "Uttar Pradesh",
+        "pincode": "234069",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4718X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98003T1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9803T02",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "request_duplicate_statement",
+    "get_account_balance",
+    "get_account_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a duplicate statement for my savings account — March 2026. I'm pretty sure the disputed hotel booking was in March."
+    },
+    {
+      "content": "Actually yeah, it was June. Request the June 2026 statement then."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Disputed hotel booking is from June 2026, not March. Correct to June.",
+      "records": [
+        {
+          "date": "2026-06-18T19:30:00",
+          "amount": 18500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-WAC-00001",
+          "transaction_note": "POS - GRAND HOTEL BOOKING",
+          "status": "success",
+          "running_balance": 65000
+        },
+        {
+          "date": "2026-03-10T12:00:00",
+          "amount": 2500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-WAC-00002",
+          "transaction_note": "UPI - RESTAURANT BILL",
+          "status": "success",
+          "running_balance": 83500
+        }
+      ]
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-STMT-WAC9803",
+        "status": "success",
+        "message": "Duplicate statement requested."
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKWAC98003T1"
+        }
+      },
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKWAC98003T1",
+          "from_date": "2026-06-01",
+          "to_date": "2026-06-30"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKWAC98003T1"
+        }
+      },
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKWAC98003T1"
+        },
+        "_comment": "CORRECTED: June 2026, not March 2026."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "request_duplicate_statement"
+      ]
+    ],
+    "expected_resolution": "Customer believes charge was March but it's June. Assistant must check history, correct the month, and request June statement after confirmation. Issuing March statement without checking fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks history, corrects month to June, confirms, and requests June statement. Issuing March without verification fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

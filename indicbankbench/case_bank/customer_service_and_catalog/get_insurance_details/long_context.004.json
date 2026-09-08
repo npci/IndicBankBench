@@ -1,0 +1,227 @@
+{
+  "case_id": "csc.get_insurance_details.long_context.004",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior conversation showed health policy active with sum assured Rs 5,00,000. Since then, premium was not paid and policy lapsed. Customer asks to file a claim. Model must re-fetch to discover policy is now lapsed.",
+  "setup": {
+    "persona": "24-year-old male, Lascar, rural South Twenty Four Parganas, West Bengal",
+    "current_date": "2026-09-25",
+    "current_time": "10:30",
+    "login_context": {
+      "customer_id": "SCN0449",
+      "full_name": "Hazrat Molla",
+      "date_of_birth": "2002-02-13",
+      "gender": "male",
+      "customer_since": "2020-06-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2065",
+      "registered_email": "h*****@gmail.com",
+      "communication_address": {
+        "line1": "26 Station Road",
+        "line2": "Civil Lines",
+        "city": "South Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "252065",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "26 Station Road",
+        "line2": "Civil Lines",
+        "city": "South Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "252065",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6820X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKINS9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "POL-INS9800001",
+          "type": "policy",
+          "label": "Health Shield"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCINS9800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Remind me what my insurance covers."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "i1",
+            "type": "function",
+            "function": {
+              "name": "get_insurance_details",
+              "arguments": {
+                "policy_ids": [
+                  "POL-INS9800001"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "i1",
+        "content": "{\"policies\":[{\"policy_id\":\"POL-INS9800001\",\"policy_type\":\"health\",\"policy_name\":\"Health Shield\",\"sum_assured\":500000,\"premium_amount\":12000,\"premium_frequency\":\"annual\",\"next_premium_date\":\"2026-09-20\",\"status\":\"active\",\"start_date\":\"2025-09-20\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your Health Shield policy has sum assured of Rs 5,00,000 with annual premium of Rs 12,000 due on September 20."
+      },
+      {
+        "role": "user",
+        "content": "Got it, thanks."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_insurance_details",
+    "raise_request",
+    "get_products_and_offers",
+    "search_knowledge_base",
+    "get_account_balance",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to file a hospitalisation claim under my Health Shield policy. I was admitted for three days last week."
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Policy lapsed on Sept 20 after premium not paid. Prior showed active.",
+      "records": [
+        {
+          "policy_id": "POL-INS9800001",
+          "policy_type": "health",
+          "sum_assured": 500000,
+          "premium_frequency": "annual",
+          "status": "lapsed",
+          "insurer": "Health Shield",
+          "premium": 12000,
+          "premium_due_date": "2026-09-20"
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-INS-00000",
+        "status": "failed",
+        "message": "Policy is lapsed.",
+        "category": "other"
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": ""
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "POL-INS9800001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {
+          "policy_ids": [
+            "POL-INS9800001"
+          ]
+        },
+        "_comment": "Must re-fetch live. Prior showed active but policy has lapsed."
+      },
+      "raise_request": {
+        "required": {},
+        "_comment": "Should not be called — policy is lapsed."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The prior conversation showed the Health Shield policy as active. However, the premium was not paid and policy lapsed. The customer wants to file a claim. The assistant must re-fetch get_insurance_details live, discover the policy is now lapsed, and inform the customer. Assuming the policy is still active fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches insurance details live and reports the policy has lapsed. Trusting stale active status fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

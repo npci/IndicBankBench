@@ -1,0 +1,194 @@
+{
+  "case_id": "cards.set_card_controls.contradicting_info.005",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'disable online international on my debit card — I never use it and want it off for safety'. The debit card's online international IS already disabled. The actual exposure is POS international which is ENABLED. The customer confused the channels. A model that only checks online international sees no issue. Broad query across all channels reveals the POS international exposure.",
+  "setup": {
+    "persona": "45-year-old female, Ayah, Domestic, rural Ghazipur, Uttar Pradesh",
+    "current_date": "2026-08-08",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0217",
+      "full_name": "Guddi Nisha",
+      "date_of_birth": "1981-08-17",
+      "gender": "female",
+      "customer_since": "2019-02-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3847",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "8 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "313847",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "8 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Ghazipur",
+        "state": "Uttar Pradesh",
+        "pincode": "313847",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5840X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9462001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9462002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_transaction_history",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to disable online international transactions on my debit card — I never shop on foreign sites and I don't want any risk."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer wants to disable online international. The debit card's online international IS already disabled (daily_limit 0, enabled false). But POS international is ENABLED with Rs 50,000 daily_limit — a real exposure the customer doesn't know about. The model that reports only the online channel says 'already disabled, nothing to do'. The model that reviews all channels flags the POS international exposure as a bigger risk.",
+      "records": [
+        {
+          "card_id": "TKCFTB9462002",
+          "masked_number": "****6543",
+          "card_type": "debit",
+          "network": "visa",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 50000
+              }
+            }
+          },
+          "expiry": "11/28"
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-FT02"
+      },
+      "_comment": "outcome_merged — allows correct state tracking for any channel change."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFTB9462002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCFTB9462002"
+          ]
+        },
+        "_comment": "Must query the debit card. The filter trap is on the reporting side: the model must review all channels, not just the one the customer named (online international)."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — can offer to disable POS international after surfacing the exposure."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to disable online international. Online international is ALREADY disabled — nothing to do there. But POS international is ENABLED with Rs 50,000/day — a real exposure. The assistant must review ALL channels, note that online international is already off, and proactively flag the POS international exposure the customer is unaware of. Saying 'online international is already disabled' without surfacing the POS international risk fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports that online international is already disabled AND proactively surfaces the enabled POS international (Rs 50,000 daily_limit) as a security exposure. Only confirming the online channel without flagging POS international fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

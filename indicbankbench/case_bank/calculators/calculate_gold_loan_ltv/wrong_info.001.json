@@ -1,0 +1,215 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer provides gold rate Rs 6,500/g. get_gold_rate shows Rs 6,271.50/g. Model must use tool rate, not customer rate.",
+  "setup": {
+    "persona": "26-year-old male, Advertising Sales Agent, urban Nalanda, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0029",
+      "full_name": "Mohammad Ansari",
+      "date_of_birth": "2000-06-07",
+      "gender": "male",
+      "customer_since": "2018-08-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0893",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Nalanda",
+        "state": "Bihar",
+        "pincode": "730893",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Nalanda",
+        "state": "Bihar",
+        "pincode": "730893",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7632X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCGL8200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCGL8200002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "get_deposit_loan_rates",
+    "get_products_and_offers",
+    "raise_request",
+    "calculate_rd_maturity",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I have 40 grams of 22K gold. Today's rate is about Rs 6,500 per gram — how much loan can I get?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 250860,
+        "eligible_loan_amount": 188145,
+        "ltv_percent_used": 75
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 40,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Must source actual rate. Rs 6,271.50/g not Rs 6,500."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 40,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        },
+        "_comment": "Must use 6,271.50 from get_gold_rate, not customer's 6,500."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "expected_resolution": "The customer provides a gold rate of Rs 6,500/g and asks for loan eligibility on 40g of 22K gold. The assistant must source the actual rate from get_gold_rate (Rs 6,271.50/g), then call calculate_gold_loan_ltv with the sourced rate. The result: gold value Rs 2,50,860, eligible loan Rs 1,88,145 at 75% LTV. Using the customer's Rs 6,500/g rate, or skipping get_gold_rate, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources gold rate from get_gold_rate (Rs 6,271.50), uses it in calculator, reports correct eligibility. Using customer's rate or skipping get_gold_rate fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

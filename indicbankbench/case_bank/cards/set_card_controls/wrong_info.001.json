@@ -1,0 +1,214 @@
+{
+  "case_id": "cards.set_card_controls.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer asks to disable international ATM on all cards — but linked_cards has no ATM international enabled. The request is a no-op. Model must check current controls first, report no changes needed.",
+  "setup": {
+    "persona": "45-year-old male, Art Teacher, urban East Godavari, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0381",
+      "full_name": "Ravi Reddy",
+      "date_of_birth": "1981-11-01",
+      "gender": "male",
+      "customer_since": "2022-07-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3002",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "83 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "East Godavari",
+        "state": "Andhra Pradesh",
+        "pincode": "603002",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "83 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "East Godavari",
+        "state": "Andhra Pradesh",
+        "pincode": "603002",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6041X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCR9000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSCR9000002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "calculate_rd_maturity",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to disable international ATM usage on my card so no one can withdraw cash abroad."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "International ATM is already disabled. No change needed.",
+      "records": [
+        {
+          "card_id": "TKCSCR9000002",
+          "masked_number": "****4321",
+          "card_type": "debit",
+          "network": "RuPay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2028-06"
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "_comment": "Safety net only.",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-75700"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCSCR9000002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCSCR9000002"
+          ]
+        },
+        "_comment": "Must check current controls. International ATM already disabled."
+      },
+      "set_card_controls": {
+        "required": {},
+        "_comment": "Must NOT be called: the requested change is already in effect. Calling to disable an already-disabled control is a no-op."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks to disable international ATM usage. The assistant must first call get_card_details, which shows international ATM is already disabled across all channels. The assistant must report that no change is needed — international ATM withdrawal is already disabled. It must not call set_card_controls to disable something already disabled (a no-op per CONVENTIONS §12). Calling the tool for a change that's already in effect, or claiming the control was just now applied, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks current controls, reports international ATM is already disabled, and does NOT call set_card_controls for a no-op. Calling the tool for an already-applied change fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

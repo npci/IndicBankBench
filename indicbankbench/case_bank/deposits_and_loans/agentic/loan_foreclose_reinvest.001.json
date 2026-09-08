@@ -1,0 +1,333 @@
+{
+  "case_id": "depl.agentic.loan_foreclose_reinvest.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details+get_deposit_loan_rates+calculate_fd_maturity+get_account_balance+create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'my loan is paid off — I have ₹8,00,000 free, book a 3-year FD.' get_account_balance shows only ₹5,25,000. Correction: principal_amount=525000.",
+  "setup": {
+    "persona": "38-year-old male, Market-Oriented Crop and Animal Producers, rural Sundargarh, Odisha",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0715",
+      "full_name": "Ladu Sahu",
+      "date_of_birth": "1988-07-04",
+      "gender": "male",
+      "customer_since": "2018-08-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0506",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "67 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Sundargarh",
+        "state": "Odisha",
+        "pincode": "470506",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "67 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "Sundargarh",
+        "state": "Odisha",
+        "pincode": "470506",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6034X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDV9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNW9700001",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TCFDV9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "create_fd",
+    "create_rd",
+    "get_account_balance",
+    "get_card_details",
+    "get_deposit_loan_rates",
+    "get_fd_details",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "My home loan is finally paid off — I'll have about ₹8,00,000 free. Book a 3-year FD with that entire amount."
+    },
+    {
+      "content": "Yes, book it at ₹5,25,000 — go ahead."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Loan is closed — outstanding=0. Customer's narrative about payoff is correct but the available funds estimate is wrong.",
+      "records": [
+        {
+          "loan_id": "TKLNW9700001",
+          "type": "home_loan",
+          "principal": 5000000,
+          "outstanding": 0,
+          "emi_amount": 0,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 0,
+          "status": "closed",
+          "next_due_date": "",
+          "emi_account_id": "TKFDV9700001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "3-year FD: 6.75%",
+      "output": {
+        "product_type": "fd",
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹5,25,000 at 6.75% for 36mo quarterly compounded. (1+6.75/400)^12 = (1.016875)^12 = 1.221931. 525000*1.221931=₹6,41,514.",
+      "output": {
+        "maturity_amount": 641514,
+        "interest_earned": 116514,
+        "total_principal_invested": 525000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "₹5,25,000 available — far from customer's ₹8L estimate.",
+      "records": [
+        {
+          "account_id": "TKFDV9700001",
+          "available_balance": 525000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDNB9701",
+        "principal_amount": 525000,
+        "status": "success",
+        "message": "Fixed Deposit booked. ₹5,25,000 debited from TKFDV9700001.",
+        "interest_rate": 6.75,
+        "maturity_date": "2029-08-24",
+        "maturity_amount": 641514,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-97001"
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — no FDs."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — no RDs."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — loan already closed."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNW9700001"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 525000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFDV9700001"
+          ]
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 525000,
+          "tenure_months": 36,
+          "source_account": "TKFDV9700001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_loan_details",
+        "create_fd"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ],
+      [
+        "calculate_fd_maturity",
+        "create_fd"
+      ],
+      [
+        "get_account_balance",
+        "create_fd"
+      ]
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — provides loan-closed context confirming the narrative."
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 525000,
+          "tenure_months": 36,
+          "source_account": "TKFDV9700001"
+        },
+        "_comment": "CORRECTED principal_amount=525000. Customer said ₹8,00,000 from paid-off loan — actual balance is ₹5,25,000."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'my home loan is paid off — I have ₹8,00,000 free, book a 3-year FD.' get_loan_details confirms the loan is closed. The assistant runs the FD booking chain and checks get_account_balance — only ₹5,25,000 available. The customer overestimated their free funds. The assistant must correct: 'Your savings account holds ₹5,25,000, not ₹8,00,000. I can book the FD for ₹5,25,000 — projected maturity ₹6,41,514 at 6.75%.' After confirmation, calls create_fd with principal_amount=525000. A weak model may acknowledge the shortfall in prose but still write 800000."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant checks the loan status and account balance, discovers ₹5,25,000 not ₹8,00,000, communicates the correction, and after confirmation books create_fd with principal_amount=525000. FAIL if create_fd is called with 800000."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

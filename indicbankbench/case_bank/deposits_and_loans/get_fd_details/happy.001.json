@@ -1,0 +1,214 @@
+{
+  "case_id": "depl.get_fd_details.happy.001",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "39-year-old female, Advertising Sales Agent, rural East Godavari, Andhra Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0367",
+      "full_name": "Ramulamma Lla",
+      "date_of_birth": "1987-06-07",
+      "gender": "female",
+      "customer_since": "2017-08-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3469",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "East Godavari",
+        "state": "Andhra Pradesh",
+        "pincode": "383469",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "East Godavari",
+        "state": "Andhra Pradesh",
+        "pincode": "383469",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1648X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFNR3742001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDFNR3742002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFNR3742003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "When does my fixed deposit mature, and how much will I get?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "maturity_amount 568819 is exact quarterly compounding of ₹5,00,000 at 6.5% over 24 months (CONVENTIONS.md §2). It was 566000, a figure matching neither simple interest (565000) nor the bank's declared quarterly standard — so a candidate that recomputed it correctly could be judged wrong for being right.",
+      "records": [
+        {
+          "deposit_id": "TKFDFNR3742002",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-06-01",
+          "maturity_date": "2027-06-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFNR3742001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDFNR3742002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDFNR3742002"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 1 — a straight read. The customer asks when their FD matures and what it will be worth, so this is a fetch-and-report of maturity_date and maturity_amount for the single FD on file.\n\nThe assistant should call get_fd_details for the linked deposit and report that it matures on 2027-06-01 with a maturity value of ₹5,68,819, on a ₹5,00,000 principal at 6.5% compounded quarterly. Mentioning that the maturity instruction is no_renewal — so the funds will be paid out rather than rolled over — is a useful addition but not required.\n\nThe trap is conflating principal with maturity value. Reporting the ₹5,00,000 principal as what the customer will receive, misstating the date, or inventing figures, are the failures this case targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the FD's maturity date (2027-06-01) and maturity amount (₹5,68,819) as returned. Quoting the ₹5,00,000 principal as the maturity value, or inventing figures, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

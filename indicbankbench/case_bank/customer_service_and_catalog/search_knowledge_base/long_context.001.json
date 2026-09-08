@@ -1,0 +1,170 @@
+{
+  "case_id": "csc.search_knowledge_base.long_context.001",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "Long context: customer asks broad question about FD products. 5 dense KB results returned. Model must synthesize without fabricating.",
+  "setup": {
+    "persona": "35-year-old male, Painter, Brush, rural Jamtara, Jharkhand",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0567",
+      "full_name": "Bhaiya Upadhyay",
+      "date_of_birth": "1991-05-21",
+      "gender": "male",
+      "customer_since": "2016-07-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4148",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Jamtara",
+        "state": "Jharkhand",
+        "pincode": "724148",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Jamtara",
+        "state": "Jharkhand",
+        "pincode": "724148",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4587X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSKB9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSKB9600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "calculate_fd_maturity",
+    "calculate_gold_loan_ltv"
+  ],
+  "user_turns": [
+    {
+      "content": "Tell me everything I need to know about fixed deposits — types, rates, tenure, penalties, tax implications."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "chunk": "Fixed Deposit (FD) types: Standard FD (fixed tenure and rate), Tax-Saver FD (5-year lock-in, Section 80C benefit), Senior Citizen FD (additional 0.5% rate for customers aged 60+), Flexi FD (linked to savings account with sweep facility), and NRE/NRO FD for NRIs.",
+          "source": "FD Product Types Guide"
+        },
+        {
+          "chunk": "Interest rates are tiered by tenure: 7-44 days: 5.0%, 6 months to <1 year: 6.0%, 1-3 years: 6.5%, 3-5 years: 6.75%. Rates are effective from 2026-03-01 and are subject to periodic revision by the bank.",
+          "source": "FD Rate Card 2026"
+        },
+        {
+          "chunk": "FD tenures range from 7 days to 10 years. Cumulative FDs pay interest at maturity; non-cumulative (monthly/quarterly payout) FDs pay interest periodically during the tenure. Interest is compounded quarterly for cumulative FDs.",
+          "source": "FD Tenure and Payout Guide"
+        },
+        {
+          "chunk": "Premature closure penalty: 1% of principal if closed within 1 year, 0.5% between 1-3 years. No penalty after 3 years or within 15 days of booking. For senior citizens, penalty is reduced by 0.25%. Post-maturity closure: no penalty.",
+          "source": "FD Premature Closure Policy"
+        },
+        {
+          "chunk": "TDS at 10% is deducted on FD interest exceeding Rs 40,000 per financial year (Rs 50,000 for senior citizens). Form 15G/15H can be submitted to avoid TDS if total income is below the taxable threshold. Interest income is taxable under income from other sources.",
+          "source": "FD Tax and TDS Guidelines"
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "fixed deposit types rates tenure penalty tax implications complete guide"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "Must search. 5 dense results — model must synthesize key points without fabricating beyond what results contain."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for comprehensive FD information. search_knowledge_base returns 5 dense results covering types, rates, tenure, penalties, and tax. The assistant must synthesize the key points from these results without fabricating beyond them. It should cover: FD types (Standard, Tax-Saver, Senior Citizen, Flexi), rates (5% to 6.75% tiered), tenure (7 days to 10 years), cumulative vs payout options, premature closure penalties (1% or 0.5%), and TDS (10% above Rs 40,000 threshold). Fabricating information not in the results, or copying raw chunks verbatim without synthesis, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "synthesizes key FD information from the 5 KB results without fabricating beyond them. Covering types, rates, tenure, penalties, and tax from results is expected. Fabricating details not in results fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

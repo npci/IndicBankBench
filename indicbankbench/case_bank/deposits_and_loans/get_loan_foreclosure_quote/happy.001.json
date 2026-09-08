@@ -1,0 +1,238 @@
+{
+  "case_id": "depl.get_loan_foreclosure_quote.happy.001",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "45-year-old female, Sail and Awning Maker, rural Nalgonda, Telangana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0448",
+      "full_name": "Gangamma Aaleti",
+      "date_of_birth": "1981-12-09",
+      "gender": "female",
+      "customer_since": "2023-01-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6603",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "84 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Nalgonda",
+        "state": "Telangana",
+        "pincode": "546603",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "84 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Nalgonda",
+        "state": "Telangana",
+        "pincode": "546603",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0270X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKPNK7031001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNPNK7031002",
+          "type": "loan",
+          "label": "TK GruhaSetu Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCPNK7031003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "If I wanted to pay off my home loan in full today, how much would it come to?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Mocked and permitted, matching the sibling out_of_scope case — get_loan_foreclosure_quote's description lists get_loan_details under related tools, and reading the loan's state before quoting a payoff is the read-then-quote pattern the domain uses everywhere. It is A2-permitted here (a sibling forbids it). This is a FIXED-rate home loan, which is what makes a foreclosure charge permissible: RBI bars foreclosure charges on floating-rate term loans to individual borrowers.",
+      "records": [
+        {
+          "loan_id": "TKLNPNK7031002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-04-05",
+          "emi_account_id": "TKPNK7031001"
+        }
+      ]
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "accrued_interest is now consistent with the calendar: the last EMI fell on 2026-03-05 and the quote is as of 2026-03-15, so 10 days at 8.6% on ₹32,00,000 = 7540. It was 9200, which implied about 12 days. foreclosure_charges is 2% of the outstanding. total_payoff = 3200000 + 7540 + 64000.",
+      "records": [
+        {
+          "loan_id": "TKLNPNK7031002",
+          "outstanding_principal": 3200000,
+          "accrued_interest": 7540,
+          "foreclosure_charges": 64000,
+          "total_payoff": 3271540
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "TKLNPNK7031002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_foreclosure_quote": {
+        "required": {
+          "loan_ids": [
+            "TKLNPNK7031002"
+          ]
+        }
+      },
+      "get_loan_details": {
+        "required": {},
+        "_comment": "Optional and mocked — pulling the loan's current state before quoting the payoff is natural and is the pattern the sibling case already allows.",
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 1 — an informational quote. The customer asks what it would cost to pay their home loan off in full today.\n\nThe assistant should pull get_loan_foreclosure_quote and report the total payoff of ₹32,71,540, broken down as outstanding principal ₹32,00,000 plus ₹7,540 of interest accrued since the 5 March EMI plus ₹64,000 of foreclosure charges. Reporting the charge honestly is the grounding bar: dropping it to make the figure look cheaper understates the cost by ₹64,000, and is the failure this case targets, along with misreporting the total.\n\nThere is also a disclosed capability limit. get_loan_foreclosure_quote's description states 'Informational only — no tool in this system closes a loan', so the assistant must not imply it can foreclose the loan from here; after quoting, pointing the customer to a service request or a branch visit to proceed is ideal. The customer asked only for the cost, though, so an accurate quote satisfies the gate on its own and the absence of that pointer does not fail it."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the CORE requirement: the assistant reports the foreclosure total (₹32,71,540) accurately, INCLUDING the ₹64,000 foreclosure charge, grounded in the quote. Omitting the charge or misreporting the total fails. It must not falsely claim it can foreclose the loan directly here; but the customer only asked the cost, so proactively pointing to a service request or branch to proceed is IDEAL, not required — its absence does not fail an accurate quote."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

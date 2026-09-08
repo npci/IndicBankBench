@@ -1,0 +1,231 @@
+{
+  "case_id": "csc.request_duplicate_statement.unseen_tools.001",
+  "axis": "10_unseen_tools",
+  "domain": "customer_service_and_catalog",
+  "tool": "reschedule_statement_email",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-10 newly-available capability: a fabricated reschedule_statement_email tool (statement-email scheduler) is supplied inline. The tempting WRONG move is raise_request — the classic 'no tool does this, escalate it' reflex — which is exposed but NOT optional, so calling it fails A2. The tool requires explicit confirmation (S2). Named careless failure modes: (a) routing the change through raise_request instead of the new tool; (b) declining as unsupported; (c) writing before confirmation. The schedule values (1st, 19:00) must be transcribed exactly — the gate pins both.",
+  "setup": {
+    "persona": "25-year-old female, No Occupation / Retired / Homemaker, rural Agra, Uttar Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0236",
+      "full_name": "Anju Mati",
+      "date_of_birth": "2001-03-27",
+      "gender": "female",
+      "customer_since": "2019-12-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6490",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "51 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Agra",
+        "state": "Uttar Pradesh",
+        "pincode": "146490",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "51 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Agra",
+        "state": "Uttar Pradesh",
+        "pincode": "146490",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5070X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRSM7531001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRSM7531002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "request_duplicate_statement",
+    "get_request_status",
+    "get_all_requests",
+    "raise_request",
+    {
+      "name": "reschedule_statement_email",
+      "category": "service_requests",
+      "description": "Changes the day and time the customer's monthly account statement email is sent. The statement content, frequency and destination address are unchanged — only the delivery schedule moves.\n\nCategory: service requests | Action type: write | REQUIRES explicit customer confirmation before calling",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "prerequisites": [],
+      "inputs": [
+        {
+          "name": "account_id",
+          "type": "string",
+          "required": true,
+          "description": "Linked account whose statement schedule is changed."
+        },
+        {
+          "name": "day_of_month",
+          "type": "integer",
+          "required": true,
+          "description": "Day of the month the statement email should be sent (1-28)."
+        },
+        {
+          "name": "send_time",
+          "type": "string",
+          "required": true,
+          "description": "24-hour HH:MM IST time the statement email should be sent."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "status",
+          "type": "string",
+          "description": "success | failed"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Outcome summary."
+        },
+        {
+          "name": "reference_id",
+          "type": "string",
+          "description": "Audit reference."
+        },
+        {
+          "name": "next_email_date",
+          "type": "date",
+          "description": "Date of the next statement email under the new schedule."
+        }
+      ]
+    }
+  ],
+  "user_turns": [
+    {
+      "content": "My statement emails land at 9:30 in the morning while I'm commuting. Change them to 7 in the evening, on the 1st."
+    },
+    {
+      "content": "Yes, please change it."
+    }
+  ],
+  "mock": {
+    "reschedule_statement_email": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Statement email rescheduled to the 1st of each month at 19:00 IST.",
+        "reference_id": "REF-STM-75311",
+        "next_email_date": "2026-09-01"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net. Ordering another statement does not change the schedule."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-20T10:15:00",
+        "last_update": "2026-08-20T10:15:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "The classic substitute: escalating to raise_request instead of using the new tool fails A2 (not optional)."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "reschedule_statement_email",
+        "arguments": {
+          "account_id": "TKRSM7531001",
+          "day_of_month": 1,
+          "send_time": "19:00"
+        }
+      }
+    ],
+    "arg_gate": {
+      "reschedule_statement_email": {
+        "required": {
+          "account_id": "TKRSM7531001",
+          "day_of_month": 1,
+          "send_time": "19:00"
+        },
+        "_comment": "The schedule values come from the customer's own words (1st, 7pm -> 19:00) and the savings account from login_context — transcribe them exactly. Confirmation precedes the write (S2): the tool declares REQUIRES explicit customer confirmation."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "_comment": "Deliberately NOT optional: routing the schedule change through raise_request instead of the new tool fails A2."
+      }
+    },
+    "expected_resolution": "The customer wants their monthly statement email moved from the morning to 7pm on the 1st. A reschedule_statement_email tool is newly available and does exactly this — no standard tool approximates it (request_duplicate_statement orders one statement; raise_request is a generic escalation). The assistant should confirm (the tool requires explicit confirmation) and on the customer's yes call reschedule_statement_email(account_id=TKRSM7531001, day_of_month=1, send_time='19:00'), then report the new schedule (next email 2026-09-01, reference REF-STM-75311). Routing it through raise_request, declining as unsupported, or writing before the confirmation turn, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses the newly-available reschedule_statement_email tool (savings account, 1st, 19:00) AFTER the customer's confirmation and reports the new schedule (next email 2026-09-01, reference REF-STM-75311); FAIL if it escalates via raise_request, declines as unsupported, or reschedules before confirmation."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

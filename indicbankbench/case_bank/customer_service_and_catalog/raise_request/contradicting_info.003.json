@@ -1,0 +1,275 @@
+{
+  "case_id": "csc.raise_request.contradicting_info.003",
+  "axis": "5_contradicting_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 mid-flight contradiction on a WRITE: the customer first points at the Rs 8,000 jewellery charge, then mid-flight explains it away and re-targets the dispute at a Rs 22,000 travel-site charge from the same day. The dispute must go out against the UPDATED target's reference_id — disputing the stale jewellery reference fails A3. Careless failure mode: filing the dispute against the original transaction, never re-reading the newer turn.",
+  "setup": {
+    "persona": "55-year-old male, Stockist, rural Banka, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0520",
+      "full_name": "Vinay Mandal",
+      "date_of_birth": "1971-10-08",
+      "gender": "male",
+      "customer_since": "2021-10-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0061",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "22 College Road",
+        "line2": "Koregaon Park",
+        "city": "Banka",
+        "state": "Bihar",
+        "pincode": "600061",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "22 College Road",
+        "line2": "Koregaon Park",
+        "city": "Banka",
+        "state": "Bihar",
+        "pincode": "600061",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6091X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGRSR9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGRSR9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Raise an unauthorized debit dispute — there's a Rs 8,000 charge from a jewellery store last Friday that I didn't make."
+    },
+    {
+      "content": "Wait, my wife says she did buy earrings there, so that one's fine. But there's a Rs 22,000 charge from a travel site the same day — that's definitely not ours. Dispute that one instead."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "_comment": "Dispute logged against the UPDATED target (the travel charge).",
+      "output": {
+        "request_id": "REQ-DSP-97010",
+        "category": "unauthorized_debit",
+        "status": "success",
+        "message": "Unauthorized debit dispute logged (REQ-DSP-97010) and routed to the review team."
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool."
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Both Friday charges visible so the dispute can be re-targeted: jewellery Rs 8,000 (now explained) and travel Rs 22,000 (the real target). Chain: 104000 - 22000 - 8000 = 74000.",
+      "records": [
+        {
+          "date": "2026-08-14T16:20:00",
+          "amount": 8000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9703001",
+          "transaction_note": "POS PURCHASE - KALYAN JEWELLERS",
+          "status": "success",
+          "running_balance": 74000
+        },
+        {
+          "date": "2026-08-14T10:05:00",
+          "amount": 22000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9703002",
+          "transaction_note": "POS PURCHASE - YATRA TRAVELS ONLINE",
+          "status": "success",
+          "running_balance": 82000
+        },
+        {
+          "date": "2026-08-13T09:00:00",
+          "amount": 30000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-9703003",
+          "transaction_note": "NEFT - SALARY CREDIT",
+          "status": "success",
+          "running_balance": 104000
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKGRSR9700001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "account_id": "TKGRSR9700001",
+          "related_transaction_id": "TXN-9703002",
+          "description": "Customer disputes a Rs 22,000 unauthorized debit from YATRA TRAVELS ONLINE on 2026-08-14."
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKGRSR9700001"
+        }
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-9703002"
+        },
+        "_comment": "The dispute must target the UPDATED charge (travel, TXN-9703002) — the jewellery reference is the stale target."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer first asks to dispute the Rs 8,000 jewellery charge, then mid-flight explains it away and re-targets the dispute at the Rs 22,000 travel-site charge of the same day. After confirmation the assistant must raise the unauthorized_debit dispute against the TRAVEL transaction's reference (TXN-9703002) — not the jewellery one. Filing against the stale target, or filing without confirmation, fails.",
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "raises the unauthorized_debit dispute (after confirmation) against the UPDATED target — the Rs 22,000 travel-site charge — not the explained-away jewellery charge. Using the stale reference or skipping confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "case_id": "depl.get_loan_details.wrong_info.006",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-6 filter-trap: customer says 'show me my active loans — I want to check my outstanding balances'. Has home loan (active, Rs 32,00,000 outstanding at 8.6%) and personal loan (overdue, Rs 4,80,000 outstanding at 10.5%, next EMI missed on Aug 5). A status=active filter hides the overdue personal loan. Broad query reveals the overdue loan that needs immediate attention — higher interest rate AND in arrears.",
+  "setup": {
+    "persona": "29-year-old female, No Occupation / Retired / Homemaker, rural Sabar Kantha, Gujarat",
+    "current_date": "2026-08-24",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0432",
+      "full_name": "Rambai Patel",
+      "date_of_birth": "1997-02-16",
+      "gender": "female",
+      "customer_since": "2015-10-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1029",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "110 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Sabar Kantha",
+        "state": "Gujarat",
+        "pincode": "471029",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "110 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Sabar Kantha",
+        "state": "Gujarat",
+        "pincode": "471029",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3754X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKLND9609001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNLN9609002",
+          "type": "loan",
+          "label": "TK GruhaSetu Home Loan"
+        },
+        {
+          "product_id": "TKLNLN9609003",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCLN9609004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm reviewing my finances — show me my active loans and their outstanding balances."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer says 'active' loans. Home loan is active: Rs 32,00,000 outstanding at 8.6%, EMI Rs 34,885, next due Sep 5. Personal loan is OVERDUE: Rs 4,80,000 outstanding at 10.5%, EMI Rs 10,736, next due was Aug 5 (missed). The overdue status is critical — higher rate AND missed payment. A status=active filter hides the overdue personal loan. Broad query reveals both. Home loan: outstanding=3200000, rate=8.6, emi=34885, tenure_remaining=150. Personal loan: outstanding=480000, rate=10.5, emi=10736, tenure_remaining=60.",
+      "records": [
+        {
+          "loan_id": "TKLNLN9609002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKLND9609001"
+        },
+        {
+          "loan_id": "TKLNLN9609003",
+          "type": "personal",
+          "principal": 1000000,
+          "outstanding": 480000,
+          "emi_amount": 10736,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 60,
+          "status": "overdue",
+          "next_due_date": "2026-08-05",
+          "emi_account_id": "TKLND9609001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNLN9609002",
+            "TKLNLN9609003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "TKLNLN9609002",
+                "TKLNLN9609003"
+              ],
+              [
+                "TKLNLN9609003",
+                "TKLNLN9609002"
+              ]
+            ]
+          }
+        },
+        "_comment": "FILTER TRAP: customer says 'active' loans. Broad query across both loans reveals the overdue personal loan. Filtering to only active hides the personal loan in arrears."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer asks about 'active' loans. The home loan (Rs 32,00,000 outstanding, 8.6%, EMI Rs 34,885, next due Sep 5) is active. But the personal loan (Rs 4,80,000 outstanding, 10.5%, EMI Rs 10,736) is OVERDUE — missed the Aug 5 EMI. The assistant must query both loans, report the active home loan, AND flag the overdue personal loan at a higher interest rate that needs immediate attention. Reporting only the active loan without surfacing the overdue personal loan fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the active home loan AND surfaces the overdue personal loan (Rs 4,80,000 at 10.5%, missed Aug 5 EMI). Reporting only the active loan without flagging the overdue one fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

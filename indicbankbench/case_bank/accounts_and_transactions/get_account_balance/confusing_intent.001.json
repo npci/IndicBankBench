@@ -1,0 +1,181 @@
+{
+  "case_id": "acct.get_account_balance.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: the customer never says 'balance'. 'How much can I actually spend right now' maps to get_account_balance's AVAILABLE balance (spendable = total minus hold) — the subtlety is that the answer is available_balance, and the model should not include the on-hold amount as spendable. Tests intent inference (spend -> balance tool) plus the available-vs-hold distinction, without over-clarifying.",
+  "setup": {
+    "persona": "23-year-old male, Signalman, Railway, urban Nanded, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0348",
+      "full_name": "Sardar Pinjari",
+      "date_of_birth": "2003-05-25",
+      "gender": "male",
+      "customer_since": "2021-01-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6148",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Nanded",
+        "state": "Maharashtra",
+        "pincode": "856148",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Nanded",
+        "state": "Maharashtra",
+        "pincode": "856148",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9789X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKZCE7566001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKZCE7566002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCZCE7566003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "How much can I actually spend from my business current account right now?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKZCE7566001",
+          "available_balance": 42350.75,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKZCE7566002",
+          "available_balance": 118420.1,
+          "hold_amount": 5000
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKZCE7566002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKZCE7566002"
+          ]
+        },
+        "forbidden_ids": [
+          "TKZCE7566001"
+        ],
+        "_comment": "'Business current account' resolves to TKZCE7566002 via its account_type in login_context. Salary account must not be queried/reported (user asked specifically about the current account)."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks how much they can 'actually spend right now' from their Business Current account. This maps to get_account_balance for TKZCE7566002, and specifically to the AVAILABLE balance (INR 1,18,420.10) — which already excludes the INR 5,000 hold. The assistant must resolve 'business current account' to TKZCE7566002 without asking, report the spendable figure (available_balance), and ideally note that a further INR 5,000 is on hold and therefore not spendable. It must NOT report a figure that adds the hold back in as spendable, and must NOT ask which account (the mapping is unambiguous)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers with the AVAILABLE balance (INR 1,18,420.10) as the spendable amount and does not present the INR 5,000 hold as spendable; FAIL if it over-clarifies ('which account/what do you mean by spend?') or reports a total that includes the hold."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_clarify"
+    ]
+  }
+}

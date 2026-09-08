@@ -1,0 +1,250 @@
+{
+  "case_id": "csc.agentic.request_status_followup.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'escalate my fraud report REQ-UD-88001.' get_request_status shows REQ-UD-88001 is resolved already. Correction: raise_request as a new follow-up, not an escalation of resolved request.",
+  "setup": {
+    "persona": "26-year-old male, Grinder (Stone and Clay), rural West Tripura, Tripura",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0319",
+      "full_name": "Ronajit Poddar",
+      "date_of_birth": "2000-03-22",
+      "gender": "male",
+      "customer_since": "2018-10-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1294",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "15 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "West Tripura",
+        "state": "Tripura",
+        "pincode": "591294",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "15 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "West Tripura",
+        "state": "Tripura",
+        "pincode": "591294",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9135X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSD9700002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSD9700004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_all_requests",
+    "get_card_details",
+    "get_products_and_offers",
+    "get_request_status",
+    "get_transaction_history",
+    "raise_request",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "Escalate my unauthorized debit report — reference REQ-UD-88001 — it hasn't been resolved yet and I want action."
+    },
+    {
+      "content": "Yes, raise a follow-up as unauthorized debit — go ahead."
+    }
+  ],
+  "mock": {
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-UD-88001",
+        "status": "resolved",
+        "raised_date": "2026-08-10",
+        "last_update": "2026-08-15",
+        "remarks": "Investigation completed. Transaction confirmed as legitimate — cardholder's own purchase at Amazon."
+      },
+      "_comment": "REQUEST ALREADY RESOLVED — customer thinks it's pending."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-UD-88002",
+        "status": "success",
+        "message": "Follow-up request logged for REQ-UD-88001.",
+        "category": "other"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-UD-88001",
+          "category": "unauthorized_debit",
+          "status": "resolved",
+          "raised_date": "2026-08-10",
+          "last_updated_date": "2026-08-15",
+          "description": "Customer reported unauthorized Amazon purchase of ₹35,000."
+        }
+      ],
+      "static_output": {
+        "total_count": 1,
+        "limit": 50,
+        "offset": 0
+      },
+      "_comment": "Noise — safety net context."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-UD-88001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "description": "Customer requests re-opening of resolved dispute REQ-UD-88001. Contests investigation conclusion."
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_request_status",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-UD-88001"
+        },
+        "_comment": "Must check status — reveals request is already RESOLVED."
+      },
+      "raise_request": {
+        "required": {},
+        "optional_ok": {
+          "category": {
+            "allowed": [
+              "other",
+              "unauthorized_debit"
+            ]
+          }
+        },
+        "_comment": "Raises follow-up. The R judge verifies the model communicates the resolved status before raising."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'escalate my fraud report REQ-UD-88001.' get_request_status shows the request is already resolved (investigation found it was legitimate — the customer's own Amazon purchase). The assistant must correct: 'REQ-UD-88001 was resolved on August 15 — the investigation concluded the transaction was your own purchase at Amazon. I can raise a new follow-up if you still disagree.' After confirmation, raises a follow-up. A weak model might escalate blindly without checking status."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant checks request status, discovers it's already resolved, communicates the finding, and after confirmation raises a new follow-up request. FAIL if the assistant escalates without acknowledging the resolved status."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

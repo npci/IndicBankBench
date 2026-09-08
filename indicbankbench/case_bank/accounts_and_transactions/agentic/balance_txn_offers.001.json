@@ -1,0 +1,239 @@
+{
+  "case_id": "acct.agentic.balance_txn_offers.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "_variant_note": "Compound: one message asks balance, recent transactions, and available offers. 3 independent reads.",
+  "setup": {
+    "persona": "49-year-old male, Loader and Unloader, rural Barddhaman, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0794",
+      "full_name": "Akup Ghosh",
+      "date_of_birth": "1977-01-12",
+      "gender": "male",
+      "customer_since": "2012-11-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5796",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Barddhaman",
+        "state": "West Bengal",
+        "pincode": "375796",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Barddhaman",
+        "state": "West Bengal",
+        "pincode": "375796",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7418X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBTO9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBTO9500002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_transaction_history",
+    "get_products_and_offers",
+    "get_fd_details",
+    "get_request_status",
+    "get_loan_details",
+    "get_account_details",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "I want a snapshot: my savings balance, the last 3 transactions, and any pre-approved offers or products you'd suggest for me."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKBTO9500001",
+          "available_balance": 175000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-16T10:00:00",
+          "amount": 2400,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-95001",
+          "transaction_note": "UPI - BESCOM BILL",
+          "status": "success",
+          "running_balance": 175000
+        },
+        {
+          "date": "2026-08-15T18:00:00",
+          "amount": 850,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-95002",
+          "transaction_note": "POS - RELIANCE FRESH",
+          "status": "success",
+          "running_balance": 177400
+        },
+        {
+          "date": "2026-08-14T09:00:00",
+          "amount": 15000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-95003",
+          "transaction_note": "NEFT - SALARY CREDIT",
+          "status": "success",
+          "running_balance": 178250
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "id": "OFF-PL-3021",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to Rs 10,00,000 at special rate.",
+          "valid_till": "2026-09-30"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKBTO9500001"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKBTO9500001",
+          "limit": 3
+        }
+      },
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "offer"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "_comment": "Rs 1,75,000 available."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "_comment": "3 recent transactions."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Pre-approved personal loan offer."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Balance: Rs 1,75,000. Recent txns: Rs 2,400 BESCOM, Rs 850 Reliance, Rs 15,000 salary credit. Offers: pre-approved personal loan. Missing any one fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports balance, 3 recent transactions, AND product offers. Missing any one fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

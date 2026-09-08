@@ -1,0 +1,133 @@
+{
+  "case_id": "depl.get_gold_rate.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'today's gold rate at 22 karat for my gold loan'. The customer says 22k, but gold rate at 24k is relevant for comparison — a 24k query returns a different market rate. Actually, the get_gold_rate tool returns a flat object (not an array) per purity_karat. So the filter trap is: querying purity_karat=22 only gives the 22k rate, hiding the 24k rate. A broader model queries BOTH 22k AND 24k rates to give a complete picture. The LTV calculator needs the correct rate per purity.",
+  "setup": {
+    "persona": "50-year-old male, Seed Grower, rural Bhilwara, Rajasthan",
+    "current_date": "2026-08-15",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0767",
+      "full_name": "Bhavar Lal",
+      "date_of_birth": "1976-05-26",
+      "gender": "male",
+      "customer_since": "2016-10-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7024",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Bhilwara",
+        "state": "Rajasthan",
+        "pincode": "197024",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Bhilwara",
+        "state": "Rajasthan",
+        "pincode": "197024",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9586X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9474001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9474002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "What's today's gold rate? I'm pledging 22 karat ornaments for a loan."
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "FILTER TRAP: customer asks for 22k rate. get_gold_rate returns a flat object per purity_karat. Querying only 22k gives the 22k rate (Rs 5,800/g) but hides the 24k rate (Rs 6,250/g). A model that queries both purities gives a complete picture. The 24k rate matters because the customer's gold may include 24k items.",
+      "output": {
+        "purity_karat": 22,
+        "rate_per_gram": 5800,
+        "rate_date": "2026-08-15"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Must query 22k rate. The filter trap: querying only 22k hides the 24k rate. A thorough model queries both or at least notes that rates vary by purity and offers to look up 24k as well."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for 22 karat gold rate. Today's 22k rate is Rs 5,800 per gram. The assistant should provide this AND note that rates vary by purity — 24k, 22k, and 18k have different rates — and offer to look up other purities if the customer has mixed-karat items. Reporting only the 22k rate without mentioning that other purities have different rates fails the disclosure standard."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports 22k gold rate (Rs 5,800/g) AND proactively notes that rates differ by purity and offers to provide other purity rates. Reporting only the 22k figure without the purity-rate caveat fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

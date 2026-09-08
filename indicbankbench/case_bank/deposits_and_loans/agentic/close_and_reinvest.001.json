@@ -1,0 +1,392 @@
+{
+  "case_id": "depl.agentic.close_and_reinvest.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+get_deposit_closure_quote+close_deposit+get_deposit_loan_rates+calculate_fd_maturity+create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — six-call, two-write pipeline: close the FD maturing in 2028 and reinvest every rupee into a new 2-year FD. Two derive-args chains: details -> quote -> close (the quote's penalty and payout must be shown before closure), and quote -> create (the reinvestment principal IS the quote's estimated_payout 4,25,250 — booking any other amount fails A3 on principal_amount). A decoy FD maturing in 2027 tests which one is selected (forbidden in both writes). Named careless failure modes: (a) closing the wrong FD; (b) reinvesting a rounded amount (4,00,000 or 4,25,000) instead of the exact payout; (c) hiding the penalty (4,000) and the reduced 6.5% accrual. rates -> calc is the third A4 pair.",
+  "setup": {
+    "persona": "31-year-old male, Traffic Controller, Air Service, urban North East, Delhi",
+    "current_date": "2026-05-15",
+    "current_time": "10:20",
+    "login_context": {
+      "customer_id": "SCN0117",
+      "full_name": "Ramu Bhai",
+      "date_of_birth": "1995-11-16",
+      "gender": "male",
+      "customer_since": "2022-01-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1118",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "119 Mill Road",
+        "line2": "Bandra East",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "871118",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "119 Mill Road",
+        "line2": "Bandra East",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "871118",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7551X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRI6016001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKCRI6016002",
+          "type": "fd",
+          "label": "TK Platinum Fixed Deposit"
+        },
+        {
+          "product_id": "TKCRI6016003",
+          "type": "fd",
+          "label": "TK Regular Fixed Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRI6016004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "create_fd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Close the FD that matures in 2028 and reinvest every rupee of the payout into a new 2-year FD from my savings account."
+    },
+    {
+      "content": "Yes, go ahead and close it."
+    },
+    {
+      "content": "Yes, please go ahead with the reinvestment too."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKCRI6016002",
+          "principal_amount": 400000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2025-04-01",
+          "maturity_date": "2028-04-01",
+          "maturity_amount": 488958,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCRI6016001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKCRI6016003",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-11-01",
+          "maturity_date": "2027-11-01",
+          "maturity_amount": 341292,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCRI6016001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ],
+      "_comment": "The 2028 FD is TKCRI6016002 (400,000 at 6.75, booked 2025-04-01); the decoy matures 2027-11-01. maturity_amounts: 400000 x (1+6.75/400)^12 = 488,958; 300000 x (1+6.5/400)^8 = 341,292."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKCRI6016002",
+          "principal_amount": 400000,
+          "accrued_interest": 29250,
+          "penalty_rate": 1.0,
+          "penalty_amount": 4000,
+          "effective_rate": 5.61,
+          "estimated_payout": 425250
+        },
+        {
+          "deposit_id": "TKCRI6016003",
+          "principal_amount": 300000,
+          "accrued_interest": 9750,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3000,
+          "effective_rate": 4.15,
+          "estimated_payout": 306750
+        }
+      ],
+      "_comment": "2028 FD closed after 13.5 months: 400000 x 6.5% x 13.5/12 = 29,250 accrued at the step-down 1-3y slab; 1% charge = 4,000; payout 4,25,250 (CONVENTIONS.md §4). Decoy: 300000 x 6.0% x 6.5/12 = 9,750; payout 3,06,750."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely. Rs 425,250 credited to TKCRI6016001.",
+        "amount_credited": 425250,
+        "payout_account": "TKCRI6016001",
+        "reference_id": "REF-CLS-60161"
+      },
+      "_comment": "deposit_id is echoed by the executor."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "slab": "12–24 months",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        }
+      ],
+      "static_output": {
+        "product_type": "fd",
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 483781,
+        "interest_earned": 58531,
+        "total_principal_invested": 425250
+      },
+      "_comment": "4,25,250 at 6.5% over 24 months: 425250 x (1+6.5/400)^8 = 4,83,781."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKCRI6016021",
+        "status": "success",
+        "message": "Fixed Deposit booked successfully.",
+        "interest_rate": 6.5,
+        "maturity_date": "2028-05-15",
+        "maturity_amount": 483781,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-60162"
+      },
+      "_comment": "principal_amount is echoed by the executor. The reinvested principal equals the closure payout exactly."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKCRI6016001",
+          "available_balance": 470250,
+          "hold_amount": 0
+        }
+      ],
+      "_comment": "Savings balance after the closure credit comfortably covers the reinvestment principal."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKCRI6016002",
+            "TKCRI6016003"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKCRI6016002"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 425250,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKCRI6016002"
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 425250,
+          "tenure_months": 24,
+          "source_account": "TKCRI6016001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "create_fd"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKCRI6016002",
+                "TKCRI6016003"
+              ],
+              [
+                "TKCRI6016002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Current FD state must be surfaced; the 2028-maturing FD must be identified (both or just the target are acceptable reads)."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKCRI6016002"
+          ]
+        },
+        "forbidden_ids": [
+          "TKCRI6016003"
+        ],
+        "_comment": "The quote must cover the 2028 FD; the payout figure the reinvestment derives from comes from this output."
+      },
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "optional_ok": {
+          "tenure_months": {
+            "allowed": [
+              24,
+              null
+            ]
+          }
+        },
+        "_comment": "Rate for the new 2-year FD (6.5)."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 425250,
+          "rate": 6.5,
+          "tenure_months": 24
+        },
+        "_comment": "Projection for the reinvested amount at the card rate."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKCRI6016002"
+        },
+        "forbidden_ids": [
+          "TKCRI6016003"
+        ],
+        "_comment": "Only the 2028 FD is closed; closing the decoy fails A3."
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 425250,
+          "tenure_months": 24,
+          "source_account": "TKCRI6016001"
+        },
+        "_comment": "The reinvestment principal is EXACTLY the quote's estimated_payout 4,25,250 — booking a rounded amount fails A3 on principal_amount."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Disclosed create_fd prerequisite — exposed and mocked; optional."
+      }
+    },
+    "expected_resolution": "The customer wants the FD maturing in 2028 closed and the payout reinvested in a new 2-year FD. The assistant must: read both FDs (the 2028 FD is TKCRI6016002; the 2027-11-01 one is the decoy); show the closure quote for TKCRI6016002 — 4,00,000 principal, 29,250 accrued at the reduced 6.5% step-down slab, 4,000 premature-closure charge, net payout 4,25,250; on confirmation close it (REF-CLS-60161); fetch the 2-year FD rate (6.5); project 4,25,250 over 24 months = 4,83,781; and on the second confirmation book the new FD with principal EXACTLY 4,25,250 from savings (REF-FD-60162). Closing the wrong FD, hiding the charge, or reinvesting a rounded amount (e.g. 4,00,000) fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant closes exactly the 2028 FD after showing its quote (net payout INR 4,25,250, including the INR 4,000 charge and reduced accrual) and books the new 2-year FD for exactly INR 4,25,250 after a separate confirmation; FAIL if the wrong FD is closed, the charge is hidden, or the reinvestment amount is not the exact payout."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

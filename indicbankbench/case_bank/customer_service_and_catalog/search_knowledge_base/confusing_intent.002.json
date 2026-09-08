@@ -1,0 +1,161 @@
+{
+  "case_id": "csc.search_knowledge_base.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks 'what are the RBI guidelines on gold loans'. A narrow query for 'RBI guidelines gold loan' returns regulatory circular references. But the bank's own gold loan LTV policy (75% cap) and product FAQ are more immediately useful. A broader query including 'gold loan LTV policy' returns practical information. The model should query broadly enough to get both regulatory context AND the bank's actual product rules.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, rural East District, Sikkim",
+    "current_date": "2026-08-15",
+    "current_time": "11:30",
+    "login_context": {
+      "customer_id": "SCN0522",
+      "full_name": "Sonam Bhutia",
+      "date_of_birth": "2008-02-03",
+      "gender": "female",
+      "customer_since": "2026-04-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8217",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "East District",
+        "state": "Sikkim",
+        "pincode": "718217",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "East District",
+        "state": "Sikkim",
+        "pincode": "718217",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4652X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9481001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9481002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "What are the RBI rules for gold loans? I want to know the legal maximum I can borrow against my jewellery."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for 'RBI guidelines gold loan'. A narrow query returns the RBI circular reference but may miss the bank's own 75% LTV cap document. A broader query including 'gold loan LTV policy' returns the practical bank rule the customer actually needs.",
+      "records": [
+        {
+          "chunk": "RBI Master Circular on Loans and Advances: Gold loans are governed by Section 6 of the Banking Regulation Act. Banks must adhere to KYC norms and maintain proper documentation of pledged gold.",
+          "source": "RBI Circular DBOD.No.BP.BC.23/21.04.048/2015-16"
+        },
+        {
+          "chunk": "The bank's current Loan-to-Value (LTV) cap for gold loans is 75% of the market value of the pledged gold, computed as weight in grams multiplied by the applicable gold rate per gram for the stated purity.",
+          "source": "TK Bank Gold Loan Product Terms, Section 3.1"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "gold loan RBI guidelines LTV cap maximum borrow jewellery"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "Must search KB. A query narrowly for 'RBI guidelines' may miss the bank's 75% LTV cap. The model should query broadly to get both the regulatory context and the practical bank rule."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about RBI gold loan rules. The assistant should query the knowledge base and explain both the RBI regulatory framework AND the bank's specific 75% LTV cap for gold loans. The LTV cap (75% of gold value) is the practical answer the customer needs — the legal maximum borrowable is 75% of the market value. Answering only with RBI circular references without the bank's 75% LTV rule fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "explains the RBI regulatory framework AND states the bank's 75% LTV cap as the practical borrowing limit. Reporting only RBI references without the 75% LTV figure fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

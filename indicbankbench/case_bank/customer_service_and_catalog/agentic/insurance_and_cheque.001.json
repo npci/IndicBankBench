@@ -1,0 +1,186 @@
+{
+  "case_id": "csc.agentic.insurance_and_cheque.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "_variant_note": "Compound: one message asks insurance policy details and cheque book request status. 2 independent reads.",
+  "setup": {
+    "persona": "43-year-old female, No Occupation / Retired / Homemaker, urban Akola, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0746",
+      "full_name": "Sugandha Patel",
+      "date_of_birth": "1983-12-18",
+      "gender": "female",
+      "customer_since": "2023-07-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5719",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Akola",
+        "state": "Maharashtra",
+        "pincode": "985719",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "120 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Akola",
+        "state": "Maharashtra",
+        "pincode": "985719",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5934X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKIAC9500001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKPLIAC9500002",
+          "type": "policy",
+          "label": "TK Life Insurance"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCIAC9500003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_rd_details",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "What's my life insurance policy status and premium due date? Also, did my cheque book request go through?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "policy_id": "TKPLIAC9500002",
+          "policy_type": "life",
+          "insurer": "LIC",
+          "sum_assured": 2500000,
+          "premium": 42000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-11-10",
+          "status": "active"
+        }
+      ]
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-IAC-001",
+          "category": "other",
+          "status": "completed",
+          "raised_date": "2026-08-14T10:00:00",
+          "last_updated_date": "2026-08-16T12:00:00",
+          "description": "Cheque book request for 25 leaves on savings account"
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "TKPLIAC9500002"
+          ]
+        }
+      },
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "_comment": "LIC life, Rs 42,000 yearly, due Nov 10."
+      },
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Cheque book request completed."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Policy: LIC life insurance active, premium Rs 42,000 due 2026-11-10. Cheque book: request completed. Missing either fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports insurance details AND cheque book request status. Missing either fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

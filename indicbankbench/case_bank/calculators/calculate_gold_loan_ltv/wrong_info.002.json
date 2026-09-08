@@ -1,0 +1,164 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap (purity): customer says 'I have 80 grams of 22 karat gold — evaluate my gold loan eligibility'. The customer assumes 22 karat. But get_gold_rate for 22k returns the 22k rate while 24k is available. A purity_karat=22 filter on get_gold_rate returns only the 22k rate. Actually the trap is simpler: the customer says 22 karat, but the gold might actually be 24 karat. The valuation at 22k underestimates — a 24k purity query gives a much higher loan amount.",
+  "setup": {
+    "persona": "45-year-old male, Packer, Hand, rural Bokaro, Jharkhand",
+    "current_date": "2026-08-10",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0761",
+      "full_name": "Chote Thakur",
+      "date_of_birth": "1981-07-11",
+      "gender": "male",
+      "customer_since": "2018-11-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6334",
+      "registered_email": "c*****@gmail.com",
+      "communication_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Bokaro",
+        "state": "Jharkhand",
+        "pincode": "486334",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Bokaro",
+        "state": "Jharkhand",
+        "pincode": "486334",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3587X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9471001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9471002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I have 80 grams of 22 karat gold jewellery — what's the maximum loan I can get against it?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "purity_karat": 22,
+        "rate_per_gram": 5800,
+        "rate_date": "2026-08-10"
+      },
+      "_comment": "22k gold rate Rs 5,800/gram. The LTV at 75%: 80 x 5800 x 0.75 = Rs 3,48,000."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 464000,
+        "eligible_loan_amount": 348000,
+        "ltv_percent_used": 75
+      },
+      "_comment": "22k valuation: 80g x 5800 = 464000. 75% LTV = 348000."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 80,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 5800
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Must query 22k rate. The filter trap: the customer says 22k, and the model computes at 22k. But the customer should verify whether their gold is actually 22k or 24k — the loan amount difference is huge. A thorough assistant asks the customer to confirm purity or notes the 24k rate for reference."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 80,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 5800
+        },
+        "_comment": "22k LTV: gold_value = 4,64,000, eligible = 3,48,000. Must compute. A thorough response notes that if the gold is actually 24k, the eligible amount would be higher."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "expected_resolution": "The customer says 22 karat gold. Gold value at 22k (Rs 5,800/gram): 80g x 5,800 = Rs 4,64,000. At 75% LTV, eligible loan is Rs 3,48,000. The assistant should compute this AND advise the customer to verify the actual purity — if the gold is 24k instead of 22k, the valuation and eligible loan amount would be significantly higher. Computing without mentioning purity verification fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes 22k gold loan LTV correctly (Rs 3,48,000) AND advises the customer to confirm actual purity, noting higher purity yields higher loan amount. Computing without the purity verification flag fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

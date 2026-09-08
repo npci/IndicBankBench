@@ -1,0 +1,234 @@
+{
+  "case_id": "depl.create_rd.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "_variant_note": "FILTER-TRAP: customer asks to create RD at Rs 2,000/month for 3 years. Rates query returns the correct slab rate. But customer has both savings and salary accounts. Querying only the savings account balance hides that the salary account has insufficient balance for sustained monthly debits.",
+  "setup": {
+    "persona": "25-year-old male, Asbestos Cement Product Maker, rural Bareilly, Uttar Pradesh",
+    "current_date": "2026-10-05",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0545",
+      "full_name": "Javar Kumar",
+      "date_of_birth": "2001-09-01",
+      "gender": "male",
+      "customer_since": "2020-12-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8232",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "33 Temple Road",
+        "line2": "Andheri West",
+        "city": "Bareilly",
+        "state": "Uttar Pradesh",
+        "pincode": "728232",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "33 Temple Road",
+        "line2": "Andheri West",
+        "city": "Bareilly",
+        "state": "Uttar Pradesh",
+        "pincode": "728232",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6430X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCRD9800001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKCRD9800002",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCRD9800003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "create_rd",
+    "get_account_balance",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Start an RD from my savings account — Rs 2,000 a month for 3 years."
+    },
+    {
+      "content": "Yes, book it."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "36M",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ]
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 79950,
+        "interest_earned": 7950,
+        "total_principal_invested": 72000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "savings has Rs 55,000. salary has only Rs 800.",
+      "records": [
+        {
+          "account_id": "TKCRD9800001",
+          "available_balance": 55000,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKCRD9800002",
+          "available_balance": 800,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "RD-CRD9800001",
+        "status": "success",
+        "message": "RD booked.",
+        "reference_id": "REF-RD-CRD9800"
+      }
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 2000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKCRD9800001"
+          ]
+        }
+      },
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 2000,
+          "tenure_months": 36,
+          "source_account": "TKCRD9800001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 2000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKCRD9800001"
+          ]
+        }
+      },
+      "create_rd": {
+        "required": {
+          "monthly_installment": 2000,
+          "tenure_months": 36,
+          "source_account": "TKCRD9800001"
+        }
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ],
+      [
+        "calculate_rd_maturity",
+        "get_account_balance"
+      ],
+      [
+        "get_account_balance",
+        "create_rd"
+      ]
+    ],
+    "expected_resolution": "The customer wants an RD from savings at Rs 2,000/month for 3 years. The assistant must check rates, compute maturity, verify balance, then book after confirmation. Standard RD booking flow."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "follows the RD booking flow: rates → maturity calc → balance check → book with confirmation. Skipping any step or booking without confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

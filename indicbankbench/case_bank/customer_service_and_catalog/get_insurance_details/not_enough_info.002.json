@@ -1,0 +1,246 @@
+{
+  "case_id": "csc.get_insurance_details.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 call-then-clarify, the complement of the sibling .001 which is pure 'ask which' and fails any tool call. Here the blessed path fetches both policies and grounds the question in real figures: the customer says 'tell me about my policy' while holding a life policy (LIC, Rs 42,000 yearly premium) and a health policy (Star Health, Rs 4,800 quarterly). The careless failure: detailing only the first record (the life policy) as if it answered the question. Presenting both one-liners and asking which one they want in detail is the pass.",
+  "setup": {
+    "persona": "28-year-old male, Cannery Worker (Can & Preservation), rural Nadia, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0249",
+      "full_name": "Mahadev Mahato",
+      "date_of_birth": "1998-06-15",
+      "gender": "male",
+      "customer_since": "2017-06-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9581",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Nadia",
+        "state": "West Bengal",
+        "pincode": "709581",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Nadia",
+        "state": "West Bengal",
+        "pincode": "709581",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2756X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 2
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXIN95201",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKPLXIN95203",
+          "type": "policy",
+          "label": "Life Insurance"
+        },
+        {
+          "product_id": "TKPLXIN95204",
+          "type": "policy",
+          "label": "Health Insurance"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXIN95202",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "Tell me about my insurance policy — the details."
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "policy_id": "TKPLXIN95203",
+          "policy_type": "life",
+          "insurer": "LIC",
+          "sum_assured": 2500000,
+          "premium": 42000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-11-10",
+          "status": "active"
+        },
+        {
+          "policy_id": "TKPLXIN95204",
+          "policy_type": "health",
+          "insurer": "Star Health",
+          "sum_assured": 1000000,
+          "premium": 4800,
+          "premium_frequency": "quarterly",
+          "premium_due_date": "2026-09-01",
+          "status": "active"
+        }
+      ]
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "TKPLXIN95203",
+            "TKPLXIN95204"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "optional_ok": {
+          "policy_ids": {
+            "allowed": [
+              [
+                "TKPLXIN95203",
+                "TKPLXIN95204"
+              ],
+              [
+                "TKPLXIN95204",
+                "TKPLXIN95203"
+              ]
+            ]
+          }
+        },
+        "_comment": "Fetch both policies so the question can be grounded. Detailing only one policy (the first record) is the careless failure."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks 'tell me about my policy' while holding two — a life policy (LIC, Rs 42,000 yearly premium, due 2026-11-10) and a health policy (Star Health, Rs 4,800 quarterly, due 2026-09-01). The assistant should fetch both records and ask which policy they want, presenting a one-line identification of each so the customer can point at one. Detailing only one policy (whichever came first in the response) as if it answered the question is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant fetches both policies and asks which one the customer wants in detail, presenting both (life and health) — rather than detailing one policy as the answer. A one-policy answer to the unqualified question fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

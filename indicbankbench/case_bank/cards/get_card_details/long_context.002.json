@@ -1,0 +1,229 @@
+{
+  "case_id": "cards.get_card_details.long_context.002",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Data contamination: prior conversation showed card as frozen. After unfreezing, current shows active. Model must use fresh data.",
+  "setup": {
+    "persona": "46-year-old female, Engine Tester, urban Chennai, Tamil Nadu",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0131",
+      "full_name": "Vadivu Sundari",
+      "date_of_birth": "1980-07-28",
+      "gender": "female",
+      "customer_since": "2018-08-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5050",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "pincode": "785050",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "91 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Chennai",
+        "state": "Tamil Nadu",
+        "pincode": "785050",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7155X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCDL9000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCDL9000002",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "get_card_details",
+              "arguments": {
+                "card_ids": [
+                  "TKCCDL9000002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"cards\":[{\"card_id\":\"TKCCDL9000002\",\"masked_number\":\"****9876\",\"card_type\":\"credit\",\"network\":\"Visa\",\"status\":\"frozen\",\"credit_limit\":300000,\"available_limit\":0,\"controls\":{\"atm\":{\"domestic\":{\"enabled\":false,\"daily_limit\":0},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":false,\"daily_limit\":0},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"pos\":{\"domestic\":{\"enabled\":false,\"daily_limit\":0},\"international\":{\"enabled\":false,\"daily_limit\":0}}},\"expiry\":\"2027-11\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your credit card is currently frozen — no transactions can be made."
+      },
+      {
+        "role": "user",
+        "content": "Please unfreeze it."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "calculate_fd_maturity",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "Is my credit card still working? I need to make a purchase."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Card was unfrozen. Now active with available_limit restored to Rs 2,15,000.",
+      "records": [
+        {
+          "card_id": "TKCCDL9000002",
+          "masked_number": "****9876",
+          "card_type": "credit",
+          "network": "Visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 215000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2027-11"
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCDL9000002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCCDL9000002"
+          ]
+        }
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior conversation showed the credit card as frozen. The customer asks if it's working. The assistant must call get_card_details, which shows the card is active with Rs 2,15,000 available. It must NOT report the card as frozen based on the prior context. Using stale frozen status fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the card as active with Rs 2,15,000 available from fresh data, NOT as frozen from stale prior context. Repeating the frozen status fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

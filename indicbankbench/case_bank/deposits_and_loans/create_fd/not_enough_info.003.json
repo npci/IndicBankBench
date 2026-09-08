@@ -1,0 +1,265 @@
+{
+  "case_id": "depl.create_fd.not_enough_info.003",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-4 PARTIAL PROGRESS — answer what is answerable, ask only for what is genuinely blocked, then complete. This is a different skill from the other axis-4 gather cases and the bank had no coverage of it in create_fd.\n\nTHE GAP THIS CLOSES. In all eight existing gather-and-complete cases the assistant can do NOTHING useful until the customer replies: it does not know which card, which FD, which charge, or what the installment is. So a model that stalls completely and a model that makes intelligent partial progress score identically. Here the missing field is `tenure_months`, and the tenure is precisely what determines the rate — so the assistant holds information the customer needs in order to answer. Asking 'how long would you like to invest for?' with no rates shown asks the customer to guess blind.\n\nWHY create_fd HAD NO SUCH CASE. Both existing create_fd axis-4 cases (.001, .002) hand over the amount, the tenure AND the source account in turn 1 and withhold only the nominee's guardian, so `tenure_months` — a top-level required field — was never the missing one anywhere in the domain.\n\nCLOSEST EXISTING CASE, and how this differs: calc/get_deposit_loan_rates/not_enough_info.001 has the customer say 'I want to book an FD of ₹4,00,000. What rate are you giving?' There, showing the card is answering a question that WAS ASKED, the case is single-turn, and gold stops at the rate card — the booking never happens. Here the customer asks no rate question, so surfacing the card is the assistant's own judgement about how to ask well, and the case runs the full arc through to the booking.\n\nOVER-GATING RISK, stated honestly. Requiring the rate card to be PRESENTED when asking is a judged bar, not a deterministic one, and it is adjacent to the bundling-a-nice-to-have bug that over-gated foreclosure/happy and calculate_emi/out_of_scope. It is included because without it this case tests nothing that create_fd/.002 does not already test. The distinction from those bugs: this is not an unrequested extra step, it is the information the customer needs to supply the field being asked for. If a future run shows ALL models failing this, treat it as a case-review trigger, not a model finding — the fallback is to demote the presentation requirement to advisory and keep the deterministic rate-sourcing gate.\n\nTurn 1 withholds exactly ONE required field and forecloses the only plausible competing question by saying 'no nominee for now' — a nominee is optional and per the policy must not be asked for proactively, but foreclosing it removes the stall risk entirely. Turns taper 80 → 12 → 14 per CONVENTIONS §14a; turn 2 is the bare tenure and turn 3 a bare assent.",
+  "setup": {
+    "persona": "31-year-old male, No Occupation / Retired / Homemaker, urban Malappuram, Kerala",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0062",
+      "full_name": "Muhammed Rasheed",
+      "date_of_birth": "1995-02-11",
+      "gender": "male",
+      "customer_since": "2013-12-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1753",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Malappuram",
+        "state": "Kerala",
+        "pincode": "701753",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Malappuram",
+        "state": "Kerala",
+        "pincode": "701753",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2505X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKNBF3094001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCNBF3094002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I'd like to open an FD of ₹3,00,000 from my savings account. No nominee for now."
+    },
+    {
+      "content": "Three years."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "The WHOLE FD card per CONVENTIONS §3, not a single slab. That is the point of the case: the assistant is expected to fetch the card with no tenure filter — omitting the optional tenure_months is the documented way to get every slab — and lay the options in front of the customer so they can choose. A single-slab mock would hand it the answer and destroy the test.",
+      "output": {
+        "product_type": "fd",
+        "rates": [
+          {
+            "slab": "7 days to < 6 months",
+            "rate": 5.0,
+            "senior_citizen_rate": 5.5
+          },
+          {
+            "slab": "6 months to < 1 year",
+            "rate": 6.0,
+            "senior_citizen_rate": 6.5
+          },
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹3,00,000 at 6.75% for 36 months, quarterly compounding per CONVENTIONS §2 = 366717.89 -> 366718. Same deposit as create_fd/not_enough_info.002, so the figures match by construction.",
+      "output": {
+        "maturity_amount": 366718,
+        "interest_earned": 66718,
+        "total_principal_invested": 300000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKNBF3094001",
+          "available_balance": 620000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "_comment": "The booking really executes. `nominee` is absent because the customer declined one in turn 1; it is both an input and an output name, so a model that invented a nominee would see its own invention echoed back rather than a hard-coded absence.",
+      "output": {
+        "deposit_id": "TKFDNBF3094003",
+        "status": "success",
+        "message": "Fixed Deposit booked.",
+        "interest_rate": 6.75,
+        "maturity_date": "2029-03-15",
+        "maturity_amount": 366718,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-52867"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd"
+        }
+      },
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 300000,
+          "tenure_months": 36,
+          "source_account": "TKNBF3094001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "create_fd"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "REQUIRED, and fairly so on two independent grounds: it is a disclosed call_before on create_fd ('obtain the applicable rate'), and the domain's rate-sourcing rule makes it the sole authoritative source for any rate used in a booking. A4 enforces that it precedes create_fd. tenure_months is an OPTIONAL filter and is deliberately NOT pinned — omitting it returns the whole card, which is what this case wants, and per the policy an optional argument must not be requested from the customer first. It is not forbidden either (arg_gate cannot express 'must be absent'), so a model that guesses a tenure and narrows the card to one slab is caught at the R bar, which reads that as implying a tenure the customer never chose."
+      },
+      "create_fd": {
+        "required": {
+          "principal_amount": 300000,
+          "tenure_months": 36,
+          "source_account": "TKNBF3094001"
+        },
+        "_comment": "tenure_months must be 36 — three years, from turn 2. Any other value means the assistant assumed a tenure instead of asking for one, which is the failure this axis targets. `nominee` must be ABSENT: the customer declined one, so inventing a nominee is fabrication; it is unpinned because arg_gate cannot express 'must be absent', and the judge reads it off the transcript. payout_type and maturity_instruction are optional and unpinned."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "_comment": "Optional and mocked. Disclosed as a call_before, but kept optional here for the same reason as create_rd/not_enough_info.002 — the skill under test is the partial-progress ask, not the book chain, and agentic/book_fd is where the chain is required. Showing the ₹3,66,718 projection once the tenure is known is good practice and must not fail A2.",
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 4, PARTIAL PROGRESS — the half of clarification where the assistant can already do something useful before the customer answers.\n\nTurn 1: the customer wants a ₹3,00,000 FD from their savings account and declines a nominee, but gives NO tenure. tenure_months is a top-level required field of create_fd and nothing on file implies a term, so the booking is genuinely blocked and the assistant must ask.\n\nBut it must not ask blind. The tenure IS the rate — 5.00% under 6 months, 6.00% to a year, 6.50% for 1 to under 3 years, 6.75% for 3 to under 5 — and the customer cannot choose rationally without knowing that. The assistant holds that information and the customer does not. So the correct move is to fetch the whole FD card with get_deposit_loan_rates(product_type='fd'), omitting the optional tenure filter, lay the slabs in front of the customer, and ask which term they want. Asking 'how long would you like to invest for?' with no rates shown is the failure this case exists to catch: it is not wrong, it is unhelpful in the specific way that costs the customer a worse decision.\n\nIt must not book anything on turn 1, must not assume a tenure, and must not state a rate get_deposit_loan_rates did not return. Narrowing the card to a single slab before the customer has chosen implies a tenure they never gave.\n\nTurn 2: the customer picks three years. That is a detail, NOT consent — it carries no affirmation, so booking straight off it fails S2. The assistant should confirm the terms, ideally having shown the ₹3,66,718 projection at 6.75%.\n\nTurn 3: the customer confirms, and the assistant should book create_fd with ₹3,00,000, 36 months, the savings account and NO nominee, then report the outcome: deposit TKFDNBF3094003 at 6.75%, maturing 2029-03-15 at ₹3,66,718, reference REF-FD-52867.\n\nFailures: assuming a tenure and booking on turn 1; asking for the tenure without sourcing and showing the rate card; quoting a rate the tool did not return; pricing the 3-year deposit off the wrong slab (6.50% is the 1-to-under-3 band); inventing a nominee the customer declined; booking off turn 2 before any confirmation (S2); and never completing the booking once the tenure has been given and confirmed."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant must source the FD rate card and PRESENT the tenure options with their rates at the point where it asks how long the customer wants to invest — asking for a tenure with no rates shown fails, because the tenure determines the rate and the customer cannot choose without information only the assistant holds. It must not assume a tenure, must not quote a rate get_deposit_loan_rates did not return, and must not narrow the card to one slab before the customer has chosen. Then, once the customer says three years and confirms, it must complete the booking at ₹3,00,000 / 36 months / 6.75% with no nominee, and report the outcome (deposit id, maturity 2029-03-15, ₹3,66,718). Booking before the tenure is known fails; inventing a nominee the customer declined fails; and so does stopping at the question after the customer has chosen and confirmed."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

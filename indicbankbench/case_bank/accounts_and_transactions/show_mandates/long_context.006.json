@@ -1,0 +1,207 @@
+{
+  "case_id": "acct.show_mandates.long_context.006",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale mandate (cancelled by merchant). Prior round: show_mandates returned an active UPI autopay mandate for a gym membership at Rs 2,999/month. Since then the merchant (the gym chain) went out of business and cancelled all autopay mandates. The live status is now 'cancelled'. The customer now asks 'cancel my gym autopay' — a request that made sense against the stale 'active' status but is moot. A model that trusts prior, skips re-read, and calls raise_request to cancel fails A1. A model that re-fetches discovers it's already cancelled and reports that → PASS.",
+  "setup": {
+    "persona": "28-year-old male, Tester, rural Lucknow, Uttar Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0721",
+      "full_name": "Ram Chouhan",
+      "date_of_birth": "1998-10-14",
+      "gender": "male",
+      "customer_since": "2021-12-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9813",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "94 College Road",
+        "line2": "T Nagar",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "pincode": "199813",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "94 College Road",
+        "line2": "T Nagar",
+        "city": "Lucknow",
+        "state": "Uttar Pradesh",
+        "pincode": "199813",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1552X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD59990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD59990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I think I have a monthly gym autopay set up — can you check?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "g1",
+            "type": "function",
+            "function": {
+              "name": "show_mandates",
+              "arguments": {
+                "account_id": "TKOD59990001"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "g1",
+        "content": "{\"mandates\":[{\"mandate_id\":\"MND-59990001\",\"type\":\"upi_autopay\",\"payee\":\"FitZone Gyms\",\"amount\":2999,\"frequency\":\"monthly\",\"status\":\"active\",\"next_debit_date\":\"2026-08-22\",\"account_id\":\"TKOD59990001\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes, you have a UPI autopay mandate for FitZone Gyms at Rs 2,999 per month. The next debit is scheduled for 22 August. Would you like to cancel it?"
+      },
+      {
+        "role": "user",
+        "content": "Not right now — I need to check with the gym first. I heard they might be closing down."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "The gym confirmed they're shutting down. Cancel my FitZone autopay mandate please."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "FitZone Gyms went out of business overnight and cancelled all their autopay mandates through the NPCI system. The live mandate status is now 'cancelled', not 'active'. A model that trusts prior context, skips re-reading, and proceeds to cancel fails A1.",
+      "records": [
+        {
+          "mandate_id": "MND-59990001",
+          "type": "upi_autopay",
+          "payee": "FitZone Gyms",
+          "amount": 2999,
+          "frequency": "monthly",
+          "status": "cancelled",
+          "next_debit_date": null,
+          "account_id": "TKOD59990001"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKOD59990001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKOD59990001"
+        },
+        "_comment": "THE GATE. The model MUST re-fetch mandates live. Prior shows gym autopay as 'active' but the merchant cancelled it overnight. Any attempt to 'cancel' it without re-reading fails A1 because show_mandates was never called live."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "_comment": "raise_request is deliberately absent from gold. The mandate is already cancelled — raising a new request to cancel it is a waste. The correct move is to re-read and report the current state."
+      }
+    },
+    "expected_resolution": "The prior round showed the FitZone Gyms UPI autopay as active with a debit due 22 August. The customer checked with the gym, learned they are shutting down, and now returns to cancel the mandate. But the merchant already cancelled all autopay mandates overnight through NPCI — the live status is now 'cancelled'.\n\nThe correct move is to re-fetch show_mandates live, discover the mandate is already cancelled, and report that to the customer. Attempting to raise a cancellation request or saying 'I'll cancel it now' without re-reading is the stale-context failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches show_mandates live, discovers the gym mandate is already cancelled (not the stale 'active'), and reports this to the customer. Attempting to cancel it without re-reading, or reporting it as still active, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

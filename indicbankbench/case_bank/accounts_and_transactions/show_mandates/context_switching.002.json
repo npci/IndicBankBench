@@ -1,0 +1,229 @@
+{
+  "case_id": "acct.show_mandates.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 filter flapping: 'all mandates', then 'just the paused ones', then 'go back to all of them'. The final answer must restore the full list (active rent + paused gym). A model that keeps the narrower paused filter — the most recently applied one — misses the active rent mandate. Careless failure mode: answering the final ask with only the paused mandate.",
+  "setup": {
+    "persona": "28-year-old female, No Occupation / Retired / Homemaker, urban North Goa, Goa",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0529",
+      "full_name": "Beena Vaigankar",
+      "date_of_birth": "1998-05-11",
+      "gender": "female",
+      "customer_since": "2016-08-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1132",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "North Goa",
+        "state": "Goa",
+        "pincode": "491132",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "53 Church Street",
+        "line2": "Anna Nagar",
+        "city": "North Goa",
+        "state": "Goa",
+        "pincode": "491132",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1742X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSMW2030001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSMW2030002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "toggle_card_freeze",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me all my mandates."
+    },
+    {
+      "content": "Just the paused ones for now."
+    },
+    {
+      "content": "Hmm no — go back to all of them."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "active rent + paused gym; status filter separates them.",
+      "records": [
+        {
+          "mandate_id": "MND-CSMW203-01",
+          "type": "enach",
+          "payee": "KRISHNA PROPERTIES",
+          "amount": 24000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-03",
+          "account_id": "TKCSMW2030001"
+        },
+        {
+          "mandate_id": "MND-CSMW203-02",
+          "type": "si",
+          "payee": "CULTFIT GYM",
+          "amount": 2000,
+          "frequency": "monthly",
+          "status": "paused",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKCSMW2030001"
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "000000",
+            "status": "failed"
+          }
+        ],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      },
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "status": "paused"
+        }
+      },
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Three queries across the turns; the final list's completeness is judged at R."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for all mandates, narrows to paused, then restores 'all of them'. The final answer must list BOTH mandates — the active Rs 24,000 Krishna Properties rent mandate (next debit 2026-09-03) and the paused Rs 2,000 CultFit gym mandate. Answering the final ask with only the paused mandate (the narrower filter persisting) fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "restores the full mandate list on the final ask — both the active rent mandate and the paused gym mandate. Listing only the paused one fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

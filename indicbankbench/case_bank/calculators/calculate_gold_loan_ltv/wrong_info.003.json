@@ -1,0 +1,164 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap (purity trap #2): customer says 'I have 125 grams of 24 karat gold coins'. The customer assumes 24 karat purity (coins are typically 24k). But get_gold_rate queried at 24k returns a rate that may not be the best — actually the trap is: the customer says 24k, the model queries 24k rate. But purity needs to be verified — gold ornaments are marked 22k, and the customer might not know the difference. A model that queries 24k without verification may over-value the gold and overstate the loan amount.",
+  "setup": {
+    "persona": "43-year-old female, Presser, Hand, rural Nabarangapur, Odisha",
+    "current_date": "2026-08-12",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0793",
+      "full_name": "Sukanti Sing",
+      "date_of_birth": "1983-06-12",
+      "gender": "female",
+      "customer_since": "2017-01-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4297",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "18 Market Road",
+        "line2": "Andheri West",
+        "city": "Nabarangapur",
+        "state": "Odisha",
+        "pincode": "834297",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "18 Market Road",
+        "line2": "Andheri West",
+        "city": "Nabarangapur",
+        "state": "Odisha",
+        "pincode": "834297",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7075X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9472001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9472002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I have 125 grams of 24 karat gold coins from a family inheritance. What's the maximum gold loan I can get?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "purity_karat": 24,
+        "rate_per_gram": 6250,
+        "rate_date": "2026-08-12"
+      },
+      "_comment": "24k rate Rs 6,250/gram."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 781250,
+        "eligible_loan_amount": 585937,
+        "ltv_percent_used": 75
+      },
+      "_comment": "24k: 125g x 6250 = 781250. 75% LTV = 585937 (truncated)."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 24
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 125,
+          "purity_karat": 24,
+          "gold_rate_per_gram": 6250
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 24
+        },
+        "_comment": "Must query 24k rate. The trap: the customer assumes 24k purity but gold coins may not be 24k. The model should flag that purity needs verification — the loan amount could differ significantly."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 125,
+          "purity_karat": 24,
+          "gold_rate_per_gram": 6250
+        },
+        "_comment": "24k LTV: ~Rs 5,85,937 eligible. Must flag that actual purity needs verification at the branch."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "expected_resolution": "The customer assumes 24 karat gold coins. At 24k (Rs 6,250/gram), gold value is Rs 7,81,250 and eligible loan at 75% LTV is approximately Rs 5,85,937. The assistant must compute this AND flag that actual purity must be verified at a branch — gold items are assessed by an appraiser and the actual purity and weight determine the final loan amount. Computing without the purity verification warning fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes 24k gold loan LTV correctly (~Rs 5,85,937) AND explicitly flags that purity and weight are subject to branch appraisal. Computing without the branch verification warning fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

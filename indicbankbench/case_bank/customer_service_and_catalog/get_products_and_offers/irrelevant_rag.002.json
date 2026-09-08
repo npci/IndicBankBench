@@ -1,0 +1,196 @@
+{
+  "case_id": "csc.get_products_and_offers.irrelevant_rag.002",
+  "axis": "9_irrelevant_rag",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Data contamination: prior conversation pitched a festive offer valid till June. Current date is August — offer expired. Model must not pitch expired offer.",
+  "setup": {
+    "persona": "32-year-old male, News Librarian, urban Dhule, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0322",
+      "full_name": "Kureshi Sheikh",
+      "date_of_birth": "1994-09-10",
+      "gender": "male",
+      "customer_since": "2020-08-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7876",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "117 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Dhule",
+        "state": "Maharashtra",
+        "pincode": "267876",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "117 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Dhule",
+        "state": "Maharashtra",
+        "pincode": "267876",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2676X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCPO9000001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCPO9000002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "get_products_and_offers",
+              "arguments": {
+                "type": "offer"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"items\":[{\"id\":\"OFF-FD-5001\",\"title\":\"Diwali Special FD\",\"type\":\"offer\",\"description\":\"0.5% extra rate on 2-year FDs booked during the festive period.\",\"valid_till\":\"2026-06-30\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "We have the Diwali Special FD — 0.5% extra rate on 2-year FDs, valid till June 2026."
+      },
+      {
+        "role": "user",
+        "content": "I'll think about it."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm looking to park some money. What FD offers or special rates do you have right now?"
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit from 7 days to 5 years, interest compounded quarterly.",
+          "valid_till": ""
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T10:00:00",
+          "amount": 100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-NOISE",
+          "transaction_note": "Noise entry",
+          "status": "success",
+          "running_balance": 100
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "deposit"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Must check current products. Prior Diwali offer expired (valid till 2026-06-30, current date 2026-08-17)."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior conversation pitched the Diwali Special FD (0.5% extra rate, valid till June 2026). Current date is August 2026 — the offer has expired. The assistant must call get_products_and_offers for current products and must NOT pitch the expired Diwali offer. Mentioning the expired offer or claiming the extra rate is still available fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks current products and does NOT pitch the expired Diwali offer. Mentioning the expired offer or claiming its rate is still available fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

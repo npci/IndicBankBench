@@ -1,0 +1,308 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 call-then-clarify with REAL quote data, complementing the sibling .001 (two FDs, pure ask-or-quote-both). Here the customer holds an FD and an RD and asks what closing 'my deposit' early would pay — and the blessed path actually computes both quotes (FD payout Rs 1,02,115; RD payout Rs 93,236) and presents both while asking which to close. The careless failure: quoting only the FD (the first record fetched) as the answer. This is the strongest form of the axis-4 call-then-clarify — the model does the full prerequisite chain and still ends on a question.",
+  "setup": {
+    "persona": "25-year-old male, Crane Driver, Hammer Head, urban Palwal, Haryana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0685",
+      "full_name": "Amar Kumar",
+      "date_of_birth": "2001-08-27",
+      "gender": "male",
+      "customer_since": "2019-02-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2207",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "8 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Palwal",
+        "state": "Haryana",
+        "pincode": "602207",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "8 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Palwal",
+        "state": "Haryana",
+        "pincode": "602207",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9066X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXDQ95601",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDXDQ95603",
+          "type": "fd",
+          "label": "TK Fixed Deposit"
+        },
+        {
+          "product_id": "TKRDXDQ95604",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXDQ95602",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "If I closed my deposit early today, what would I actually get back?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDXDQ95603",
+          "principal_amount": 100000,
+          "interest_rate": 6.0,
+          "tenure_months": 12,
+          "start_date": "2026-02-10",
+          "maturity_date": "2027-02-10",
+          "maturity_amount": 106167,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXDQ95601",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDXDQ95604",
+          "monthly_installment": 6000,
+          "installments_paid": 15,
+          "total_deposited": 90000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2025-05-05",
+          "next_debit_date": "2026-08-05",
+          "maturity_date": "2027-05-05",
+          "maturity_amount": 154514,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXDQ95601",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "FD: 6m7d run at the 6.0% step-down slab -> accrued 3115, penalty 1% of 100000 = 1000, payout 102115, effective 4.11. RD: 15 installments of 6000 (90000 deposited) at the 6.75% step-down slab, quarterly compounding per installment -> accrued 4136, penalty 1% of 90000 = 900, payout 93236, effective 2.88.",
+      "records": [
+        {
+          "deposit_id": "TKFDXDQ95603",
+          "principal_amount": 100000,
+          "accrued_interest": 3115,
+          "penalty_rate": 1.0,
+          "penalty_amount": 1000,
+          "effective_rate": 4.11,
+          "estimated_payout": 102115
+        },
+        {
+          "deposit_id": "TKRDXDQ95604",
+          "principal_amount": 90000,
+          "accrued_interest": 4136,
+          "penalty_rate": 1.0,
+          "penalty_amount": 900,
+          "effective_rate": 2.88,
+          "estimated_payout": 93236
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDXDQ95603"
+          ]
+        }
+      },
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDXDQ95604"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDXDQ95603",
+            "TKRDXDQ95604"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer holds an FD (Rs 1,00,000) and an RD (Rs 6,000/month, Rs 90,000 deposited) and asks what closing 'my deposit' early would pay back. The assistant should surface both deposits' states and fetch the closure quote for both — the FD would pay about Rs 1,02,115 (Rs 1,000 premature-closure charge included) and the RD about Rs 93,236 — and present both while asking which deposit the customer wants to close. Quoting only one deposit's payout as if it answered the unqualified question is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant fetches both deposits' states and quotes BOTH payouts (about Rs 1,02,115 for the FD, Rs 93,236 for the RD), then asks which deposit the customer wants to close — rather than presenting one deposit's quote as the answer. A one-sided quote presented as the answer fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

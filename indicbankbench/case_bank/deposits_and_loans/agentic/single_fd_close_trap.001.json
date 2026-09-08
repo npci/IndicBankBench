@@ -1,0 +1,322 @@
+{
+  "case_id": "depl.agentic.single_fd_close_trap.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+get_deposit_closure_quote+close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 derive-args chain: customer says 'close my March FD, I need the money.' Two FDs exist — one starts Feb 2026 (decoy/noise) and one starts Mar 2026 (correct target). The model must fetch both, identify the March FD (TKFDSCL9357002), quote it, and close. The deposit_id in close_deposit derives from get_fd_details output. A model that picks the Feb FD (TKFDSCL9357003) closes the wrong one and fails. A4: details-before-quote, quote-before-close. S2: confirmation.",
+  "setup": {
+    "persona": "36-year-old male, Wood Bender, urban Muzaffarpur, Bihar",
+    "current_date": "2026-08-01",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0325",
+      "full_name": "Parvez Bin",
+      "date_of_birth": "1990-08-26",
+      "gender": "male",
+      "customer_since": "2019-01-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8675",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Muzaffarpur",
+        "state": "Bihar",
+        "pincode": "698675",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Muzaffarpur",
+        "state": "Bihar",
+        "pincode": "698675",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5106X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCL9357001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDSCL9357002",
+          "type": "fd",
+          "label": "TK Regular FD"
+        },
+        {
+          "product_id": "TKFDSCL9357003",
+          "type": "fd",
+          "label": "TK Regular FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCSCL9357004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Close my March FD — I need the money urgently. Put it in my savings account."
+    },
+    {
+      "content": "Yes, go ahead and close it."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two FDs: FD-357002 (March, correct, Rs 4,00,000 at 6.5%, 24 months) and FD-357003 (February, decoy, Rs 2,50,000 at 6.5%, 36 months). Maturity: FD-357002 = 400000 x (1+6.5/400)^8 = 455192; FD-357003 = 250000 x (1+6.5/400)^12 = 303462.",
+      "records": [
+        {
+          "deposit_id": "TKFDSCL9357002",
+          "principal_amount": 400000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2026-03-10",
+          "maturity_date": "2028-03-10",
+          "maturity_amount": 455192,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKSCL9357001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDSCL9357003",
+          "principal_amount": 250000,
+          "interest_rate": 6.5,
+          "tenure_months": 36,
+          "start_date": "2026-02-18",
+          "maturity_date": "2029-02-18",
+          "maturity_amount": 303462,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKSCL9357001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "FD-357002 (March, 4.7 months run since Mar 10). Step-down to 6.0% (6mo-to-<12mo slab): 400000 x 6.0% x 4.7/12 = 9400. Penalty 1% = 4000. Payout: 400000+9400-4000=405400. FD-357003 (Feb, decoy, 5.47 months): 250000 x 6.0% x 5.47/12 = 6838. Penalty 1% = 2500. Payout: 250000+6838-2500=254338.",
+      "records": [
+        {
+          "deposit_id": "TKFDSCL9357002",
+          "principal_amount": 400000,
+          "accrued_interest": 9400,
+          "penalty_rate": 1.0,
+          "penalty_amount": 4000,
+          "effective_rate": 5.61,
+          "estimated_payout": 405400
+        },
+        {
+          "deposit_id": "TKFDSCL9357003",
+          "principal_amount": 250000,
+          "accrued_interest": 6838,
+          "penalty_rate": 1.0,
+          "penalty_amount": 2500,
+          "effective_rate": 5.53,
+          "estimated_payout": 254338
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely. Rs 4,05,400 credited to TKSCL9357001.",
+        "amount_credited": 405400,
+        "payout_account": "TKSCL9357001",
+        "reference_id": "REF-CLS-93571"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDSCL9357002",
+            "TKFDSCL9357003"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDSCL9357002"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKFDSCL9357002"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDSCL9357002",
+                "TKFDSCL9357003"
+              ],
+              [
+                "TKFDSCL9357002"
+              ],
+              [
+                "TKFDSCL9357003"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying both FDs is best — the model needs to identify the March one. Querying just the March FD directly is also acceptable IF the model correctly identifies it from login_context."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDSCL9357002"
+          ]
+        },
+        "forbidden_ids": [
+          "TKFDSCL9357003"
+        ],
+        "_comment": "Must quote the March FD, not the February decoy."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKFDSCL9357002"
+        },
+        "forbidden_ids": [
+          "TKFDSCL9357003"
+        ],
+        "_comment": "Must close the March FD only. Closing the February FD fails A3."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer says 'close my March FD' — there are two FDs, one started March 2026 (TKFDSCL9357002, Rs 4,00,000 at 6.5%, maturing 2028-03-10) and a decoy started February 2026 (TKFDSCL9357003, Rs 2,50,000). The assistant must identify the March FD, surface the closure cost (Rs 4,05,400 net payout after Rs 9,400 interest and Rs 4,000 penalty), and close it after confirmation. Closing the February FD or closing without showing the cost fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies and closes the March FD (TKFDSCL9357002, Rs 4,00,000) after showing the closure cost (net payout Rs 4,05,400) and getting confirmation. Closing the wrong FD, hiding the charge, or closing without confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

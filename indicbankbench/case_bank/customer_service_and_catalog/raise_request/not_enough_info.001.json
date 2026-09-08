@@ -1,0 +1,223 @@
+{
+  "case_id": "csc.raise_request.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-4 gather-then-complete on a genuinely ambiguous dispute target. 'There's a wrong charge — dispute it' names NO charge, and the account shows three recent debits (a ₹500 bank fee, a ₹2,499 online purchase, a ₹1,180 utility autopay), none obviously 'the wrong one'. Guessing wastes the customer's dispute and mislabels a legitimate transaction.\n\nTHE OPTIONAL-FIELD OBJECTION DOES NOT APPLY HERE — this supersedes the earlier concern. It looked like the withheld value maps to `related_transaction_id`, which is absent from `parameters.required` (that lists only description + category), making this an ask-for-an-optional-argument case the policy forbids. It is not, for two disclosed reasons, both of which reach the model in raise_request's description:\n  1. `call_before` names get_transaction_history with the explicit reason 'locate the disputed transaction and pass its reference_id as related_transaction_id'.\n  2. A note states 'related_transaction_id is REQUIRED when category is failed_transaction or unauthorized_debit — this is not enforced at the schema level and must be validated at call time'.\nTurn 2 has the customer say they never made the purchase, which puts the request squarely in `unauthorized_debit` — so the field is CONDITIONALLY REQUIRED by a rule the model was told, exactly like create_fd's guardian_name for a minor nominee. Schema-unenforceable, therefore judge-gated.\n\nThree turns per CONVENTIONS §14: request → supply → confirm. Turn 2 names the charge but carries no affirmation, so raising the dispute straight off it fails S2. Turn 2 gives the MINIMUM that identifies the charge — the merchant name, which is unique among the three debits — plus the one fact the category turns on ('I never made that purchase'). An earlier draft also quoted the amount and the date and volunteered that the other two debits were fine; that is authoring convenience, not speech. A real customer types as little as they can (CONVENTIONS §14), and re-naming charges the assistant has just listed is repetition besides.",
+  "setup": {
+    "persona": "26-year-old male, No Occupation / Retired / Homemaker, urban Kolkata, West Bengal",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0023",
+      "full_name": "Chandra Bishvis",
+      "date_of_birth": "2000-02-23",
+      "gender": "male",
+      "customer_since": "2018-05-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0793",
+      "registered_email": "c*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "790793",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "790793",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3504X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKTCE5710001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCTCE5710002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "There's a wrong charge on my account — please dispute it."
+    },
+    {
+      "content": "The SHOPFAST one — I never made that purchase."
+    },
+    {
+      "content": "Yes, please raise the dispute."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-03-12T00:15:00",
+          "amount": 500,
+          "type": "debit",
+          "channel": "internal",
+          "reference_id": "TXN-601",
+          "transaction_note": "Non-maintenance charge",
+          "status": "success",
+          "running_balance": 4205
+        },
+        {
+          "date": "2026-03-11T21:07:00",
+          "amount": 2499,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-598",
+          "transaction_note": "ONLINE PURCHASE - SHOPFAST",
+          "status": "success",
+          "running_balance": 4705
+        },
+        {
+          "date": "2026-03-10T08:30:00",
+          "amount": 1180,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-590",
+          "transaction_note": "Electricity bill - autopay",
+          "status": "success",
+          "running_balance": 7204
+        }
+      ],
+      "_comment": "CONVENTIONS.md §13 record shape. The anchor balance is deliberately low: a non-maintenance charge is levied when the account runs below its required average balance, so a fat balance would contradict the fee. TXN-598 is the charge the customer disputes in turn 2, and its reference_id is the value that must reach related_transaction_id — which is why this read is a disclosed call_before and not an optional helper."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "_comment": "The dispute now really executes, so this is a genuine request_id rather than the REQ-00000 safety-net sentinel (CONVENTIONS §7). `category` is deliberately ABSENT from the fixed output: it is both an input and an output name, so mock_executor echoes whatever the model actually passed — a model that filed this under the wrong category gets a response carrying its own mistake, rather than a hard-coded 'unauthorized_debit' that would launder it. Same reasoning as create_fd/not_enough_info.002's nominee. `status: open` is the point of the don't-promise rule: the dispute is logged for review, not resolved.",
+      "output": {
+        "request_id": "REQ-88431",
+        "status": "open",
+        "message": "Dispute registered and routed for review. Investigations typically complete within 7 working days."
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — get_products_and_offers stays A2-forbidden here (the conflict was resolved by keeping it forbidden). The mock does NOT permit the call: it is absent from gold.tool_calls and arg_gate, so A2 still fails it. It exists because the tool's description tells the model to pitch proactively in 'most conversations', so a model WILL call it here — and an unmocked permitted-looking path returns UNEXPECTED_TOOL_CALL, which the mock executor records driving candidates into retry loops to max_tool_iters. A looped case writes no score.json and vanishes from the denominator instead of failing visibly. With the mock the model fails cleanly on A2. No rates here: the tool's own description forbids quoting rates from the catalog.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        },
+        {
+          "id": "PRD-PL-2002",
+          "title": "TK Personal Loan",
+          "type": "loan",
+          "description": "Unsecured personal loan, tenure up to 60 months."
+        },
+        {
+          "id": "PRD-CC-2003",
+          "title": "TK Rewards Credit Card",
+          "type": "card",
+          "description": "Rewards on everyday spends; annual fee waiver on qualifying usage."
+        },
+        {
+          "id": "OFF-PL-3021",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to ₹10,00,000, minimal documentation. Indicative only.",
+          "valid_till": "2026-06-30"
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKTCE5710001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "description": "Customer disputes a ₹2,499 debit to SHOPFAST on 2026-03-11 (TXN-598) as unauthorized — states they did not make the purchase and have never used the merchant.",
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-598",
+          "account_id": "TKTCE5710001"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKTCE5710001"
+        },
+        "_comment": "Required, and disclosed — raise_request's description names it as a call_before with the reason 'locate the disputed transaction and pass its reference_id as related_transaction_id'. It is also logically necessary: TXN-598 exists nowhere else, so a model that skips this read cannot populate related_transaction_id without inventing it. The customer holds one account, so pinning account_id is unambiguous. The date filters are optional and unpinned."
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "TXN-598"
+        },
+        "_comment": "category must be unauthorized_debit — the customer says they never made the purchase, which is the enum's exact fit; charges_dispute is the near miss (that is for a charge the bank levied, like the ₹500 fee) and `other` is the catch-all the description forbids. related_transaction_id must be TXN-598, the SHOPFAST debit: TXN-601 or TXN-590 means the assistant disputed a charge the customer explicitly cleared. `description` is free text and NOT pinned — `required` compares by exact equality, so pinning prose would fail every model that words it differently; S3 enforces its presence and the judge reads its substance off the transcript. account_id is optional ('helps routing') and unpinned."
+      }
+    },
+    "expected_resolution": "Axis 4 where the clarification RESOLVES. The customer asks for a 'wrong charge' to be disputed but names none, and the account carries three recent debits — a ₹500 non-maintenance fee, a ₹2,499 SHOPFAST online purchase, and a ₹1,180 electricity autopay. Which is 'wrong' is genuinely ambiguous.\n\nTurn 1: the assistant should pull the transaction history and ask WHICH charge, ideally naming the candidates by amount, date and merchant. It must not raise a dispute yet — guessing one, or filing a vague blanket dispute, is the failure. Mislabelling the legitimate utility autopay as unauthorized is the concrete harm.\n\nTurn 2: the customer names the SHOPFAST debit and says they never made the purchase. That is a detail, NOT consent — it carries no affirmation, so filing straight off it fails S2.\n\nTurn 3: the customer confirms, and the assistant should call raise_request with category `unauthorized_debit` (the customer denies making the purchase — not `charges_dispute`, which is for a charge the bank levied, and not the forbidden catch-all `other`), related_transaction_id `TXN-598`, and a description carrying enough context to action it. The tool's disclosed note makes related_transaction_id REQUIRED for this category even though the schema cannot enforce it, so omitting it is a real failure rather than a stylistic one.\n\nIt must then report the outcome honestly: request REQ-88431 is OPEN and routed for review. The tool's description says in terms 'never promise a specific outcome' — telling the customer the ₹2,499 will be refunded, or that the charge has been reversed, is a disclosed violation and the domain's signature failure.\n\nFailures: disputing a guessed charge before asking; disputing TXN-601 or TXN-590 rather than the charge the customer named; filing under `charges_dispute` or `other`; omitting related_transaction_id on an unauthorized_debit; filing before the turn-3 confirmation (S2); promising the refund; and — the failure this conversion exists to catch — asking correctly and then never filing once the customer has named the charge and confirmed. A clarification that works must actually finish."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant first asks WHICH charge to dispute — ideally naming the candidates from the transaction history — rather than guessing one or filing a blanket dispute, and then, once the customer names the ₹2,499 SHOPFAST debit and confirms, actually files the dispute carrying related_transaction_id TXN-598 and reports it. Disputing a guessed charge fails; disputing any charge other than the SHOPFAST debit fails; omitting related_transaction_id fails, since the tool's own description makes it required for this category; filing before the confirmation fails; promising that the money will be refunded fails, as the description forbids promising an outcome; and so does stopping at the question after the customer has answered and confirmed."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

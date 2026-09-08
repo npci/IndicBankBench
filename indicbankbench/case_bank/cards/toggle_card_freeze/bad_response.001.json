@@ -1,0 +1,202 @@
+{
+  "case_id": "cards.toggle_card_freeze.bad_response.001",
+  "axis": "2_bad_tool_response",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 business rejection (documented in the schema notes: 'Cannot unfreeze a card whose status is blocked or expired'). The customer asks to unfreeze a card that is actually BLOCKED. The tool returns status=failed with the reason. The assistant must report the failure honestly and explain that a blocked card is permanent and cannot be reactivated — a replacement is the only route. Claiming the card was unfrozen (echoing the request rather than the outcome) is the failure this axis targets.\n\nSince D2 requires the get_card_details read first, the assistant discovers the card is blocked before acting. The second turn ('So what are my options now?') reads naturally on either path and additionally checks that the assistant points to a replacement, the genuinely useful next step for a blocked card.",
+  "setup": {
+    "persona": "41-year-old female, No Occupation / Retired / Homemaker, urban Mumbai Suburban, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0645",
+      "full_name": "Hajra Lambe",
+      "date_of_birth": "1985-02-15",
+      "gender": "female",
+      "customer_since": "2013-03-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5321",
+      "registered_email": "h*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Mumbai Suburban",
+        "state": "Maharashtra",
+        "pincode": "575321",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Mumbai Suburban",
+        "state": "Maharashtra",
+        "pincode": "575321",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0067X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKJCS6P001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCJCS6P7188",
+          "card_type": "credit",
+          "masked_number": "****7188",
+          "status": "blocked"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_request_status",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I found my credit card, it was in my jacket. Please unfreeze it so I can use it today."
+    },
+    {
+      "content": "So what are my options now?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The card is BLOCKED, not frozen — the customer's premise ('unfreeze it') is mistaken. Blocked is permanent.",
+      "records": [
+        {
+          "card_id": "TKCJCS6P7188",
+          "masked_number": "****7188",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "blocked",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Documented rejection: only active/frozen cards are valid targets. This card is blocked, so the unfreeze fails.",
+      "output": {
+        "card_status": "blocked",
+        "status": "failed",
+        "message": "Card is blocked and cannot be unfrozen. A blocked card is permanent; please request a replacement card.",
+        "reference_id": "REF-FRZ-00000"
+      }
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "_tool_calls_note": "Deliberately empty so A1 requires no specific call — the two valid paths use different tools and neither must be forced. Path A: attempt toggle_card_freeze(unfreeze), get status=failed, report it. Path B: read get_card_details, see status=blocked, explain WITHOUT attempting the doomed unfreeze (the smarter path). Both are correct; putting either tool in tool_calls would make it A1-required and fail the other path. What matters — honest reporting of the blocked/permanent state — is judged by R.",
+    "arg_gate": {
+      "toggle_card_freeze": {
+        "required": {
+          "state": "unfreeze"
+        },
+        "_comment": "Allowed but NOT required (Path A). If attempted, state must be 'unfreeze' — and the mock returns status=failed. A model that skips it (Path B: sees blocked via get_card_details, doesn't attempt) is equally correct and must not fail A1.",
+        "optional": true
+      },
+      "get_card_details": {
+        "required": {},
+        "_comment": "Allowed but NOT required (Path B). Checking status first reveals the card is blocked before any unfreeze attempt — the smarter path.",
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer believes the card is frozen and asks to unfreeze it, but the card is actually BLOCKED. toggle_card_freeze returns status='failed' with the reason: a blocked card cannot be unfrozen. The assistant must report this honestly — the unfreeze did NOT succeed — and explain that a block is permanent and irreversible, so the card cannot be reactivated even though it has been found; the route forward is a replacement card. Claiming the card is now unfrozen/usable, or glossing over the failure, is the failure this axis targets. Checking get_card_details first and catching the blocked status before attempting the unfreeze is an equally good path."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant makes clear the unfreeze did NOT and cannot succeed — the card is blocked, which is permanent — rather than claiming the card is now usable, and then answers the follow-up with a real next step: a replacement card, requested via a service request. Reporting success, leaving the customer believing the card works, or having no answer to 'what are my options' fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

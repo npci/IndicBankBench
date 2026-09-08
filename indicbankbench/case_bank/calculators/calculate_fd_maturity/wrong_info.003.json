@@ -1,0 +1,179 @@
+{
+  "case_id": "calc.calculate_fd_maturity.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks 'FD maturity on Rs 2,00,000 for 2 years at the FD rate'. The 2-year FD rate (from get_deposit_loan_rates) is 6.5%. But the equivalent RD at 6.75% for the same tenure would earn Rs 2,125 more in interest. A product_type=fd filter hides the RD alternative. Broad rate card disclosure reveals the better RD option.",
+  "setup": {
+    "persona": "24-year-old male, Freight Handlers, rural Dhanbad, Jharkhand",
+    "current_date": "2026-08-01",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0075",
+      "full_name": "Sudarshan Mandal",
+      "date_of_birth": "2002-10-21",
+      "gender": "male",
+      "customer_since": "2021-04-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9753",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "34 College Road",
+        "line2": "T Nagar",
+        "city": "Dhanbad",
+        "state": "Jharkhand",
+        "pincode": "889753",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "34 College Road",
+        "line2": "T Nagar",
+        "city": "Dhanbad",
+        "state": "Jharkhand",
+        "pincode": "889753",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4739X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9467001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9467002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate"
+  ],
+  "user_turns": [
+    {
+      "content": "I have Rs 2,00,000 to invest for 2 years — calculate my FD maturity amount with the current rate."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for FD rate. FD 2-year rate is 6.5%. But RD 2-year rate is 6.75% (+25bp). A product_type=fd filter returns only the FD slab and hides the RD option. Broad query reveals both, letting the model suggest the RD alternative.",
+      "records": [
+        {
+          "slab": "1 year to < 3 years",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        },
+        {
+          "slab": "1 year to < 3 years",
+          "rate": 6.75,
+          "senior_citizen_rate": 7.25
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 227519,
+        "interest_earned": 27519,
+        "total_principal_invested": 200000
+      },
+      "_comment": "FD maturity: 200000 x (1+6.5/400)^(8) = 200000 x 1.13760 = 227519"
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 256644,
+        "interest_earned": 56644,
+        "total_principal_invested": 200000
+      },
+      "_comment": "RD if Rs 8,333/month for 24 months at 6.75%"
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd"
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "FD rate query. The filter trap: the model should also note that RD at 6.75% earns more — a product_type=fd filter hides this."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        },
+        "_comment": "FD maturity ~Rs 2,27,519. A thorough response notes the RD alternative at 6.75%."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — computing RD maturity to show the comparison."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for 2-year FD maturity on Rs 2,00,000. At 6.5%, maturity is approximately Rs 2,27,519 (interest Rs 27,519). The assistant should compute this AND proactively mention that an RD at 6.75% (+25bp) would earn more interest — approximately Rs 56,644 over 24 months if structured as monthly installments. Reporting only the FD maturity without the RD alternative fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "computes FD maturity correctly (~Rs 2,27,519) AND proactively surfaces the RD alternative at 6.75% as a higher-yield option. Reporting only the FD figure fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

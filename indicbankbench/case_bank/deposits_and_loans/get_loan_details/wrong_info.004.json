@@ -1,0 +1,233 @@
+{
+  "case_id": "depl.get_loan_details.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'my home loan outstanding'. The profile has a home loan AND a personal loan. A model that only queries the home loan ID gets the home loan (Rs 15,00,000 outstanding) — that answers the stated question correctly. But a broad query of both loans reveals the personal loan has an overdue EMI. The customer's real financial concern might be across all loans. The filer is the single-loan-id query that misses the personal loan's urgency.",
+  "setup": {
+    "persona": "48-year-old male, Construction and Maintenance Labourers, urban Ernakulam, Kerala",
+    "current_date": "2026-08-25",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0640",
+      "full_name": "Muhammed Rasik",
+      "date_of_birth": "1978-01-26",
+      "gender": "male",
+      "customer_since": "2012-01-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8780",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Ernakulam",
+        "state": "Kerala",
+        "pincode": "538780",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Ernakulam",
+        "state": "Kerala",
+        "pincode": "538780",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9221X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKLNW9412001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKHMW9412002",
+          "type": "loan",
+          "label": "TK GruhaSetu Home Loan"
+        },
+        {
+          "product_id": "TKPLW9412003",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCLNW9412004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to check my home loan — what's the outstanding and when's the next EMI?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the customer explicitly asks about the home loan. The home loan (TKHMW9412002) has Rs 15,00,000 outstanding, EMI Rs 16,357, next due Sept 5. But the personal loan (TKPLW9412003) has Rs 1,80,000 outstanding with the last EMI overdue (next_due_date Aug 5, 2026 — 20 days ago). A model that queries only the home loan ID answers the question but misses the overdue personal loan. Broad query reveals both.",
+      "records": [
+        {
+          "loan_id": "TKHMW9412002",
+          "type": "home",
+          "principal": 2000000,
+          "outstanding": 1500000,
+          "emi_amount": 16357,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 120,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKLNW9412001"
+        },
+        {
+          "loan_id": "TKPLW9412003",
+          "type": "personal",
+          "principal": 250000,
+          "outstanding": 180000,
+          "emi_amount": 8668,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 24,
+          "status": "active",
+          "next_due_date": "2026-08-05",
+          "emi_account_id": "TKLNW9412001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKHMW9412002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "TKHMW9412002"
+              ],
+              [
+                "TKHMW9412002",
+                "TKPLW9412003"
+              ],
+              [
+                "TKPLW9412003",
+                "TKHMW9412002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying the home loan answers the stated question. Querying both loans is better — the personal loan's EMI is overdue (next_due_date Aug 5, 20 days ago). The model that queries only the home loan passes technically; the judge determines whether the overdue personal loan was also flagged as a proactive service move."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about the home loan. The home loan (TKHMW9412002) has Rs 15,00,000 outstanding, Rs 16,357 EMI at 8.6%, 120 EMIs remaining, next due Sept 5. The assistant should report this. However, the customer ALSO holds a personal loan (TKPLW9412003, Rs 1,80,000 outstanding, Rs 8,668 EMI at 10.5%) whose last EMI was due August 5 — 20 days ago — which may mean it is overdue. A thorough assistant should query both loans and flag the personal loan's overdue EMI as a proactive alert."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "correctly reports the home loan details (Rs 15,00,000 outstanding, Rs 16,357 EMI, next due Sept 5). Ideally also surfaces the personal loan with overdue EMI (next due Aug 5 — 20 days ago). Reporting only the home loan is correct as requested; flagging the personal loan overdue is excellent service."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

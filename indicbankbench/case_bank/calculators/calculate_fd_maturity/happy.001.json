@@ -1,0 +1,212 @@
+{
+  "case_id": "calc.calculate_fd_maturity.happy.001",
+  "axis": "1_happy_path",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 baseline for the calculators domain AND the rate-sourcing backbone: computing an FD maturity requires a `rate`, and the schema says that rate comes from get_deposit_loan_rates ('never assumed'). So the correct flow is a two-step chain — get_deposit_loan_rates(fd, 24mo) -> calculate_fd_maturity with the sourced 6.5% — exercising A4 ordering (gold.dependencies) plus faithful reporting of the returned figures. get_deposit_loan_rates is exposed so the model CAN source the rate (fairness: the prerequisite tool must be available).",
+  "setup": {
+    "persona": "35-year-old female, No Occupation / Retired / Homemaker, rural Samastipur, Bihar",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0164",
+      "full_name": "Nageena Devi",
+      "date_of_birth": "1991-05-16",
+      "gender": "female",
+      "customer_since": "2016-02-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6232",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Samastipur",
+        "state": "Bihar",
+        "pincode": "586232",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "113 Church Street",
+        "line2": "Anna Nagar",
+        "city": "Samastipur",
+        "state": "Bihar",
+        "pincode": "586232",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0280X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBHB8476001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBHB8476002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "create_rd",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "If I put ₹2,00,000 into a 2-year fixed deposit, what will it be worth at maturity?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "outcome_fixed used for its fixed-output behaviour on a read: returns the authoritative FD rate card; product_type is echoed from the call.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 227528,
+        "interest_earned": 27528,
+        "total_principal_invested": 200000
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Must query the FD rate card. tenure_months is a helpful filter but not pinned."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        },
+        "_comment": "rate MUST be the sourced 6.5 — not assumed, not omitted. principal 2 lakh and tenure 24 months are unambiguous from the query."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants the maturity value of a ₹2,00,000 FD over 2 years. The assistant must first source the FD rate from get_deposit_loan_rates (6.5% for the 1–3 year slab) — it must not assume or invent a rate — then call calculate_fd_maturity with principal 200000, rate 6.5, tenure 24, and report the returned figures faithfully: maturity ₹2,27,528 and interest earned ₹27,528. Skipping the rate lookup and using a guessed rate, or misreporting the returned numbers, are failures. Mentioning that interest compounds quarterly, or the effective rate date, is a nice-to-have."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant sources the FD rate from get_deposit_loan_rates and reports the maturity value (₹2,27,528) and interest earned (₹27,528) as returned by the tool. Inventing/assuming a rate instead of sourcing it, or misstating the returned figures, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

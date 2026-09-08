@@ -1,0 +1,193 @@
+{
+  "case_id": "calc.calculate_fd_maturity.bad_response.001",
+  "axis": "2_bad_tool_response",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 IMPLICIT-discrepancy trap (the failure shape our findings say models miss): with payout_type = monthly, the schema says maturity_amount is PRINCIPAL ONLY — interest is paid out during the tenure, not added at maturity. The tool returns maturity_amount = 500000 (= the principal) and interest_earned = 32500 separately. Nothing in the response 'looks' wrong — a model that reports 'your FD matures to ₹5,00,000' as the total return misleads the customer into thinking they earned nothing, or conflates principal-back with a return. The correct answer explains the structure: you get ₹32,500 interest paid out monthly (~₹2,708/mo) and your ₹5,00,000 principal back at maturity. This mirrors the cards deceptive-success finding — the model must reconcile the returned fields against what the number MEANS, not just read maturity_amount.\n\nThe rate card uses the '1 year to < 3 years' slab at 6.5% (CONVENTIONS.md §3), so its label covers the 12-month tenure the case pins. This domain's core skill is the rate-sourcing rule (the rate must come from get_deposit_loan_rates, never assumed); a slab that excluded the asked tenure would penalise exactly the care this case rewards.\n\nNOTE on the figure: an earlier draft proposed ₹5,33,301 as the replacement maturity value. That is the CUMULATIVE figure and is wrong for this case — payout_type is monthly, so maturity_amount stays principal-only (₹5,00,000) and the interest is not compounded. At 6.5% the annual interest is ₹32,500, paid out monthly. The principal-only trap the case is built on is untouched.",
+  "setup": {
+    "persona": "45-year-old male, Shop Attendant, rural Bhavnagar, Gujarat",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0189",
+      "full_name": "Jagdishbhai Bilwal",
+      "date_of_birth": "1981-12-15",
+      "gender": "male",
+      "customer_since": "2023-04-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5491",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "12 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Bhavnagar",
+        "state": "Gujarat",
+        "pincode": "355491",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "12 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Bhavnagar",
+        "state": "Gujarat",
+        "pincode": "355491",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6953X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKEXX6972001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCEXX6972002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_insurance_details",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to put ₹5,00,000 in a 1-year FD but take the interest as a monthly payout to help with expenses. What will I get?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "The slab must COVER the 12-month tenure the customer asked about. 6.5% is the bank's 1-to-3-year FD rate per CONVENTIONS.md §3, and 7.0% senior is +50bp on it. Nothing about the rate card is the axis here — the trap is entirely in calculate_fd_maturity's principal-only return."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "payout_type=monthly -> maturity_amount is PRINCIPAL ONLY (500000). interest_earned (32500) is paid out monthly during the tenure, NOT added at maturity. The trap: maturity_amount == principal.",
+      "output": {
+        "maturity_amount": 500000,
+        "interest_earned": 32500,
+        "total_principal_invested": 500000
+      }
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 12
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 500000,
+          "rate": 6.5,
+          "tenure_months": 12,
+          "payout_type": "monthly"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        }
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 500000,
+          "rate": 6.5,
+          "tenure_months": 12,
+          "payout_type": "monthly"
+        },
+        "_comment": "payout_type must be 'monthly' — the customer explicitly asked for a monthly interest payout. That is what triggers the principal-only maturity behaviour."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants a ₹5,00,000 1-year FD with a MONTHLY interest payout. With a monthly payout, calculate_fd_maturity returns maturity_amount equal to the principal (₹5,00,000) because interest is paid out during the tenure rather than accumulated to maturity; interest_earned (₹32,500) is reported separately. The assistant must NOT present ₹5,00,000 as the customer's return or gain — that is just their principal coming back. It must explain the structure: they receive ~₹32,500 in interest across the year, paid out monthly (~₹2,708/month), and get their ₹5,00,000 principal back at maturity. Reporting 'your FD will mature to ₹5,00,000' as if that were the outcome of interest, or ignoring that maturity_amount here means principal-only, is the failure this axis targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant makes clear that with a monthly payout the ₹5,00,000 maturity_amount is just the principal returned, and that the ₹32,500 interest is paid out monthly during the year (not added at maturity). Presenting ₹5,00,000 as the return/gain, or implying interest accrues to maturity, fails. Stating the approx monthly payout (~₹2,917) is ideal."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

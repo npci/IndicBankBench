@@ -1,0 +1,214 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: 'a deposit' is ambiguous between the bank's two deposit products — FD and RD — which carry different rate cards (RD runs +25bp over FD). product_type is a required argument, so a model that wants rates must pick; answering with one product's rates while the customer meant the other misquotes. Distinct from not_enough_info.001 (which is answer-shaped: FD amount given, rate asked). Here neither product nor tenure is named, and the right move is one focused question (FD or RD).",
+  "setup": {
+    "persona": "40-year-old female, No Occupation / Retired / Homemaker, rural Hardwar, Uttarakhand",
+    "current_date": "2026-08-20",
+    "current_time": "13:25",
+    "login_context": {
+      "customer_id": "SCN0498",
+      "full_name": "Devaki Devi",
+      "date_of_birth": "1986-12-18",
+      "gender": "female",
+      "customer_since": "2023-01-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9591",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Hardwar",
+        "state": "Uttarakhand",
+        "pincode": "189591",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Hardwar",
+        "state": "Uttarakhand",
+        "pincode": "189591",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9511X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCDR5101001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCDR5101002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "What interest rate would I get on a deposit these days?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net — both deposit products' cards, in case the assistant queries one (or the tool is called without tenure to show all slabs). The ambiguity the case tests is FD-vs-RD, which no amount of rate data resolves.",
+      "output": {
+        "product_type": "fd",
+        "rates": [
+          {
+            "slab": "7 days to < 6 months",
+            "rate": 5.0,
+            "senior_citizen_rate": 5.5
+          },
+          {
+            "slab": "6 months to < 1 year",
+            "rate": 6.0,
+            "senior_citizen_rate": 6.5
+          },
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Call-then-clarify tolerated: the model may fetch a card to frame the question (e.g. 'fixed deposits pay 6.5% at 1-3 years, recurring deposits pay more — which are you asking about?'). Answering with one product's rates as if 'deposit' meant only that product is the failure, judge-gated."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks what rate they would get 'on a deposit'. The bank offers two deposit products — fixed deposits (lump sum) and recurring deposits (monthly instalments) — with different rate cards (RD runs higher than FD at equal tenures), and product_type is a required argument of get_deposit_loan_rates, so any rate answer requires choosing. The assistant must ask ONE focused question: which product — FD or RD. It may quote one card to contrast the products while asking, but it must not answer with one product's rates as if 'deposit' were unambiguous. The clarification is the complete answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks whether the customer means an FD or an RD rather than quoting rates for one product as if that answered it. Quoting a card while still asking is fine; answering with one product's rates and no question fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

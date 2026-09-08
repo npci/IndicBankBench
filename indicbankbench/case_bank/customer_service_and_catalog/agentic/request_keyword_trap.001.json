@@ -1,0 +1,210 @@
+{
+  "case_id": "csc.agentic.request_keyword_trap.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests+get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 derive-args chain with TIGHTER noise — KEYWORD OVERLAP TRAP. Customer asks about the status of 'the card application request I raised last month.' get_all_requests returns two relevant entries: NOISE (REQ-KW-5001, category 'app_issue', description 'Credit card application status inquiry on mobile app', raised 2026-07-22) — this literally says 'card application' matching the customer's words EXACTLY — and CORRECT (REQ-KW-5002, category 'other', description 'Debit card dispatch follow-up for replacement', raised 2026-07-08). The customer's actual request is the debit card replacement dispatch (REQ-KW-5002), but the noise request's description contains the EXACT keywords 'card application' that the customer used. A model that keyword-matches ('card application') picks the noise request and fails A3. A model that reads carefully understands the real request is about card dispatch.",
+  "setup": {
+    "persona": "24-year-old female, No Occupation / Retired / Homemaker, urban Kanpur Nagar, Uttar Pradesh",
+    "current_date": "2026-08-18",
+    "current_time": "14:20",
+    "login_context": {
+      "customer_id": "SCN0366",
+      "full_name": "Usha Paati",
+      "date_of_birth": "2002-02-16",
+      "gender": "female",
+      "customer_since": "2020-10-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4693",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Kanpur Nagar",
+        "state": "Uttar Pradesh",
+        "pincode": "614693",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Kanpur Nagar",
+        "state": "Uttar Pradesh",
+        "pincode": "614693",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3387X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKW50001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKW50002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I raised a card application request last month — can you check where it stands?"
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "KEYWORD OVERLAP TRAP: NOISE (REQ-KW-5001) description mentions 'Credit card application status inquiry' — literally matches the customer's words 'card application request'. CORRECT (REQ-KW-5002) is the actual debit card replacement dispatch the customer is following up on, but its description says 'Debit card dispatch follow-up for replacement' — no 'application' keyword. A keyword-matching model picks REQ-KW-5001 and fails A3.",
+      "records": [
+        {
+          "request_id": "REQ-KW-5001",
+          "category": "app_issue",
+          "status": "open",
+          "raised_date": "2026-07-22",
+          "last_updated_date": "2026-07-25",
+          "description": "Credit card application status inquiry on mobile app"
+        },
+        {
+          "request_id": "REQ-KW-5002",
+          "category": "other",
+          "status": "in_progress",
+          "raised_date": "2026-07-08",
+          "last_updated_date": "2026-08-10",
+          "description": "Debit card dispatch follow-up for replacement"
+        },
+        {
+          "request_id": "REQ-KW-5003",
+          "category": "service_quality",
+          "status": "resolved",
+          "raised_date": "2026-06-15",
+          "last_updated_date": "2026-06-28",
+          "description": "Branch visit feedback — long wait time"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-KW-5002",
+        "status": "in_progress",
+        "raised_date": "2026-07-08T11:20:00",
+        "last_update": "2026-08-10T09:45:00",
+        "remarks": "Replacement card dispatched via SpeedPost — tracking ID shared with courier, expected delivery within 5 business days"
+      }
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — noise tool.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      },
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-KW-5002"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_all_requests",
+        "get_request_status"
+      ]
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must list all requests. Two July requests exist: REQ-KW-5001 (app_issue, 'Credit card application status inquiry') and REQ-KW-5002 (other, 'Debit card dispatch follow-up'). The noise request description literally contains 'card application' matching the customer's own phrasing."
+      },
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-KW-5002"
+        },
+        "_comment": "Must check status of the CORRECT request (REQ-KW-5002, debit card replacement), NOT the noise (REQ-KW-5001, app issue about card application display). The customer's words 'card application request' match the noise description verbatim, but the real request is about card dispatch."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer asks about the status of 'a card application request from last month.' get_all_requests shows REQ-KW-5001 (app_issue, raised 2026-07-22, 'Credit card application status inquiry on mobile app') and REQ-KW-5002 (other, raised 2026-07-08, 'Debit card dispatch follow-up for replacement'). The noise (REQ-KW-5001) literally contains 'card application' in its description — matching the customer's phrasing exactly. However, the REAL request the customer is following up on is REQ-KW-5002 (debit card replacement dispatch). The assistant must correctly identify REQ-KW-5002 and report its status: in progress, card dispatched via SpeedPost, expected within 5 business days. Checking REQ-KW-5001 (the app issue about card application display) fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "correctly identifies REQ-KW-5002 (debit card dispatch follow-up, in_progress) as the relevant request and reports its status: replacement card already dispatched, expected delivery within 5 business days. Picking REQ-KW-5001 (the app issue about credit card application display) despite its description matching the customer's keyword phrasing fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,289 @@
+{
+  "case_id": "csc.request_cheque_book.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-6 filter-trap: customer says 'order a cheque book for my savings account — 50 leaves'. get_account_details queried broadly returns savings (active) and current (active). The savings account is fine. But get_transaction_history for the CURRENT account shows the customer's last cheque book was ordered 14 months ago for the current account — that cheque book is likely nearly exhausted given the customer's cheque-writing pattern (4 cheques in the last 2 months). The account filter (only checking savings) hides the current account's cheque usage. Broad query across both accounts' transaction history reveals the current account also needs a cheque book.",
+  "setup": {
+    "persona": "50-year-old female, Shoe Repairer, Cobbler, rural Allahabad, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0245",
+      "full_name": "Kavita Kumari",
+      "date_of_birth": "1976-01-27",
+      "gender": "female",
+      "customer_since": "2012-08-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3112",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "73 MG Road",
+        "line2": "Model Town",
+        "city": "Allahabad",
+        "state": "Uttar Pradesh",
+        "pincode": "873112",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "73 MG Road",
+        "line2": "Model Town",
+        "city": "Allahabad",
+        "state": "Uttar Pradesh",
+        "pincode": "873112",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6932X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCQR9605001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKCQR9605002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCQ9605003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_account_details",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I've run out of cheques — order a new 50-leaf cheque book for my savings account."
+    },
+    {
+      "content": "Ok, go ahead and order it."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer names savings account. Both accounts are active. But the current account has been writing cheques heavily — get_transaction_history on both accounts would reveal this. A model that only checks savings and orders the cheque book there misses the current account's cheque needs.",
+      "records": [
+        {
+          "account_id": "TKCQR9605001",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "Model Town",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Kavita Kumari",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2019-06-15"
+        },
+        {
+          "account_id": "TKCQR9605002",
+          "account_type": "current",
+          "status": "active",
+          "branch_name": "Model Town",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Kavita Kumari",
+              "role": "primary"
+            }
+          ],
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          },
+          "open_date": "2020-03-10"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Current account transactions show heavy cheque usage — 4 cheque debits in the last 2 months suggesting the current account's cheque book is running low. Running balance chains: opening 280000. Chq 0048 (Jul 1, -15000): 265000. Chq 0049 (Jul 15, -25000): 240000. Chq 0050 (Aug 5, -18500): 221500. Chq 0051 (Aug 20, -32000): 189500.",
+      "records": [
+        {
+          "date": "2026-08-20T00:00:00",
+          "amount": 32000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-CHQ-96001",
+          "transaction_note": "Cheque #0051 — Vendor payment",
+          "status": "success",
+          "running_balance": 189500
+        },
+        {
+          "date": "2026-08-05T00:00:00",
+          "amount": 18500,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-CHQ-96002",
+          "transaction_note": "Cheque #0050 — Rent",
+          "status": "success",
+          "running_balance": 221500
+        },
+        {
+          "date": "2026-07-15T00:00:00",
+          "amount": 25000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-CHQ-96003",
+          "transaction_note": "Cheque #0049 — Supplier",
+          "status": "success",
+          "running_balance": 240000
+        },
+        {
+          "date": "2026-07-01T00:00:00",
+          "amount": 15000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-CHQ-96004",
+          "transaction_note": "Cheque #0048 — Maintenance",
+          "status": "success",
+          "running_balance": 265000
+        }
+      ]
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CB-96051",
+        "status": "success",
+        "message": "Cheque book of 50 leaves ordered for TKCQR9605001. Delivery to communication address within 7 working days.",
+        "delivery_address": "73 MG Road, Model Town, Allahabad, Uttar Pradesh, 873112"
+      },
+      "_comment": "Success — cheque book ordered for savings account."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKCQR9605001",
+            "TKCQR9605002"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCQR9605002"
+        }
+      },
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKCQR9605001",
+          "leaves": 50
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_account_details",
+        "get_transaction_history"
+      ]
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKCQR9605001",
+                "TKCQR9605002"
+              ],
+              [
+                "TKCQR9605002",
+                "TKCQR9605001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both accounts. Filtering only savings hides the current account that also needs cheque attention."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKCQR9605001",
+              "TKCQR9605002"
+            ]
+          }
+        },
+        "_comment": "Querying current account transactions reveals the heavy cheque usage. The filter trap: checking only savings account's transactions hides the current account's cheque pattern."
+      },
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKCQR9605001",
+          "leaves": 50
+        },
+        "_comment": "Must order for savings. But should also flag that the current account needs one based on transaction history."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer asks for a 50-leaf cheque book for savings. The assistant should order it for the savings account AND check the current account's transaction history, which shows 4 cheques cleared in the last 2 months (cheques #0048-#0051) — suggesting the current account's cheque book is nearly exhausted. The assistant should proactively ask if the customer also needs a cheque book for the current account. Ordering for savings only without flagging the current account's cheque needs fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "orders cheque book for savings AND proactively asks whether the current account also needs a cheque book given the heavy cheque usage pattern. Ordering only for savings without mentioning the current account fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

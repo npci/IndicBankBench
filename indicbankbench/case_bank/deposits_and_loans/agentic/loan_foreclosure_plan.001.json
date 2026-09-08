@@ -1,0 +1,231 @@
+{
+  "case_id": "depl.agentic.loan_foreclosure_plan.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details+get_loan_foreclosure_quote+calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — three-tool read-only chain where the EMI comparison derives from the loan record: the quote must target the loan id and the future date 'next month on the 10th' (2026-04-10 — not today), and the EMI comparison must use the loan's OWN contracted figures (emi_amount 41,130 × 60 months, or an optional calculate_emi recomputation at the record's rate 8.6 and remaining 60 months — the rates tool is deliberately NOT exposed, so the only legitimate rate source is the loan record). Named careless failure modes: (a) quoting today's payoff instead of the 2026-04-10 value-date figure (gate pins as_of_date); (b) pulling a rate from memory or another source (optional calculate_emi gate pins rate=8.6; A2 fails any other rate source since none is exposed). A4 pins loan_details before the optional calculate_emi (its args derive from the record), NOT before the quote (quote args come from login_context + the user's date).",
+  "setup": {
+    "persona": "29-year-old female, Fisherman, Estuaries, Coastal and Back Water, rural Rajouri, Jammu & Kashmir",
+    "current_date": "2026-03-15",
+    "current_time": "12:00",
+    "login_context": {
+      "customer_id": "SCN0706",
+      "full_name": "Neeta Devi",
+      "date_of_birth": "1997-08-22",
+      "gender": "female",
+      "customer_since": "2019-02-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3987",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Rajouri",
+        "state": "Jammu & Kashmir",
+        "pincode": "803987",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Rajouri",
+        "state": "Jammu & Kashmir",
+        "pincode": "803987",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5015X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFLP6117001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFLP6117002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFLP6117003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "calculate_emi",
+    "get_account_balance",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm planning to pay off my home loan in full next month on the 10th. What's the payoff then, and how does that compare with just keeping the EMIs going?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKFLP6117002",
+          "type": "home",
+          "principal": 2400000,
+          "outstanding": 2000000,
+          "emi_amount": 41130,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 60,
+          "status": "active",
+          "next_due_date": "2026-04-05",
+          "emi_account_id": "TKFLP6117001"
+        }
+      ],
+      "_comment": "outstanding = 41130 x (1 - (1+8.6/1200)^-60)/(8.6/1200) = 2,000,023 ≈ 2,000,000 (CONVENTIONS.md §5). The loan's own rate and remaining tenure feed the EMI recomputation."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKFLP6117002",
+          "outstanding_principal": 2000000,
+          "accrued_interest": 2356,
+          "foreclosure_charges": 40000,
+          "total_payoff": 2042356
+        }
+      ],
+      "_comment": "Value date 2026-04-10, last EMI 2026-04-05: 2000000 x 8.6% x 5/365 = 2,356 accrued; 2% charges = 40,000; total payoff 20,42,356 (CONVENTIONS.md §4 loans)."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 41130,
+        "total_interest": 467800,
+        "total_payment": 2467800,
+        "schedule": [
+          {
+            "installment_no": 1,
+            "principal_component": 26797,
+            "interest_component": 14333,
+            "closing_balance": 1973203
+          },
+          {
+            "installment_no": 60,
+            "principal_component": 40837,
+            "interest_component": 293,
+            "closing_balance": 0
+          }
+        ]
+      },
+      "_comment": "2,000,000 at the loan's 8.6% over 60 months: EMI 41,129.52 -> 41,130; total payment 24,67,800 -> interest 4,67,800. Month 1 interest = 2000000 x 8.6/1200 = 14,333."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKFLP6117002"
+          ]
+        }
+      },
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "TKFLP6117002"
+          ],
+          "as_of_date": "2026-04-10"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_loan_details",
+        "calculate_emi"
+      ]
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKFLP6117002"
+          ]
+        },
+        "_comment": "The loan record is the source of the outstanding, the contracted rate, and the remaining tenure for both dependents."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {
+          "loan_ids": [
+            "TKFLP6117002"
+          ],
+          "as_of_date": "2026-04-10"
+        },
+        "_comment": "The value date is 'next month on the 10th' = 2026-04-10 (five days after the 2026-04-05 EMI). Quoting today's payoff — omitting or wronging as_of_date — fails A3. The quote's args come from login_context + the user's date, NOT from the loan record, so no A4 pair pins loan_details before the quote (A4 is only for args derived from an earlier call's output)."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 2000000,
+          "rate": 8.6,
+          "tenure_months": 60
+        },
+        "optional": true,
+        "_comment": "The EMI comparison is fully derivable from the loan record itself (emi_amount 41,130 × tenure 60 = 24,67,800), so the calculator is an OPTIONAL way to show the comparison, not a required pipeline step. If a model does call it, the args must come from the loan record's own contracted 8.6% and remaining 60 months (the rates tool is deliberately unexposed — no other rate source exists in this case)."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer plans to close the home loan on 2026-04-10 and wants the payoff versus staying on EMIs. The assistant must read the loan record (outstanding 20,00,000, EMI 41,130, 8.6%, 60 months remaining, next EMI 2026-04-05), then quote the foreclosure on the value date 2026-04-10: 20,00,000 + 2,356 accrued interest (5 days) + 40,000 charges = 20,42,356, and lay out the comparison from the loan record's own numbers — keeping the EMIs means 41,130 × 60 = 24,67,800 total (about 4,25,444 more than the payoff); an optional calculate_emi recomputation at the record's 8.6% over 60 months must reproduce the same figures. Using today's date for the quote, or sourcing the rate from anywhere but the loan record, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant quotes the payoff as of 2026-04-10 (INR 20,42,356 = 20,00,000 + 2,356 interest + 40,000 charges) and compares it against the remaining EMIs using the loan record's own numbers (41,130 × 60 months = 24,67,800 total — an equivalent calculate_emi recomputation at the record's 8.6% over 60 months is fine); FAIL if the quote uses today's date, the rate is not the loan record's, or the charge breakdown is wrong."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

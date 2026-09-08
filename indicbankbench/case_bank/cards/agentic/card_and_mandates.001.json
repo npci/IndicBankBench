@@ -1,0 +1,271 @@
+{
+  "case_id": "cards.agentic.card_and_mandates.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "_variant_note": "Agentic: one message asks for credit card limit AND auto-debit mandates. Cross-domain: cards + accounts.",
+  "setup": {
+    "persona": "33-year-old male, Counter, rural Mirzapur, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0485",
+      "full_name": "Ankur Kumar",
+      "date_of_birth": "1993-12-26",
+      "gender": "male",
+      "customer_since": "2023-01-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3143",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "24 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Mirzapur",
+        "state": "Uttar Pradesh",
+        "pincode": "913143",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "24 Jubilee Road",
+        "line2": "Boring Road",
+        "city": "Mirzapur",
+        "state": "Uttar Pradesh",
+        "pincode": "913143",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5929X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCMD9200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCMD9200002",
+          "card_type": "credit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCCMD9200003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Two things: what's my available credit card limit, and what active auto-debits do I have on my account?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCMD9200002",
+          "masked_number": "****9876",
+          "card_type": "credit",
+          "network": "Visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 85000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2027-11"
+        },
+        {
+          "card_id": "TKCCMD9200003",
+          "masked_number": "****4321",
+          "card_type": "debit",
+          "network": "RuPay",
+          "status": "active",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "2028-06"
+        }
+      ]
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "mandate_id": "MNDCMD9200001",
+          "type": "upi",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKCMD9200001"
+        },
+        {
+          "mandate_id": "MNDCMD9200002",
+          "type": "nach",
+          "payee": "HDFC SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKCMD9200001"
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCMD9200002",
+            "TKCCMD9200003"
+          ]
+        }
+      },
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKCMD9200001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Must check cards. Credit available: Rs 85,000 of Rs 3,00,000."
+      },
+      "show_mandates": {
+        "required": {},
+        "_comment": "Must check auto-debits: Netflix Rs 649 + HDFC SIP Rs 5,000."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks two questions in one message: credit card limit and auto-debits. The assistant must call both get_card_details (credit card: Rs 85,000 available of Rs 3,00,000) and show_mandates (Netflix Rs 649, HDFC SIP Rs 5,000). Answering only one question, or mixing data between card and mandates, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports both credit available (Rs 85,000) and active mandates (Netflix + HDFC SIP). Missing either, or mixing data, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

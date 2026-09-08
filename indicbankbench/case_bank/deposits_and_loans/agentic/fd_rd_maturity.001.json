@@ -1,0 +1,274 @@
+{
+  "case_id": "depl.agentic.fd_rd_maturity.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details",
+  "_variant_note": "Compound: one message asks for FD maturity date/amount AND RD progress. 2 independent read tools.",
+  "setup": {
+    "persona": "30-year-old female, No Occupation / Retired / Homemaker, rural Guntur, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0469",
+      "full_name": "Rajumma Shaik",
+      "date_of_birth": "1996-05-15",
+      "gender": "female",
+      "customer_since": "2016-03-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0620",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "930620",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "101 Church Street",
+        "line2": "Civil Lines",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "930620",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5385X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFRM9400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDN9400002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKRDN9400003",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFRM9400004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "get_deposit_loan_rates",
+    "get_account_balance",
+    "calculate_fd_maturity",
+    "get_transaction_history",
+    "close_deposit",
+    "create_fd"
+  ],
+  "user_turns": [
+    {
+      "content": "When does my FD mature and how much will I get? Also, how many RD installments have I paid so far?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKFDN9400002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-11-01",
+          "maturity_date": "2027-05-01",
+          "maturity_amount": 330464,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFRM9400001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "TKRDN9400003",
+          "monthly_installment": 5000,
+          "installments_paid": 15,
+          "total_deposited": 75000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2025-05-01",
+          "next_debit_date": "2026-09-01",
+          "maturity_date": "2027-05-01",
+          "maturity_amount": 128762,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFRM9400001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T10:00:00",
+          "amount": 100,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-NOISE",
+          "transaction_note": "Noise entry",
+          "status": "success",
+          "running_balance": 100
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDN9400002"
+          ]
+        }
+      },
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDN9400003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "_comment": "FD: mature 2027-05-01, Rs 3,30,464."
+      },
+      "get_rd_details": {
+        "required": {},
+        "_comment": "RD: 15/24 installments, Rs 75,000 deposited."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "FD matures 2027-05-01 at Rs 3,30,464 on Rs 3,00,000 at 6.5%. RD: 15 of 24 installments paid (Rs 75,000 deposited). Missing either answer fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports FD maturity (2027-05-01, Rs 3,30,464) AND RD progress (15/24, Rs 75,000). Missing either fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  },
+  "target_behavior": "answer"
+}

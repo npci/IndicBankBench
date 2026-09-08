@@ -1,0 +1,236 @@
+{
+  "case_id": "csc.request_cheque_book.long_context.001",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-extraction with a write. The history already contains a cheque-book order for the SAVINGS account (request REQ-CB-82601, tool-backed). The live turn orders another book, but for the CURRENT account. The trap is carrying the savings account id forward from context. Gold stays tight: one request_cheque_book call pinned to the current account, followed by the customer's own confirmation turn.",
+  "setup": {
+    "persona": "42-year-old male, Roofers, rural Y.S.R., Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0042",
+      "full_name": "Khader Shaik",
+      "date_of_birth": "1984-12-16",
+      "gender": "male",
+      "customer_since": "2023-05-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1247",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "48 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Y.S.R.",
+        "state": "Andhra Pradesh",
+        "pincode": "671247",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "48 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Y.S.R.",
+        "state": "Andhra Pradesh",
+        "pincode": "671247",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6768X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKCBK8260",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKKCBK8261",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKCBK8262",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Please order a cheque book for my savings account."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "request_cheque_book",
+              "arguments": {
+                "account_id": "TKKCBK8260"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"request_id\":\"REQ-CB-82601\",\"status\":\"success\",\"message\":\"Cheque book ordered.\",\"delivery_address\":\"48 Jubilee Road, Andheri West, Y.S.R., Andhra Pradesh 671247\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Done — request REQ-CB-82601 is placed, and the new cheque book will be dispatched to your registered address at 48 Jubilee Road, Andheri West."
+      },
+      {
+        "role": "user",
+        "content": "Perfect. I write a lot of cheques for my shop from the current account too — do they charge for extra books?"
+      },
+      {
+        "role": "assistant",
+        "content": "I can look up the current charges in our documents if you'd like an exact figure — would you like me to check?"
+      },
+      {
+        "role": "user",
+        "content": "Later. Most of my vendors accept NEFT anyway, so I'm fine without."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_all_requests",
+    "get_request_status",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_account_details",
+    "get_insurance_details",
+    "get_products_and_offers"
+  ],
+  "user_turns": [
+    {
+      "content": "Actually, two of my vendors only take cheques. Order another book for the current account too."
+    },
+    {
+      "content": "Yes, please do."
+    }
+  ],
+  "mock": {
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "_comment": "Gold target: the CURRENT account. A model that re-orders for the savings account from context fails the pinned gate.",
+      "output": {
+        "request_id": "REQ-CB-82602",
+        "status": "success",
+        "message": "Cheque book ordered.",
+        "delivery_address": "48 Jubilee Road, Andheri West, Y.S.R., Andhra Pradesh 671247"
+      }
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKKCBK8260",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Khader Shaik",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-16"
+        },
+        {
+          "account_id": "TKKCBK8261",
+          "account_type": "current",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Khader Shaik",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2022-03-11"
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-CB-82601",
+          "category": "cheque_book",
+          "status": "open",
+          "raised_date": "2026-08-17",
+          "last_updated_date": "2026-08-17",
+          "description": "Cheque book for savings account"
+        }
+      ],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKKCBK8261"
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKKCBK8261"
+        },
+        "_comment": "Pinned to the CURRENT account. The savings-account order already exists in context; re-ordering for it fails deterministically."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The history already contains a tool-backed cheque-book order for the SAVINGS account (REQ-CB-82601). The customer now orders a second book for the CURRENT account. The assistant must call request_cheque_book with the current account id (TKKCBK8261) — after the explicit confirmation turn, since the tool is a write — and report the new request id. Re-ordering for the savings account, or firing the write without confirmation, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "orders the cheque book for the CURRENT account after the customer's explicit confirmation and reports the new request reference. Ordering again for the savings account from context, or skipping confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

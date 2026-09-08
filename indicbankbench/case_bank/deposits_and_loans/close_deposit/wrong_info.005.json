@@ -1,0 +1,240 @@
+{
+  "case_id": "depl.close_deposit.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "FILTER-TRAP: customer wants to close 'the large FD — the Rs 5,00,000 one'. He has two FDs at Rs 5,00,000 each. Narrowing to amount picks both, customer assumes only one. Must query both and identify which to close.",
+  "setup": {
+    "persona": "46-year-old male, Operator, Call Centre, urban Ahmadabad, Gujarat",
+    "current_date": "2026-10-03",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0262",
+      "full_name": "Buhecha Kumar",
+      "date_of_birth": "1980-12-14",
+      "gender": "male",
+      "customer_since": "2023-12-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2327",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "48 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "882327",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "48 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "882327",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6631X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCDP9800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "FD-CDP9800001",
+          "type": "fd",
+          "label": "Tax Saving FD"
+        },
+        {
+          "product_id": "FD-CDP9800002",
+          "type": "fd",
+          "label": "Growth FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCDP9800003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to close my large FD — the Rs 5,00,000 one. I need the money for a medical expense."
+    },
+    {
+      "content": "The Tax Saving FD — yes, close that one."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Both FDs are Rs 5,00,000. Must query both.",
+      "records": [
+        {
+          "deposit_id": "FD-CDP9800001",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 60,
+          "start_date": "2024-03-15",
+          "maturity_date": "2029-03-15",
+          "maturity_instruction": "renew principal and interest",
+          "payout_account": "TKCDP9800001",
+          "nominee": {
+            "name": "Rajesh Gupta",
+            "relationship": "brother"
+          }
+        },
+        {
+          "deposit_id": "FD-CDP9800002",
+          "principal_amount": 500000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2025-06-01",
+          "maturity_date": "2028-06-01",
+          "maturity_instruction": "no renewal",
+          "payout_account": "TKCDP9800001",
+          "nominee": {
+            "name": "Rajesh Gupta",
+            "relationship": "brother"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "deposit_id": "FD-CDP9800001",
+          "principal_amount": 500000,
+          "accrued_interest": 75000,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "estimated_payout": 570000,
+          "effective_rate": 6.0
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "FD-CDP9800001",
+        "status": "success",
+        "amount_credited": 570000,
+        "payout_account": "TKCDP9800001",
+        "reference_id": "REF-CLS-CDP9800",
+        "message": "FD closed. Rs 5,70,000 credited."
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "FD-CDP9800001",
+            "FD-CDP9800002"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "FD-CDP9800001"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "FD-CDP9800001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "FD-CDP9800001",
+            "FD-CDP9800002"
+          ]
+        },
+        "_comment": "Must query both FDs — two Rs 5,00,000 FDs."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "FD-CDP9800001"
+          ]
+        },
+        "_comment": "Customer picks Tax Saving FD."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "FD-CDP9800001"
+        },
+        "_comment": "Close customer-chosen Tax Saving FD."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "expected_resolution": "Customer assumes only one Rs 5,00,000 FD. He has two. Must query both, report two, ask which one. He picks Tax Saving FD. Quote and close after confirmation."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both FDs, identifies two, disambiguates, confirms with customer, quotes and closes the chosen one. Assuming only one exists fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

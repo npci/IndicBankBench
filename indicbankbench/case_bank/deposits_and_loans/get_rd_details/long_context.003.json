@@ -1,0 +1,238 @@
+{
+  "case_id": "depl.get_rd_details.long_context.003",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "get_rd_details",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale RD (installment auto-debited overnight). Prior round: get_rd_details showed 16 installments paid of 24, total_deposited Rs 80,000. Since then the 17th monthly installment of Rs 5,000 was auto-debited — live now shows 17 installments paid, total_deposited Rs 85,000. The customer now asks 'how many more installments are left on my RD?' — a model that trusts stale prior says 8 remaining (based on 16/24) fails A1. A model that re-fetches live sees 17 paid → 7 remaining → PASS.",
+  "setup": {
+    "persona": "40-year-old female, No Occupation / Retired / Homemaker, urban Bastar, Chhattisgarh",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0550",
+      "full_name": "Garima Sharma",
+      "date_of_birth": "1986-05-22",
+      "gender": "female",
+      "customer_since": "2016-10-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3824",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Bastar",
+        "state": "Chhattisgarh",
+        "pincode": "513824",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Bastar",
+        "state": "Chhattisgarh",
+        "pincode": "513824",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6829X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD61990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDOD61990002",
+          "type": "rd",
+          "label": "TK Recurring Deposit Rs 5,000"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD61990003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "How is my RD doing? I'm planning my budget."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "r1",
+            "type": "function",
+            "function": {
+              "name": "get_rd_details",
+              "arguments": {
+                "deposit_ids": [
+                  "TKRDOD61990002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "r1",
+        "content": "{\"deposits\":[{\"deposit_id\":\"TKRDOD61990002\",\"monthly_installment\":5000,\"installments_paid\":16,\"total_deposited\":80000,\"interest_rate\":6.75,\"tenure_months\":24,\"start_date\":\"2024-04-05\",\"next_debit_date\":\"2026-08-05\",\"maturity_date\":\"2026-04-05\",\"maturity_amount\":135290,\"status\":\"active\",\"maturity_instruction\":\"no_renewal\",\"payout_account\":\"TKOD61990001\",\"nominee\":{\"name\":\"Vivek Gupta\",\"relationship\":\"Spouse\"}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your RD of Rs 5,000/month has 16 installments paid so far (Rs 80,000 deposited). The next debit is on 5 August. You have 8 more installments remaining to maturity on 5 April 2027, with a projected maturity value of about Rs 1,35,290."
+      },
+      {
+        "role": "user",
+        "content": "Thanks. I'll check again next month."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_rd_details",
+    "get_fd_details",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "get_deposit_loan_rates",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "How many more installments are left on my RD now? Did August's go through?"
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The 17th installment of Rs 5,000 was auto-debited on 5 August. Live now shows 17 installments paid (Rs 85,000 deposited), next_debit_date 2026-09-05. A model that trusts stale data and says 8 remaining (from the old 16/24) without re-fetching fails A1.",
+      "records": [
+        {
+          "deposit_id": "TKRDOD61990002",
+          "monthly_installment": 5000,
+          "installments_paid": 17,
+          "total_deposited": 85000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2024-04-05",
+          "next_debit_date": "2026-09-05",
+          "maturity_date": "2026-04-05",
+          "maturity_amount": 135290,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKOD61990001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDOD61990002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKRDOD61990002"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-read the RD live. Prior shows 16 paid with 8 remaining, but the August installment auto-debited — live shows 17 paid with 7 remaining."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed 16 installments paid with 8 remaining. The August 5th installment of Rs 5,000 has since been auto-debited — the live data now shows 17 paid, Rs 85,000 deposited, and 7 remaining installments.\n\nThe correct move is to re-fetch get_rd_details live and report the updated count: 17 paid, 7 remaining. Saying '8 remaining' from the stale prior data without a live call is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_rd_details live, discovers 17 installments paid with 7 remaining (not the stale 16 paid / 8 remaining), and reports the updated figures. Quoting old numbers without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

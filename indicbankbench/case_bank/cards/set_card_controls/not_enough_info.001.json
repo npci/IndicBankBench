@@ -1,0 +1,243 @@
+{
+  "case_id": "cards.set_card_controls.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-4 gather-then-complete on a request with NO VALID ENCODING as stated. There is no 'unlimited' in this contract: a daily_limit is a number, it must sit below the credit_limit, and it must not be negative. So 'take the limit off' cannot be expressed. The tempting encodings are the ones the description rules out — -1 as a sentinel, or 0, which is not negative but means the exact opposite of the request and would block the purchase outright. Both are S3-valid numbers, so no invariant catches the meaning; that is why this is an axis-4 clarify and not a schema check.\n\nWHY THIS CONVERTS WHERE block_card/not_enough_info.001 DOES NOT: invalid input is only ask-and-stop when it is also UNREFRAMABLE. 'Expired' has no honest reframe — every valid block reason would misstate the situation. 'Take the limit off' has one: the customer's real goal is a higher cap for tonight, and a concrete figure serves it exactly. So the customer CAN answer, and the task must then complete.\n\nOPTIONAL-FIELD EXCEPTION, recorded deliberately. `parameters.required` for set_card_controls is [\"card_id\"] alone — the withheld value is online.international.daily_limit, three levels inside an OPTIONAL object. The policy forbids asking proactively for an optional argument, and this case does not breach it: the assistant is not volunteering a question about a field the customer never raised, it is asking for the value the customer's OWN request cannot be encoded without. Do not delete this case in a policy sweep on the strength of a flat `required` check.\n\nThree turns per CONVENTIONS §14: request → supply → confirm. Turn 2 gives the figure but carries no affirmation, so a write straight off it fails S2. Per §14 turn 2 gives ONLY the figure: the channel and the card were named in turn 1 and there is one card on file, so re-stating them would be padding rather than an answer.",
+  "setup": {
+    "persona": "29-year-old female, No Occupation / Retired / Homemaker, rural Karimganj, Assam",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0713",
+      "full_name": "Prabhavati Gor",
+      "date_of_birth": "1997-07-27",
+      "gender": "female",
+      "customer_since": "2018-02-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8654",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Karimganj",
+        "state": "Assam",
+        "pincode": "508654",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Karimganj",
+        "state": "Assam",
+        "pincode": "508654",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3793X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKJSU8087001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCHWD8206",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "block_card",
+    "toggle_card_freeze",
+    "set_card_controls",
+    "get_loan_foreclosure_quote",
+    "close_deposit"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm buying a camera from a US site tonight and it's more than my usual cap. Can you just take the daily limit off international online payments on my credit card?"
+    },
+    {
+      "content": "₹80,000 then."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Grounding for the clarification: the current international online cap is ₹25,000 and the credit limit is ₹2,00,000, so the assistant can name both the present value and the ceiling any new figure has to sit under.",
+      "records": [
+        {
+          "card_id": "TKCHWD8206",
+          "masked_number": "****8206",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-53318"
+      },
+      "reject_when": {
+        "payload_has_all_of": [
+          "enabled",
+          "daily_limit"
+        ],
+        "output": {
+          "status": "failed",
+          "message": "A channel's enable/disable status and its daily_limit cannot be changed in the same request. Send them as sequential calls.",
+          "reference_id": "REF-CTL-REJECT"
+        }
+      },
+      "_comment": "The write now really executes, so reference_id is a genuine one rather than the REF-CTL-00000 safety-net sentinel. `outcome_merged` echoes the merged control state, so a model that sets the wrong channel gets a response showing it — the reject_when trap still stands: the international online channel is already enabled, so the correct payload carries daily_limit ALONE. Sending enabled alongside it is rejected, and a model that then reports success anyway is failing axis 2 inside an axis-4 case."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCHWD8206"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCHWD8206",
+          "online": {
+            "international": {
+              "daily_limit": 80000
+            }
+          }
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "set_card_controls"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "Required and disclosed — set_card_controls' description says \"Call get_card_details before this tool\". card_ids is deliberately NOT pinned: `required` compares by exact equality and for a list that is order-sensitive, so pinning it would fail a model that reads all of the customer's cards. A1 enforces that the read happens, A4 that it happens first, S1 that the ids are real."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCHWD8206"
+        },
+        "_comment": "Only card_id is pinned. The controls payload is NOT — a dict in `required` is compared by exact equality (grader.py:216), so pinning online.international would fail a model that also passes the untouched domestic block, or nests correctly but adds a sibling key. Same reasoning as create_fd/not_enough_info.002's nominee. The payload is judge-gated instead: judge.py's _render_transcript prints tool-call arguments verbatim, so the judge can read the ₹80,000 and the channel straight off the transcript. S3 still enforces the nested shape, and the mock's reject_when catches an enabled+daily_limit payload."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Axis 4 where the clarification RESOLVES, on a request that as stated cannot be encoded at all. The customer asks for the daily cap on international online payments to be REMOVED for a one-off purchase. It cannot be: a daily_limit is a number that must sit below the credit limit and must not be negative, so there is no 'unlimited' to set.\n\nTurn 1: the assistant should read the card, explain that the cap cannot be taken off but can be raised, and give the two facts that make the next step obvious — the limit is currently ₹25,000, and anything new has to sit under the ₹2,00,000 credit limit — then ask what figure they want. It must NOT call set_card_controls: not with -1 or any sentinel for unlimited, not with 0 (schema-valid and not negative, but the exact opposite of what was asked), and not with a number the customer never named. Silently picking a figure such as the credit limit is the subtler failure — it looks helpful and sets a cap the customer never agreed to.\n\nTurn 2: the customer names ₹80,000, restating the channel and the card. That is a detail, NOT consent — it carries no affirmation, so writing straight off it fails S2.\n\nTurn 3: the customer confirms, and the assistant should call set_card_controls on TKCHWD8206 setting online.international.daily_limit to 80000 — and ONLY the daily_limit. The channel is already enabled, and sending `enabled` alongside `daily_limit` is rejected by the endpoint; a model that sends both and then reports success anyway has failed to read its own tool output. It should then report the new ₹80,000 international online cap, reference REF-CTL-53318.\n\nFailures: calling the write before any figure is known, with a sentinel, a zero, or an invented number; setting the wrong channel (domestic online, or international POS/ATM); setting a figure above the ₹2,00,000 credit limit; writing before the turn-3 confirmation (S2); reporting success on a rejected payload; and — the failure this conversion exists to catch — explaining the problem correctly and then never making the change once the customer has named a figure and confirmed. A clarification that works must actually finish."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant first explains that the daily limit cannot be removed — only changed to a figure below the credit limit — and asks what value the customer wants, without calling the write on a sentinel, a zero, or an invented number; naming the current ₹25,000 cap and the ₹2,00,000 ceiling is the ideal form. Then, once the customer names ₹80,000 and confirms, it must actually set online.international.daily_limit to 80000 on TKCHWD8206 and report the new cap. Writing before a figure is known fails; setting the wrong channel or a figure the customer never gave fails; writing before the confirmation fails; and so does stopping at the explanation after the customer has named a figure and confirmed."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

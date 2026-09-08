@@ -1,0 +1,302 @@
+{
+  "case_id": "depl.get_loan_foreclosure_quote.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_foreclosure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks 'what's the foreclosure quote on my home loan'. get_loan_details filtered to the home loan (LN-FTB86001) shows outstanding Rs 25,00,000 with EMI Rs 22,500. But the customer also has a PERSONAL loan (LN-FTB86002) with outstanding Rs 1,80,000 — an easily foreclosable amount. A loan_ids filter for only the home loan hides the small personal loan that could be cleared immediately. Broad query surfaces both loans and the easier path.",
+  "setup": {
+    "persona": "31-year-old male, Wafer Baking Machine Operator (Baking), urban Surat, Gujarat",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0157",
+      "full_name": "Shantilal Makvana",
+      "date_of_birth": "1995-01-01",
+      "gender": "male",
+      "customer_since": "2013-04-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0080",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "1 MG Road",
+        "line2": "Indiranagar",
+        "city": "Surat",
+        "state": "Gujarat",
+        "pincode": "620080",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "1 MG Road",
+        "line2": "Indiranagar",
+        "city": "Surat",
+        "state": "Gujarat",
+        "pincode": "620080",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6093X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9486001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "LN-FTB86001",
+          "type": "loan",
+          "label": "TK Home Loan"
+        },
+        {
+          "product_id": "LN-FTB86002",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9486003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to clear my home loan early — what's the foreclosure amount I need to pay?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about home loan foreclosure. The home loan (LN-FTB86001) has Rs 25,00,000 outstanding — a large amount. But the PERSONAL loan (LN-FTB86002) has only Rs 1,80,000 outstanding — a small amount easily cleared first. A loan_ids filter for only the home loan hides the personal loan. Broad query reveals both — the model can advise clearing the small personal loan first.",
+      "records": [
+        {
+          "loan_id": "LN-FTB86001",
+          "type": "home",
+          "principal": 3500000,
+          "outstanding": 2500000,
+          "emi_amount": 28125,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 120,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKFTB9486001"
+        },
+        {
+          "loan_id": "LN-FTB86002",
+          "type": "personal",
+          "principal": 300000,
+          "outstanding": 180000,
+          "emi_amount": 6450,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 10,
+          "tenure_remaining": 40,
+          "status": "active",
+          "next_due_date": "2026-09-10",
+          "emi_account_id": "TKFTB9486001"
+        }
+      ]
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Home loan foreclosure: outstanding 25,00,000, accrued interest since last EMI (Aug 5 to Aug 15 = ~10 days): 2500000*8.6%*10/365 = 5890. Charges 2%: 50000. Total: 2500000+5890+50000=2555890. Personal loan: outstanding 180000, accrued (Aug 10 to Aug 15 = ~5 days): 180000*10.5%*5/365 = 259. Charges 2%: 3600. Total: 180000+259+3600=183859.",
+      "records": [
+        {
+          "loan_id": "LN-FTB86001",
+          "outstanding_principal": 2500000,
+          "accrued_interest": 5890,
+          "foreclosure_charges": 50000,
+          "total_payoff": 2555890
+        },
+        {
+          "loan_id": "LN-FTB86002",
+          "outstanding_principal": 180000,
+          "accrued_interest": 259,
+          "foreclosure_charges": 3600,
+          "total_payoff": 183859
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "LN-FTB86001",
+            "LN-FTB86002"
+          ]
+        }
+      },
+      {
+        "tool": "get_loan_foreclosure_quote",
+        "arguments": {
+          "loan_ids": [
+            "LN-FTB86001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "LN-FTB86001",
+                "LN-FTB86002"
+              ],
+              [
+                "LN-FTB86002",
+                "LN-FTB86001"
+              ],
+              [
+                "LN-FTB86001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying both loans surfaces the personal loan (Rs 1,80,000 outstanding) which is easily cleared. Querying only the home loan hides this cleaner path."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "LN-FTB86001"
+              ],
+              [
+                "LN-FTB86001",
+                "LN-FTB86002"
+              ],
+              [
+                "LN-FTB86002",
+                "LN-FTB86001"
+              ],
+              [
+                "LN-FTB86002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must quote the home loan (~Rs 25,55,890). A thorough response also quotes the personal loan (~Rs 1,83,859) as a cheaper quicker clearance."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_loan_details",
+        "get_loan_foreclosure_quote"
+      ]
+    ],
+    "expected_resolution": "The customer asks about home loan foreclosure. Home loan outstanding: Rs 25,00,000, total payoff ~Rs 25,55,890. The assistant should also surface the personal loan (LN-FTB86002, Rs 1,80,000 outstanding, total payoff ~Rs 1,83,859) as a much smaller obligation that can be cleared immediately with far lower charges. Reporting only the home loan without surfacing the personal loan fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "quotes home loan foreclosure (~Rs 25,55,890) AND surfaces the personal loan (~Rs 1,83,859) as a smaller, easier-to-clear obligation. Reporting only the home loan without the personal loan fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

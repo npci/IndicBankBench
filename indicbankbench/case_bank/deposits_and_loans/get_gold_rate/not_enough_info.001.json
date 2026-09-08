@@ -1,0 +1,177 @@
+{
+  "case_id": "depl.get_gold_rate.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_gold_rate",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer names a purity (20 carat) not in the enum {18,22,24}. Model must ask which valid purity, not call the tool with 20.",
+  "setup": {
+    "persona": "24-year-old female, No Occupation / Retired / Homemaker, rural Seoni, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0503",
+      "full_name": "Kanku Sahu",
+      "date_of_birth": "2002-02-20",
+      "gender": "female",
+      "customer_since": "2020-09-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0661",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "62 Station Road",
+        "line2": "Sector 17",
+        "city": "Seoni",
+        "state": "Madhya Pradesh",
+        "pincode": "880661",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "62 Station Road",
+        "line2": "Sector 17",
+        "city": "Seoni",
+        "state": "Madhya Pradesh",
+        "pincode": "880661",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4696X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGDL740400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGDL740400002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "search_knowledge_base",
+    "toggle_card_freeze",
+    "block_card",
+    "get_loan_foreclosure_quote",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the gold rate for 20 carat?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only.",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {},
+        "_comment": "Must NOT be called: 20K outside enum."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the gold rate at 20 carat, but the tool only recognises 18, 22 and 24 carat. The assistant must ask ONE focused question to resolve the ambiguity — e.g. 'did you mean 22K or 18K?' — and must NOT call get_gold_rate with 20, must not silently round to 22/18, and must not quote any rate."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which valid purity the customer meant (22K vs 18K) and does not call get_gold_rate or quote a rate. Calling the tool with an invalid purity, silently substituting a nearby purity, or quoting a rate fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,172 @@
+{
+  "case_id": "csc.get_products_and_offers.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer asks about FD products, detours to insurance products, then returns to FD question. Model must keep product listings separate.",
+  "setup": {
+    "persona": "54-year-old male, Shoemaker, Hand, urban Tiruppur, Tamil Nadu",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0512",
+      "full_name": "Sanmuk Subair",
+      "date_of_birth": "1972-03-25",
+      "gender": "male",
+      "customer_since": "2014-02-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1026",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Tiruppur",
+        "state": "Tamil Nadu",
+        "pincode": "331026",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Tiruppur",
+        "state": "Tamil Nadu",
+        "pincode": "331026",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0965X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCPR8700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCPR8700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "What fixed deposit products do you offer? I want to know the options."
+    },
+    {
+      "content": "Wait, do you also have any term insurance plans?"
+    },
+    {
+      "content": "Going back to FDs — what's the minimum tenure for a fixed deposit?"
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "Two separate calls expected: FD products, then insurance products.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years. Interest compounded quarterly. Minimum deposit Rs 1,000.",
+          "valid_till": ""
+        },
+        {
+          "id": "PRD-RD-2004",
+          "title": "TK FlexiRD",
+          "type": "deposit",
+          "description": "Recurring deposit from 6 months to 10 years. Monthly installments from Rs 500.",
+          "valid_till": ""
+        },
+        {
+          "id": "PRD-LI-3001",
+          "title": "TK Term Life",
+          "type": "insurance",
+          "description": "Pure term insurance plan. Coverage from Rs 50 lakh to Rs 5 crore. No maturity benefit.",
+          "valid_till": "2026-12-31"
+        },
+        {
+          "id": "PRD-HI-3002",
+          "title": "TK Health Shield",
+          "type": "insurance",
+          "description": "Health insurance with family floater option. Sum insured up to Rs 1 crore.",
+          "valid_till": "2026-12-31"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "deposit"
+        }
+      },
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "insurance"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Must be called for FD products and then insurance products."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about FD products. The assistant calls get_products_and_offers for deposits and reports the SmartFD (7 days to 5 years, min Rs 1,000) and FlexiRD. The customer then detours to term insurance — the assistant calls again for insurance products and reports TK Term Life and Health Shield. The customer returns to ask the minimum FD tenure — the assistant must recall '7 days' from the first call without confusing it with insurance product details. Confusing FD tenure with insurance coverage amounts, or forgetting the FD product data, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the insurance detour, correctly recalls the minimum FD tenure (7 days) from the earlier call. Confusing FD data with insurance product data, or forgetting FD details, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

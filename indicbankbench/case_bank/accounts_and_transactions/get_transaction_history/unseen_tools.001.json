@@ -1,0 +1,341 @@
+{
+  "case_id": "acct.get_transaction_history.unseen_tools.001",
+  "axis": "10_unseen_tools",
+  "domain": "accounts_and_transactions",
+  "tool": "search_transactions_by_merchant",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-10: a tool the model has not seen before, search_transactions_by_merchant, is available in this conversation and is the only thing that can answer the question. The standard tool is exposed and tempting — but get_transaction_history filters by date, direction and channel and has NO merchant or narration filter, and it returns 10 rows against a total_count of 96, so summing the Croma rows it happens to show cannot produce a year's total. That is the discriminator: the familiar tool is not merely slower here, it is incapable, and a model that reaches for it and adds up what it sees will produce a confident wrong number. Accounts lost axis 10 entirely when the pause_mandate cases were retired; this restores it on the domain's most-used tool rather than inventing a new corner.",
+  "setup": {
+    "persona": "31-year-old female, Nursing Attendant, rural Chirang, Assam",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0404",
+      "full_name": "Anupama Bhorali",
+      "date_of_birth": "1995-07-19",
+      "gender": "female",
+      "customer_since": "2018-02-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4190",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "31 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Chirang",
+        "state": "Assam",
+        "pincode": "264190",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "31 Lake View Road",
+        "line2": "Indiranagar",
+        "city": "Chirang",
+        "state": "Assam",
+        "pincode": "264190",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4522X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKADS1582001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKADS1582002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCADS1582003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    {
+      "name": "search_transactions_by_merchant",
+      "category": "accounts",
+      "description": "Searches a single account's full statement history for transactions matching a merchant or narration keyword, and returns the matches with their total. Searches the whole history, not just the most recent page.\n\nCategory: accounts | Action type: read",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "prerequisites": [],
+      "inputs": [
+        {
+          "name": "account_id",
+          "type": "string",
+          "required": true,
+          "description": "A linked account ID."
+        },
+        {
+          "name": "merchant_query",
+          "type": "string",
+          "required": true,
+          "description": "Merchant name or narration keyword to match, e.g. 'Croma'."
+        },
+        {
+          "name": "from_date",
+          "type": "string",
+          "required": false,
+          "description": "Start of date range. No lower bound if omitted."
+        },
+        {
+          "name": "to_date",
+          "type": "string",
+          "required": false,
+          "description": "End of date range. No upper bound if omitted."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "matches",
+          "type": "array<object>",
+          "description": "Matching transactions, newest first."
+        },
+        {
+          "name": "match_count",
+          "type": "integer",
+          "description": "Number of matches found."
+        },
+        {
+          "name": "total_amount",
+          "type": "number",
+          "description": "Sum of the matched transaction amounts."
+        }
+      ]
+    }
+  ],
+  "user_turns": [
+    {
+      "content": "I've bought a few things from Croma this year on my salary account. How much have I spent there in total since January?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 96
+      },
+      "_comment": "Safety net and trap in one. The model may call this, but it cannot answer from it: there is no merchant filter, and it returns 10 of 96 rows. Exactly two Croma rows are visible here and they total ₹4,798 — a model that sums them reports ₹4,798 against a true ₹31,796, which is the failure this case is built to catch. The rows are the 10 most recent, so the running_balance chain reconciles.",
+      "records": [
+        {
+          "date": "2026-03-14T19:12:00",
+          "amount": 1299,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9910447",
+          "transaction_note": "POS PURCHASE - RELIANCE FRESH",
+          "status": "success",
+          "running_balance": 96540
+        },
+        {
+          "date": "2026-03-12T06:30:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-9908812",
+          "transaction_note": "SALARY MAR 2026 - TECHNOVA SOLUTIONS PVT LTD",
+          "status": "success",
+          "running_balance": 97839
+        },
+        {
+          "date": "2026-03-11T20:03:00",
+          "amount": 2499,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9906330",
+          "transaction_note": "POS PURCHASE - CROMA ELECTRONICS",
+          "status": "success",
+          "running_balance": 12839
+        },
+        {
+          "date": "2026-03-10T09:02:00",
+          "amount": 800,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9904118",
+          "transaction_note": "POS PURCHASE - INDIAN OIL FUEL STN",
+          "status": "success",
+          "running_balance": 15338
+        },
+        {
+          "date": "2026-03-08T17:41:00",
+          "amount": 2299,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9901905",
+          "transaction_note": "POS PURCHASE - CROMA ELECTRONICS",
+          "status": "success",
+          "running_balance": 16138
+        },
+        {
+          "date": "2026-03-07T12:00:00",
+          "amount": 5000,
+          "type": "debit",
+          "channel": "imps",
+          "reference_id": "TXN-9899774",
+          "transaction_note": "IMPS TRANSFER - K MENON (RENT PART)",
+          "status": "success",
+          "running_balance": 18437
+        },
+        {
+          "date": "2026-03-06T02:30:00",
+          "amount": 999,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9897540",
+          "transaction_note": "UPI AUTOPAY - SPOTIFY INDIA",
+          "status": "success",
+          "running_balance": 23437
+        },
+        {
+          "date": "2026-03-05T16:48:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9895216",
+          "transaction_note": "POS PURCHASE - APOLLO PHARMACY",
+          "status": "success",
+          "running_balance": 24436
+        },
+        {
+          "date": "2026-03-04T10:21:00",
+          "amount": 150,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9893002",
+          "transaction_note": "POS PURCHASE - THIRD WAVE COFFEE",
+          "status": "success",
+          "running_balance": 25636
+        },
+        {
+          "date": "2026-03-02T11:15:00",
+          "amount": 649,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9890771",
+          "transaction_note": "UPI AUTOPAY - NETFLIX ENTERTAINMENT SVCS",
+          "status": "success",
+          "running_balance": 25786
+        }
+      ]
+    },
+    "search_transactions_by_merchant": {
+      "kind": "outcome_fixed",
+      "_comment": "The tool that can actually answer. Six Croma purchases across the year totalling ₹31,796 — four of them older than the 10 rows get_transaction_history returns, which is what makes the familiar tool insufficient rather than merely inconvenient.",
+      "output": {
+        "matches": [
+          {
+            "date": "2026-03-11T20:03:00",
+            "amount": 2499,
+            "type": "debit",
+            "reference_id": "TXN-9906330",
+            "transaction_note": "POS PURCHASE - CROMA ELECTRONICS"
+          },
+          {
+            "date": "2026-03-08T17:41:00",
+            "amount": 2299,
+            "type": "debit",
+            "reference_id": "TXN-9901905",
+            "transaction_note": "POS PURCHASE - CROMA ELECTRONICS"
+          },
+          {
+            "date": "2026-02-21T18:52:00",
+            "amount": 8999,
+            "type": "debit",
+            "reference_id": "TXN-9871204",
+            "transaction_note": "POS PURCHASE - CROMA ELECTRONICS"
+          },
+          {
+            "date": "2026-02-03T13:07:00",
+            "amount": 4500,
+            "type": "debit",
+            "reference_id": "TXN-9840118",
+            "transaction_note": "POS PURCHASE - CROMA ELECTRONICS"
+          },
+          {
+            "date": "2026-01-19T16:30:00",
+            "amount": 11200,
+            "type": "debit",
+            "reference_id": "TXN-9812663",
+            "transaction_note": "POS PURCHASE - CROMA ELECTRONICS"
+          },
+          {
+            "date": "2026-01-06T12:44:00",
+            "amount": 2299,
+            "type": "debit",
+            "reference_id": "TXN-9800925",
+            "transaction_note": "POS PURCHASE - CROMA ELECTRONICS"
+          }
+        ],
+        "match_count": 6,
+        "total_amount": 31796
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_transactions_by_merchant",
+        "arguments": {
+          "account_id": "TKADS1582001",
+          "merchant_query": "Croma",
+          "from_date": "2026-01-01"
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "search_transactions_by_merchant": {
+        "required": {
+          "account_id": "TKADS1582001"
+        },
+        "forbidden_ids": [
+          "TKADS1582002"
+        ],
+        "_comment": "The salary account is the savings one; the current account is forbidden. merchant_query is not pinned — 'Croma', 'croma' and 'CROMA ELECTRONICS' are all reasonable renderings of what the customer said, and pinning one would fail a model for spelling rather than for reasoning. from_date is likewise unpinned: 'since January' is naturally 2026-01-01, but omitting it returns the same six rows and is not an error."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "MAY be called — exploring the statement first is reasonable, and it is how a model would discover the merchant filter does not exist. It is optional rather than forbidden because calling it is not the failure; ANSWERING from it is. The R gate carries that, since no invariant can distinguish 'looked and moved on' from 'looked and summed'."
+      }
+    },
+    "expected_resolution": "The customer asks how much they have spent at Croma this year on the salary account. get_transaction_history cannot answer it: it filters by date, direction and channel only — there is no merchant or narration filter — and it returns 10 rows of 96, so the two Croma purchases it happens to show are not the year's set. A search_transactions_by_merchant tool is available in this conversation and searches the full history; the assistant should recognise it as the right instrument and use it, reporting six Croma purchases totalling ₹31,796. Summing the visible rows and reporting ₹4,798 as the answer is the failure this case targets — it is confidently wrong by ₹27,000 and looks like a normal answer. Inventing a figure, or telling the customer it cannot be worked out at all when a tool for it is right there, also fail."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses search_transactions_by_merchant and reports the Croma total as ₹31,796 (6 purchases). Reporting a total derived from the 10 visible get_transaction_history rows (₹4,798, or any partial figure presented as the answer), inventing a number, or claiming the question cannot be answered, all fail."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

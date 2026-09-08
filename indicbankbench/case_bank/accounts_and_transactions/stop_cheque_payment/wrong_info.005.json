@@ -1,0 +1,186 @@
+{
+  "case_id": "acct.stop_cheque_payment.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'stop cheque 770012'. Lookup (get_transaction_history) shows that cheque number doesn't exist, but cheque 770021 exists (transposed digits). Correction: stop cheque 770021. arg_gate pins corrected number.",
+  "setup": {
+    "persona": "32-year-old male, Loader and Unloader, urban Moradabad, Uttar Pradesh",
+    "current_date": "2026-10-15",
+    "current_time": "13:00",
+    "login_context": {
+      "customer_id": "SCN0364",
+      "full_name": "Ram Mishra",
+      "date_of_birth": "1994-04-11",
+      "gender": "male",
+      "customer_since": "2015-12-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9595",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "309595",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "309595",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3011X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98004T1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9804T02",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "stop_cheque_payment",
+    "get_account_details",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to stop cheque 770012 on my savings account — I wrote it to the wrong payee."
+    },
+    {
+      "content": "Ok, 770021 it is — please stop it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "WRITE-AFTER-CORRECTION: cheque 770012 doesn't exist. Cheque 770021 does (customer transposed digits). Correct to 770021.",
+      "records": [
+        {
+          "date": "2026-10-10T09:00:00",
+          "amount": 45000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-770021",
+          "transaction_note": "CHEQUE 770021 - PAYEE PAYMENT",
+          "status": "pending",
+          "running_balance": 128500
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "Stop corrected cheque 770021.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "770021",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment applied on cheque 770021.",
+        "reference_id": "REF-SCP-WAC9804"
+      }
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKWAC98004T1"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKWAC98004T1",
+          "cheque_numbers": [
+            "770021"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKWAC98004T1"
+        },
+        "_comment": "Must check transaction history. Cheque 770012 doesn't exist."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKWAC98004T1",
+          "cheque_numbers": [
+            "770021"
+          ]
+        },
+        "_comment": "CORRECTED: stop cheque 770021 (customer transposed digits from 770012)."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "expected_resolution": "Customer says cheque 770012 but that cheque doesn't exist. Transaction history shows cheque 770021 — likely the correct number. The assistant must check history, find 770021, correct the customer, and stop 770021 after confirmation. Stopping non-existent cheque 770012 without checking fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks history, finds 770021, corrects customer, confirms, stops correct cheque. Stopping 770012 without verification fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

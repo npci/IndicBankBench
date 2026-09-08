@@ -1,0 +1,283 @@
+{
+  "case_id": "acct.agentic.conditional_multi_cheque.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history+stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — conditional branch across a TWO-cheque set: check which cheques have cleared and stop whichever has NOT. The history shows cheque 100234 presented and cleared (a cheque-channel debit) while 100235 appears nowhere, so the correct branch is to stop ONLY 100235. The arg_gate pins cheque_numbers to exactly ['100235'], so stopping both (or the cleared one) fails A3; A4 orders the check before the act. Named careless failure mode: blanket-stopping both cheques without separating cleared from uncleared — the 'stop every number the customer mentioned' reflex. Turn 2 names the reason (lost) in the customer's own words so the optional enum stays obtainable without deflating the case.",
+  "setup": {
+    "persona": "47-year-old male, White Washer, urban Kozhikode, Kerala",
+    "current_date": "2026-08-16",
+    "current_time": "09:40",
+    "login_context": {
+      "customer_id": "SCN0725",
+      "full_name": "Radhakrishnan Bhavan",
+      "date_of_birth": "1979-07-23",
+      "gender": "male",
+      "customer_since": "2018-06-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2974",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Kozhikode",
+        "state": "Kerala",
+        "pincode": "662974",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "55 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Kozhikode",
+        "state": "Kerala",
+        "pincode": "662974",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8991X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMCQ5107001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKMCQ5107002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMQC5107003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "create_fd",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "I issued two cheques recently — 100234 and 100235, both from my salary account. Tell me which have already been paid, and stop whichever hasn't cleared."
+    },
+    {
+      "content": "Yes, please go ahead and stop 100235 — those cheques were lost, that's the reason."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-14T19:20:00",
+          "amount": 1240,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI510701",
+          "transaction_note": "SWIGGY ORDER 8842",
+          "status": "success",
+          "running_balance": 88612
+        },
+        {
+          "date": "2026-08-12T11:05:00",
+          "amount": 22500,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-510701",
+          "transaction_note": "CHEQUE 100234 PRESENTED",
+          "status": "success",
+          "running_balance": 89852
+        },
+        {
+          "date": "2026-08-10T10:05:00",
+          "amount": 90000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT510701",
+          "transaction_note": "SALARY AUG26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 112352
+        }
+      ],
+      "_comment": "Cheque 100234 is present as a cleared cheque-channel debit; 100235 appears nowhere, so it has NOT cleared. Filtering channel='cheque' returns only the 100234 row — an equally clear signal. running_balance chains: 88612+1240=89852, 89852+22500=112352, opening 112352-90000=22352."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "100235",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment instruction placed on 1 cheque.",
+        "reference_id": "REF-SCP-51071"
+      },
+      "_comment": "account_id is echoed by the executor."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKMCQ5107001",
+          "channel": "cheque"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKMCQ5107001",
+          "cheque_numbers": [
+            "100235"
+          ],
+          "reason": "lost"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKMCQ5107001"
+        },
+        "forbidden_ids": [
+          "TKMCQ5107002"
+        ],
+        "optional_ok": {
+          "channel": {
+            "allowed": [
+              "cheque",
+              "all",
+              null
+            ]
+          }
+        },
+        "_comment": "Check the salary account to separate cleared from uncleared cheques. Filtering channel='cheque' is sharpest; querying everything is also fine."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKMCQ5107001",
+          "cheque_numbers": [
+            "100235"
+          ]
+        },
+        "forbidden_ids": [
+          "TKMCQ5107002"
+        ],
+        "optional_ok": {
+          "reason": {
+            "allowed": [
+              "lost",
+              null
+            ]
+          }
+        },
+        "_comment": "100234 has CLEARED and must not be stopped; the stop targets exactly 100235. Stopping both numbers fails A3. reason is optional; 'lost' is the customer's stated reason."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer wants the cleared cheques identified and the uncleared ones stopped. The assistant must check the salary account's transaction history first: cheque 100234 was presented and cleared (a 22,500 cheque-channel debit on 2026-08-12), while 100235 appears nowhere — so it has not cleared. It must report that split, confirm the stop (a write), and then stop ONLY cheque 100235 with reason lost, reporting REF-SCP-51071. Stopping both cheques, stopping the cleared one, or stopping before checking, fails — the arg_gate pins cheque_numbers to exactly ['100235'] and A4 requires the history check first."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant separates the two cheques from the history (100234 cleared, 100235 not), stops ONLY 100235 after confirmation, and reports it stopped; FAIL if both cheques are stopped, the cleared one is stopped, or the check precedes the act incorrectly."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

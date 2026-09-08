@@ -1,0 +1,242 @@
+{
+  "case_id": "acct.agentic.mandate_account_resolution.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates+get_account_balance",
+  "target_behavior": "answer",
+  "_axis_note": "GENERAL EVAL — multi-tool task with a REAL dependency through record output. The customer asks whether the auto-debit for their yearly LIC premium will go through, but never says which of their two accounts it debits. show_mandates must be read first: the LIC SI mandate (MND-MRR694-02) carries account_id TKMRR6942002 — the CURRENT account. Only then can get_account_balance know WHICH account to check. A model that defaults to the salary account 'because premiums come from savings' checks the wrong balance and gives a confident wrong verdict — the case is built to catch exactly that. The later call's argument is derived from the earlier call's output (record keyword), not available any other way.",
+  "setup": {
+    "persona": "33-year-old male, Carpenter Mistry, Boat Building, rural Guntur, Andhra Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0582",
+      "full_name": "Rajannadora Shankar",
+      "date_of_birth": "1993-04-22",
+      "gender": "male",
+      "customer_since": "2015-06-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9167",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "88 Nehru Street",
+        "line2": "Model Town",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "749167",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "88 Nehru Street",
+        "line2": "Model Town",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "749167",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4704X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMRR6942001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKMRR6942002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMRR6942003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "My LIC premium is due soon — I remember it gets debited automatically. Will the debit go through with the money I have, or do I need to top up?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "The trap row is MND-MRR694-02: the yearly LIC premium mandate sits on the CURRENT account, not the salary one. The model must treat the mandate record (payee, amount, next_debit_date, account_id) as the source of truth for which account the debit will hit.",
+      "records": [
+        {
+          "mandate_id": "MND-MRR694-01",
+          "type": "upi_autopay",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-04-01",
+          "account_id": "TKMRR6942001"
+        },
+        {
+          "mandate_id": "MND-MRR694-02",
+          "type": "si",
+          "payee": "LIC Premium",
+          "amount": 12500,
+          "frequency": "yearly",
+          "status": "active",
+          "next_debit_date": "2026-03-30",
+          "account_id": "TKMRR6942002"
+        },
+        {
+          "mandate_id": "MND-MRR694-03",
+          "type": "enach",
+          "payee": "HDFC SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-04-05",
+          "account_id": "TKMRR6942001"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Salary account is comfortably funded (Rs 48,600) — the decoy. The current account, which the LIC mandate actually debits, has Rs 9,840 against a Rs 12,500 debit: a Rs 2,660 shortfall. Answering from the salary balance gives the opposite (wrong) verdict.",
+      "records": [
+        {
+          "account_id": "TKMRR6942001",
+          "available_balance": 48600,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKMRR6942002",
+          "available_balance": 9840,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKMRR6942002"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "show_mandates",
+        "get_account_balance"
+      ]
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "The mandate list is the only source of the LIC mandate's amount and account. Called with no filters (or any harmless filter) — unpinned because the discriminator is downstream: which account the balance check lands on."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKMRR6942002"
+          ]
+        },
+        "forbidden_ids": [
+          "TKMRR6942001"
+        ],
+        "_comment": "The account_id must be taken from the LIC mandate record (current account TKMRR6942002). Checking the salary account — even alongside — is the wrong-read failure this case targets, since only the mandate account funds the LIC debit."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks whether the auto-debit for their yearly LIC premium will go through, without saying which account it debits. The assistant must first read show_mandates and locate the LIC mandate: MND-MRR694-02, a yearly SI of Rs 12,500 for LIC Premium, next debit 2026-03-30, sitting on the CURRENT account (TKMRR6942002). Only after reading that record should it check that account's balance: Rs 9,840 available. The verdict must be grounded in that check: the customer is short by about Rs 2,660 and needs to top up the current account before 30 March, or the debit will fail.\n\nThe failure this case targets is checking the WRONG account — the salary account holds Rs 48,600 and would wrongly suggest there is nothing to worry about. The account for the balance check is derivable only from the mandate record, so get_account_balance must be called on TKMRR6942002 (the mandate read must precede the balance read). Answering mostly from the salary balance, inventing the mandate details, or failing to see that LIC debits the current account, all fail."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads show_mandates, identifies the LIC premium mandate (Rs 12,500, due 2026-03-30, on the CURRENT account TKMRR6942002), checks THAT account's balance (Rs 9,840) and reports a shortfall of about Rs 2,660 with the top-up advice. FAIL if it checks the salary account instead and concludes the customer is covered, invents mandate details, or answers without grounding in both tool results."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

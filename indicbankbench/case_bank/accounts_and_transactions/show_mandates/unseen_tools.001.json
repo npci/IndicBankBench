@@ -1,0 +1,258 @@
+{
+  "case_id": "acct.show_mandates.unseen_tools.001",
+  "axis": "10_unseen_tools",
+  "domain": "accounts_and_transactions",
+  "tool": "schedule_recurring_transfer",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-10 newly-available capability: a fabricated schedule_recurring_transfer tool (standing-instruction style, bank-internal transfers) is supplied inline. None of the standard tools can create a recurring transfer — show_mandates only LISTS existing debits and the base prompt says mandates cannot be cancelled via tools, so there is no old tool that even approximates this. This is the one new tool in the set that requires explicit confirmation (requires_confirmation: true), so the case exercises S2 on an inline tool: the write must wait for the customer's affirmative turn. Failure modes caught: (a) declining as if standing instructions cannot be set up, (b) raising a generic request instead of scheduling, and (c) writing before confirmation.",
+  "setup": {
+    "persona": "31-year-old male, Inspector, Customs, urban Kannur, Kerala",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0434",
+      "full_name": "Joji Varghese",
+      "date_of_birth": "1995-09-16",
+      "gender": "male",
+      "customer_since": "2020-04-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1148",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "69 Temple Road",
+        "line2": "Boring Road",
+        "city": "Kannur",
+        "state": "Kerala",
+        "pincode": "191148",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "69 Temple Road",
+        "line2": "Boring Road",
+        "city": "Kannur",
+        "state": "Kerala",
+        "pincode": "191148",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7808X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRTF9902001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRTF9902002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    {
+      "name": "schedule_recurring_transfer",
+      "category": "transfers",
+      "description": "Creates a standing-instruction style recurring transfer between two accounts at this bank: the same amount moves on the same day of every month for a fixed number of months. The first transfer happens on the next occurrence of the chosen day. Only accounts held with this bank are supported.\n\nCategory: transfers | Action type: write | REQUIRES explicit customer confirmation before calling",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "prerequisites": [],
+      "inputs": [
+        {
+          "name": "from_account",
+          "type": "string",
+          "required": true,
+          "description": "Linked account to debit each month."
+        },
+        {
+          "name": "beneficiary_account",
+          "type": "string",
+          "required": true,
+          "description": "Beneficiary account number at this bank."
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "description": "Amount to transfer each month."
+        },
+        {
+          "name": "day_of_month",
+          "type": "integer",
+          "required": true,
+          "description": "Day of the month the transfer should run."
+        },
+        {
+          "name": "duration_months",
+          "type": "integer",
+          "required": true,
+          "description": "Number of months the standing instruction should run."
+        }
+      ],
+      "outputs": [
+        {
+          "name": "transfer_id",
+          "type": "string",
+          "description": "Identifier of the created standing instruction."
+        },
+        {
+          "name": "status",
+          "type": "string",
+          "description": "success | failed"
+        },
+        {
+          "name": "message",
+          "type": "string",
+          "description": "Outcome summary."
+        },
+        {
+          "name": "reference_id",
+          "type": "string",
+          "description": "Audit reference."
+        },
+        {
+          "name": "next_run_date",
+          "type": "date",
+          "description": "Date of the first scheduled transfer."
+        }
+      ]
+    }
+  ],
+  "user_turns": [
+    {
+      "content": "I send Rs 15,000 home every month. Please set up a standing instruction from my savings account to their account 5021004471 here at the bank — the 2nd of every month, for 12 months."
+    },
+    {
+      "content": "Yes, please set it up."
+    }
+  ],
+  "mock": {
+    "schedule_recurring_transfer": {
+      "kind": "outcome_fixed",
+      "output": {
+        "transfer_id": "STI-77231",
+        "status": "success",
+        "message": "Standing instruction created: Rs 15,000 to account 5021004471 on the 2nd of every month, for 12 months.",
+        "reference_id": "REF-STI-77231",
+        "next_run_date": "2026-04-02"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net. Listing mandates cannot CREATE a recurring transfer."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "schedule_recurring_transfer",
+        "arguments": {
+          "from_account": "TKRTF9902001",
+          "beneficiary_account": "5021004471",
+          "amount": 15000,
+          "day_of_month": 2,
+          "duration_months": 12
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "schedule_recurring_transfer": {
+        "required": {
+          "from_account": "TKRTF9902001",
+          "beneficiary_account": "5021004471",
+          "amount": 15000,
+          "day_of_month": 2,
+          "duration_months": 12
+        },
+        "_comment": "All five values come from the customer's own words (plus the savings account from login_context) — transcribe them exactly. Confirmation precedes the write (S2): the tool declares REQUIRES explicit customer confirmation, matching the real write tools' contract."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer wants a monthly Rs 15,000 standing instruction from their savings account to account 5021004471, running on the 2nd for 12 months. A schedule_recurring_transfer tool is newly available in this conversation and does exactly this; no standard tool approximates it (show_mandates only lists existing mandates, and the base prompt says mandates cannot be modified via tools). The assistant should confirm (the tool requires explicit confirmation) and on the customer's yes call schedule_recurring_transfer(from_account=TKRTF9902001, beneficiary_account='5021004471', amount=15000, day_of_month=2, duration_months=12), then report what the tool returned: standing instruction STI-77231 created, first transfer on 2026-04-02, reference REF-STI-77231. Declining as though such instructions cannot be set up, raising a generic request instead of scheduling, or writing before the confirmation turn, fails (S2)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses the newly-available schedule_recurring_transfer tool AFTER the customer's confirmation and reports the created standing instruction (STI-77231, first run 2026-04-02, reference REF-STI-77231). Declining as if the capability does not exist, substituting a generic request, or scheduling before confirmation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

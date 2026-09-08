@@ -1,0 +1,212 @@
+{
+  "case_id": "depl.get_loan_details.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-7 non-existent entity: the customer asks for the outstanding balance on 'my car loan', but their profile holds only a home loan — no auto loan exists in login_context. The trap is that `auto` IS a valid get_loan_details loan type enum value, so a model reaching for 'check what loans exist' would get the home loan back and could report its figures as though they answered the car-loan question. The model must NOT invent an auto loan id (S1 catches any fabricated id — no auto loan id exists in login_context), and must name the real loan: 'you don't have an auto loan, but you have a home loan with ₹32,00,000 outstanding (₹40,00,000 original sanction, ₹34,885 EMI at 8.6%, 150 EMIs remaining)'. This is the deposit mirror of get_fd_details.wrong_info (FD → RD+loan) and the accounts wrong_info (NRE → salary+current): surface the missing entity against what actually exists. The home loan fixture reuses CONVENTIONS §5 canonical figures.",
+  "setup": {
+    "persona": "24-year-old female, Wood Bender, rural Tiruchirappalli, Tamil Nadu",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0045",
+      "full_name": "Tamil Devi",
+      "date_of_birth": "2002-04-22",
+      "gender": "female",
+      "customer_since": "2020-05-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9375",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Tiruchirappalli",
+        "state": "Tamil Nadu",
+        "pincode": "289375",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Tiruchirappalli",
+        "state": "Tamil Nadu",
+        "pincode": "289375",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0113X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGBQ9104001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNGBQ9104002",
+          "type": "loan",
+          "label": "TK GruhaSetu Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCGBQ9104003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the outstanding balance on my car loan?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The customer's only loan: a home loan. No car/auto loan exists — any auto loan id would be fabricated and S1 catches it. The home loan fixture reuses CONVENTIONS §5 canonical figures: ₹40,00,000 original sanction, ₹32,00,000 outstanding, ₹34,885 EMI at 8.6%, 150 EMIs remaining.",
+      "records": [
+        {
+          "loan_id": "TKLNGBQ9104002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-04-05",
+          "emi_account_id": "TKGBQ9104001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — the absence of an auto loan is visible in login_context (loan:1, type home), but calling get_loan_details to fetch the home loan's outstanding to name it concretely is correct exploration. Any fabricated auto loan id would fail S1 (no auto loan id exists in login_context or prior output)."
+      },
+      "_comment": "All other tools are absent from the gate — calling get_deposit_closure_quote, close_deposit, or a calculator for a loan that does not exist is irrelevant and fails A2.",
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 7 — a non-existent entity. The customer asks for the outstanding balance of 'my car loan', but their profile holds only a home loan (linked_products_summary says loan:1, type home).\n\nNo auto loan exists in login_context — no car-loan id, no auto-loan entry in linked_products. The assistant must convey, grounded in the profile, that there is no car loan on the account, and name what they DO have: a home loan with ₹32,00,000 outstanding (against a ₹40,00,000 original sanction), ₹34,885 EMI at 8.6%, 150 EMIs remaining, next due 2026-04-05.\n\nIt must NOT invent a car loan, fabricate an auto-loan outstanding figure, or report the home loan's outstanding as though it were the car loan's. Inventing a car loan or its balance is the failure this case targets; a grounded correction naming the real loan is correct."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "PASS requires the assistant to convey, grounded in the profile, that there is no car loan on the account — and to name the real loan they do have (a home loan). Inventing a car loan, fabricating an auto-loan balance, or silently reporting the home loan's figures without surfacing the mismatch fails. A bare 'I can't find that' with no grounding in what exists fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_refusal",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

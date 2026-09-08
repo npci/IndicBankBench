@@ -1,0 +1,339 @@
+{
+  "case_id": "cards.agentic.card_freeze_wrong_txn.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+get_transaction_history+toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'freeze card 5599 — someone just used it online.' get_transaction_history for the debit account reveals the suspicious txn was via card 6688 (a ₹92,000 online charge), not 5599. Correction: toggle_card_freeze on TKCBW6688.",
+  "setup": {
+    "persona": "23-year-old female, No Occupation / Retired / Homemaker, urban Agra, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0059",
+      "full_name": "Jyoti Singh",
+      "date_of_birth": "2003-09-04",
+      "gender": "female",
+      "customer_since": "2021-08-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5932",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Agra",
+        "state": "Uttar Pradesh",
+        "pincode": "325932",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Agra",
+        "state": "Uttar Pradesh",
+        "pincode": "325932",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6350X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCF9500200",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW5599",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCBW6688",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "block_card",
+    "get_account_balance",
+    "get_card_details",
+    "get_transaction_history",
+    "set_card_controls",
+    "toggle_card_freeze"
+  ],
+  "user_turns": [
+    {
+      "content": "Freeze my card ending 5599 — someone just made an online purchase with it. I got an alert. Freeze it now."
+    },
+    {
+      "content": "Yes, freeze that card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCBW5599",
+          "masked_number": "****5599",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "04/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCBW6688",
+          "masked_number": "****6688",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 400000,
+          "available_limit": 308000,
+          "expiry": "06/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 80000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 40000
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "Customer named 5599 (debit, domestic-only) but the suspicious online charge pointing to credit card 6688 (international enabled)."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-24T09:15:00",
+          "amount": 92000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-6688-F01",
+          "transaction_note": "ELECTRONICS GALORE MUMBAI — Credit Card 6688",
+          "status": "success",
+          "running_balance": 308000
+        }
+      ],
+      "static_output": {
+        "total_count": 1
+      },
+      "_comment": "The suspicious ₹92,000 charge on card 6688 — not 5599."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCBW6688",
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Card frozen. All channels suspended.",
+        "reference_id": "REF-FRZ-95030"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW5599",
+            "TKCBW6688"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKSCF9500200"
+        }
+      },
+      {
+        "tool": "toggle_card_freeze",
+        "arguments": {
+          "card_id": "TKCBW6688",
+          "state": "freeze"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "toggle_card_freeze"
+      ],
+      [
+        "get_transaction_history",
+        "toggle_card_freeze"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCBW5599",
+                "TKCBW6688"
+              ],
+              [
+                "TKCBW6688"
+              ],
+              [
+                "TKCBW5599"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must surface card details. Customer named 5599 (debit)."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKSCF9500200"
+            ]
+          }
+        },
+        "_comment": "Reveals the fraudulent ₹92,000 charge on card 6688."
+      },
+      "toggle_card_freeze": {
+        "required": {
+          "card_id": "TKCBW6688",
+          "state": "freeze"
+        },
+        "forbidden_ids": [
+          "TKCBW5599"
+        ],
+        "_comment": "CORRECTED card_id=TKCBW6688. Customer named 5599 but the fraudulent charge is on 6688."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'freeze card 5599 — someone just used it online.' The assistant looks up cards: 5599 is a debit card with domestic-only online (₹30,000 limit). 6688 is a credit card with international online enabled (₹80,000 limit). get_transaction_history reveals a recent ₹92,000 charge via card 6688 at 'ELECTRONICS GALORE MUMBAI' — this is the suspicious transaction. Customer named the wrong card. The assistant must correct: 'Your card 5599 is domestic-only with a ₹30,000 limit — it can't have been used for this charge. The suspicious transaction is on your credit card 6688. I'll freeze that instead.' After confirmation, calls toggle_card_freeze on TKCBW6688. A weak model freezes the named debit card. arg_gate pins card_id=TKCBW6688 and forbidden_ids=[TKCBW5599]."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads both card details and transaction history, identifies the fraudulent charge is on credit card 6688 not the named debit card 5599, communicates the correction, and after confirmation freezes TKCBW6688. FAIL if toggle_card_freeze is called on TKCBW5599."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

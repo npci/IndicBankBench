@@ -1,0 +1,221 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.long_context.003",
+  "axis": "8_long_context",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior conversation fetched gold rate at Rs 6,200/g for 24k. Since then the rate has moved to Rs 7,100/g. Customer asks to compute LTV on 50g, expecting outdated figure. Model must re-fetch get_gold_rate live, not reuse the stale Rs 6,200.",
+  "setup": {
+    "persona": "56-year-old male, Street Vendors, Non Food Products, rural Chandel, Manipur",
+    "current_date": "2026-09-15",
+    "current_time": "14:30",
+    "login_context": {
+      "customer_id": "SCN0328",
+      "full_name": "Isaac Haokip",
+      "date_of_birth": "1970-09-20",
+      "gender": "male",
+      "customer_since": "2020-03-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2780",
+      "registered_email": "i*****@gmail.com",
+      "communication_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Chandel",
+        "state": "Manipur",
+        "pincode": "822780",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "21 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Chandel",
+        "state": "Manipur",
+        "pincode": "822780",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4345X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGLT9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGLT9600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's today's gold rate?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "g1",
+            "type": "function",
+            "function": {
+              "name": "get_gold_rate",
+              "arguments": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "g1",
+        "content": "{\"rate_per_gram\":6200,\"rate_date\":\"2026-09-15\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The rate for 24k gold today is Rs 6,200 per gram."
+      },
+      {
+        "role": "user",
+        "content": "That seems lower than last week. Anyway, let me think about the pledge amount."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Ok, I've decided — calculate the gold loan LTV for 50 grams of 24 karat gold."
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Gold rate has moved from Rs 6,200 (stale, in prior) to Rs 7,100 now. 50g * 7100 * 0.75 = Rs 2,66,250 LTV.",
+      "output": {
+        "rate_per_gram": 7100,
+        "rate_date": "2026-09-15"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 355000,
+        "eligible_loan_amount": 266250,
+        "ltv_percent_used": 75
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 24
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 50,
+          "purity_karat": 24,
+          "gold_rate_per_gram": 7100
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {},
+        "_comment": "Must re-fetch live rate. Prior showed Rs 6,200 but rate is now Rs 7,100."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 50,
+          "purity_karat": 24
+        },
+        "_comment": "Must use fresh rate for LTV computation."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "expected_resolution": "The prior conversation had the assistant fetching today's gold rate of Rs 6,200/g. Since then the rate has moved. The customer asks for LTV calculation on 50g of 24k gold. The assistant must re-fetch get_gold_rate live (Rs 7,100/g), call calculate_gold_loan_ltv with 50g 24k, and report: gold value Rs 3,55,000, eligible loan amount Rs 2,66,250 at 75% LTV. Using the stale Rs 6,200/g from the prior conversation fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches get_gold_rate live and discovers Rs 7,100/g (not stale Rs 6,200), reports LTV of Rs 2,66,250 on 50g 24k gold. Using the stale gold rate without re-fetching fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,312 @@
+{
+  "case_id": "cards.set_card_controls.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "cards",
+  "tool": "set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction on a write, with the multi-constraint rule that a channel's enable/disable state and its daily limit must not change in the same call. Turn 1 asks for online limit 80,000 AND disabling international online; turn 2 corrects the limit to 60,000 and WITHDRAWS the international change. The final write must carry exactly online.domestic.daily_limit=60000 — nothing about international. The arg_gate pins the whole nested payload via exact dict equality, so a call that still carries 80,000, or one that still disables international, fails A3; and a call that bundles enabled+limit is refused by the outcome_merged reject_when rule. Named careless failure mode: executing the pre-correction version of the request (both the old limit and the international disable) in a single call.",
+  "setup": {
+    "persona": "37-year-old female, No Occupation / Retired / Homemaker, urban Panchkula, Haryana",
+    "current_date": "2026-08-12",
+    "current_time": "17:40",
+    "login_context": {
+      "customer_id": "SCN0395",
+      "full_name": "Sanyogita Rati",
+      "date_of_birth": "1989-02-25",
+      "gender": "female",
+      "customer_since": "2013-12-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5281",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Panchkula",
+        "state": "Haryana",
+        "pincode": "705281",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Panchkula",
+        "state": "Haryana",
+        "pincode": "705281",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8697X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCCS4603001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCCS4603002",
+          "card_type": "credit",
+          "masked_number": "****7685",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCCCS4603003",
+          "card_type": "debit",
+          "masked_number": "****9088",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "My credit card — raise the online limit to ₹80,000, and switch off international online usage too."
+    },
+    {
+      "content": "Hmm, on second thought make it ₹60,000 — and leave international as it is. Go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCCS4603002",
+          "masked_number": "****7685",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 214500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 20000
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCCCS4603003",
+          "masked_number": "****9088",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "03/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-46031"
+      },
+      "reject_when": {
+        "payload_has_all_of": [
+          "enabled",
+          "daily_limit"
+        ],
+        "output": {
+          "status": "failed",
+          "message": "Send them as sequential calls."
+        }
+      },
+      "_comment": "A call that carries BOTH a channel's enabled flag and its daily_limit in one call is rejected per the documented sequential-calls rule; the gold payload carries only daily_limit, so it is accepted."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCCS4603002"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCCCS4603002",
+          "online": {
+            "domestic": {
+              "daily_limit": 60000
+            }
+          }
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "set_card_controls"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCCCS4603002"
+          ]
+        },
+        "forbidden_ids": [
+          "TKCCCS4603003"
+        ],
+        "_comment": "Current settings must be surfaced before the change (also a disclosed prerequisite)."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCCCS4603002",
+          "online": {
+            "domestic": {
+              "daily_limit": 60000
+            }
+          }
+        },
+        "forbidden_ids": [
+          "TKCCCS4603003"
+        ],
+        "_comment": "The write must carry the CORRECTED payload: online.domestic.daily_limit=60000 and NOTHING else. The exact-match required dict fails a call that still has 80,000, still disables international, or bundles enabled+limit (which the mock would also reject)."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Turn 1 requests an online limit of 80,000 plus disabling international online; turn 2 corrects the limit to 60,000 and withdraws the international change. The final write must carry the corrected request and nothing else: set_card_controls(card_id=TKCCCS4603002, online={domestic: {daily_limit: 60000}}), after surfacing the current controls via get_card_details. International online stays enabled (25,000 limit). Executing the pre-correction version (80,000, international disabled) is the careless failure; bundling an enabled flag with the limit change is separately refused by the mock's sequential-calls rule."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the write applies ONLY the corrected change — online domestic daily limit 60,000 — and leaves international online untouched; FAIL if the limit lands at 80,000, if international usage is switched off, or if the change is made without surfacing current settings first."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

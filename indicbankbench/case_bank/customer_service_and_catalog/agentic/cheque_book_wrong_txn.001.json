@@ -1,0 +1,241 @@
+{
+  "case_id": "csc.agentic.cheque_book_wrong_txn.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_transaction_history+request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'order a cheque book for my salary account.' Only one savings account exists but customer says 'salary account'. get_transaction_history shows salary credits on the savings account. Correction: request_cheque_book with savings account_id.",
+  "setup": {
+    "persona": "35-year-old male, Richshaw Puller, rural Hoshiarpur, Punjab",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0534",
+      "full_name": "Ram Kumar",
+      "date_of_birth": "1991-05-28",
+      "gender": "male",
+      "customer_since": "2016-03-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4600",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Hoshiarpur",
+        "state": "Punjab",
+        "pincode": "584600",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Hoshiarpur",
+        "state": "Punjab",
+        "pincode": "584600",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4370X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSB9500002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSB9500004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_products_and_offers",
+    "get_request_status",
+    "get_transaction_history",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "Send me a new cheque book — 50 leaves — for my salary account. I need it for upcoming expenses."
+    },
+    {
+      "content": "Yes, order it for the savings account — go ahead."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-01T09:00:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT-SAL-88001",
+          "transaction_note": "Salary credit — TechMaharashtra Ltd",
+          "status": "success",
+          "running_balance": 245000
+        },
+        {
+          "date": "2026-07-01T09:00:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT-SAL-88000",
+          "transaction_note": "Salary credit — TechMaharashtra Ltd",
+          "status": "success",
+          "running_balance": 160000
+        }
+      ],
+      "static_output": {
+        "total_count": 2
+      },
+      "_comment": "Salary credits on savings account — confirms this IS the salary account even though account_type says 'savings'."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CB-96002",
+        "status": "success",
+        "message": "Cheque book ordered. 50 leaves will be delivered to your registered address.",
+        "delivery_address": "41 Church Street, Civil Lines, Hoshiarpur, Punjab, 584600, India"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE-00000",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCSB9500002"
+        }
+      },
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKCSB9500002",
+          "leaves": 50
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "request_cheque_book"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKCSB9500002"
+        },
+        "_comment": "Confirms salary credits on this account."
+      },
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKCSB9500002"
+        },
+        "_comment": "CORRECTED to the savings account that receives salary credits. Customer said 'salary account' — the account_id is correct based on the txn evidence."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'order cheque book for my salary account.' Only one savings account TKCSB9500002 exists (account_type=savings, not salary). get_transaction_history reveals regular salary credits from TechMaharashtra Ltd — confirming this IS functionally a salary account. The assistant should verify via transaction history and then order the cheque book. The 'correction' here is resolving the informal 'salary account' reference: the savings account IS the account receiving salary. After confirmation, calls request_cheque_book with account_id=TKCSB9500002 and leaves=50."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches transaction history, confirms salary credits exist on the savings account, resolves the informal 'salary account' reference, and after confirmation orders a cheque book. FAIL if the assistant refuses to process because 'salary' isn't the account type."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

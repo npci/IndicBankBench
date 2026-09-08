@@ -1,0 +1,201 @@
+{
+  "case_id": "acct.show_mandates.happy.001",
+  "axis": "1_happy_path",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, urban South, Delhi",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0579",
+      "full_name": "Asha Eaur",
+      "date_of_birth": "2008-07-21",
+      "gender": "female",
+      "customer_since": "2026-02-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6326",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "7 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "896326",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "7 Lake View Road",
+        "line2": "Koregaon Park",
+        "city": "New Delhi",
+        "state": "Delhi",
+        "pincode": "896326",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5196X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGXA9650001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKGXA9650002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGXA9650006",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "calculate_gold_loan_ltv",
+    "create_fd"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you pull up all the standing auto-payments set up on my salary account?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "Executor returns records whose account_id matches the call's account_id arg (all if omitted), further narrowed by the status arg if present. Same record set is reused by other show_mandates cases (wrong-account, bad-response, etc.).",
+      "records": [
+        {
+          "mandate_id": "MND-GXA9650-03",
+          "type": "upi_autopay",
+          "payee": "Netflix",
+          "amount": 649,
+          "status": "active",
+          "account_id": "TKGXA9650001"
+        },
+        {
+          "mandate_id": "MND-GXA9650-04",
+          "type": "enach",
+          "payee": "HDFC SIP",
+          "amount": 5000,
+          "status": "active",
+          "account_id": "TKGXA9650001"
+        },
+        {
+          "mandate_id": "MND-GXA9650-05",
+          "type": "si",
+          "payee": "LIC Premium",
+          "amount": 2200,
+          "status": "paused",
+          "account_id": "TKGXA9650002"
+        }
+      ]
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKGXA9650001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKGXA9650001"
+        },
+        "forbidden_ids": [
+          "TKGXA9650002"
+        ],
+        "optional_ok": {
+          "status": {
+            "allowed": [
+              "all",
+              "active",
+              null
+            ]
+          }
+        },
+        "_comment": "account_id MUST resolve to the salary account from login_context (the only salary account), WITHOUT asking. status filter optional because the user said 'all'. No other account may appear in any arg."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for standing auto-payments on their salary account. The assistant must resolve 'salary account' to TKGXA9650001 from login_context (the only salary account) WITHOUT asking, then call show_mandates filtered to that account. It should report exactly the two mandates on TKGXA9650001 - Netflix (UPI AutoPay, INR 649, active) and HDFC SIP (e-NACH, INR 5000, active) - with correct payee, type and amount. It must NOT surface MND-GXA9650-05 (LIC), which is on the current account, and must not invent, alter, or omit amounts. A clarifying question is a failure: the mapping is unambiguous."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "final answer lists exactly the TKGXA9650001 mandates (MND-GXA9650-03, MND-GXA9650-04) with correct payee/type/amount; excludes MND-GXA9650-05; nothing invented."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

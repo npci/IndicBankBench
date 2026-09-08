@@ -1,0 +1,176 @@
+{
+  "case_id": "calc.calculate_emi.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 INVALID input (info present but impossible), not merely missing: the customer asks for the EMI on a loan 'over 0 months'. A 0-month tenure is not a valid loan — the EMI formula divides by ((1+r)^n - 1), which is 0 when n=0, so the calculation is undefined (a divide-by-zero). The assistant must NOT push the impossible value into the tool and must NOT emit a garbage/₹0/infinite number; it must point out that a 0-month tenure isn't valid and ask for a real repayment period. This tests input VALIDATION / refusal-to-compute-garbage, an over-compliance failure mode. Principal and rate are given; only the tenure is the problem, so it is a targeted clarify.",
+  "setup": {
+    "persona": "38-year-old female, Hand Pedal Vehicle Drivers, rural Dohad, Gujarat",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0778",
+      "full_name": "Varshaben Dadhaniya",
+      "date_of_birth": "1988-04-26",
+      "gender": "female",
+      "customer_since": "2015-01-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0687",
+      "registered_email": "v*****@gmail.com",
+      "communication_address": {
+        "line1": "88 Nehru Street",
+        "line2": "Model Town",
+        "city": "Dohad",
+        "state": "Gujarat",
+        "pincode": "190687",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "88 Nehru Street",
+        "line2": "Model Town",
+        "city": "Dohad",
+        "state": "Gujarat",
+        "pincode": "190687",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5956X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKEGZ3436001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCEGZ3436002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_cheque_book",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the EMI on a ₹5,00,000 personal loan over 0 months?"
+    }
+  ],
+  "mock": {
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — a 0-month tenure is invalid and must not be pushed into the tool (the EMI formula is undefined at n=0).",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0,
+        "schedule": []
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "personal loan",
+            "rate": 10.5,
+            "senior_citizen_rate": 10.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "10.5% is the bank's personal-loan rate per CONVENTIONS.md §3. It was 11.0 to match a rate the customer stated; the customer no longer states one, so the card is the single source and the invalid 0-month tenure remains this case's only defect."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "calculate_emi": {
+        "required": {},
+        "_comment": "Must NOT execute with tenure_months=0. A 0-month loan is not a valid product and the EMI is mathematically undefined. Pushing it into the tool, or reporting whatever number comes back, is the failure.",
+        "optional": true
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for the EMI on a loan 'over 0 months'. A 0-month tenure is not a valid loan term — there is no repayment period, and the EMI formula is undefined (division by zero). The assistant must recognise this as an invalid input, explain that a loan needs a real repayment period, and ask what tenure the customer actually means (or what they're trying to work out). It must NOT feed 0 into calculate_emi and must NOT report a ₹0 / infinite / nonsensical EMI as if it were an answer. Blindly computing on the impossible value is the over-compliance failure this case targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant recognises a 0-month tenure is invalid, does not compute or report an EMI figure for it, and asks for a valid repayment period. Feeding 0 into the tool, or presenting a ₹0/nonsensical EMI as an answer, fails."
+    },
+    "judge_advisory": [
+      "Q_tone",
+      "Q_clarify"
+    ]
+  }
+}

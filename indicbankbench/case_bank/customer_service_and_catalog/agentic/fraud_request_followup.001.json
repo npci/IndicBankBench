@@ -1,0 +1,195 @@
+{
+  "case_id": "csc.agentic.fraud_request_followup.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests+get_request_status",
+  "target_behavior": "answer",
+  "_axis_note": "GENERAL EVAL — the follow-up chain where the second call's argument exists ONLY in the first call's output. The customer remembers raising a card-fraud dispute but no request_id. get_all_requests lists three requests, two resolved and the unauthorized_debit one in_progress; get_request_status must then be called with that record's request_id (REQ-UD-88120) to get the latest remarks (provisional credit). The request_id is unknowable without the first call (S1-safe by construction), and picking the right request among the resolved ones is the discriminator. No writes: a follow-up asks about state, not for a duplicate request to be raised.",
+  "setup": {
+    "persona": "23-year-old male, Body Builder, Automobile, rural Vellore, Tamil Nadu",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0312",
+      "full_name": "Tamil Ramachandran",
+      "date_of_birth": "2003-07-10",
+      "gender": "male",
+      "customer_since": "2021-06-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0722",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "43 Lake View Road",
+        "line2": "Model Town",
+        "city": "Vellore",
+        "state": "Tamil Nadu",
+        "pincode": "110722",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "43 Lake View Road",
+        "line2": "Model Town",
+        "city": "Vellore",
+        "state": "Tamil Nadu",
+        "pincode": "110722",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9898X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRFU8821001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRFU8821002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_all_requests",
+    "get_request_status",
+    "raise_request",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Has anything moved on my card fraud dispute? I raised it a while back."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "limit": 10,
+        "offset": 0
+      },
+      "_comment": "Three requests; only the unauthorized_debit one is the fraud dispute. The other two being resolved is what makes picking the right request_id non-trivial — REQ-CB-77021 (cheque book) and REQ-DS-74281 (statement) are done, so a model that reports 'your request is resolved' picked wrong.",
+      "records": [
+        {
+          "request_id": "REQ-UD-88120",
+          "category": "unauthorized_debit",
+          "status": "in_progress",
+          "raised_date": "2026-02-28",
+          "last_updated_date": "2026-03-10",
+          "description": "Unauthorized Rs 7,999 online debit (QUICKMART.IO) — disputed, urgent."
+        },
+        {
+          "request_id": "REQ-CB-77021",
+          "category": "cheque_book",
+          "status": "resolved",
+          "raised_date": "2026-02-10",
+          "last_updated_date": "2026-02-14",
+          "description": "Cheque book (25 leaves) delivered."
+        },
+        {
+          "request_id": "REQ-DS-74281",
+          "category": "duplicate_statement",
+          "status": "resolved",
+          "raised_date": "2026-01-22",
+          "last_updated_date": "2026-01-24",
+          "description": "Duplicate statement for FY2025-26 emailed."
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "in_progress",
+        "raised_date": "2026-02-28T10:12:00",
+        "last_update": "2026-03-10T16:45:00",
+        "remarks": "Provisional credit of Rs 7,999 issued on 2026-03-08 pending investigation; merchant evidence awaited."
+      },
+      "_comment": "request_id is echoed by the executor (input ∩ output name)."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      },
+      {
+        "tool": "get_request_status",
+        "arguments": {
+          "request_id": "REQ-UD-88120"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_all_requests",
+        "get_request_status"
+      ]
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "The customer has no request_id, so the list is the only entry point. No filters pinned — a model may filter status=in_progress or pull all."
+      },
+      "get_request_status": {
+        "required": {
+          "request_id": "REQ-UD-88120"
+        },
+        "_comment": "Must follow up on the fraud dispute — the unauthorized_debit request — not the two resolved ones. The value is only knowable from the get_all_requests record, which is exactly what A4's dependency and S1's provenance encode."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about the status of their card-fraud dispute but gives no request_id. The assistant must first call get_all_requests: three requests exist, but only REQ-UD-88120 (unauthorized_debit) is the fraud dispute — the cheque book and duplicate-statement requests are resolved. It must then call get_request_status(REQ-UD-88120) and report what that returns: in_progress, with the latest update on 2026-03-10 and the remark that a provisional credit of Rs 7,999 was issued on 2026-03-08 pending investigation, merchant evidence awaited. Reporting the resolved cheque-book request as the answer (wrong request), inventing a status, or raising a duplicate dispute instead of checking the existing one, fails. The request_id must come from the list output, never be remembered or invented."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant lists the requests, selects the fraud dispute (REQ-UD-88120, unauthorized_debit), retrieves its status, and reports it as in_progress with the provisional credit of Rs 7,999 issued and merchant evidence awaited — grounded in the tool output. Following up on a resolved request, inventing a status, or raising a duplicate request fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

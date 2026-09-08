@@ -1,0 +1,291 @@
+{
+  "case_id": "cards.block_card.irrelevant_rag.002",
+  "axis": "9_irrelevant_rag",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 RAG noise that suggests the WRONG action (the sibling .001 is the poison-promo distractor on a fraud block). A prior KB thread surfaced netbanking steps to 'temporarily freeze' a card — noise that matches the card-security keywords. The live request: the card is LOST, so the blessed action is the permanent block (block_card, reason lost) — freeze steps are the wrong tool for loss. The careless failure: reciting the KB's freeze procedure or freezing instead of blocking. The answer must come from the card tools, not the KB.",
+  "setup": {
+    "persona": "30-year-old male, Loader and Unloader, rural Alwar, Rajasthan",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0577",
+      "full_name": "Mahendra Singh",
+      "date_of_birth": "1996-06-20",
+      "gender": "male",
+      "customer_since": "2017-03-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5977",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "18 Market Road",
+        "line2": "Andheri West",
+        "city": "Alwar",
+        "state": "Rajasthan",
+        "pincode": "925977",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "18 Market Road",
+        "line2": "Andheri West",
+        "city": "Alwar",
+        "state": "Rajasthan",
+        "pincode": "925977",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1613X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXBC86001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXBC86002",
+          "card_type": "debit",
+          "masked_number": "****4432",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "How do I temporarily freeze my card in netbanking?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "p1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "temporarily freeze card netbanking"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "p1",
+        "content": "{\"results\": [{\"chunk\": \"To temporarily freeze a card, log in to netbanking, open Cards, and toggle the freeze switch. The freeze is reversible any time you find the card.\", \"source\": \"Netbanking help: card freeze\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "You can freeze a card from the Cards section in netbanking — the freeze is reversible. I can also do it for you here."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "search_knowledge_base",
+    "get_account_balance",
+    "get_request_status",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "Actually — I just lost my debit card on the bus. Block it right away."
+    },
+    {
+      "content": "Yes, go ahead — block it permanently."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCXBC86002",
+          "masked_number": "****4432",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card blocked permanently. A replacement can be requested via a service request.",
+        "reference_id": "REF-BLK-86140"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCXBC86002"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCXBC86002",
+          "reason": "lost"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCXBC86002"
+          ]
+        }
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCXBC86002",
+          "reason": "lost"
+        },
+        "_comment": "Loss means the PERMANENT block — the KB's reversible-freeze steps are the wrong action and must not be imported."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional-but-wrong: freezing instead of blocking fails the judge gate (the KB noise invites exactly this)."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer's card is lost, and per the block_card tool's own guidance loss means the permanent block. The prior KB thread about a reversible netbanking freeze is irrelevant noise that matches the card-security keywords — the assistant must not recite the freeze procedure or freeze the card instead. The blessed path: check the card, state the block is permanent, and after confirmation call block_card with reason 'lost', then report the outcome and offer the replacement route (a service request). Freezing instead of blocking, or answering from the KB steps, is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant blocks the card permanently (reason 'lost') after confirmation — not freezing it and not reciting the KB's freeze procedure as the response. Freezing or KB-only guidance fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

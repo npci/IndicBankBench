@@ -1,0 +1,149 @@
+{
+  "case_id": "csc.request_cheque_book.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer asks for a chequebook but has 2 linked accounts. Must ask which account before proceeding.",
+  "setup": {
+    "persona": "41-year-old female, No Occupation / Retired / Homemaker, urban Khordha, Odisha",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0044",
+      "full_name": "Bhagyavati Sahu",
+      "date_of_birth": "1985-02-16",
+      "gender": "female",
+      "customer_since": "2013-11-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7205",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "86 Station Road",
+        "line2": "Civil Lines",
+        "city": "Khordha",
+        "state": "Odisha",
+        "pincode": "517205",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "86 Station Road",
+        "line2": "Civil Lines",
+        "city": "Khordha",
+        "state": "Odisha",
+        "pincode": "517205",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1684X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRQB8000001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKRQB8000002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRQB8000003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_card_details",
+    "calculate_gold_loan_ltv"
+  ],
+  "user_turns": [
+    {
+      "content": "I need a new chequebook — the standard 25 leaves one. Can you order it for me?"
+    }
+  ],
+  "mock": {
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only.",
+      "output": {
+        "request_id": "REQ-CB-75100",
+        "status": "success",
+        "message": "Cheque book request placed.",
+        "delivery_address": "86 Station Road, Civil Lines, Khordha 517205"
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "request_cheque_book": {
+        "required": {},
+        "_comment": "Must NOT be called: ambiguous which account. A2 enforces."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer has two accounts (salary and savings) and asks for a chequebook without specifying which account. The assistant must ask ONE focused question to identify which account and must NOT call request_cheque_book yet. The clarification is the complete answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which account (salary or savings) rather than guessing or calling request_cheque_book. Calling the tool without knowing the account fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

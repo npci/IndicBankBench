@@ -1,0 +1,211 @@
+{
+  "case_id": "depl.update_deposit_renewal.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'change my Growth FD renewal to no renewal'. Lookup (get_fd_details) reveals she has two FDs — 'Growth FD' and 'Growth FD 2'. Customer assumed only one. Correction: update the correct Growth FD. arg_gate pins corrected FD.",
+  "setup": {
+    "persona": "23-year-old female, No Occupation / Retired / Homemaker, rural Kaimur, Bihar",
+    "current_date": "2026-10-17",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0558",
+      "full_name": "Sandeepa Devi",
+      "date_of_birth": "2003-03-13",
+      "gender": "female",
+      "customer_since": "2021-12-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3506",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Kaimur",
+        "state": "Bihar",
+        "pincode": "403506",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Kaimur",
+        "state": "Bihar",
+        "pincode": "403506",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8959X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98007T1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "FD-WAC9800701",
+          "type": "fd",
+          "label": "Growth FD"
+        },
+        {
+          "product_id": "FD-WAC9800702",
+          "type": "fd",
+          "label": "Growth FD 2"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9807T03",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "update_deposit_renewal",
+    "get_deposit_closure_quote",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to change my Growth FD renewal to 'no renewal' — please update it."
+    },
+    {
+      "content": "The December one — yes, update it."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRITE-AFTER-CORRECTION: two FDs named 'Growth FD' and 'Growth FD 2'. Customer assumed only one. Must query both and ask which one.",
+      "records": [
+        {
+          "deposit_id": "FD-WAC9800701",
+          "principal_amount": 300000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2025-06-01",
+          "maturity_date": "2028-06-01",
+          "maturity_instruction": "renew principal and interest",
+          "payout_account": "TKWAC98007T1",
+          "nominee": {
+            "name": "Rajesh Gupta",
+            "relationship": "brother"
+          }
+        },
+        {
+          "deposit_id": "FD-WAC9800702",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-12-01",
+          "maturity_date": "2026-12-01",
+          "maturity_instruction": "renew principal and interest",
+          "payout_account": "TKWAC98007T1",
+          "nominee": {
+            "name": "Rajesh Gupta",
+            "relationship": "brother"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "FD-WAC9800702",
+        "status": "success",
+        "message": "Renewal instruction updated to 'no renewal'.",
+        "reference_id": "REF-RNW-WAC9807"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "FD-WAC9800701",
+            "FD-WAC9800702"
+          ]
+        }
+      },
+      {
+        "tool": "update_deposit_renewal",
+        "arguments": {
+          "deposit_id": "FD-WAC9800702",
+          "instruction": "no_renewal"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "FD-WAC9800701",
+            "FD-WAC9800702"
+          ]
+        },
+        "_comment": "Must query both FDs. Customer says 'Growth FD' but there are two."
+      },
+      "update_deposit_renewal": {
+        "required": {
+          "deposit_id": "FD-WAC9800702",
+          "instruction": "no_renewal"
+        },
+        "_comment": "CORRECTED: customer picks the December FD (Growth FD 2)."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_fd_details",
+        "update_deposit_renewal"
+      ]
+    ],
+    "expected_resolution": "Customer says 'my Growth FD' but has both 'Growth FD' and 'Growth FD 2'. The assistant must query both, identify two FDs, and ask which one. Customer picks the December one (Growth FD 2). Update that FD's renewal to 'no renewal'. Updating without checking or updating the wrong FD fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both FDs, disambiguates, confirms, updates Growth FD 2. Updating wrong FD without disambiguation fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

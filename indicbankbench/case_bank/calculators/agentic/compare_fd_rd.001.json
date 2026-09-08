@@ -1,0 +1,228 @@
+{
+  "case_id": "calc.agentic.compare_fd_rd.001",
+  "axis": "general_agentic_multitool",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Agentic four-step chain: the customer weighs a lump-sum FD against a monthly RD for the same ₹1,20,000 total, and asks which yields more. The assistant must source BOTH rates (FD and RD) and run BOTH calculators, then compare and explain. Correct outcome: the FD (full ₹1,20,000 working from day 1 at 6.5%) matures to ₹1,36,517 vs the RD (₹5,000/month building up at 6.75%) at ₹1,28,762 — the FD wins despite its lower rate, because the RD's money is invested gradually rather than all at once. Exercises A4 twice (each rate before its calc) and grounded multi-figure reporting. The subtle trap: picking the RD just because its rate (6.75%) is higher, without accounting for the time-value difference.",
+  "setup": {
+    "persona": "39-year-old female, Milkman, rural Bhojpur, Bihar",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0185",
+      "full_name": "Sugiya Kumari",
+      "date_of_birth": "1987-12-01",
+      "gender": "female",
+      "customer_since": "2023-05-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6667",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "108 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Bhojpur",
+        "state": "Bihar",
+        "pincode": "626667",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "108 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Bhojpur",
+        "state": "Bihar",
+        "pincode": "626667",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9622X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKQMD4081001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCQMD4081002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "show_mandates",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I've got ₹1,20,000 spare. I could lock it all in a 2-year FD now, or instead put ₹5,000 a month into a 2-year RD. Which one leaves me with more at the end?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Returns whichever product's card is queried; both FD (6.5%) and RD (6.75%) slabs are here so a single design serves both calls.",
+      "output": {
+        "rates": [
+          {
+            "slab": "fd 1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "rd 1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 136517,
+        "interest_earned": 16517,
+        "total_principal_invested": 120000
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 128762,
+        "interest_earned": 8762,
+        "total_principal_invested": 120000
+      },
+      "_comment": "₹5,000/month for 24 months at 6.75%, quarterly compounding = 128761.64 -> 128762 (interest 8762) per CONVENTIONS.md §2. It was 128100/8100 — roughly 6.48% on a simple-interest average-balance basis, i.e. computed at about the FD rate without compounding, which is exactly the pair of errors §2 exists to prevent. The case makes the model SOURCE 6.75%, so a result that cannot be derived from 6.75% contradicts a model that checks its own arithmetic. deposits create_rd/not_enough_info.001 already published 128762 for the identical calculation."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 120000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Queried for BOTH products across the two calls. Not pinning product_type here since one gate entry covers both invocations; the calc gates below enforce the right sourced rate per product."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 120000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "rate": 6.75,
+          "tenure_months": 24
+        }
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants to compare investing ₹1,20,000 as a lump-sum 2-year FD versus ₹5,000/month into a 2-year RD. The assistant must source both the FD rate (6.5%) and the RD rate (6.75%), run calculate_fd_maturity (principal 120000) and calculate_rd_maturity (installment 5000, 24 months), and compare the results: the FD matures to ₹1,36,517 (₹16,517 interest) and the RD to ₹1,28,762 (₹8,762 interest). It should conclude the FD leaves more — by about ₹8,400 — and explain WHY despite the RD's higher headline rate: in the FD the full ₹1,20,000 earns from day one, whereas the RD's money is invested gradually over the two years, so less principal is working for less time. Reporting only one product, getting the figures wrong, or picking the RD merely because its rate is higher (missing the time-value point) are failures."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant sources both rates, computes both maturities (FD ₹1,36,517 vs RD ₹1,28,762), and correctly concludes the FD yields more — ideally explaining it is because the full sum is invested up front rather than gradually, not simply comparing headline rates. Computing only one, misreporting the figures, or choosing the RD on its higher rate alone fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

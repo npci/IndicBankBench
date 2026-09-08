@@ -1,0 +1,286 @@
+{
+  "case_id": "cards.get_card_details.not_enough_info.002",
+  "axis": "4_not_enough_info",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 call-then-clarify, complementing the sibling .001 which is pure 'ask which' and fails any tool call. The customer reports a card decline but never says WHICH card — they hold a credit card (****5409) and a debit card (****2241). The blessed path fetches both records, surfaces each card's current state (both active; the credit card has online domestic enabled with a Rs 1,00,000 limit) and asks which card was declined and where. The careless failure: diagnosing the first record in the response (the credit card) and presenting its settings as the answer.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, urban Purbi Singhbhum, Jharkhand",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0273",
+      "full_name": "Kamli Devi",
+      "date_of_birth": "2008-01-19",
+      "gender": "female",
+      "customer_since": "2026-11-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2856",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "97 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Purbi Singhbhum",
+        "state": "Jharkhand",
+        "pincode": "522856",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "97 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Purbi Singhbhum",
+        "state": "Jharkhand",
+        "pincode": "522856",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4001X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXCD95301",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXCD95302",
+          "card_type": "credit",
+          "masked_number": "****5409",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCXCD95303",
+          "card_type": "debit",
+          "masked_number": "****2241",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "create_rd",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "My card keeps getting declined — can you check what's wrong with it?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCXCD95302",
+          "masked_number": "****5409",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 500000,
+          "available_limit": 312400,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 100000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCXCD95303",
+          "masked_number": "****2241",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCXCD95302",
+            "TKCXCD95303"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCXCD95302",
+                "TKCXCD95303"
+              ],
+              [
+                "TKCXCD95303",
+                "TKCXCD95302"
+              ]
+            ]
+          }
+        },
+        "_comment": "Fetch both cards so the decline question can be grounded. Diagnosing only the first record (the credit card) is the careless failure."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer reports a card decline but does not say which of their two cards — a Visa credit card (****5409) and a RuPay debit card (****2241) — was declined, or where. The assistant should fetch both card records and ask which card was declined and in which situation (online, POS, ATM), noting what it can see (both cards active, online domestic enabled on both). Diagnosing one card's settings — typically the first record, the credit card — and presenting them as the answer is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant fetches both card records and asks which card was declined (and where), rather than diagnosing one card's controls as if the customer's referent were obvious. A one-card diagnosis presented as the answer fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,213 @@
+{
+  "case_id": "csc.get_products_and_offers.bad_response.003",
+  "axis": "2_bad_tool_response",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 degradation that must be FLAGGED (the siblings .001 covered the empty set and .002 the blank description). The catalogue returns a personal-loan offer with all fields present except valid_till, which came back empty — and the customer's question is exactly 'how long is this offer valid?'. The careless failure: inventing a deadline (or importing a date from memory/other offers). The model must say the validity date did not come through and offer a next step.",
+  "setup": {
+    "persona": "32-year-old female, No Occupation / Retired / Homemaker, rural Kannauj, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0282",
+      "full_name": "Pallavi Devi",
+      "date_of_birth": "1994-03-18",
+      "gender": "female",
+      "customer_since": "2014-04-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1422",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "63 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Kannauj",
+        "state": "Uttar Pradesh",
+        "pincode": "991422",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "63 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Kannauj",
+        "state": "Uttar Pradesh",
+        "pincode": "991422",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7827X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXPB75001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCXPB75002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I can see a pre-approved personal loan offer in the app — how long is it valid?"
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "THE ANOMALY: valid_till came back empty on the offer the customer asked about.",
+      "records": [
+        {
+          "id": "OFF-75001",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to Rs 10,00,000, minimal documentation. Indicative only.",
+          "valid_till": null
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "cancelled",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "The model must look up the offer and then flag that its validity date is missing."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks how long the pre-approved personal loan offer is valid. The catalogue returns the offer (up to Rs 10,00,000, indicative) but its valid_till date did not come through. The assistant must present the offer and say plainly that the validity date is not visible right now, offering a next step — not invent a deadline and not import one from another offer or from memory. Stating any validity date is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant flags that the offer's validity date did not come through and does NOT state any deadline for it. Inventing a valid_till date or claiming the offer expires on some date fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

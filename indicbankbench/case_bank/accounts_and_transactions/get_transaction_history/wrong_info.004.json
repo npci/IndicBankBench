@@ -1,0 +1,205 @@
+{
+  "case_id": "acct.get_transaction_history.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'the last 7 days' of transactions looking for a salary credit. The salary (Rs 92,000) actually hit 10 days ago — a date_range:last_7_days filter hides it. Broad query finds the credit.",
+  "setup": {
+    "persona": "55-year-old male, Domestic and Related Helpers, Cleaners and Launderers, rural Kushinagar, Uttar Pradesh",
+    "current_date": "2026-07-15",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0633",
+      "full_name": "Mukesh Asthana",
+      "date_of_birth": "1971-02-07",
+      "gender": "male",
+      "customer_since": "2013-01-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7289",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "50 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Kushinagar",
+        "state": "Uttar Pradesh",
+        "pincode": "217289",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "50 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Kushinagar",
+        "state": "Uttar Pradesh",
+        "pincode": "217289",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6203X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSLR9401001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSLR9401002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "My salary was supposed to credit this week — check my last 7 days of transactions for a credit of Rs 92,000 from my employer."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the Rs 92,000 salary credit (TXN-9401002) hit on 2026-07-05 — 10 days ago. A date_range last_7_days query would only show TXN-9401003 (July 12) and TXN-9401004 (July 14), hiding the salary credit. Broad query returns all records.",
+      "records": [
+        {
+          "date": "2026-07-14T11:20:00",
+          "amount": 3200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9401004",
+          "transaction_note": "UPI - SWIGGY ORDER",
+          "status": "success",
+          "running_balance": 111300
+        },
+        {
+          "date": "2026-07-12T15:45:00",
+          "amount": 4500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9401003",
+          "transaction_note": "POS PURCHASE - DECATHLON",
+          "status": "success",
+          "running_balance": 114500
+        },
+        {
+          "date": "2026-07-05T09:15:00",
+          "amount": 92000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-9401002",
+          "transaction_note": "NEFT - SALARY JULY 2026 TECHSYS INDIA",
+          "status": "success",
+          "running_balance": 119000
+        },
+        {
+          "date": "2026-07-01T08:00:00",
+          "amount": 15000,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-9401001",
+          "transaction_note": "NEFT - RENT PAYMENT JULY 2026",
+          "status": "success",
+          "running_balance": 27000
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKSLR9401001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKSLR9401001"
+        },
+        "_comment": "Broad query without date_range filter — a last_7_days filter hides the Rs 92,000 salary credit from July 5 (10 days ago). The model must query without a date constraint and locate the credit even though the customer said 'this week'."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer expects a Rs 92,000 salary credit 'this week'. The salary DID arrive — on 2026-07-05 via NEFT — which is 10 days ago, not within the last 7. The assistant must query broadly (no date_range) and find the credit, surfacing that it arrived earlier than the customer thought. Reporting that no salary credit exists in the last 7 days, without identifying the earlier credit, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "locates the Rs 92,000 salary credit (TXN-9401002, 2026-07-05) and surfaces that it arrived 10 days ago, not within the last 7 days, confirming the salary is present. Reporting zero salary credits in the last 7 days without surfacing the actual credit fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

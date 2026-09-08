@@ -1,0 +1,272 @@
+{
+  "case_id": "acct.get_transaction_history.long_context.007",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale transaction history (cheque cleared overnight). Prior round: get_transaction_history showed 3 recent transactions with running_balance Rs 42,500. Since then a cheque for Rs 18,000 cleared overnight, so the live history now shows 4 entries with running_balance Rs 24,500. The customer now asks 'confirm my latest statement balance' — a model that trusts the stale prior says Rs 42,500 without re-fetching fails A1. A model that re-fetches live sees the cheque clearing → reports Rs 24,500 → PASS.",
+  "setup": {
+    "persona": "35-year-old female, No Occupation / Retired / Homemaker, urban Nadia, West Bengal",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0247",
+      "full_name": "Mabia Sekh",
+      "date_of_birth": "1991-06-22",
+      "gender": "female",
+      "customer_since": "2017-11-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7473",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "114 Market Road",
+        "line2": "Boring Road",
+        "city": "Nadia",
+        "state": "West Bengal",
+        "pincode": "217473",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "114 Market Road",
+        "line2": "Boring Road",
+        "city": "Nadia",
+        "state": "West Bengal",
+        "pincode": "217473",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7842X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD57990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD57990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Show me my recent transactions from the last week."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "t1",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_history",
+              "arguments": {
+                "account_id": "TKOD57990001",
+                "from_date": "2026-08-13",
+                "limit": 10
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "t1",
+        "content": "{\"transactions\":[{\"date\":\"2026-08-19T14:22:00\",\"amount\":3500,\"type\":\"debit\",\"channel\":\"upi\",\"reference_id\":\"UTR-573-8291\",\"transaction_note\":\"Swiggy payment\",\"status\":\"success\",\"running_balance\":42500},{\"date\":\"2026-08-17T09:15:00\",\"amount\":12000,\"type\":\"debit\",\"channel\":\"upi\",\"reference_id\":\"UTR-573-8200\",\"transaction_note\":\"Electricity bill\",\"status\":\"success\",\"running_balance\":46000},{\"date\":\"2026-08-15T08:00:00\",\"amount\":50000,\"type\":\"credit\",\"channel\":\"neft\",\"reference_id\":\"NEFT-A8291-B\",\"transaction_note\":\"Freelance payment\",\"status\":\"success\",\"running_balance\":58000}],\"total_count\":3}"
+      },
+      {
+        "role": "assistant",
+        "content": "Here are your recent transactions. Your running balance after the most recent one is Rs 42,500. Three entries: a freelance credit of Rs 50,000 on 15 Aug, then two debits — electricity Rs 12,000 on 17 Aug and a Swiggy payment Rs 3,500 yesterday. Your ending balance is Rs 42,500."
+      },
+      {
+        "role": "user",
+        "content": "Thanks, that's helpful. I'll check again once my rent cheque clears."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "stop_cheque_payment",
+    "request_duplicate_statement",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Has my rent cheque cleared yet? What's my current balance after everything so far?"
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 4
+      },
+      "_comment": "The rent cheque for Rs 18,000 cleared overnight. The live history now shows 4 entries with the cheque as the most recent debit, dropping the running balance to Rs 24,500.",
+      "records": [
+        {
+          "date": "2026-08-20T03:45:00",
+          "amount": 18000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-N8291-C",
+          "transaction_note": "Rent cheque #100482 cleared",
+          "status": "success",
+          "running_balance": 24500
+        },
+        {
+          "date": "2026-08-19T14:22:00",
+          "amount": 3500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UTR-573-8291",
+          "transaction_note": "Swiggy payment",
+          "status": "success",
+          "running_balance": 42500
+        },
+        {
+          "date": "2026-08-17T09:15:00",
+          "amount": 12000,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UTR-573-8200",
+          "transaction_note": "Electricity bill",
+          "status": "success",
+          "running_balance": 46000
+        },
+        {
+          "date": "2026-08-15T08:00:00",
+          "amount": 50000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT-A8291-B",
+          "transaction_note": "Freelance payment",
+          "status": "success",
+          "running_balance": 58000
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Consistent with the live transaction history — balance after cheque clearing is Rs 24,500.",
+      "records": [
+        {
+          "account_id": "TKOD57990001",
+          "available_balance": 24500,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "ACCT-NOISE",
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKOD57990001",
+          "limit": 10
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKOD57990001"
+        },
+        "_comment": "THE GATE. The model MUST re-fetch transaction history live. Prior shows balance Rs 42,500 but the rent cheque for Rs 18,000 cleared overnight — live balance is Rs 24,500."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — calling get_account_balance instead is also fine since the customer asked about balance."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior round showed 3 transactions with a running balance of Rs 42,500. The customer noted the rent cheque was pending and paused. Overnight, the rent cheque for Rs 18,000 cleared — the live history now shows 4 entries with the cheque debit as the most recent, dropping the balance to Rs 24,500.\n\nThe correct move is to re-fetch get_transaction_history live, discover the cheque has cleared, and report the updated balance of Rs 24,500 with the cheque clearing details. Quoting Rs 42,500 from the stale prior data without a live call is the failure. Calling get_account_balance instead is acceptable — it also reveals the updated Rs 24,500 balance."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_transaction_history (or get_account_balance) live, discovers the cheque has cleared, and reports the updated balance of Rs 24,500 (not the stale Rs 42,500). Reporting the old balance without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

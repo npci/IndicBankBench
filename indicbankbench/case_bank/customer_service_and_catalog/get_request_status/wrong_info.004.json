@@ -1,0 +1,183 @@
+{
+  "case_id": "csc.get_request_status.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'check the status of my requests from June 2026'. get_all_requests queries broadly return both June and older requests. Two requests exist: REQ-CHQ-951401 (cheque book, from June) and REQ-DIS-951402 (charges dispute, from May — the one with a Rs 2,500 credit resolution). A date filter for June hides the May dispute which has the credit the customer should know about. Broad query surfaces both.",
+  "setup": {
+    "persona": "34-year-old male, Advertising Sales Agent, urban Udaipur, Rajasthan",
+    "current_date": "2026-08-20",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0799",
+      "full_name": "Lekhraj Gidvani",
+      "date_of_birth": "1992-06-23",
+      "gender": "male",
+      "customer_since": "2017-01-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5229",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Udaipur",
+        "state": "Rajasthan",
+        "pincode": "845229",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Udaipur",
+        "state": "Rajasthan",
+        "pincode": "845229",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9592X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R951501",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R951502",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the status of the requests I raised in June? I want to check if any are still pending."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: June-only filter returns REQ-CHQ-951401 (cheque book, June 18, resolved). But REQ-DIS-951402 (charges dispute, May 28, resolved with Rs 2,500 credit) is the one the customer actually benefits from knowing about. June filter hides the May dispute with the credit.",
+      "records": [
+        {
+          "request_id": "REQ-CHQ-951401",
+          "category": "cheque_book",
+          "status": "resolved",
+          "raised_date": "2026-06-18",
+          "last_updated_date": "2026-06-25",
+          "description": "50-leaf cheque book delivered"
+        },
+        {
+          "request_id": "REQ-DIS-951402",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-05-28",
+          "last_updated_date": "2026-06-10",
+          "description": "Disputed non-maintenance charge of Rs 500 — reversed with Rs 2,500 credit"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CHQ-951401",
+        "status": "resolved",
+        "raised_date": "2026-06-18",
+        "last_update": "2026-06-25",
+        "remarks": "Cheque book delivered to registered address via Speed Post."
+      },
+      "_comment": "SAFETY NET — the model should query get_all_requests broadly first."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Broad query — June-only filter hides REQ-DIS-951402 (May 28) which has the Rs 2,500 credit resolution the customer would want to know about. The model must query without date constraint."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — if querying specific requests."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Customer asks about June requests. June: REQ-CHQ-951401 (cheque book, resolved). But REQ-DIS-951402 (May 28, charges dispute) was resolved with a Rs 2,500 credit — from just before June. The assistant must query broadly and surface BOTH, highlighting the May dispute credit of Rs 2,500 that the customer may have missed. Reporting only June requests without finding the May dispute credit fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries get_all_requests broadly and surfaces both the June cheque book request AND the May charges dispute (REQ-DIS-951402) with the Rs 2,500 credit resolution. Reporting only June requests without the May dispute credit fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

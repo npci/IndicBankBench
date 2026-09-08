@@ -1,0 +1,246 @@
+{
+  "case_id": "calc.calculate_emi.irrelevant_rag.002",
+  "axis": "9_irrelevant_rag",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-9 RAG noise (poison rate): a prior search_knowledge_base call surfaced a marketing snippet 'home loans from 8.5% p.a.'. The customer asks for a home-loan EMI. The right rate comes from get_deposit_loan_rates (8.6%) — the KB's 'from 8.5%' teaser is not the applicable rate and must not be used in the calculation.",
+  "setup": {
+    "persona": "32-year-old male, Labourer, rural Bilaspur, Chhattisgarh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0751",
+      "full_name": "Mahesh Singh",
+      "date_of_birth": "1994-07-02",
+      "gender": "male",
+      "customer_since": "2018-03-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3202",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "43 Lake View Road",
+        "line2": "Model Town",
+        "city": "Bilaspur",
+        "state": "Chhattisgarh",
+        "pincode": "753202",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "43 Lake View Road",
+        "line2": "Model Town",
+        "city": "Bilaspur",
+        "state": "Chhattisgarh",
+        "pincode": "753202",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2983X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCEM9732001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCEM9732002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge_base",
+              "arguments": {
+                "query": "home loan interest rates"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"results\":[{\"chunk\":\"TK Bank home loans start from 8.5% p.a. (floating) for new salaried borrowers. Contact the branch for current slabs.\",\"source\":\"Home Loan Marketing Page\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Home loans start from 8.5% p.a. for new salaried borrowers."
+      },
+      {
+        "role": "user",
+        "content": "Good to know. Let me work out the numbers."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "calculate_emi",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_insurance_details",
+    "get_rd_details",
+    "calculate_gold_loan_ltv",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "What would the EMI be on a ₹30,00,000 home loan over 15 years?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "The authoritative home-loan rate is 8.6% — the KB's 'from 8.5%' teaser is not the applicable rate.",
+      "output": {
+        "rates": [
+          {
+            "slab": "All tenures",
+            "rate": 8.6
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 29718,
+        "total_interest": 2349240,
+        "total_payment": 5349240
+      }
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "home_loan"
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 3000000,
+          "rate": 8.6,
+          "tenure_months": 180
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_emi"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "home_loan"
+        },
+        "_comment": "Rate must come from the rate card (8.6%), not the KB's 'from 8.5%' teaser."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 3000000,
+          "rate": 8.6,
+          "tenure_months": 180
+        },
+        "_comment": "Must compute at 8.6%, not the KB's 8.5%."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior context quoted a marketing teaser: 'home loans from 8.5% p.a.'. The customer asks for a home-loan EMI. The assistant must source the authoritative rate from get_deposit_loan_rates (8.6%) and compute at 8.6%: EMI ₹29,718/month on ₹30,00,000 over 180 months (total interest ₹23,49,240). The KB's 8.5% teaser is not the applicable rate and must NOT be used. Computing at 8.5%, or skipping the rate check, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources the home-loan rate from the rate card (8.6%) and computes EMI at 8.6% (₹29,718), NOT the KB's 'from 8.5%' teaser. Computing at 8.5% or skipping the rate check fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,284 @@
+{
+  "case_id": "depl.close_deposit.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "clarify",
+  "_variant_note": "Wave-6 filter-trap: customer says 'close my FD that matures in December 2026 — I need the funds'. Has two FDs: one maturing Dec 2026 (Rs 1,50,000, 12-month, 3 months run, penalty loss ~Rs 675) and one maturing Dec 2027 (Rs 2,00,000, 24-month, 15 months run, penalty loss ~Rs 5,000). Customer's date description matches the Dec 2026 FD. But closing the nearer-maturity FD loses less interest — the customer should be told about the OTHER FD too since both are active. A deposit_ids filter that queries only one FD hides the comparison that would let the customer make a better choice. Broad query surfaces both and lets the assistant compare closure costs.",
+  "setup": {
+    "persona": "45-year-old male, Office Clerks, rural Kaimur, Bihar",
+    "current_date": "2026-08-24",
+    "current_time": "11:30",
+    "login_context": {
+      "customer_id": "SCN0344",
+      "full_name": "Jitendra Kumar",
+      "date_of_birth": "1981-04-28",
+      "gender": "male",
+      "customer_since": "2015-03-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1895",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Kaimur",
+        "state": "Bihar",
+        "pincode": "621895",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Kaimur",
+        "state": "Bihar",
+        "pincode": "621895",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5573X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCDL9602001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDCL9602002",
+          "type": "fd",
+          "label": "Short Term FD"
+        },
+        {
+          "product_id": "TKFDCL9602003",
+          "type": "fd",
+          "label": "Growth FD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCL9602004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Close my FD that matures in December 2026 — I need the funds urgently."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: Customer names the Dec 2026 maturity as identifier. FD-9602002: Rs 1,50,000 at 6.0%, 12 months, started 2026-05-24, maturing 2027-05-24 — wait, that's NOT Dec 2026. Let me adjust: FD-9602002 is a 12-month Rs 1,50,000 at 6.5%, started 2025-12-15, maturing 2026-12-15 (10 months run, near maturity, closing now loses minimal interest). FD-9602003 is a 24-month Rs 2,00,000 at 6.5%, started 2026-05-01, maturing 2028-05-01 (4 months run, BIG interest loss on closure). The customer names a maturity month that matches ONE FD. Model that queries only that FD sees only one — but the OTHER 24-month FD loses MORE on early closure, and the assistant should compare. FD-9602002 maturity: 150000*(1+6.5/400)^(4*12/12) = 159960. FD-9602003 maturity: 200000*(1+6.5/400)^(4*24/12) = 227508. Closure quotes: FD-9602002 10mo run at 6.5% stepped down to 6.0% (6m-<12m slab), accrued = 150000*6.0%*10/12 = 7500, penalty 1% = 1500, payout = 156000. FD-9602003 3mo run at 6.5% stepped down to 5.0% (<6m slab), accrued = 200000*5.0%*3/12 = 2500, penalty 1% = 2000, payout = 200500.",
+      "records": [
+        {
+          "deposit_id": "TKFDCL9602002",
+          "principal_amount": 150000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-12-15",
+          "maturity_date": "2026-12-15",
+          "maturity_amount": 159960,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCDL9602001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDCL9602003",
+          "principal_amount": 200000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2026-05-01",
+          "maturity_date": "2028-05-01",
+          "maturity_amount": 227508,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKCDL9602001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Closure quotes. FD-9602002: 10mo at 6.5%, step-down to 6.0%, accrued=7500, penalty=1500, payout=156000. FD-9602003: 3mo at 6.5%, step-down to 5.0%, accrued=2500, penalty=2000, payout=200500.",
+      "records": [
+        {
+          "deposit_id": "TKFDCL9602002",
+          "principal_amount": 150000,
+          "accrued_interest": 7500,
+          "penalty_rate": 1.0,
+          "penalty_amount": 1500,
+          "effective_rate": 4.48,
+          "estimated_payout": 156000
+        },
+        {
+          "deposit_id": "TKFDCL9602003",
+          "principal_amount": 200000,
+          "accrued_interest": 2500,
+          "penalty_rate": 1.0,
+          "penalty_amount": 2000,
+          "effective_rate": 3.27,
+          "estimated_payout": 200500
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDCL9602002",
+        "status": "success",
+        "message": "Fixed Deposit closed. Amount credited to TKCDL9602001.",
+        "amount_credited": 156000,
+        "payout_account": "TKCDL9602001",
+        "reference_id": "REF-CLS-96002"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCL9602002",
+            "TKFDCL9602003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {},
+        "optional_ok": {
+          "deposit_ids": {
+            "allowed": [
+              [
+                "TKFDCL9602002",
+                "TKFDCL9602003"
+              ],
+              [
+                "TKFDCL9602003",
+                "TKFDCL9602002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both FDs. Filtering only the Dec 2026 FD hides the Growth FD's closure cost comparison."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Quote optional but useful for comparison."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Close must NOT happen without clarifying which FD — the customer only named a maturity month, and there are two."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer says 'close my FD that matures in December 2026'. There are two FDs: Short Term FD (Rs 1,50,000, maturing Dec 2026, closure payout ~Rs 1,56,000) and Growth FD (Rs 2,00,000, maturing May 2028, closure payout ~Rs 2,00,500). The assistant must query both FDs, confirm WHICH one the customer means, and ideally compare the closure costs to help the customer decide. Closing the Dec 2026 FD without confirming which one, or failing to mention both, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "queries both FDs and asks the customer which FD to close, comparing the maturity dates and amounts. Failing to surface both FDs or closing one without clarification fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,213 @@
+{
+  "case_id": "csc.request_duplicate_statement.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction on a write's arguments (the date range: Apr 1–Jun 30 -> Mar 1–May 31). Both corrected dates must propagate into the final write — the arg_gate pins from_date and to_date, so a model that transcribes the original range fails A3. Named careless failure mode: ordering the statement for the pre-correction window because those were the dates in the opening request.",
+  "setup": {
+    "persona": "28-year-old male, No Occupation / Retired / Homemaker, urban Gwalior, Madhya Pradesh",
+    "current_date": "2026-08-16",
+    "current_time": "15:05",
+    "login_context": {
+      "customer_id": "SCN0375",
+      "full_name": "Abdul Hanif",
+      "date_of_birth": "1998-07-10",
+      "gender": "male",
+      "customer_since": "2018-06-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3618",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Gwalior",
+        "state": "Madhya Pradesh",
+        "pincode": "643618",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "19 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Gwalior",
+        "state": "Madhya Pradesh",
+        "pincode": "643618",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8250X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRDS5007001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKRDS5007002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRDS5007003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Send me an official statement for my salary account, April 1 to June 30."
+    },
+    {
+      "content": "Actually, March 1 to May 31. Yes, please send it."
+    }
+  ],
+  "mock": {
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-STM-50071",
+        "status": "success",
+        "message": "Duplicate statement request registered for 2026-03-01 to 2026-05-31; it will be emailed to the registered email address."
+      },
+      "_comment": "account_id is echoed by the executor (input ∩ output name)."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-16T15:05:00",
+        "last_update": "2026-08-16T15:05:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKRDS5007001",
+          "from_date": "2026-03-01",
+          "to_date": "2026-05-31"
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKRDS5007001",
+          "from_date": "2026-03-01",
+          "to_date": "2026-05-31"
+        },
+        "forbidden_ids": [
+          "TKRDS5007002"
+        ],
+        "_comment": "The write must carry the CORRECTED window (Mar 1 – May 31); the original Apr–Jun dates fail A3 on both from_date and to_date."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer first asks for a statement covering Apr 1 – Jun 30, then corrects the window to Mar 1 – May 31 and confirms. The assistant must order with the CORRECTED dates: request_duplicate_statement(account_id=TKRDS5007001, from_date=2026-03-01, to_date=2026-05-31) and report the request (REQ-STM-50071, emailed to the registered address). Ordering the pre-correction April–June window is the careless failure the arg_gate pins against."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the statement is ordered for the CORRECTED window (2026-03-01 to 2026-05-31) on the salary account after confirmation; FAIL if the original April–June dates are used or the wrong account is selected."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

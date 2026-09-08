@@ -1,0 +1,238 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 two-thread calculator with CLOSE numbers: the gold-loan LTV is computed first (Rs 3,06,000), an FD-maturity detour intervenes (Rs 2,84,410), and the customer returns to 'the gold loan amount'. The two figures are close enough that a careless swap looks plausible. Calculator arguments are pinned, so mixing inputs fails A3. Careless failure mode: answering the final ask with the FD maturity figure.",
+  "setup": {
+    "persona": "44-year-old female, No Occupation / Retired / Homemaker, rural Mahbubnagar, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0334",
+      "full_name": "Pendota Papayya",
+      "date_of_birth": "1982-11-13",
+      "gender": "female",
+      "customer_since": "2022-12-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2218",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "59 Mill Road",
+        "line2": "Bandra East",
+        "city": "Mahbubnagar",
+        "state": "Telangana",
+        "pincode": "162218",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "59 Mill Road",
+        "line2": "Bandra East",
+        "city": "Mahbubnagar",
+        "state": "Telangana",
+        "pincode": "162218",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1884X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [],
+      "linked_products": [],
+      "linked_cards": []
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "show_mandates",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "How much can I borrow against 60 grams of 22 carat gold?"
+    },
+    {
+      "content": "Also — what would a Rs 2,50,000 FD for 2 years grow to?"
+    },
+    {
+      "content": "So the gold loan amount — what was it?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "2,50,000 @ 6.5% / 24mo -> 284,410.",
+      "output": {
+        "maturity_amount": 284410,
+        "interest_earned": 34410,
+        "total_principal_invested": 250000
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "60g x 6,800 x 0.75 = 306,000.",
+      "output": {
+        "gold_value": 408000,
+        "eligible_loan_amount": 306000,
+        "ltv_percent_used": 75
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6800,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 60,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6800
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 250000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        }
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 60,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6800
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 250000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for the gold-loan amount on 60 grams of 22K, detours to a Rs 2,50,000 2-year FD maturity, then returns to the gold loan amount. The assistant must answer the final ask with the LTV result: Rs 3,06,000 at the bank's Rs 6,800 rate (75% of Rs 4,08,000 gold value). The FD detour is worth Rs 2,84,410. Answering the final ask with the FD figure — close enough to look plausible — fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the final ask with the gold-loan LTV (Rs 3,06,000), not the FD maturity (Rs 2,84,410). Swapping the two close figures fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

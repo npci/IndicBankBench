@@ -1,0 +1,220 @@
+{
+  "case_id": "depl.get_loan_details.happy.001",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "19-year-old female, No Occupation / Retired / Homemaker, rural Mayurbhanj, Odisha",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0647",
+      "full_name": "Dhadi Pradhan",
+      "date_of_birth": "2007-11-14",
+      "gender": "female",
+      "customer_since": "2025-10-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5062",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Mayurbhanj",
+        "state": "Odisha",
+        "pincode": "465062",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Mayurbhanj",
+        "state": "Odisha",
+        "pincode": "465062",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2503X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKHRV2648001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNHRV2648002",
+          "type": "loan",
+          "label": "TK GruhaSetu Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCHRV2648003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "How much do I still owe on my home loan, and what's my monthly EMI?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The record now reconciles and uses the declared field names. tenure_remaining (was emitted as remaining_tenure_months, a name the contract does not have), plus the previously withheld status, next_due_date and emi_account_id. Arithmetic: ₹32,00,000 at 8.6% over 150 remaining EMIs gives an EMI of ₹34,885 (CONVENTIONS.md §5). The old triple — 32,00,000 / ₹34,500 / 132 months — was mutually impossible, implying an EMI of ₹37,571, or 153 months, or an outstanding of ₹29,38,421, depending which two you believed.",
+      "records": [
+        {
+          "loan_id": "TKLNHRV2648002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-04-05",
+          "emi_account_id": "TKHRV2648001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNHRV2648002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLNHRV2648002"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 1 — a loan read. The customer asks their outstanding balance and monthly EMI, so this is a fetch-and-report from get_loan_details.\n\nThe assistant should report ₹32,00,000 still outstanding, against an original sanction of ₹40,00,000, with an EMI of ₹34,885 due on the 5th of each month — next on 2026-04-05 — debited from the savings account, with 150 EMIs remaining at 8.6%.\n\nThe trap is principal versus outstanding. Quoting the ₹40,00,000 original sanction as what the customer still owes overstates the debt by ₹8,00,000 and is the failure this case targets; misreporting the EMI fails too. Note that emi_day_of_month is a day of the month (5 meaning the 5th), not a full date — but next_due_date is now returned alongside it, so the actual upcoming date does not have to be inferred."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the current outstanding (₹32,00,000) and the EMI (₹34,885) as returned. Quoting the original ₹40,00,000 sanction as the outstanding, or misstating the EMI, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

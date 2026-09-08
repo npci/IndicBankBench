@@ -1,0 +1,211 @@
+{
+  "case_id": "csc.get_all_requests.long_context.006",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior conversation showed 2 open service requests (cheque book request and duplicate statement request). Since then, the cheque book request was fulfilled. Model must re-fetch live to discover only 1 open request remains.",
+  "setup": {
+    "persona": "38-year-old female, No Occupation / Retired / Homemaker, urban Kolkata, West Bengal",
+    "current_date": "2026-09-22",
+    "current_time": "09:45",
+    "login_context": {
+      "customer_id": "SCN0092",
+      "full_name": "Shobha Maiti",
+      "date_of_birth": "1988-03-06",
+      "gender": "female",
+      "customer_since": "2014-09-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0990",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "111 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "420990",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "111 Gandhi Nagar",
+        "line2": "Salt Lake",
+        "city": "Kolkata",
+        "state": "West Bengal",
+        "pincode": "420990",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9215X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAR9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAR9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What requests do I have open right now?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "r1",
+            "type": "function",
+            "function": {
+              "name": "get_all_requests",
+              "arguments": {}
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "r1",
+        "content": "{\"requests\":[{\"request_id\":\"REQ-CHQ-9700001\",\"type\":\"request_cheque_book\",\"status\":\"in_progress\",\"raised_date\":\"2026-09-15\",\"details\":\"Cheque book of 50 leaves for savings account\"},{\"request_id\":\"REQ-STMT-9700002\",\"type\":\"request_duplicate_statement\",\"status\":\"in_progress\",\"raised_date\":\"2026-09-18\",\"details\":\"Duplicate statement for July 2026\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "You have two open requests: a cheque book request (REQ-CHQ-9700001) raised on September 15, and a duplicate statement request (REQ-STMT-9700002) raised on September 18. Both are in progress."
+      },
+      {
+        "role": "user",
+        "content": "Good, I'll follow up on those later."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_all_requests",
+    "get_request_status",
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "request_cheque_book",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you check my open requests again? I think the cheque book might have shipped already."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "Cheque book request is now fulfilled — only the duplicate statement remains open. Stale prior showed 2 open requests.",
+      "records": [
+        {
+          "request_id": "REQ-STMT-9700002",
+          "status": "in_progress",
+          "raised_date": "2026-09-18",
+          "category": "request_duplicate_statement",
+          "description": "Duplicate statement for July 2026",
+          "last_updated_date": "2026-09-18"
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": ""
+      }
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_products_and_offers": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-CHQ-00000",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "delivery_address": ""
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-STMT-00000",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must re-fetch live. Prior showed 2 open requests, but cheque book was fulfilled."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The prior conversation showed 2 open requests (cheque book and duplicate statement). Since then the cheque book request was fulfilled. The assistant must re-fetch get_all_requests live and report only 1 open request remaining (the duplicate statement REQ-STMT-9700002). Claiming 2 open requests based on stale prior data fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches request list live and reports 1 remaining open request, not 2. Using stale prior count fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

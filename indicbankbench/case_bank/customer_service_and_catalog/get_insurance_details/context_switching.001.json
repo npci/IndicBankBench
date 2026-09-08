@@ -1,0 +1,196 @@
+{
+  "case_id": "csc.get_insurance_details.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer asks about life policy, detours to ask about credit card offers, then returns to policy premium question. Separate domains, no bleed.",
+  "setup": {
+    "persona": "40-year-old male, Steward, Hotel, urban Thane, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0162",
+      "full_name": "Tukaram Kale",
+      "date_of_birth": "1986-12-14",
+      "gender": "male",
+      "customer_since": "2023-01-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8391",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "968391",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Thane",
+        "state": "Maharashtra",
+        "pincode": "968391",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2539X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 1
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCIN8800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKPLCIN8800002",
+          "type": "policy",
+          "label": "TK Life Insurance"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCCIN8800003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the sum assured and premium on my life insurance policy?"
+    },
+    {
+      "content": "By the way, do you have any cards with zero foreign transaction fee?"
+    },
+    {
+      "content": "Back to the policy — how much is my premium and when is it due next?"
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "policy_id": "TKPLCIN8800002",
+          "policy_type": "life",
+          "insurer": "LIC",
+          "sum_assured": 2500000,
+          "premium": 42000,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2026-11-10",
+          "status": "active"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "Credit card products — none with zero forex fee.",
+      "records": [
+        {
+          "id": "CC-PLT-001",
+          "title": "TK Platinum Credit Card",
+          "type": "card",
+          "description": "Premium credit card, annual fee Rs 999, foreign transaction fee 3.5%. Complimentary lounge access.",
+          "valid_till": "2026-12-31"
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "TKPLCIN8800002"
+          ]
+        }
+      },
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "card"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {
+          "policy_ids": [
+            "TKPLCIN8800002"
+          ]
+        }
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Must check card products. No zero-fee forex card found — model must report honestly."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks about their life insurance policy: sum assured Rs 25,00,000, premium Rs 42,000 yearly, due 2026-11-10. The customer detours to ask about zero foreign transaction fee cards — the assistant must check get_products_and_offers and report that the Platinum card has a 3.5% forex fee and no zero-fee card exists. The customer returns to ask the premium and due date again — the assistant must recall Rs 42,000 and 2026-11-10 without confusing it with card fees. Confusing insurance premium with card annual fees, or forgetting the policy details, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the credit card detour, correctly recalls the life insurance premium (Rs 42,000 yearly, due 2026-11-10). Confusing premium with card fees, or forgetting the policy details, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

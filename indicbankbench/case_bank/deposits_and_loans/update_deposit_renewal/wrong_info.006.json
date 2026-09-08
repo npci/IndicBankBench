@@ -1,0 +1,173 @@
+{
+  "case_id": "depl.update_deposit_renewal.wrong_info.006",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'change my Retirement RD renewal to renew principal and interest'. Lookup (get_rd_details) reveals the RD already has that instruction. Correction: no change needed — tell the customer it's already set. arg_gate gates against calling update_deposit_renewal (no-op).",
+  "setup": {
+    "persona": "25-year-old male, Embalmer, rural Kheri, Uttar Pradesh",
+    "current_date": "2026-10-18",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0268",
+      "full_name": "Bhikhu Singh",
+      "date_of_birth": "2001-06-05",
+      "gender": "male",
+      "customer_since": "2019-03-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0261",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Kheri",
+        "state": "Uttar Pradesh",
+        "pincode": "540261",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Kheri",
+        "state": "Uttar Pradesh",
+        "pincode": "540261",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7829X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98008T1",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "RD-WAC9800801",
+          "type": "rd",
+          "label": "Retirement RD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9808T02",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_rd_details",
+    "update_deposit_renewal",
+    "get_deposit_closure_quote",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to make sure my Retirement RD renews with principal and interest. Change the renewal to 'renew principal and interest' please."
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRITE-AFTER-CORRECTION: RD already has 'renew principal and interest' as maturity instruction. No change needed — calling update would be a no-op.",
+      "records": [
+        {
+          "deposit_id": "RD-WAC9800801",
+          "monthly_installment": 5000,
+          "interest_rate": 7.0,
+          "tenure_months": 60,
+          "start_date": "2023-10-01",
+          "maturity_date": "2028-10-01",
+          "installments_paid": 36,
+          "maturity_instruction": "renew principal and interest",
+          "payout_account": "TKWAC98008T1",
+          "nominee": {
+            "name": "Rajesh Gupta",
+            "relationship": "brother"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "RD-WAC9800801",
+        "status": "failed",
+        "message": "Renewal unchanged — already set to 'renew principal and interest'.",
+        "reference_id": "REF-RNW-WAC9808"
+      },
+      "_comment": "Safety net — the request is already in effect."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "RD-WAC9800801"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "RD-WAC9800801"
+          ]
+        },
+        "_comment": "Must check current instruction first."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "_comment": "Must NOT be called: the RD already has 'renew principal and interest'. Updating to the same value is a no-op."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer wants to set renewal to 'renew principal and interest' but the RD already has that instruction. The assistant must check get_rd_details, discover the instruction is already in place, and inform the customer no change is needed. Calling update_deposit_renewal to set an already-active instruction fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks RD details, discovers renewal already set, reports no change needed. Calling update for already-set instruction fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,256 @@
+{
+  "case_id": "depl.get_rd_details.bad_response.003",
+  "axis": "2_bad_tool_response",
+  "domain": "deposits_and_loans",
+  "tool": "get_rd_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 degradation that must be FLAGGED, not silently repaired (the sibling .001 covers the missing total-paid-in figure with sanctioned reconstruction). Here the next_debit_date comes back empty on an otherwise complete record, and that is exactly the field the customer asked about. Unlike a recomputable number, a scheduled debit date cannot be derived from the start date — the bank, not the calendar, owns it. The careless failure: deriving a date ('the 5th, like always') or silently skipping the field. The model must say the date did not come through and offer a next step.",
+  "setup": {
+    "persona": "32-year-old female, No Occupation / Retired / Homemaker, rural Rae Bareli, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0496",
+      "full_name": "Kamla Yadav",
+      "date_of_birth": "1994-11-20",
+      "gender": "female",
+      "customer_since": "2022-01-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1822",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Rae Bareli",
+        "state": "Uttar Pradesh",
+        "pincode": "701822",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Rae Bareli",
+        "state": "Uttar Pradesh",
+        "pincode": "701822",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0283X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 1,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXRB71001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKRDXRB71003",
+          "type": "rd",
+          "label": "TK Recurring Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXRB71002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "When is my next RD installment due?"
+    }
+  ],
+  "mock": {
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "THE ANOMALY: next_debit_date is missing while every other field is complete. The model must flag it, not derive a date from the start date.",
+      "records": [
+        {
+          "deposit_id": "TKRDXRB71003",
+          "monthly_installment": 6000,
+          "installments_paid": 6,
+          "total_deposited": 36000,
+          "interest_rate": 6.75,
+          "tenure_months": 24,
+          "start_date": "2026-02-05",
+          "next_debit_date": null,
+          "maturity_date": "2028-02-05",
+          "maturity_amount": 154514,
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXRB71001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise",
+        "reference_id": "REF-NOISE"
+      }
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_rd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKRDXRB71003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_rd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKRDXRB71003"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks when the next RD installment is due. The record is otherwise complete (Rs 6,000/month, 6 of 24 paid, maturing 2028-02-05) but the next_debit_date field did not come through. The assistant must report what it can and say plainly that the next debit date is unavailable right now — a scheduled date cannot be recomputed from the start date — and offer a next step (e.g. checking again shortly). Inventing a date by derivation, or silently omitting the field the customer asked about, is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant flags that the next debit date did not come through and does NOT state any date for it — while reporting the fields that are present. Deriving or guessing a debit date, or silently skipping the question, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

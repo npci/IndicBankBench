@@ -1,0 +1,221 @@
+{
+  "case_id": "depl.get_loan_details.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks about 'my home loan — I want to check the outstanding'. The home loan has Rs 32,00,000 outstanding at 8.6%. But the customer ALSO has a personal loan with Rs 4,80,000 outstanding at 10.5% that's accruing higher interest and is a better candidate for early payoff. A model that queries only the home loan_id hides the personal loan — and misses the financially smarter recommendation to target the higher-rate personal loan first.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, urban Ahmadabad, Gujarat",
+    "current_date": "2026-09-05",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0740",
+      "full_name": "Sumitraben Patel",
+      "date_of_birth": "2006-07-02",
+      "gender": "female",
+      "customer_since": "2024-11-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5202",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "43 Lake View Road",
+        "line2": "Model Town",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "315202",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "43 Lake View Road",
+        "line2": "Model Town",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "315202",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6304X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 2,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9541001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFTB9542001",
+          "type": "loan",
+          "label": "Home Loan"
+        },
+        {
+          "product_id": "TKFTB9542002",
+          "type": "loan",
+          "label": "Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9541003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_account_balance",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm thinking of prepaying — show me my home loan outstanding. I want to close it early if I can."
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks only about the home loan (Rs 32,00,000 outstanding at 8.6%). But the personal loan (Rs 4,80,000 outstanding at 10.5%) has a HIGHER interest rate and is a better candidate for early payoff. A model that queries only the home loan_id misses the personal loan entirely. Broad query reveals both loans and lets the model advise on the higher-rate priority.",
+      "records": [
+        {
+          "loan_id": "TKFTB9542001",
+          "type": "home",
+          "principal": 4500000,
+          "outstanding": 3200000,
+          "emi_amount": 41120,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 108,
+          "status": "active",
+          "next_due_date": "2026-10-05",
+          "emi_account_id": "TKFTB9541001"
+        },
+        {
+          "loan_id": "TKFTB9542002",
+          "type": "personal",
+          "principal": 800000,
+          "outstanding": 480000,
+          "emi_amount": 12850,
+          "interest_rate": 10.5,
+          "emi_day_of_month": 15,
+          "tenure_remaining": 48,
+          "status": "active",
+          "next_due_date": "2026-10-15",
+          "emi_account_id": "TKFTB9541001"
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Home loan: last EMI Sep 5, today Sep 5 (same day), 0 days interest. Foreclosure charges 2% of 32,00,000 = 64,000. Total: 32,00,000 + 0 + 64,000 = 32,64,000. Personal loan: last EMI Aug 15, 21 days to Sep 5. Accrued: 4,80,000 x 10.5% x 21/365 = 2,899. Charges 2% of 4,80,000 = 9,600. Total: 4,80,000 + 2,899 + 9,600 = 4,92,499.",
+      "records": [
+        {
+          "loan_id": "TKFTB9542001",
+          "outstanding_principal": 3200000,
+          "accrued_interest": 0,
+          "foreclosure_charges": 64000,
+          "total_payoff": 3264000
+        },
+        {
+          "loan_id": "TKFTB9542002",
+          "outstanding_principal": 480000,
+          "accrued_interest": 2899,
+          "foreclosure_charges": 9600,
+          "total_payoff": 492499
+        }
+      ]
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKFTB9542001",
+            "TKFTB9542002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {},
+        "optional_ok": {
+          "loan_ids": {
+            "allowed": [
+              [
+                "TKFTB9542001",
+                "TKFTB9542002"
+              ],
+              [
+                "TKFTB9542002",
+                "TKFTB9542001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both loans. The customer asked about the home loan but the personal loan at 10.5% is the financially smarter prepay target. The assistant should surface both."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks about their home loan outstanding. The home loan has Rs 32,00,000 remaining at 8.6%. But the customer also has a personal loan with Rs 4,80,000 outstanding at 10.5% — a higher rate that makes it a better early-payoff candidate. The assistant must query both loans and advise that while the home loan can be prepaid, the personal loan at 10.5% should be prioritized for early payoff. Querying only the home loan and not surfacing the personal loan fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both loans and surfaces the home loan (Rs 32,00,000 at 8.6%) AND the personal loan (Rs 4,80,000 at 10.5%), recommending the higher-rate personal loan as the priority for early payoff. Reporting only the home loan without mentioning the personal loan fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

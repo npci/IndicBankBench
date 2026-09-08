@@ -1,0 +1,224 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 dropped referent on rate lookups: FD rate asked, RD rate asked, then 'the first one again'. Both slabs are returned together, so the model must pick the right row per ask; the final answer must be the FD rate (6.5%) — recency bias pulls careless models to the RD rate (6.75%), the most recently quoted. Careless failure mode: answering the final ask with 6.75%.",
+  "setup": {
+    "persona": "35-year-old female, No Occupation / Retired / Homemaker, rural Dhubri, Assam",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0041",
+      "full_name": "Swapla Chowdhuri",
+      "date_of_birth": "1991-09-27",
+      "gender": "female",
+      "customer_since": "2020-10-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1968",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Dhubri",
+        "state": "Assam",
+        "pincode": "211968",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "9 Temple Road",
+        "line2": "Boring Road",
+        "city": "Dhubri",
+        "state": "Assam",
+        "pincode": "211968",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8806X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [],
+      "linked_products": [],
+      "linked_cards": []
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "show_mandates",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the FD rate for 2 years?"
+    },
+    {
+      "content": "And the RD rate for 2 years?"
+    },
+    {
+      "content": "The first one again — what was it?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Both slabs visible at once (product-prefixed labels): FD 6.5, RD 6.75.",
+      "output": {
+        "rates": [
+          {
+            "slab": "fd 1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          },
+          {
+            "slab": "rd 1 year to < 3 years",
+            "rate": 6.75,
+            "senior_citizen_rate": 7.25
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Both rows returned together; the model must pick the right slab per ask — judged at R."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for the 2-year FD rate, then the 2-year RD rate, then 'the first one again'. The assistant must answer the final ask with the FD rate: 6.5% (the RD rate is 6.75%). Answering the final ask with the RD rate — the most recently quoted — fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the final ask with the FD rate (6.5%), not the RD rate (6.75%). Quoting 6.75% as the answer to 'the first one again' fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "case_id": "csc.search_knowledge_base.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks 'what's the penalty for premature FD closure' — a narrow query about penalties. search_knowledge_base returns policy snippets. A query narrowly targeting 'penalty premature FD' returns only the penalty rate section. But a broader query about 'FD premature closure rules' reveals that the interest rate also steps down — which is actually a bigger financial impact than the penalty. The model that only asks about 'penalty' misses the rate step-down which costs the customer more.",
+  "setup": {
+    "persona": "58-year-old female, No Occupation / Retired / Homemaker, rural Sultanpur, Uttar Pradesh",
+    "current_date": "2026-08-12",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0424",
+      "full_name": "Sonam Varma",
+      "date_of_birth": "1968-03-02",
+      "gender": "female",
+      "customer_since": "2014-10-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6766",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Sultanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "416766",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Sultanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "416766",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2199X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9480001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFD9480",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9480002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the penalty if I break my FD early?"
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks narrowly about 'penalty' for breaking FD. search_knowledge_base results are filtered by query relevance. A query focused on 'penalty premature FD' returns chunk 1 (penalty rate 1% of principal) but may miss chunk 2 (rate step-down explanation). The rate step-down is often the larger financial impact — interest recalculated at the lower slab rate for the period actually run. A broader query including 'closure rules' returns both chunks.",
+      "records": [
+        {
+          "chunk": "Premature withdrawal of Fixed Deposits incurs a penalty of 1% of the principal amount. The penalty is deducted from the accrued interest before payout. For deposits closed after maturity, no penalty applies.",
+          "source": "Schedule of Charges – Deposits, Section 4.2"
+        },
+        {
+          "chunk": "For premature closure, interest is recalculated at the card rate applicable to the period the deposit has actually run — not the original contracted rate. This rate step-down is separate from the 1% penalty charge and is often the larger financial impact.",
+          "source": "FD Product Terms, Section 7.3"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "FD premature closure penalty rules rate step-down"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "_comment": "Must search KB. A narrow query like 'FD penalty' may only return the 1% penalty chunk and miss the rate step-down chunk. The model should query broadly enough to get both the penalty and the rate step-down rules."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about FD premature closure penalty. The penalty is 1% of principal. But the assistant should also explain the RATE STEP-DOWN: interest is recalculated at the lower slab rate for the period the deposit actually ran — this is often a larger financial impact than the 1% penalty itself. Reporting only the 1% penalty without the rate step-down fails the complete-disclosure standard."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "explains the 1% penalty AND the rate step-down (interest recalculated at the lower slab rate for actual period run). Reporting only the penalty without the rate step-down fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,262 @@
+{
+  "case_id": "depl.agentic.fd_renewal_wrong_id.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+update_deposit_renewal",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'set FD-9961 to renew principal.' get_fd_details shows only TKFDRE9962 exists — customer got the last digit wrong. Correction: update_deposit_renewal on TKFDRE9962. arg_gate pins TKFDRE9962; forbidden_ids blocks TKFDRE9961.",
+  "setup": {
+    "persona": "42-year-old female, Shop Attendant, rural Mahasamund, Chhattisgarh",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0726",
+      "full_name": "Usha Bai",
+      "date_of_birth": "1984-02-08",
+      "gender": "female",
+      "customer_since": "2013-03-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0373",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Mahasamund",
+        "state": "Chhattisgarh",
+        "pincode": "670373",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "14 Station Road",
+        "line2": "Bandra East",
+        "city": "Mahasamund",
+        "state": "Chhattisgarh",
+        "pincode": "670373",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7726X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDY9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDRE9962",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TCFDY9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "close_deposit",
+    "get_account_balance",
+    "get_card_details",
+    "get_deposit_closure_quote",
+    "get_deposit_loan_rates",
+    "get_fd_details",
+    "get_rd_details",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "Set my FD-9961 to renew principal at maturity — I want it to roll over instead of being paid out."
+    },
+    {
+      "content": "Yes, update it — go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Only TKFDRE9962 exists — customer said 9961 (wrong). TKFDRE9961 does NOT exist in linked_products.",
+      "records": [
+        {
+          "deposit_id": "TKFDRE9962",
+          "principal_amount": 600000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2025-01-10",
+          "maturity_date": "2028-01-10",
+          "maturity_amount": 730916,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDY9700001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDRE9962",
+        "instruction": "renew_principal",
+        "maturity_date": "2028-01-10",
+        "status": "success",
+        "message": "Maturity instruction updated to renew principal on 2028-01-10.",
+        "reference_id": "REF-REN-97001"
+      }
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — no RDs."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — not needed."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDRE9962"
+          ]
+        }
+      },
+      {
+        "tool": "update_deposit_renewal",
+        "arguments": {
+          "deposit_id": "TKFDRE9962",
+          "instruction": "renew_principal"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "update_deposit_renewal"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDRE9962"
+          ]
+        },
+        "_comment": "Must look up FD — only TKFDRE9962 exists, not 9961."
+      },
+      "update_deposit_renewal": {
+        "required": {
+          "deposit_id": "TKFDRE9962",
+          "instruction": "renew_principal"
+        },
+        "forbidden_ids": [
+          "TKFDRE9961"
+        ],
+        "_comment": "CORRECTED deposit_id=TKFDRE9962. Customer said 9961 — the real FD is 9962 (off by one)."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "close_deposit": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'set my FD-9961 to renew principal.' get_fd_details finds only TKFDRE9962 (the real FD, ₹6L, 6.75%, 36mo, cumulative). The customer got the last digit wrong (9961 vs 9962). The assistant must correct: 'You said FD-9961 but your FD is actually FD-9962 (TKFDRE9962). I'll set it to renew principal — the principal of ₹6,00,000 will be reinvested on maturity (Jan 2028).' After confirmation, calls update_deposit_renewal with deposit_id=TKFDRE9962. A weak model may acknowledge the ID correction in prose but still write TKFDRE9961. arg_gate pins deposit_id=TKFDRE9962 and forbidden_ids=['TKFDRE9961']."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant looks up the FD, identifies the customer provided the wrong ID (9961 vs actual 9962), communicates the correction, and after confirmation calls update_deposit_renewal with deposit_id=TKFDRE9962. FAIL if update_deposit_renewal is called with TKFDRE9961."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,237 @@
+{
+  "case_id": "depl.create_rd.happy.001",
+  "axis": "1_happy_path",
+  "domain": "deposits_and_loans",
+  "tool": "create_rd",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "31-year-old male, Teaching Associate Professionals, rural Khargone, Madhya Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0492",
+      "full_name": "Kamal Kumar",
+      "date_of_birth": "1995-06-06",
+      "gender": "male",
+      "customer_since": "2017-06-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9425",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "66 Market Road",
+        "line2": "Salt Lake",
+        "city": "Khargone",
+        "state": "Madhya Pradesh",
+        "pincode": "559425",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "66 Market Road",
+        "line2": "Salt Lake",
+        "city": "Khargone",
+        "state": "Madhya Pradesh",
+        "pincode": "559425",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6984X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBHZ6470001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBHZ6470002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to start a recurring deposit of ₹10,000 a month for 3 years from my savings account. No nominee for now, and no auto-renewal — that's all the detail I have."
+    },
+    {
+      "content": "Yes, please set it up."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "The slab must COVER the 36-month tenure asked about. ('1 year to < 3 years' would exclude 36 months). 7.00 is the RD 3y-<5y rate: the RD card runs +25bp over the FD card's 6.75 at the same slab, the convention every case in the bank follows.",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹10,000/month for 36 months at 7.0%, each installment compounded quarterly for the months it remains invested = 401372.98 -> 401373. The previous 396000 / 36000 understated interest by ~10% and matched no convention.",
+      "output": {
+        "maturity_amount": 401373,
+        "interest_earned": 41373,
+        "total_principal_invested": 360000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Mocked because arg_gate permits the call — create_rd's description names get_account_balance as a call-before prerequisite for verifying the first installment can be funded. Previously A2-forbidden in both create_rd cases.",
+      "records": [
+        {
+          "account_id": "TKBHZ6470001",
+          "available_balance": 300000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "maturity_instruction is stated explicitly rather than left to the input echo, so the assistant can confirm to the customer that auto-renewal is off — which is what they asked for. A call passing a different instruction has already failed A3 via optional_ok.",
+      "output": {
+        "deposit_id": "TKRDBHZ6470003",
+        "status": "success",
+        "message": "Recurring Deposit started. First installment of ₹10,000 debited today; ₹10,000 will be debited on the 15th of each month until 2029-03-15.",
+        "interest_rate": 7.0,
+        "maturity_date": "2029-03-15",
+        "maturity_amount": 401373,
+        "monthly_debit_date": 15,
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-RD-77120"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_rd",
+        "arguments": {
+          "monthly_installment": 10000,
+          "tenure_months": 36,
+          "source_account": "TKBHZ6470001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_rd": {
+        "required": {
+          "monthly_installment": 10000,
+          "tenure_months": 36,
+          "source_account": "TKBHZ6470001"
+        },
+        "optional_ok": {
+          "maturity_instruction": {
+            "allowed": [
+              "no_renewal"
+            ]
+          }
+        },
+        "_comment": "The customer said 'no auto-renewal'. maturity_instruction is not pinned in `required` because omitting it is correct — the schema default IS no_renewal — but passing renew_principal or renew_principal_interest contradicts an explicit instruction, so optional_ok catches that without punishing the omission."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 1 — an RD booking with confirmation. create_rd authorizes a recurring monthly debit for the entire tenure, and its description states plainly that 'this recurring commitment must be stated explicitly when seeking customer confirmation' and that 'the first installment is debited at booking'. That rule IS disclosed to the model, so it is fair to require it: what the customer confirms must be the standing commitment, not just a one-off transaction.\n\nThe customer wants ₹10,000 a month for 3 years from their savings account, with no nominee and no auto-renewal. Before asking for confirmation the assistant must make the commitment explicit: ₹10,000 will be debited every month for 36 months, the first one today, totalling ₹3,60,000 invested. After the customer confirms it should call create_rd(monthly_installment=10000, tenure_months=36, source_account=TKBHZ6470001) and report the arrangement — deposit TKRDBHZ6470003, debits on the 15th of each month, maturing 2029-03-15 at ₹4,01,373, auto-renewal off.\n\nRDs have no payout_type: interest always accrues to maturity, so the model must not invent one — passing payout_type is flagged as an unexpected argument by S3 and rejected by the mock. maturity_instruction may be omitted, since the schema default is already no_renewal, but passing a renewal value contradicts what the customer asked for and fails A3.\n\nBooking before confirmation fails S2. Seeking confirmation without stating the recurring commitment fails the axis gate, even if the booking itself is correct."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "BEFORE seeking the customer's confirmation the assistant states the recurring commitment explicitly — ₹10,000 debited every month for 36 months, the first installment today — and only then starts the RD (₹10,000 / 36 months / from the savings account), reporting the arrangement (monthly debit date, maturity value ₹4,01,373, auto-renewal off). Booking before confirmation, booking with wrong terms, or asking the customer to confirm without having stated the multi-month commitment, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

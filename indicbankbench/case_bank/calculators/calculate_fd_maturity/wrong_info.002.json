@@ -1,0 +1,257 @@
+{
+  "case_id": "calc.calculate_fd_maturity.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7 wrong TENURE belief corrected by the deposit RECORD, with the correction landing in the calculator's ARGS (the siblings covered wrong-rate beliefs — the demoted .002's pattern — this is a different wrong fact). The customer says their Rs 3,00,000 FD runs '4 years', but get_fd_details shows the actual tenure is 24 months (started 2025-11-10, maturing 2027-11-10). The model must compute maturity with the record's tenure — calculate_fd_maturity.tenure_months = 24, not the customer's 48. The careless failure: running the calculator at 48 months (Rs 3,92,105-ish at the 3-5y rate) or trusting the customer's word over the record. The corrected tenure must reach the calculator's arguments.",
+  "setup": {
+    "persona": "58-year-old female, Caner, rural Surguja, Chhattisgarh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0272",
+      "full_name": "Jyoti Devi",
+      "date_of_birth": "1968-09-22",
+      "gender": "female",
+      "customer_since": "2020-06-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5972",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Surguja",
+        "state": "Chhattisgarh",
+        "pincode": "915972",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "93 Temple Road",
+        "line2": "Andheri West",
+        "city": "Surguja",
+        "state": "Chhattisgarh",
+        "pincode": "915972",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0078X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKXFM83001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDXFM83003",
+          "type": "fd",
+          "label": "TK Fixed Deposit"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCXFM83002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_fd_details",
+    "request_cheque_book",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "I have a Rs 3,00,000 FD running for 4 years — what will it be worth at maturity?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The record is the truth: the FD runs 24 months (2025-11-10 to 2027-11-10) at 6.5%, maturity 341292 — not the customer's '4 years'.",
+      "records": [
+        {
+          "deposit_id": "TKFDXFM83003",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-11-10",
+          "maturity_date": "2027-11-10",
+          "maturity_amount": 341292,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKXFM83001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "3,00,000 at 6.5% for 24 months, quarterly compounding = 341292. A 48-month run at the 3-5y rate (6.75%) would be 392105 — the careless-failure figure.",
+      "output": {
+        "maturity_amount": 341292,
+        "interest_earned": 41292,
+        "total_principal_invested": 300000
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDXFM83003"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd"
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 300000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "calculate_fd_maturity"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDXFM83003"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Rate must come from the card (6.5%), not memory."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 300000,
+          "rate": 6.5,
+          "tenure_months": 24
+        },
+        "_comment": "THE GATE: the calculator must run the RECORD's tenure (24), not the customer's wrong '4 years' (48). The corrected tenure reaches the calculator's arguments."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer believes their Rs 3,00,000 FD runs for 4 years. The deposit record shows the actual tenure is 24 months (started 2025-11-10, maturing 2027-11-10, contracted at 6.5%). The assistant must check the record, surface the correction, source the rate from the card, and compute the maturity at the RECORD's tenure: Rs 3,41,292 (24 months, quarterly compounding). Running the calculator at the customer's 48 months (about Rs 3,92,105 at the 3-5y rate) — or answering from the customer's belief without the lookup — is the failure."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant checks the deposit record, corrects the customer's 4-year belief (the FD runs 24 months), and computes maturity at the record's tenure with the sourced rate — Rs 3,41,292. Computing at 48 months or skipping the lookup fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

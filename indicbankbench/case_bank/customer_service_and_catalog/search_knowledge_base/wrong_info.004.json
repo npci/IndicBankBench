@@ -1,0 +1,192 @@
+{
+  "case_id": "csc.search_knowledge_base.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "search_knowledge_base",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'search for fraud protection — I think someone used my card'. Asks about fraud safeguards. If the model searches narrowly (only fraud), it gets fraud reporting procedures. But the REAL answer is in a 'disputed transaction fee' article that explains how fee disputes work — the Rs 500 observation the customer actually saw isn't fraud, it's a non-maintenance charge that needs a charges_dispute, not a fraud report. A broader search (or searching for charges/disputes) reveals the correct resolution path.",
+  "setup": {
+    "persona": "55-year-old female, Construction and Maintenance Labourers, rural Viluppuram, Tamil Nadu",
+    "current_date": "2026-09-08",
+    "current_time": "11:00",
+    "login_context": {
+      "customer_id": "SCN0609",
+      "full_name": "Prema Jayaseeli",
+      "date_of_birth": "1971-10-15",
+      "gender": "female",
+      "customer_since": "2021-10-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0385",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "Viluppuram",
+        "state": "Tamil Nadu",
+        "pincode": "780385",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "Viluppuram",
+        "state": "Tamil Nadu",
+        "pincode": "780385",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4477X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9711001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9711002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_transaction_history",
+    "get_account_balance",
+    "raise_request",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "I think there's been fraud on my account — I can see a Rs 500 debit I don't recognise. Search your knowledge base about fraud protection and tell me what I should do."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about 'fraud protection'. A narrow fraud query returns fraud reporting procedures (unauthorized_debit). But the Rs 500 charge isn't fraud — it's a non-maintenance fee. The relevant article (charges_dispute procedure) is hidden behind the fraud filter. A broader search (or including charges/fee queries) reveals the correct resolution: raise a charges_dispute, not a fraud report. The model must identify the fee nature and direct accordingly.",
+      "records": [
+        {
+          "chunk": "If you suspect fraud or unauthorised activity on your account, immediately freeze your card via toggle_card_freeze and raise an unauthorised_debit request via raise_request with the related_transaction_id from get_transaction_history. The bank will investigate and provisionally credit the disputed amount within 7 working days.",
+          "source": "Fraud Protection and Unauthorised Transactions FAQ"
+        },
+        {
+          "chunk": "Non-maintenance charges of Rs 500 are applied to savings accounts with an average monthly balance below Rs 10,000. If you believe the charge was applied in error, raise a charges_dispute request via raise_request. The fee may be waived at the bank's discretion. This is not treated as a fraud incident.",
+          "source": "Schedule of Charges — Maintenance Fees and Disputes"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "The Rs 500 debit is a non-maintenance charge (internal, fee). The customer thinks it's fraud.",
+      "records": [
+        {
+          "date": "2026-09-01T00:01:00",
+          "amount": 500,
+          "type": "debit",
+          "channel": "internal",
+          "reference_id": "TXN-9710001",
+          "transaction_note": "NON-MAINTENANCE CHARGE - AUGUST 2026",
+          "status": "success",
+          "running_balance": 12450
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE-00000",
+        "status": "failed",
+        "message": "Noise tool.",
+        "category": "other"
+      },
+      "_comment": "Safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "search_knowledge_base",
+        "arguments": {
+          "query": "non-maintenance charge dispute fee deduction procedure"
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFTB9711001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "search_knowledge_base": {
+        "required": {},
+        "optional_ok": {
+          "query": {
+            "allowed": [
+              "non-maintenance charge dispute fee deduction procedure"
+            ]
+          }
+        },
+        "_comment": "Broad query about charges and fees reveals BOTH fraud procedures AND the non-maintenance charge policy. A narrow 'fraud protection' query misses the charges_dispute article which is the actual resolution path for this Rs 500 fee."
+      },
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFTB9711001"
+        },
+        "_comment": "Need to identify the transaction as a non-maintenance fee, not fraud."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer believes a Rs 500 debit is fraud and wants to search for fraud protection procedures. The knowledge base returns both fraud reporting procedures (unauthorized_debit) and the non-maintenance charge policy. The Rs 500 is actually a non-maintenance fee from the bank, not a fraud incident. The assistant must recognise this from the transaction description (NON-MAINTENANCE CHARGE) and the KB article, and direct the customer to raise a charges_dispute rather than a fraud report. Searching only for fraud and recommending fraud procedures without identifying the fee nature fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies that the Rs 500 debit is a non-maintenance charge (not fraud) from the transaction description and knowledge base, and directs the customer to raise a charges_dispute request rather than a fraud report. Recommending fraud procedures for a bank fee fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "case_id": "cards.get_card_details.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 diagnose-don't-ask: the customer reports a symptom ('declined at a restaurant in Dubai') rather than naming a tool or a setting. get_card_details is documented as the decline-diagnosis tool. The controls show international POS disabled — the actual cause. The assistant should infer the intent, look it up and explain the cause, NOT ask 'what would you like me to check?'. Over-clarifying here is the failure.",
+  "setup": {
+    "persona": "49-year-old female, Fisherman, Deep Sea, rural Mahesana, Gujarat",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0098",
+      "full_name": "Dakshaba Ghudiben",
+      "date_of_birth": "1977-06-20",
+      "gender": "female",
+      "customer_since": "2017-04-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1577",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "18 Market Road",
+        "line2": "Andheri West",
+        "city": "Mahesana",
+        "state": "Gujarat",
+        "pincode": "821577",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "18 Market Road",
+        "line2": "Andheri West",
+        "city": "Mahesana",
+        "state": "Gujarat",
+        "pincode": "821577",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7396X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKMAS67001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCMAS672218",
+          "card_type": "credit",
+          "masked_number": "****2218",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_details",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "My card got declined at a restaurant in Dubai last night. It's embarrassing. Why?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The cause: pos.international.enabled = false. The card is active and has plenty of available limit, so neither status nor funds explain the decline.",
+      "records": [
+        {
+          "card_id": "TKCMAS672218",
+          "masked_number": "****2218",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCMAS672218"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "The customer has exactly one card, so the id is inferable. get_card_details is the documented decline-diagnosis tool — the assistant should call it rather than asking what to check."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer reports a card decline abroad and asks why. The assistant should recognise this as a diagnosis request, call get_card_details, and identify the actual cause from the controls: international POS is disabled (pos.international.enabled = false), while the card is active with ₹1,43,500 available — so neither card status nor insufficient funds explains it. It should explain that in-store (POS) international transactions are switched off, and offer to enable them. Asking the customer what they'd like checked instead of diagnosing, blaming the limit or card status, or inventing a cause (e.g. 'the merchant's terminal failed') are failures."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant infers the diagnostic intent, looks up the card, and correctly identifies international POS being disabled as the cause — rather than asking the customer what to check, blaming card status/limit (both are fine), or inventing an unrelated cause. Offering to enable international POS is ideal."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

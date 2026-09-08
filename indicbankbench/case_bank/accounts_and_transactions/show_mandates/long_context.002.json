@@ -1,0 +1,191 @@
+{
+  "case_id": "acct.show_mandates.long_context.002",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Prior showed Netflix as active. Customer paused it. Now shows paused. Model must use fresh data.",
+  "setup": {
+    "persona": "37-year-old male, Ships’ Deck Ratings, Barge Crews and Boatmen, rural Mainpuri, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0307",
+      "full_name": "Ram Karan",
+      "date_of_birth": "1989-12-10",
+      "gender": "male",
+      "customer_since": "2023-07-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4551",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Mainpuri",
+        "state": "Uttar Pradesh",
+        "pincode": "994551",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "Mainpuri",
+        "state": "Uttar Pradesh",
+        "pincode": "994551",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4584X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSMN9900011",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSMN9900012",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "show_mandates",
+              "arguments": {
+                "account_id": "TKSMN9900011"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"mandates\":[{\"mandate_id\":\"MND99001\",\"type\":\"upi\",\"payee\":\"Netflix\",\"amount\":649,\"frequency\":\"monthly\",\"status\":\"active\",\"next_debit_date\":\"2026-09-01\",\"account_id\":\"TKSMN9900011\"},{\"mandate_id\":\"MND99002\",\"type\":\"nach\",\"payee\":\"HDFC SIP\",\"amount\":5000,\"frequency\":\"monthly\",\"status\":\"active\",\"next_debit_date\":\"2026-09-05\",\"account_id\":\"TKSMN9900011\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "You have 2 active mandates: Netflix Rs 649 and HDFC SIP Rs 5,000."
+      },
+      {
+        "role": "user",
+        "content": "Pause the Netflix one please."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "get_deposit_closure_quote",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my current mandates — I want to make sure Netflix is paused."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "Netflix paused, HDFC SIP active.",
+      "records": [
+        {
+          "mandate_id": "MND99001",
+          "type": "upi",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "paused",
+          "next_debit_date": "2026-12-01",
+          "account_id": "TKSMN9900011"
+        },
+        {
+          "mandate_id": "MND99002",
+          "type": "nach",
+          "payee": "HDFC SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKSMN9900011"
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {
+          "account_id": "TKSMN9900011"
+        }
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {
+          "account_id": "TKSMN9900011"
+        }
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Prior showed both mandates active. Netflix was paused. The assistant must call show_mandates and report Netflix as paused, HDFC SIP as active — NOT repeat that both are active from prior. Saying Netflix is still active fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports Netflix paused, HDFC SIP active from fresh call, NOT that both are active from stale prior. Misreporting Netflix status fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

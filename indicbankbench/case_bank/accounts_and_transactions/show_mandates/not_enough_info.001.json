@@ -1,0 +1,162 @@
+{
+  "case_id": "acct.show_mandates.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer says 'my mandates' but has 2 linked accounts. show_mandates takes a single account_id — must ask which account.",
+  "setup": {
+    "persona": "35-year-old female, Heel Attacher, Hand (Foot Wear), rural Osmanabad, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0313",
+      "full_name": "Kalavati Sanjay",
+      "date_of_birth": "1991-09-10",
+      "gender": "female",
+      "customer_since": "2020-05-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6644",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Osmanabad",
+        "state": "Maharashtra",
+        "pincode": "946644",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "45 Temple Road",
+        "line2": "Adyar",
+        "city": "Osmanabad",
+        "state": "Maharashtra",
+        "pincode": "946644",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8839X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSMN7600001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKSMN7600002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSMN7600003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "calculate_rd_maturity",
+    "get_loan_foreclosure_quote"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you show me all my mandates and standing instructions?"
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only. Salary: Netflix+LIC. Savings: HDFC SIP.",
+      "records": [
+        {
+          "mandate_id": "MNDSMN7600001",
+          "type": "upi",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKSMN7600001"
+        },
+        {
+          "mandate_id": "MNDSMN7600002",
+          "type": "nach",
+          "payee": "HDFC SIP",
+          "amount": 5000,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-05",
+          "account_id": "TKSMN7600002"
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Must NOT be called: ambiguous which account. A2 enforces."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer has two accounts (salary and savings) and asks to see 'my mandates' without specifying which account. The assistant must ask ONE focused question to identify which account's mandates they want, and must NOT call show_mandates yet. The clarification is the complete answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which account (salary or savings) rather than guessing or calling show_mandates without knowing the account. Calling the tool without clarifying, or guessing an account, fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "case_id": "acct.get_account_balance.contradicting_info.003",
+  "axis": "5_contradicting_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'my current account has enough for the vendor payment — confirm the balance'. The current account holds only Rs 18,500 but the SAVINGS account (which they didn't ask about) holds Rs 3,45,000 — the payment of Rs 3,20,000 went there. An account_ids filter for only the current account hides the savings balance where the money actually is. Broad query reveals the mismatch.",
+  "setup": {
+    "persona": "43-year-old female, No Occupation / Retired / Homemaker, rural Kendrapara, Odisha",
+    "current_date": "2026-08-20",
+    "current_time": "11:45",
+    "login_context": {
+      "customer_id": "SCN0154",
+      "full_name": "Mangali Nayak",
+      "date_of_birth": "1983-06-28",
+      "gender": "female",
+      "customer_since": "2017-10-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3625",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "66 Market Road",
+        "line2": "Salt Lake",
+        "city": "Kendrapara",
+        "state": "Odisha",
+        "pincode": "293625",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "66 Market Road",
+        "line2": "Salt Lake",
+        "city": "Kendrapara",
+        "state": "Odisha",
+        "pincode": "293625",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3584X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9452001",
+          "account_type": "current",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9452002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9452003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I just received a big client payment of Rs 3,20,000 — it should be in my current account. Check the balance there so I can transfer it to the vendor."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the customer believes the Rs 3,20,000 payment landed in the current account, which has only Rs 18,500. The payment actually credited to the SAVINGS account (Rs 3,45,000). An account_ids filter for only the current account hides the savings balance where the money really is. Broad query reveals the mismatch between customer belief and reality.",
+      "records": [
+        {
+          "account_id": "TKFTB9452001",
+          "available_balance": 18500,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKFTB9452002",
+          "available_balance": 345000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFTB9452001",
+            "TKFTB9452002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFTB9452001",
+                "TKFTB9452002"
+              ],
+              [
+                "TKFTB9452002",
+                "TKFTB9452001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both accounts — filtering only the current account hides the savings account's Rs 3,45,000 balance where the Rs 3,20,000 payment actually landed."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer believes Rs 3,20,000 landed in the current account. The current account has only Rs 18,500 — the Rs 3,20,000 payment actually credited to the SAVINGS account (balance Rs 3,45,000). The assistant must query both accounts and correct the customer — the money is in savings, not current. Reporting only the current account's low balance without identifying where the money actually is fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces both accounts and corrects the customer: the Rs 3,20,000 payment landed in the savings account (Rs 3,45,000), not the current account (Rs 18,500). Reporting only the current account balance without finding the payment fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

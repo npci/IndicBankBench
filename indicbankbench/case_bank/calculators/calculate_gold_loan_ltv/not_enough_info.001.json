@@ -1,0 +1,164 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4 UNSUPPORTED enum value: the customer says their gold is 20-carat, but both get_gold_rate and calculate_gold_loan_ltv accept purity_karat only from {18, 22, 24} — and that enum is disclosed to the model in the function schema it receives. The IDEAL behaviour is to recognise from the allowed set that 20 is unsupported and ask the customer to confirm the actual purity WITHOUT calling any tool with 20. GRADING NOTE: S3 hard-fails, turn-wise, on any call carrying purity_karat=20 — so a model that probes get_gold_rate(20) fails S3 EVEN IF it then recovers and clarifies correctly to the customer. This is by design under the strict reading of S3 ('never construct an invalid call'): the enum was given, so pre-validating against it is the tested skill. On this case S3=FAIL means 'called with an out-of-enum value then recovered', NOT 'gave the customer a wrong answer'. It functions as a pre-validation FLOOR, not a clarify discriminator.",
+  "setup": {
+    "persona": "28-year-old female, No Occupation / Retired / Homemaker, rural Aurangabad, Bihar",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0733",
+      "full_name": "Urmila Devi",
+      "date_of_birth": "1998-01-07",
+      "gender": "female",
+      "customer_since": "2016-06-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6664",
+      "registered_email": "u*****@gmail.com",
+      "communication_address": {
+        "line1": "25 MG Road",
+        "line2": "Alkapuri",
+        "city": "Aurangabad",
+        "state": "Bihar",
+        "pincode": "366664",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "25 MG Road",
+        "line2": "Alkapuri",
+        "city": "Aurangabad",
+        "state": "Bihar",
+        "pincode": "366664",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9608X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKZKS3099001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCZKS3099002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_loan_foreclosure_quote",
+    "request_cheque_book"
+  ],
+  "user_turns": [
+    {
+      "content": "I've got about 60 grams of 20-carat gold. What loan can I get on it?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — 20K is not a valid purity. get_gold_rate should not be called with 20; if it is, S3 fails on the enum.",
+      "output": {
+        "rate_per_gram": 6000,
+        "rate_date": "2026-03-15"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — must not be called with purity_karat=20 (fails S3 enum).",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 75
+      }
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {},
+        "_comment": "Should not be called with purity_karat=20 — not in the {18,22,24} enum. If called at all it must use a supported purity, but the correct move is to confirm the purity with the customer first.",
+        "optional": true
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "_comment": "Must not execute — purity 20 is unsupported and unconfirmed. A purity_karat=20 call also fails S3 on the enum.",
+        "optional": true
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer says their gold is 20-carat, but the bank's tools only support 18K, 22K, or 24K purity (the allowed set is disclosed in the tool schema). The ideal behaviour is to recognise from that set that 20K is unsupported and ask the customer to confirm the actual carat — noting the supported options and that Indian jewellery is most commonly 22K — WITHOUT calling any tool with the invalid purity. Calling get_gold_rate or calculate_gold_loan_ltv with purity_karat=20 is itself a schema violation (S3): the model was given the valid values and should pre-validate against them. Quietly substituting 22K and quoting a figure as if confirmed is also a failure. A clarifying question about the purity — with no invalid tool call — is the correct, clean pass."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "the assistant recognises 20-carat is not a supported purity (only 18/22/24) and asks the customer to confirm the actual carat — rather than forcing 20 through the tools or silently assuming 22K and quoting a loan figure. Silently substituting a purity and answering fails."
+    },
+    "judge_advisory": [
+      "Q_clarify",
+      "Q_tone"
+    ]
+  }
+}

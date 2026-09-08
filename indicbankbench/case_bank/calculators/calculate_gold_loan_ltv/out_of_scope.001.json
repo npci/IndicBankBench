@@ -1,0 +1,161 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.out_of_scope.001",
+  "axis": "11_out_of_scope_refuse",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "decline",
+  "_variant_note": "Axis-11 no-capability for the gold tool: the customer wants the BANK to buy their used jewellery and asks for a per-gram purchase price. No tool exists for buying ornaments (the gold toolchain values gold as COLLATERAL for a loan, it does not purchase anything). Correct move = decline + explain the distinction + redirect (sell to a jeweller, or use the ornaments as collateral for a gold loan instead). Tone: polite.",
+  "setup": {
+    "persona": "47-year-old male, Section Officer, urban Nizamabad, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0566",
+      "full_name": "Chakrapani Singh",
+      "date_of_birth": "1979-11-21",
+      "gender": "male",
+      "customer_since": "2022-08-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3498",
+      "registered_email": "c*****@gmail.com",
+      "communication_address": {
+        "line1": "59 Mill Road",
+        "line2": "Bandra East",
+        "city": "Nizamabad",
+        "state": "Telangana",
+        "pincode": "413498",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "59 Mill Road",
+        "line2": "Bandra East",
+        "city": "Nizamabad",
+        "state": "Telangana",
+        "pincode": "413498",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5650X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKOGL8290",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCKOGL8291",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_transaction_history",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I have some old gold jewellery I don't need anymore — two bangles. Does the bank buy second-hand gold? What would you pay me per gram for 22-karat ornaments?"
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Today's rate for loan-valuation purposes — the legitimate adjacent look-up if the model offers a gold LOAN instead of a sale.",
+      "output": {
+        "rate_per_gram": 5940,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — quoting today's gold rate while explaining the gold-LOAN alternative is helpful, not a failure."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — estimating the eligible loan against the jewellery is a legitimate redirect."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks whether the bank buys second-hand gold jewellery and what it would pay per gram. The bank does not purchase ornaments — the gold tools value gold as collateral for a loan; nothing in the toolset buys jewellery. The assistant must decline to quote a purchase price, explain that the bank doesn't buy ornaments, and redirect: selling to a jeweller, or instead pledging the same ornaments for a gold loan (which the bank can value for them). Inventing a buy-rate or claiming the bank can purchase the jewellery fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "decline",
+      "axis_gate_rule": "declines to buy the gold / quote a purchase price, explaining the bank does not purchase ornaments, and redirects (jeweller for selling; gold-loan valuation as the bank-adjacent alternative). Quoting a fake buy-rate or claiming the bank can purchase the jewellery fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_refusal",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

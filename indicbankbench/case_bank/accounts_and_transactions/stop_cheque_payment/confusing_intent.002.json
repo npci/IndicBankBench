@@ -1,0 +1,226 @@
+{
+  "case_id": "acct.stop_cheque_payment.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction on a WRITE: turn 1 names cheque 100234; turn 2 corrects it to 100235 and affirms in the same turn. The corrected number must propagate into the final write — the arg_gate pins cheque_numbers to the corrected value, so a model that transcribes the stale number from turn 1 fails A3. Named careless failure mode: stopping cheque 100234 (the pre-correction number) because it was the most recent number the customer 'requested'. The stop reason (lost) is supplied in the customer's own words to keep the enum obtainable.",
+  "setup": {
+    "persona": "47-year-old female, Restorer, Paper and Paints, rural Guntur, Andhra Pradesh",
+    "current_date": "2026-08-10",
+    "current_time": "12:40",
+    "login_context": {
+      "customer_id": "SCN0698",
+      "full_name": "Rathnamma Uppati",
+      "date_of_birth": "1979-01-12",
+      "gender": "female",
+      "customer_since": "2012-08-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6516",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "646516",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "37 MG Road",
+        "line2": "Koregaon Park",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "646516",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6495X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCW4399001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKSCW4399002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSCW4399003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "Please stop cheque 100234 on my salary account before it gets cashed."
+    },
+    {
+      "content": "Sorry, I got the number wrong — it's 100235, not 100234. Yes, go ahead and stop it, I lost it somewhere."
+    }
+  ],
+  "mock": {
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "100235",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment instruction placed on 1 cheque.",
+        "reference_id": "REF-SCP-43991"
+      },
+      "_comment": "account_id is echoed by the executor (input ∩ output name)."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-10T12:40:00",
+        "last_update": "2026-08-10T12:40:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKSCW4399001",
+          "cheque_numbers": [
+            "100235"
+          ],
+          "reason": "lost"
+        }
+      }
+    ],
+    "arg_gate": {
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKSCW4399001",
+          "cheque_numbers": [
+            "100235"
+          ]
+        },
+        "forbidden_ids": [
+          "TKSCW4399002"
+        ],
+        "optional_ok": {
+          "reason": {
+            "allowed": [
+              "lost",
+              null
+            ]
+          }
+        },
+        "_comment": "The write MUST carry the corrected number 100235 — stopping 100234 (the stale pre-correction number) fails A3. reason is optional in the schema; the customer stated 'lost', so passing it is natural and omitting it is equally fine."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer first names cheque 100234, then corrects the number to 100235 in the same turn that confirms the stop. The assistant must place the stop-payment on the CORRECTED cheque: stop_cheque_payment(account_id=TKSCW4399001, cheque_numbers=['100235'], reason='lost') after confirmation, and report it stopped (REF-SCP-43991). Acting on the stale number 100234 — the value the customer originally gave — is the careless failure this case exists to catch, and the arg_gate pins the corrected number so such a model fails A3."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the stop-payment is placed on the CORRECTED cheque 100235 (salary account) after confirmation and reported stopped; FAIL if the write carries the stale number 100234 or lands on the wrong account."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

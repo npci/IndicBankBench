@@ -1,0 +1,229 @@
+{
+  "case_id": "calc.calculate_fd_maturity.confusing_intent.003",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction to an earlier argument (the tenure: 2 years -> 3 years), on a chain with a real derive-args dependency (rate must come from get_deposit_loan_rates' output, so parallel batching fails A4). The corrected tenure moves the slab from 6.5% to 6.75% and the maturity from 2,27,528 to 2,44,479. Named careless failure mode: computing/reporting the 2-year figure (2,27,528 at 6.5) — the pre-correction input — either by not re-running after the correction or by carrying the old tenure into the calculator call. The arg_gate pins rate=6.75 and tenure=36, so a stale call fails A3.",
+  "setup": {
+    "persona": "27-year-old female, No Occupation / Retired / Homemaker, rural Uttara Kannada, Karnataka",
+    "current_date": "2026-08-12",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0602",
+      "full_name": "Yamanavva Patil",
+      "date_of_birth": "1999-06-18",
+      "gender": "female",
+      "customer_since": "2017-06-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0817",
+      "registered_email": "y*****@gmail.com",
+      "communication_address": {
+        "line1": "18 Market Road",
+        "line2": "Andheri West",
+        "city": "Uttara Kannada",
+        "state": "Karnataka",
+        "pincode": "380817",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "18 Market Road",
+        "line2": "Andheri West",
+        "city": "Uttara Kannada",
+        "state": "Karnataka",
+        "pincode": "380817",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5392X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCFC4401001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCFC4401002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "If I put ₹2,00,000 into an FD for 2 years, what will I get at maturity?"
+    },
+    {
+      "content": "Wait, I meant 3 years — 2 was a typo."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "slab": "12–24 months",
+          "rate": 6.5,
+          "senior_citizen_rate": 7.0
+        },
+        {
+          "slab": "36–60 months",
+          "rate": 6.75,
+          "senior_citizen_rate": 7.25
+        }
+      ],
+      "static_output": {
+        "product_type": "fd",
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 244479,
+        "interest_earned": 44479,
+        "total_principal_invested": 200000
+      },
+      "_comment": "2,00,000 at 6.75% over 36 months, quarterly compounding: 200000 x (1 + 6.75/400)^12 = 2,44,479 (CONVENTIONS.md §2)."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-12"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.75,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "optional_ok": {
+          "tenure_months": {
+            "allowed": [
+              36,
+              24,
+              null
+            ]
+          }
+        },
+        "_comment": "The rate is the sole authoritative source for the calculator; an intermediate 2-year lookup before the correction is permitted (allowed 24), but the calculation must use the corrected 3-year slab."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 200000
+        },
+        "_comment": "principal is the only invariant across the pre-correction (24mo) and corrected (36mo) calls — the mid-flight correction means a compliant model legitimately calls once at each tenure. rate/tenure are deliberately NOT pinned (confusing_intent.001 precedent): the corrected final values (36 months at 6.75) are verified by the R bar, not A3."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for an FD maturity projection at 2 years, then corrects the tenure to 3 years. The assistant must re-run with the corrected tenure: fetch the FD rate for 36 months (6.75%, the 3-year to under-5-year slab) from get_deposit_loan_rates and compute 2,00,000 at 6.75% over 36 months = INR 2,44,479 maturity (INR 44,479 interest). Reporting the pre-correction 2-year figure (INR 2,27,528 at 6.5%) is the careless failure — the correction must propagate into the calculator call and the final answer. The rate must come from the rates tool, not memory, and the calculator must follow the rates call (A4)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the projection uses the CORRECTED 3-year tenure at the 3-year slab rate 6.75% and reports INR 2,44,479 maturity; FAIL if it reports the 2-year figure (INR 2,27,528 at 6.5) or uses a rate not sourced from the rates tool."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,276 @@
+{
+  "case_id": "cards.get_card_details.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'check my credit card — it was declined at the restaurant'. The credit card is active with available credit. The DEBIT card has been frozen (suspicious activity by the bank) — and that's the card actually declined. A card_ids filter for only the credit card hides the frozen debit card. Broad query reveals the frozen debit card as the real issue.",
+  "setup": {
+    "persona": "24-year-old female, No Occupation / Retired / Homemaker, rural Koch Bihar, West Bengal",
+    "current_date": "2026-09-12",
+    "current_time": "19:30",
+    "login_context": {
+      "customer_id": "SCN0396",
+      "full_name": "Sabita Das",
+      "date_of_birth": "2002-10-03",
+      "gender": "female",
+      "customer_since": "2021-10-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5185",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "Koch Bihar",
+        "state": "West Bengal",
+        "pincode": "365185",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "106 College Road",
+        "line2": "Indiranagar",
+        "city": "Koch Bihar",
+        "state": "West Bengal",
+        "pincode": "365185",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1487X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9501001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9501002",
+          "card_type": "credit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCFTB9501003",
+          "card_type": "debit",
+          "status": "frozen (reversible)"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "set_card_controls",
+    "toggle_card_freeze",
+    "block_card",
+    "raise_request",
+    "get_transaction_history",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "My card just got declined at a restaurant. It was embarrassing. Check my credit card — what's wrong with it?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer blames the credit card for the decline. The credit card (TKCFTB9501002) is active with Rs 85,000 credit available — no issues. The DEBIT card (TKCFTB9501003) is frozen due to suspected fraud. A card_ids filter for only the credit card hides the frozen debit card. Broad query reveals the actual problem.",
+      "records": [
+        {
+          "card_id": "TKCFTB9501002",
+          "masked_number": "****8912",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 150000,
+          "available_limit": 85000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 50000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 150000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 50000
+              }
+            }
+          },
+          "expiry": "12/27"
+        },
+        {
+          "card_id": "TKCFTB9501003",
+          "masked_number": "****4521",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "frozen (reversible)",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "06/28"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFTB9501002",
+            "TKCFTB9501003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCFTB9501002",
+                "TKCFTB9501003"
+              ],
+              [
+                "TKCFTB9501003",
+                "TKCFTB9501002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both cards — filtering only the credit card hides the frozen debit card which is the actual cause of the decline."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "block_card": {
+        "required": {},
+        "optional": true
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer believes their credit card was declined at a restaurant. The credit card (TKCFTB9501002) is active with Rs 85,000 available credit — it's fine. The debit card (TKCFTB9501003) is frozen due to suspected fraud — that's the card that was declined. The assistant must query both cards and surface that the credit card is fine but the debit card is frozen, correcting the customer's assumption about which card was declined. Reporting only the credit card as healthy without surfacing the frozen debit card fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both cards and identifies the debit card (TKCFTB9501003) as frozen, which is the actual card declined at the restaurant, while the credit card is fine. Reporting only that the credit card is healthy without surfacing the frozen debit card fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

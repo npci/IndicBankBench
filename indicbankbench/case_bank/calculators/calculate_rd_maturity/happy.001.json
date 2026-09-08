@@ -1,0 +1,203 @@
+{
+  "case_id": "calc.calculate_rd_maturity.happy.001",
+  "axis": "1_happy_path",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 baseline for calculate_rd_maturity: the customer states the product ('recurring deposit'), the installment, and the tenure up front, so there is no inference and no missing field — this is a straight source-the-rate-then-compute chain, exercising A4 ordering (gold.dependencies) and faithful reporting of the returned figures. This is the case that measures whether the tool is used CORRECTLY: the existing two cases (confusing_intent, not_enough_info) only prove the model can route to RD and clarify a missing tenure, not that it computes the right number. 36 months / 3 years is chosen deliberately: it lands in the 3–5y slab (7.0% RD, CONVENTIONS §3), so the figures differ from both 24-month cases and the case is not a re-skin of them.",
+  "setup": {
+    "persona": "36-year-old male, Stamper, Hand, rural Kanpur Dehat, Uttar Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0754",
+      "full_name": "Dhanesh Singh",
+      "date_of_birth": "1990-06-14",
+      "gender": "male",
+      "customer_since": "2017-10-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2305",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "66 Market Road",
+        "line2": "Salt Lake",
+        "city": "Kanpur Dehat",
+        "state": "Uttar Pradesh",
+        "pincode": "592305",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "66 Market Road",
+        "line2": "Salt Lake",
+        "city": "Kanpur Dehat",
+        "state": "Uttar Pradesh",
+        "pincode": "592305",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7243X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCAL9001001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCAL9001002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "request_duplicate_statement",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to start a recurring deposit of ₹4,000 every month for 3 years. How much will I have at maturity?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 7.0,
+            "senior_citizen_rate": 7.5
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "RD rate for a 36-month tenure: the 3–5 year slab is 7.0% (CONVENTIONS §3, RD = FD + 25bp). The customer is not a senior (segment regular, born 1990), so 7.0 is the operative rate."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 160549,
+        "interest_earned": 16549,
+        "total_principal_invested": 144000
+      },
+      "_comment": "₹4,000/month for 36 months at 7.0%, quarterly compounding = 160549 (interest 16549) per CONVENTIONS §2 RD formula M = Σ(k=0..35) 4000 × (1 + 7.0/400)^(4×(36-k)/12). total_principal_invested = 4000 × 36 = 144000."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 4000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "_comment": "Must query the RD rate card. tenure_months 36 is a helpful filter but not pinned (omitting it still yields the 3–5y slab; the correct-rate requirement is enforced by the calculate_rd_maturity arg_gate)."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 4000,
+          "rate": 7.0,
+          "tenure_months": 36
+        },
+        "_comment": "rate MUST be the sourced 7.0 — not assumed, not omitted. installment 4000 and tenure 36 are unambiguous from the query."
+      },
+      "_comment": "calculate_fd_maturity is exposed but must NOT be used — this is a recurring deposit, not a lump-sum FD. An FD call fails A2 (not in the allowed set).",
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer states a recurring deposit of ₹4,000 a month for 3 years and asks the maturity value. The assistant should source the RD rate from get_deposit_loan_rates (7.0% for the 3–5 year slab), then call calculate_rd_maturity with monthly_installment 4000, rate 7.0, tenure 36, and report the returned figures faithfully: maturity ₹1,60,549, interest earned ₹16,549, on ₹1,44,000 invested. Skipping the rate lookup and assuming a rate, using calculate_fd_maturity to treat the plan as a lump-sum FD, or misreporting the returned numbers, are failures."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant sources the RD rate from get_deposit_loan_rates and reports the maturity value (₹1,60,549) and interest earned (₹16,549) as returned by the tool. Assuming a rate instead of sourcing it, treating the plan as an FD, or misstating the returned figures, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

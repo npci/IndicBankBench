@@ -1,0 +1,213 @@
+{
+  "case_id": "acct.stop_cheque_payment.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'stop cheque #100845 from my savings account'. The cheque was actually issued from the SALARY account, not savings. get_transaction_history filtered by savings account doesn't show it. A model that queries transactions across both accounts finds the cheque on the salary account and can correctly stop it there.",
+  "setup": {
+    "persona": "28-year-old male, Farm Hands, rural Moradabad, Uttar Pradesh",
+    "current_date": "2026-08-05",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0796",
+      "full_name": "Hari Chand",
+      "date_of_birth": "1998-06-15",
+      "gender": "male",
+      "customer_since": "2017-12-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2381",
+      "registered_email": "h*****@gmail.com",
+      "communication_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "702381",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "102 Market Road",
+        "line2": "Gomti Nagar",
+        "city": "Moradabad",
+        "state": "Uttar Pradesh",
+        "pincode": "702381",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2277X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9457001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9457002",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9457003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I issued cheque #100845 for Rs 25,000 from my savings account but the payee hasn't deposited it yet. I need to stop that cheque — please put a stop on it right away."
+    },
+    {
+      "content": "Ok, go ahead and stop it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer says cheque #100845 was from the savings account. The savings account transactions don't show cheque #100845. The actual cheque was issued from the SALARY account (TKFTB9457002). An account_id filter for only the savings account returns empty/irrelevant records. Broad query finds cheque #100845 was from the salary account.",
+      "records": [
+        {
+          "date": "2026-08-03T10:30:00",
+          "amount": 15000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-FTB7001-03",
+          "transaction_note": "CHEQUE #100846 - RENT PAYMENT",
+          "status": "success",
+          "running_balance": 135000
+        },
+        {
+          "date": "2026-08-01T09:00:00",
+          "amount": 25000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-FTB7001-02",
+          "transaction_note": "CHEQUE #100845 - KUMAR ELECTRICALS",
+          "status": "success",
+          "running_balance": 150000
+        },
+        {
+          "date": "2026-07-28T14:00:00",
+          "amount": 5000,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-FTB7001-01",
+          "transaction_note": "UPI - GROCERY STORE",
+          "status": "success",
+          "running_balance": 175000
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "TKFTB9457002",
+        "results": [
+          {
+            "cheque_number": "100845",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop payment placed on cheque #100845.",
+        "reference_id": "REF-SCP-FT01"
+      },
+      "_comment": "Success — stop placed on the salary account cheque #100845."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFTB9457002"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFTB9457002"
+        },
+        "optional_ok": {
+          "account_id": {
+            "allowed": [
+              "TKFTB9457002",
+              "TKFTB9457001"
+            ]
+          }
+        },
+        "_comment": "Must query the salary account where cheque #100845 was actually issued. Querying only the savings account (TKFTB9457001) returns no matching cheque, sending the model down a dead end. The gold requires the salary account. The optional_ok allows querying both. The model then needs to call stop_cheque_payment on the salary account."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKFTB9457002"
+        },
+        "optional_ok": {
+          "cheque_numbers": {
+            "allowed": [
+              [
+                "100845"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must call stop on the SALARY account (TKFTB9457002) where the cheque was actually issued. Calling it on the savings account would be wrong since that's not where the cheque originated."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "expected_resolution": "The customer says cheque #100845 was from the savings account. But after checking transaction history, the assistant discovers cheque #100845 (Rs 25,000, Kumar Electricals) was actually issued from the SALARY account (TKFTB9457002). The assistant must surface this correction to the customer and place the stop payment on the salary account. Calling stop_cheque_payment on the savings account without finding the actual cheque fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "discovers via transaction history that cheque #100845 was issued from the salary account (not savings as the customer assumed), surfaces this correction, and places the stop payment on the salary account. Stopping the cheque on the wrong account or failing to find it fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

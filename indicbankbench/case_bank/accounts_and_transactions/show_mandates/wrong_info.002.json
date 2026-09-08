@@ -1,0 +1,165 @@
+{
+  "case_id": "acct.show_mandates.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks for 'my salary account mandates'. The suspicious mandate (a Zomato Gold eNACH) is actually on the SAVINGS account, not the salary account. An account_id filter for only the salary account hides it. Broad query across both accounts (or no account_id) reveals both mandates.",
+  "setup": {
+    "persona": "40-year-old female, No Occupation / Retired / Homemaker, urban Gurdaspur, Punjab",
+    "current_date": "2026-08-10",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0703",
+      "full_name": "Geeta Bala",
+      "date_of_birth": "1986-09-11",
+      "gender": "female",
+      "customer_since": "2020-05-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0320",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "81 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Gurdaspur",
+        "state": "Punjab",
+        "pincode": "190320",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "81 Temple Road",
+        "line2": "Salt Lake",
+        "city": "Gurdaspur",
+        "state": "Punjab",
+        "pincode": "190320",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7927X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACD9404001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKACD9404002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCACD9404003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I don't recognise a Zomato Gold payment going out. Check all mandates on my salary account — I want to see what's set up there."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the Zomato Gold mandate (MND-ACD0001-04, Rs 799/month) is on the SAVINGS account (TKACD9404002), NOT the salary account. The salary account only has a Netflix mandate. An account_id=TKACD9404001 filter returns only MND-ACD0001-03 (Netflix), hiding the Zomato mandate entirely. Broad query returns both accounts' mandates.",
+      "records": [
+        {
+          "mandate_id": "MND-ACD0001-03",
+          "type": "upi_autopay",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKACD9404001"
+        },
+        {
+          "mandate_id": "MND-ACD0001-04",
+          "type": "enach",
+          "payee": "Zomato Gold",
+          "amount": 799,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-08-15",
+          "account_id": "TKACD9404002"
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Broad query — the customer asked for salary-account mandates but the Zomato Gold mandate (the one they're looking for) is on the SAVINGS account. An account_id=TKACD9404001 filter returns only Netflix and hides Zomato Gold entirely. The model must query broadly (both accounts) and surface the Zomato mandate on the savings account."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks to check mandates on the salary account, worried about a Zomato Gold payment. The salary account has a Netflix mandate (Rs 649/month). The Zomato Gold mandate (MND-ACD0001-04, Rs 799/month, next debit Aug 15) is actually on the SAVINGS account. The assistant must query all mandates and surface that the Zomato mandate exists on the savings account, correcting the customer's account assumption. Showing only the salary-account mandate (Netflix) and saying there's no Zomato Gold fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries all mandates and surfaces the Zomato Gold mandate (MND-ACD0001-04, Rs 799/month, savings account TKACD9404002), correcting the customer's assumption it's on the salary account. Reporting only the Netflix mandate without surfacing Zomato Gold fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

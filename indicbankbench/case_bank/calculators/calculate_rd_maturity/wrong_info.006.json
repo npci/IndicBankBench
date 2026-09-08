@@ -1,0 +1,185 @@
+{
+  "case_id": "calc.calculate_rd_maturity.wrong_info.006",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_rd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'calculate RD maturity for 3 years, rate should be 6.75% from the 1-3yr slab for RD'. But RD 1-3yr slab is 6.75% and 3-5yr slab is 7.0% (+25bp over FD). For 36 months, the correct slab is 3-5 years at 7.0%. A model that trusts the customer's slab naming uses wrong rate. The rate card shows both slabs — the model must pick the correct one.",
+  "setup": {
+    "persona": "31-year-old male, Non-Ordained Religious Workers, urban Rewari, Haryana",
+    "current_date": "2026-09-02",
+    "current_time": "09:00",
+    "login_context": {
+      "customer_id": "SCN0288",
+      "full_name": "Abhishek Kumar",
+      "date_of_birth": "1995-01-26",
+      "gender": "male",
+      "customer_since": "2013-10-07",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5980",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Rewari",
+        "state": "Haryana",
+        "pincode": "815980",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "61 MG Road",
+        "line2": "Indiranagar",
+        "city": "Rewari",
+        "state": "Haryana",
+        "pincode": "815980",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7046X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9661001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9661002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_rd_maturity",
+    "get_deposit_loan_rates",
+    "create_rd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to start an RD of Rs 5,000 per month for 3 years. The 1-3 year slab rate for RD is 6.75% — use that for the calculation."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer assumes 3 years = 1-3 year slab (6.75%). But for RD at 36 months, the correct slab is '3 years to < 5 years' at 7.0% (+25bp over FD at 6.75%). The 1-3yr slab rate is for tenures UP TO (but not including) 3 years. 36 months = 3 years, so the next slab applies.",
+      "records": [
+        {
+          "slab": "1 year to < 3 years",
+          "rate": 6.75,
+          "senior_citizen_rate": 7.25
+        },
+        {
+          "slab": "3 years to < 5 years",
+          "rate": 7.0,
+          "senior_citizen_rate": 7.5
+        }
+      ],
+      "static_output": {
+        "product_type": "rd",
+        "effective_date": "2026-03-01"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 200943,
+        "interest_earned": 20943,
+        "total_principal_invested": 180000
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "rd",
+          "tenure_months": 36
+        }
+      },
+      {
+        "tool": "calculate_rd_maturity",
+        "arguments": {
+          "monthly_installment": 5000,
+          "rate": 7.0,
+          "tenure_months": 36
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "rd"
+        },
+        "optional_ok": {
+          "tenure_months": {
+            "allowed": [
+              36
+            ]
+          }
+        },
+        "_comment": "Query for 36-month tenure reveals the 3-5yr slab at 7.0%. Customer's slab assumption (1-3yr at 6.75%) is wrong for 36 months."
+      },
+      "calculate_rd_maturity": {
+        "required": {
+          "monthly_installment": 5000,
+          "tenure_months": 36
+        },
+        "optional_ok": {
+          "rate": {
+            "allowed": [
+              7.0
+            ]
+          }
+        },
+        "_comment": "Correct rate is 7.0% from 3-5yr slab. Using 6.75% produces wrong maturity."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks for an RD maturity calculation at Rs 5,000/month for 3 years, assuming the 1-3yr slab rate of 6.75%. But 36 months falls in the '3 years to < 5 years' slab at 7.0% for RD. The correct maturity at 7.0% is higher than at 6.75%. The assistant must fetch rates, identify the correct slab, and use 7.0% in the calculation, correcting the customer. Using the customer's assumed 6.75% without checking the rate card fails.",
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_rd_maturity"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "fetches the RD rate card, identifies that 36 months falls in the 3-5yr slab at 7.0% (not 1-3yr at 6.75%), and uses the correct rate. Using the customer's assumed 6.75% without correction fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

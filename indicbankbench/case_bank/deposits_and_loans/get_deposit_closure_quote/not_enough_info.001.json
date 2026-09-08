@@ -1,0 +1,313 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: the customer holds two FDs of different sizes and asks what closing 'my FD' early would pay out. Closing one destroys a booked deposit, so the right move is to ask which — or (mirroring acct.get_account_balance.not_enough_info.001) quote BOTH and let the customer pick. A one-sided quote, presented as the answer, is the failure. The two FDs differ by principal and tenure, so the assistant has real facts to disambiguate with.",
+  "setup": {
+    "persona": "39-year-old male, Stenciler, urban Moga, Punjab",
+    "current_date": "2026-08-20",
+    "current_time": "17:15",
+    "login_context": {
+      "customer_id": "SCN0569",
+      "full_name": "Harpar Singh",
+      "date_of_birth": "1987-08-08",
+      "gender": "male",
+      "customer_since": "2019-01-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5787",
+      "registered_email": "h*****@gmail.com",
+      "communication_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Moga",
+        "state": "Punjab",
+        "pincode": "715787",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "68 Park Avenue",
+        "line2": "Anna Nagar",
+        "city": "Moga",
+        "state": "Punjab",
+        "pincode": "715787",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2208X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 2,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDCQ6600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDDCQ6600002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        },
+        {
+          "product_id": "TKFDDCQ6600003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCDCQ6600004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "If I close my FD early, how much will I actually get?"
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Both FDs, differing by principal and tenure — the facts the assistant needs to disambiguate or to offer a choice.",
+      "records": [
+        {
+          "deposit_id": "TKFDDCQ6600002",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2026-03-01",
+          "maturity_date": "2028-03-01",
+          "maturity_amount": 341292,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "renew_principal_interest",
+          "payout_account": "TKDCQ6600001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        },
+        {
+          "deposit_id": "TKFDDCQ6600003",
+          "principal_amount": 500000,
+          "interest_rate": 6.75,
+          "tenure_months": 36,
+          "start_date": "2026-06-15",
+          "maturity_date": "2029-06-15",
+          "maturity_amount": 611196,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "renew_principal_interest",
+          "payout_account": "TKDCQ6600001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net — quotes for both deposits, so a both-FDs query (the acceptable resolution) yields real figures.",
+      "records": [
+        {
+          "deposit_id": "TKFDDCQ6600002",
+          "principal_amount": 300000,
+          "accrued_interest": 9218,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3000,
+          "effective_rate": 4.4,
+          "estimated_payout": 306218
+        },
+        {
+          "deposit_id": "TKFDDCQ6600003",
+          "principal_amount": 500000,
+          "accrued_interest": 6103,
+          "penalty_rate": 1.0,
+          "penalty_amount": 5000,
+          "effective_rate": 1.22,
+          "estimated_payout": 501103
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — no closure should execute on this turn; the deposit to close is unnamed and unconfirmed.",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKDEP-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Call-then-clarify: quoting BOTH deposits and letting the customer pick is an acceptable resolution (mirrors the acct.get_account_balance pattern). A one-sided quote presented as the answer is the failure — judge-gated."
+      },
+      "close_deposit": {
+        "required": {},
+        "_comment": "Must NOT be called — the target deposit is unnamed and nothing is confirmed. A2 catches the call."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "The natural helper read — surface the two deposits before asking which."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks what an early closure of 'my FD' would pay out, but they hold two fixed deposits — a ₹3,00,000 FD opened 1 Mar 2026 (maturing 1 Mar 2028) and a ₹5,00,000 FD opened 15 Jun 2026 (maturing 15 Jun 2029) — and closing one is a real action with penalty consequences. The assistant must ask WHICH deposit the customer means; it may surface both deposits (via get_fd_details) and even quote both closure figures, but it must not present one deposit's pay-out as the answer to an unqualified question, and it must not call close_deposit on a guessed deposit. The clarification is the complete answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which FD the customer means (naming the two deposits, with quotes for both, is a plus) rather than answering with one deposit's pay-out or calling close_deposit. A one-sided answer to an unqualified question fails; closing a guessed deposit fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

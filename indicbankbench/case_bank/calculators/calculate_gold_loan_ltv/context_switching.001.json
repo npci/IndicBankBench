@@ -1,0 +1,297 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 calculator recency: LTV for 50g of 22K is computed first, an EMI detour on a home loan intervenes, and the customer returns to the gold loan amount. The final answer must be the LTV result (₹2,35,181), not the EMI figures.",
+  "setup": {
+    "persona": "32-year-old male, Suitcase Maker, rural Sagar, Madhya Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0457",
+      "full_name": "Anil Pandey",
+      "date_of_birth": "1994-10-22",
+      "gender": "male",
+      "customer_since": "2021-02-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7301",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "22 College Road",
+        "line2": "Koregaon Park",
+        "city": "Sagar",
+        "state": "Madhya Pradesh",
+        "pincode": "237301",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "22 College Road",
+        "line2": "Koregaon Park",
+        "city": "Sagar",
+        "state": "Madhya Pradesh",
+        "pincode": "237301",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5316X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAGLTP1101",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGLTP3101",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "raise_request",
+    "request_duplicate_statement",
+    "create_rd",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "How much loan can I get on 50 grams of 22K gold?"
+    },
+    {
+      "content": "While at it — what would the EMI be on a ₹5,00,000 home loan over 20 years?"
+    },
+    {
+      "content": "So the gold loan amount?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "All tenures",
+            "rate": 8.6
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 4370.81,
+        "total_interest": 548994.4,
+        "total_payment": 1048994.4
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 313575.0,
+        "eligible_loan_amount": 235181,
+        "ltv_percent_used": 75
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6271.5,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 22
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "home_loan",
+          "tenure_months": 240
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 500000,
+          "rate": 8.6,
+          "tenure_months": 240
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ],
+      [
+        "get_deposit_loan_rates",
+        "calculate_emi"
+      ]
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {
+          "purity_karat": 22
+        },
+        "_comment": "Source of the LTV rate."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 50,
+          "purity_karat": 22,
+          "gold_rate_per_gram": 6271.5
+        },
+        "_comment": "50g x 6271.50 = 313575 -> 235181 at 75%."
+      },
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "home_loan"
+        },
+        "_comment": "The EMI detour's rate source: 8.6%."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 500000,
+          "rate": 8.6,
+          "tenure_months": 240
+        },
+        "_comment": "EMI 4370.81 on 20 years."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks the gold loan eligibility (50g 22K -> ₹2,35,181 at 75% LTV), detours to a home-loan EMI (₹4,370.81/month on ₹5,00,000 at 8.6% over 20 years), then returns to the gold loan amount. The assistant must restate ₹2,35,181 — not the EMI, and not any EMI-derived totals."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the EMI detour and, on return, restates the gold loan eligibility ₹2,35,181 (75% LTV on 50g 22K). Answering with the EMI figure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

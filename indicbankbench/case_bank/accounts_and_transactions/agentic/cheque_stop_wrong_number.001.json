@@ -1,0 +1,239 @@
+{
+  "case_id": "acct.agentic.cheque_stop_wrong_number.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history+stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'stop cheque #100281 — I issued it to the wrong person.' Model calls get_transaction_history, finds the REAL pending cheque is #100291 (status=pending, channel=cheque, ₹85,000 to 'Raj Traders'). #100281 doesn't match any pending cheque entry. Model must correct the customer AND propagate the corrected cheque_number into stop_cheque_payment. arg_gate pins cheque_numbers=['100291']; forbidden_ids blocks '100281'.",
+  "setup": {
+    "persona": "26-year-old male, No Occupation / Retired / Homemaker, urban Palakkad, Kerala",
+    "current_date": "2026-08-20",
+    "current_time": "13:45",
+    "login_context": {
+      "customer_id": "SCN0258",
+      "full_name": "Purushothaman Mohan",
+      "date_of_birth": "2000-09-06",
+      "gender": "male",
+      "customer_since": "2020-10-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0996",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "117 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Palakkad",
+        "state": "Kerala",
+        "pincode": "210996",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "117 Temple Road",
+        "line2": "Gomti Nagar",
+        "city": "Palakkad",
+        "state": "Kerala",
+        "pincode": "210996",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0757X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACH9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCACH9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "stop_cheque_payment",
+    "get_account_balance",
+    "get_account_details",
+    "get_card_details",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "Stop cheque number 100281 — I wrote it to the wrong payee by mistake. It hasn't cleared yet. Please stop it from my account."
+    },
+    {
+      "content": "Yes, go ahead and stop it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Transaction history for TKACH9700001. #100291 is the real pending cheque (₹85,000 to Raj Traders, channel=cheque, status=pending). #100281 doesn't appear. Customer got the cheque number wrong by one digit (off by ten).",
+      "records": [
+        {
+          "date": "2026-08-19T10:15:00",
+          "amount": 85000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "CHQ-100291",
+          "transaction_note": "Cheque #100291 — Raj Traders",
+          "status": "success",
+          "running_balance": 227500
+        },
+        {
+          "date": "2026-08-18T14:30:00",
+          "amount": 12000,
+          "type": "credit",
+          "channel": "upi",
+          "reference_id": "UPI-884521",
+          "transaction_note": "Salary credit — ABC Corp",
+          "status": "success",
+          "running_balance": 312500
+        },
+        {
+          "date": "2026-08-17T09:00:00",
+          "amount": 3500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI-773210",
+          "transaction_note": "Swiggy order",
+          "status": "success",
+          "running_balance": 300500
+        }
+      ],
+      "static_output": {
+        "total_count": 3
+      }
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "account_id": "TKACH9700001",
+        "results": [
+          {
+            "cheque_number": "100291",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop payment placed on cheque 100291.",
+        "reference_id": "REF-CHQ-97001"
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKACH9700001"
+        }
+      },
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKACH9700001",
+          "cheque_numbers": [
+            "100291"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "stop_cheque_payment"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKACH9700001"
+        },
+        "_comment": "Must fetch transaction history — this is where the real cheque number 100291 is found."
+      },
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKACH9700001",
+          "cheque_numbers": [
+            "100291"
+          ]
+        },
+        "forbidden_ids": [
+          "100281"
+        ],
+        "_comment": "CORRECTED cheque_number=100291. Customer said 100281 (wrong). The real pending cheque from transaction history is 100291. Writing 100281 fails A3 via forbidden_ids."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'stop cheque #100281.' get_transaction_history returns the account's recent transactions including a pending cheque #100291 (₹85,000 to Raj Traders, status=pending). #100281 does not appear in the records. The assistant must correct: 'I don't see cheque 100281 in your recent transactions. The only pending cheque I can find is 100291 — ₹85,000 to Raj Traders. Should I stop that one instead?' After confirmation, calls stop_cheque_payment with cheque_numbers=['100291']. A weak model may pass the customer's wrong number 100281 directly. arg_gate pins cheque_numbers=['100291'] and forbidden_ids=['100281']."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches transaction history, identifies cheque 100281 is not in the records but 100291 is the pending cheque, communicates this correction to the customer, and after confirmation calls stop_cheque_payment with cheque_numbers=['100291']. FAIL if stop_cheque_payment is called with 100281."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

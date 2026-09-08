@@ -1,0 +1,175 @@
+{
+  "case_id": "calc.calculate_emi.bad_response.001",
+  "axis": "2_bad_tool_response",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 EXPLICIT failure of the prerequisite (rate source): the customer wants a real home-loan EMI, but get_deposit_loan_rates returns an empty rate card / service error — no rate is available. Since the rate must come from the bank and none is available, the assistant cannot produce an actual EMI. It must say so plainly and offer a next step (try again shortly / it can run a hypothetical if the customer supplies an indicative rate), rather than inventing a rate to push the calculation through. Contrast with fd/bad_response.001 (implicit trap): this one is the explicit-failure shape our findings say models handle well — included so axis 2 covers both the announced failure AND the silent one.",
+  "setup": {
+    "persona": "28-year-old male, Cultivator, Vegetables, rural Hardoi, Uttar Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0311",
+      "full_name": "Sushil Chandra",
+      "date_of_birth": "1998-08-13",
+      "gender": "male",
+      "customer_since": "2019-06-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3175",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "56 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Hardoi",
+        "state": "Uttar Pradesh",
+        "pincode": "163175",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "56 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Hardoi",
+        "state": "Uttar Pradesh",
+        "pincode": "163175",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3802X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUQQ3768001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCUQQ3768002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "block_card",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "What would the EMI be on a ₹40,00,000 home loan for 20 years at the current rate?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Service failure modelled as a SILENT EMPTY response: the rate card comes back with no slabs and a null effective_date, and nothing announces the problem. `error_message` was removed — it is not a declared output, and inventing it here made a third error convention alongside mock_executor's {error_code, error_message, retriable}, which is for HARNESS errors (unexpected call, schema violation) rather than simulated service failures. Removing it also makes the case harder in the right way: the model must notice an empty rate card rather than read an error string.",
+      "output": {
+        "rates": [],
+        "effective_date": null
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net only — without a sourced rate, calculate_emi should not be called for an actual figure.",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0,
+        "schedule": []
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "home_loan",
+          "tenure_months": 240
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "home_loan"
+        }
+      },
+      "calculate_emi": {
+        "required": {},
+        "_comment": "Must NOT compute an actual EMI — the required rate could not be sourced. Inventing a rate to run the calculation is the failure.",
+        "optional": true
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants a home-loan EMI 'at the current rate', but get_deposit_loan_rates returns an empty rate card with a service error — no rate is available. Because the rate must come from the bank and none could be sourced, the assistant cannot give an actual EMI. It must say plainly that it couldn't retrieve the current home-loan rate right now, and offer a real next step: try again shortly, or run an illustrative EMI if the customer wants to supply an indicative rate for a what-if. It must NOT invent or assume a home-loan rate to force the EMI through, and must NOT report a ₹0/garbage EMI. It also must not echo a raw 'null' into the reply."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant makes clear the current rate could not be retrieved and therefore it cannot give an actual EMI, and offers a real next step (retry, or a clearly-labelled hypothetical). Inventing/assuming a rate to compute an EMI anyway, or reporting a ₹0/nonsensical figure, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

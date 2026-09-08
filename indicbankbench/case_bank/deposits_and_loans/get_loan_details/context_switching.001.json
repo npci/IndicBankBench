@@ -1,0 +1,260 @@
+{
+  "case_id": "depl.get_loan_details.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "get_loan_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer asks about home loan, detours to FD maturity, then returns to loan EMI question. Model must keep sub-tasks separate — no bleed between loan and FD data.",
+  "setup": {
+    "persona": "53-year-old male, Well Digger Helper, rural Pune, Maharashtra",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0405",
+      "full_name": "Koterange Rahangdale",
+      "date_of_birth": "1973-11-05",
+      "gender": "male",
+      "customer_since": "2022-04-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8762",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "83 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "788762",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "83 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Pune",
+        "state": "Maharashtra",
+        "pincode": "788762",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7041X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGLD8400001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLNGLD8400002",
+          "type": "loan",
+          "label": "TK Home Loan"
+        },
+        {
+          "product_id": "TKFDGLD8400003",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCGLD8400004",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "How much do I still owe on my home loan and what's my EMI?"
+    },
+    {
+      "content": "Actually, while we're on it — when does my fixed deposit mature and how much will I get?"
+    },
+    {
+      "content": "So coming back to the loan — what was the EMI again?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Home loan, canonical figures.",
+      "records": [
+        {
+          "loan_id": "TKLNGLD8400002",
+          "type": "home",
+          "principal": 4000000,
+          "outstanding": 3200000,
+          "emi_amount": 34885,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 150,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKGLD8400001"
+        }
+      ]
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FD: 5L @ 6.5% 24mo -> 568,819.",
+      "records": [
+        {
+          "deposit_id": "TKFDGLD8400003",
+          "principal_amount": 500000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2024-09-01",
+          "maturity_date": "2026-09-01",
+          "maturity_amount": 568819,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKGLD8400001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKLNGLD8400002"
+          ]
+        }
+      },
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDGLD8400003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKLNGLD8400002"
+          ]
+        }
+      },
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDGLD8400003"
+          ]
+        }
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer starts by asking about their home loan (outstanding Rs 32,00,000, EMI Rs 34,885). After the assistant answers, the customer detours to ask about their FD (matures 2026-09-01, Rs 5,68,819). Then the customer returns to the loan topic and asks for the EMI again. The assistant must recall the correct EMI (Rs 34,885) from the earlier get_loan_details call — not confuse it with any FD figure — and must not refetch get_loan_details unnecessarily. Bleeding the FD maturity amount into the loan answer, or forgetting the EMI and asking the customer again, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "accurately recalls the home loan EMI (Rs 34,885) after the FD detour, without confusing it with FD data. Reporting the FD figure as the EMI, forgetting the number, or re-calling get_loan_details unnecessarily fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

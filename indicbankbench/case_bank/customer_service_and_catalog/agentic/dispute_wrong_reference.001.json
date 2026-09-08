@@ -1,0 +1,252 @@
+{
+  "case_id": "csc.agentic.dispute_wrong_reference.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_transaction_history+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'dispute transaction UPI-773210 — unauthorized debit.' Model calls get_transaction_history, finds UPI-773210 is the customer's own Swiggy order (legitimate ₹3,500). The real unauthorized debit is UPI-992341 (AMAZON MARKETPLACE, ₹45,000). Model must correct the customer in prose AND propagate the corrected related_transaction_id (UPI-992341) into raise_request. arg_gate pins related_transaction_id=UPI-992341; forbidden_ids blocks UPI-773210.",
+  "setup": {
+    "persona": "24-year-old female, Middle School Teachers, urban Bhojpur, Bihar",
+    "current_date": "2026-08-21",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0665",
+      "full_name": "Archana Kumari",
+      "date_of_birth": "2002-06-09",
+      "gender": "female",
+      "customer_since": "2020-10-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9813",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Bhojpur",
+        "state": "Bihar",
+        "pincode": "249813",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Bhojpur",
+        "state": "Bihar",
+        "pincode": "249813",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3790X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSC9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSC9600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_transaction_history",
+    "raise_request",
+    "get_account_balance",
+    "get_account_details",
+    "get_card_details",
+    "get_request_status",
+    "get_products_and_offers",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "There's an unauthorized debit on my account — dispute transaction UPI-773210. I don't recognize it at all."
+    },
+    {
+      "content": "Yes, raise the dispute for the Amazon transaction."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "UPI-992341 is the unauthorized Amazon debit (₹45,000). UPI-773210 is the customer's own Swiggy order (₹3,500, legitimate). Customer named the wrong reference. Running_balance chain: 155000, 200000, 203500.",
+      "records": [
+        {
+          "date": "2026-08-20T19:30:00",
+          "amount": 45000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "UPI-992341",
+          "transaction_note": "AMAZON MARKETPLACE PURCHASE",
+          "status": "success",
+          "running_balance": 155000
+        },
+        {
+          "date": "2026-08-20T12:45:00",
+          "amount": 3500,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI-773210",
+          "transaction_note": "Swiggy food order",
+          "status": "success",
+          "running_balance": 200000
+        },
+        {
+          "date": "2026-08-19T09:00:00",
+          "amount": 40000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT-99012",
+          "transaction_note": "Salary credit",
+          "status": "success",
+          "running_balance": 203500
+        }
+      ],
+      "static_output": {
+        "total_count": 3
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-UD-96010",
+        "category": "unauthorized_debit",
+        "status": "success",
+        "message": "Unauthorized debit dispute logged (REQ-UD-96010) for UPI-992341 (₹45,000) and flagged urgent for investigation."
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCSC9600001"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "UPI-992341",
+          "description": "Customer disputes unauthorized Amazon Marketplace debit (UPI-992341, ₹45,000 on 2026-08-20)."
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKCSC9600001"
+        },
+        "_comment": "Must fetch transactions — this is where the wrong-reference trap is triggered."
+      },
+      "raise_request": {
+        "required": {
+          "category": "unauthorized_debit",
+          "related_transaction_id": "UPI-992341"
+        },
+        "forbidden_ids": [
+          "UPI-773210"
+        ],
+        "_comment": "CORRECTED related_transaction_id=UPI-992341. Customer named UPI-773210 (own Swiggy order, not unauthorized). The real unauthorized debit is UPI-992341 (Amazon ₹45,000). Passing UPI-773210 fails A3 via forbidden_ids."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'dispute transaction UPI-773210, unauthorized debit.' get_transaction_history returns: UPI-773210 = Swiggy food order ₹3,500 (legitimate, the customer's own lunch) and UPI-992341 = AMAZON MARKETPLACE PURCHASE ₹45,000 (actually unauthorized). The assistant must correct: 'UPI-773210 is your Swiggy order — that looks like your own transaction. The unauthorized debit appears to be UPI-992341 (Amazon, ₹45,000). Should I dispute that instead?' After confirmation, calls raise_request with related_transaction_id=UPI-992341 and category=unauthorized_debit. A weak model raises the dispute with the customer's stated wrong reference. arg_gate pins related_transaction_id=UPI-992341 and forbidden_ids=['UPI-773210']."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches transaction history, identifies the customer's stated UPI-773210 is their own Swiggy order (legitimate) and the real unauthorized debit is UPI-992341 (Amazon ₹45,000), communicates this correction, and after confirmation raises an unauthorized_debit dispute with related_transaction_id=UPI-992341. FAIL if raise_request is called with UPI-773210."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

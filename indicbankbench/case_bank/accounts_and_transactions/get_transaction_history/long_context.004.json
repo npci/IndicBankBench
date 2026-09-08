@@ -1,0 +1,253 @@
+{
+  "case_id": "acct.get_transaction_history.long_context.004",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_transaction_history",
+  "target_behavior": "answer",
+  "_variant_note": "Pagination trap: customer asks for ALL transactions from 2 years. total_count=245, mock returns only 10 rows. Model must use total_count and offer pagination or narrowing.",
+  "setup": {
+    "persona": "36-year-old female, Shaper Pith Hat, rural Uttar Dinajpur, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0623",
+      "full_name": "Saraswati Bibi",
+      "date_of_birth": "1990-08-02",
+      "gender": "female",
+      "customer_since": "2019-01-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1155",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Uttar Dinajpur",
+        "state": "West Bengal",
+        "pincode": "381155",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "116 Park Avenue",
+        "line2": "Civil Lines",
+        "city": "Uttar Dinajpur",
+        "state": "West Bengal",
+        "pincode": "381155",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3063X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGTH9800001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGTH9800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "toggle_card_freeze",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me all my transactions from the past 2 years. Everything."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "total_count=245 but only 10 rows returned. Model must acknowledge this is a subset.",
+      "records": [
+        {
+          "date": "2026-08-16T10:15:00",
+          "amount": 2400,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9803001",
+          "transaction_note": "UPI - BESCOM ELECTRICITY BILL",
+          "status": "success",
+          "running_balance": 31750
+        },
+        {
+          "date": "2026-08-15T18:00:00",
+          "amount": 850,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9803002",
+          "transaction_note": "UPI - SWIGGY PAYMENT",
+          "status": "success",
+          "running_balance": 34150
+        },
+        {
+          "date": "2026-08-14T09:00:00",
+          "amount": 15000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-9803003",
+          "transaction_note": "NEFT - SALARY CREDIT",
+          "status": "success",
+          "running_balance": 35000
+        },
+        {
+          "date": "2026-08-13T12:00:00",
+          "amount": 5000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-9803004",
+          "transaction_note": "POS PURCHASE - DMART",
+          "status": "success",
+          "running_balance": 20000
+        },
+        {
+          "date": "2026-08-12T16:00:00",
+          "amount": 1200,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9803005",
+          "transaction_note": "UPI - ZOMATO PAYMENT",
+          "status": "success",
+          "running_balance": 25000
+        },
+        {
+          "date": "2026-08-11T10:00:00",
+          "amount": 3000,
+          "type": "debit",
+          "channel": "cheque",
+          "reference_id": "TXN-9803006",
+          "transaction_note": "CHQ 100234 - RENT PAYMENT",
+          "status": "success",
+          "running_balance": 26200
+        },
+        {
+          "date": "2026-08-10T08:00:00",
+          "amount": 800,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "TXN-9803007",
+          "transaction_note": "UPI - PHONEPE RECHARGE",
+          "status": "success",
+          "running_balance": 29200
+        },
+        {
+          "date": "2026-08-09T18:00:00",
+          "amount": 4500,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-9803008",
+          "transaction_note": "NEFT - LOAN EMI",
+          "status": "success",
+          "running_balance": 30000
+        },
+        {
+          "date": "2026-08-08T14:00:00",
+          "amount": 2000,
+          "type": "credit",
+          "channel": "upi",
+          "reference_id": "TXN-9803009",
+          "transaction_note": "UPI - FRIEND TRANSFER",
+          "status": "success",
+          "running_balance": 34500
+        },
+        {
+          "date": "2026-08-07T09:00:00",
+          "amount": 1000,
+          "type": "debit",
+          "channel": "atm",
+          "reference_id": "TXN-9803010",
+          "transaction_note": "ATM WITHDRAWAL - SBI MG ROAD",
+          "status": "success",
+          "running_balance": 32500
+        }
+      ],
+      "static_output": {
+        "total_count": 245
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKGTH9800001",
+          "limit": 10
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {},
+        "_comment": "Must fetch. total_count=245 but only 10 returned. Model must note this is partial and offer pagination or narrowing."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for all transactions from 2 years. get_transaction_history returns total_count=245 but only 10 rows. The assistant must acknowledge this is a partial result — e.g. 'showing the most recent 10 of 245 total matching transactions' — and offer to narrow the date range, filter by type/channel, or paginate further. Presenting the 10 rows as if they were the complete set, or reporting 10 when 245 exist, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports transactions with context that this is 10 of 245 total, and offers to narrow or paginate. Presenting the 10 rows as the complete set, or hiding total_count, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

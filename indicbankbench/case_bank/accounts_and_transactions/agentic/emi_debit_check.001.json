@@ -1,0 +1,300 @@
+{
+  "case_id": "acct.agentic.emi_debit_check.001",
+  "axis": "general_agentic_multitool",
+  "domain": "accounts_and_transactions",
+  "tool": "get_loan_details+get_transaction_history+get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — three-tool chain with TWO derive-args dependencies: which account the EMI debits exists only in the loan record (emi_account_id -> savings), so both the transaction check and the balance check must follow get_loan_details (A4). The current account is a high-balance decoy — checking IT makes the assistant wrongly declare coverage fine. Named careless failure mode: assuming the salary/current account pays the EMI instead of deriving the account from the loan record. Gates pin account TKEDC5511001 and forbid TKEDC5511002 on both dependent calls.",
+  "setup": {
+    "persona": "40-year-old male, Electrical Technicians, other, rural Ernakulam, Kerala",
+    "current_date": "2026-08-16",
+    "current_time": "09:15",
+    "login_context": {
+      "customer_id": "SCN0175",
+      "full_name": "John Jose",
+      "date_of_birth": "1986-08-14",
+      "gender": "male",
+      "customer_since": "2019-02-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2979",
+      "registered_email": "j*****@gmail.com",
+      "communication_address": {
+        "line1": "20 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Ernakulam",
+        "state": "Kerala",
+        "pincode": "862979",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "20 Park Avenue",
+        "line2": "Banjara Hills",
+        "city": "Ernakulam",
+        "state": "Kerala",
+        "pincode": "862979",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7271X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKEDC5511001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKEDC5511002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKEDC5511004",
+          "type": "loan",
+          "label": "TK Home Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCEDC5511003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_loan_details",
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "get_loan_foreclosure_quote",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "My home loan EMI is due on the 5th — did this month's debit go through, and how much is left in that account now?"
+    }
+  ],
+  "mock": {
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "loan_id": "TKEDC5511004",
+          "type": "home",
+          "principal": 2400000,
+          "outstanding": 2000000,
+          "emi_amount": 41130,
+          "interest_rate": 8.6,
+          "emi_day_of_month": 5,
+          "tenure_remaining": 60,
+          "status": "active",
+          "next_due_date": "2026-09-05",
+          "emi_account_id": "TKEDC5511001"
+        }
+      ],
+      "_comment": "outstanding = 41130 x (1 - (1+8.6/1200)^-60) / (8.6/1200) = 2,000,023 ≈ 2,000,000 (CONVENTIONS.md §5). The EMI debits the SAVINGS account — that field is the chain's hinge."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-08-05T09:05:00",
+          "amount": 41130,
+          "type": "debit",
+          "channel": "internal",
+          "reference_id": "INT-5511001",
+          "transaction_note": "HOME LOAN EMI",
+          "status": "success",
+          "running_balance": 96000
+        },
+        {
+          "date": "2026-08-01T10:05:00",
+          "amount": 85000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "NEFT-5511001",
+          "transaction_note": "SALARY AUG26 ACME CORP PAYROLL",
+          "status": "success",
+          "running_balance": 137130
+        },
+        {
+          "date": "2026-07-28T08:30:00",
+          "amount": 2340,
+          "type": "debit",
+          "channel": "upi",
+          "reference_id": "UPI-5511001",
+          "transaction_note": "BESCOM ELECTRICITY BILL",
+          "status": "success",
+          "running_balance": 52130
+        },
+        {
+          "date": "2026-07-26T18:40:00",
+          "amount": 1800,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "POS-5511001",
+          "transaction_note": "GREENGROCER MALL",
+          "status": "success",
+          "running_balance": 54470
+        }
+      ],
+      "_comment": "Savings history: EMI debit of 41,130 on 08-05 went through; chain 96000+41130=137130, 137130-85000=52130, 52130+2340=54470, opening 54470+1800=56270."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKEDC5511001",
+          "available_balance": 96000,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKEDC5511002",
+          "available_balance": 340000,
+          "hold_amount": 0
+        }
+      ],
+      "_comment": "The savings balance agrees with the newest running_balance (96,000). The current account (3,40,000) is the decoy."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_foreclosure_quote": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_loan_details",
+        "arguments": {
+          "loan_ids": [
+            "TKEDC5511004"
+          ]
+        }
+      },
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKEDC5511001"
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKEDC5511001"
+          ]
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_loan_details",
+        "get_transaction_history"
+      ],
+      [
+        "get_loan_details",
+        "get_account_balance"
+      ]
+    ],
+    "arg_gate": {
+      "get_loan_details": {
+        "required": {
+          "loan_ids": [
+            "TKEDC5511004"
+          ]
+        },
+        "_comment": "The loan record is the only source of the EMI-debit account — both dependent calls derive from it."
+      },
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKEDC5511001"
+        },
+        "forbidden_ids": [
+          "TKEDC5511002"
+        ],
+        "_comment": "The EMI-debit account from the loan record is the SAVINGS account; checking the current account fails A3."
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKEDC5511001"
+          ]
+        },
+        "forbidden_ids": [
+          "TKEDC5511002"
+        ],
+        "_comment": "The balance asked about is the EMI-debit account's — the savings account (96,000). The current account (3,40,000) is the decoy; reporting IT would wrongly imply coverage."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_loan_foreclosure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks whether the home-loan EMI debit went through and what remains in 'that account'. The assistant must first read the loan record (get_loan_details): emi_amount 41,130, due on the 5th, debited from emi_account_id TKEDC5511001 (the SAVINGS account). From there it checks the savings history — the 41,130 EMI debit settled on 2026-08-05 — and the savings balance: INR 96,000 available. Both dependent calls must target the account derived from the loan record; the current account (3,40,000) is a decoy, and checking it instead is the careless failure. Both A4 pairs pin the loan read first."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant derives the EMI-debit account from the loan record (savings), confirms the 41,130 EMI debit went through on 2026-08-05, and reports the savings balance of INR 96,000; FAIL if it checks the wrong (current) account, claims the debit did not go through, or reports a balance without the loan-record derivation."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,269 @@
+{
+  "case_id": "depl.agentic.fd_close_wrong_payout.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+get_deposit_closure_quote+close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'close my FD and send proceeds to account ending 8002.' get_fd_details shows FD's linked payout_account is TKFDZ9700001 — there is no account 8002 in linked_accounts. The customer's requested payout account doesn't exist. Correction: close_deposit uses the FD's registered payout_account.",
+  "setup": {
+    "persona": "20-year-old female, No Occupation / Retired / Homemaker, rural Balrampur, Uttar Pradesh",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0137",
+      "full_name": "Salma Hashmi",
+      "date_of_birth": "2006-05-01",
+      "gender": "female",
+      "customer_since": "2024-08-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8468",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Balrampur",
+        "state": "Uttar Pradesh",
+        "pincode": "848468",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "29 Church Street",
+        "line2": "Bandra East",
+        "city": "Balrampur",
+        "state": "Uttar Pradesh",
+        "pincode": "848468",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2725X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFDZ9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDCX8891",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TCFDZ9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "close_deposit",
+    "get_account_balance",
+    "get_card_details",
+    "get_deposit_closure_quote",
+    "get_deposit_loan_rates",
+    "get_fd_details",
+    "get_rd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Close my FD — push the proceeds to my other account ending 8002. I use that for my emergency fund, not my regular savings."
+    },
+    {
+      "content": "Ok, send it to the linked savings account — go ahead."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FD TKFDCX8891: ₹2.5L at 6.5% for 12mo, started Dec 2025. ~8 months run. Linked payout_account is TKFDZ9700001. No account 8002 exists.",
+      "records": [
+        {
+          "deposit_id": "TKFDCX8891",
+          "principal_amount": 250000,
+          "interest_rate": 6.5,
+          "tenure_months": 12,
+          "start_date": "2025-12-01",
+          "maturity_date": "2026-12-01",
+          "maturity_amount": 266532,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKFDZ9700001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "~8mo run. Simple interest at 1yr slab 6.5%: 250000*6.5%*(8/12+24/365)=250000*6.5%*0.7325=₹11,903. Penalty 1%=₹2,500. Payout: 250000+11903-2500=₹2,59,403.",
+      "records": [
+        {
+          "deposit_id": "TKFDCX8891",
+          "principal_amount": 250000,
+          "accrued_interest": 11903,
+          "penalty_rate": 1.0,
+          "penalty_amount": 2500,
+          "effective_rate": 5.72,
+          "estimated_payout": 259403
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely. ₹2,59,403 credited to TKFDZ9700001.",
+        "amount_credited": 259403,
+        "payout_account": "TKFDZ9700001",
+        "reference_id": "REF-CLS-97001"
+      }
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — no RDs."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCX8891"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDCX8891"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKFDCX8891"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDCX8891"
+          ]
+        },
+        "_comment": "Reveals FD's linked payout_account = TKFDZ9700001. Account 8002 does not exist."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDCX8891"
+          ]
+        },
+        "_comment": "Must quote for closure — ₹2,59,403 payout."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKFDCX8891"
+        },
+        "forbidden_ids": [
+          "8002"
+        ],
+        "_comment": "Customer wanted payout to account 8002 which doesn't exist. The FD's registered payout_account is TKFDZ9700001. forbidden_ids catches '8002' as sentinel."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite safety net."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'close my FD and send the proceeds to my other account ending 8002.' get_fd_details shows the FD's linked payout_account is TKFDZ9700001 (the only linked savings account). There is no account ending 8002 in linked_accounts. The proceeds will go to the FD's registered payout_account by default. The assistant must correct: 'Your FD's proceeds will be credited to your linked savings account TKFDZ9700001. I don't see an account ending 8002 in your profile — you only have one savings account. The closure payout is estimated at ₹2,59,403 after ₹11,903 accrued interest and ₹2,500 penalty.' After confirmation, calls close_deposit with the correct deposit_id. forbidden_ids catches '8002' should the model incorrectly pass it as a payout_account value."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant looks up the FD, identifies the only linked savings account TKFDZ9700001 is where proceeds will go (no account 8002 exists), communicates this correction and discloses the ₹2,59,403 net payout, and after confirmation closes the FD. FAIL if the assistant tells the customer the payout will go to a non-existent account."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

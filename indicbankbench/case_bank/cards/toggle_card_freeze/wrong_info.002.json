@@ -1,0 +1,226 @@
+{
+  "case_id": "cards.toggle_card_freeze.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7 wrong STATUS belief: the customer is convinced the bank froze their card 'after that fraud SMS' and wants it unfrozen. get_card_details shows the card is ACTIVE — it was never frozen. The model must check and correct the premise, and must NOT call toggle_card_freeze (unfreezing an already-active card is a no-op, and a freeze request was never made).",
+  "setup": {
+    "persona": "37-year-old male, Freight Handlers, urban Aizawl, Mizoram",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0559",
+      "full_name": "Lalrintluanga Lalthazuala",
+      "date_of_birth": "1989-02-25",
+      "gender": "male",
+      "customer_since": "2013-03-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5089",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "50 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Aizawl",
+        "state": "Mizoram",
+        "pincode": "345089",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "50 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Aizawl",
+        "state": "Mizoram",
+        "pincode": "345089",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8385X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKATF9532000",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCTF9532001",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Your bank froze my debit card after that fraud SMS yesterday — I'm about to pay for groceries and it's embarrassing. Unfreeze it right now."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The card IS active — the 'frozen' premise is what the case corrects. A model that unfreezes blindly would toggle an already-active card.",
+      "records": [
+        {
+          "card_id": "TKCTF9532001",
+          "masked_number": "****2109",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "09/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 25000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 25000
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCTF9532001",
+        "card_status": "active",
+        "status": "failed",
+        "message": "No change applied — the card is already in the requested state.",
+        "reference_id": "REF-FRZ-00000"
+      },
+      "_comment": "The tool signals the no-op; the correct model never makes this call at all."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "controls": {},
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCTF9532001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCTF9532001"
+          ]
+        }
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer believes the bank froze their card and asks for it to be unfrozen. The assistant must call get_card_details, verify the real state, and correct the premise: the debit card (****2109) is ACTIVE — it was not frozen, so there is nothing to unfreeze and no toggle call is made. The assistant should not contradict itself by 'unfreezing'; if the customer still reports declines, the right next step is checking the card or the payment attempt, not a freeze/unfreeze round-trip. Calling toggle_card_freeze, or agreeing the card is frozen and then claiming to have unfrozen it, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks get_card_details, reports the card is active (not frozen), and does NOT call toggle_card_freeze for a no-op unfreeze. Calling the toggle, or confirming the card was frozen when it is active, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

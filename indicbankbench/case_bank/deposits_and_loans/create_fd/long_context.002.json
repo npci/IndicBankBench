@@ -1,0 +1,260 @@
+{
+  "case_id": "depl.create_fd.long_context.002",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale balance. Prior shows get_account_balance returning Rs 85,000 available with Rs 0 hold. Since that earlier round a Rs 60,000 hold was placed by the bank (lien against a pending transaction), so the live balance is Rs 25,000 available. The customer asks to book an Rs 80,000 FD, implying the stale Rs 85,000 balance suffices. A model that trusts the prior context sees Rs 85K → books Rs 80K without re-checking → A1 fails (get_account_balance never called in the live turn). A model that re-fetches get_account_balance live discovers the hold → reports funds insufficient → PASS.",
+  "setup": {
+    "persona": "36-year-old female, No Occupation / Retired / Homemaker, urban Nagpur, Maharashtra",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0172",
+      "full_name": "Aditi Kulkarni",
+      "date_of_birth": "1990-11-20",
+      "gender": "female",
+      "customer_since": "2022-02-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6382",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "pincode": "736382",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "23 Mill Road",
+        "line2": "Anna Nagar",
+        "city": "Nagpur",
+        "state": "Maharashtra",
+        "pincode": "736382",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7919X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD12985001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD12985002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "How much do I have in my savings account? Thinking about opening a fixed deposit."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "s1",
+            "type": "function",
+            "function": {
+              "name": "get_account_balance",
+              "arguments": {
+                "account_ids": [
+                  "TKOD12985001"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "s1",
+        "content": "{\"balances\":[{\"account_id\":\"TKOD12985001\",\"available_balance\":85000,\"hold_amount\":0}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your savings account has Rs 85,000 available with nothing on hold."
+      },
+      {
+        "role": "user",
+        "content": "Good — I'll come back to you about that FD once I decide the amount."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I've decided — open a 2-year fixed deposit for Rs 80,000 from my savings account. Cumulative, no nominee."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Since the prior round, the bank placed a Rs 60,000 lien. Available is now Rs 25,000, not the Rs 85,000 the prior messages show. A model that trusts the stale prior and skips this call books an unfundable FD.",
+      "records": [
+        {
+          "account_id": "TKOD12985001",
+          "available_balance": 25000,
+          "hold_amount": 60000
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      },
+      "_comment": "Safety net for models that fetch the rate as a prerequisite."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net. Rs 80,000 at 6.5% for 24 months quarterly compounding = 91011.20 → 91012. Provided so a model that still attempts the projection is not silently killed.",
+      "output": {
+        "maturity_amount": 91012,
+        "interest_earned": 11012,
+        "total_principal_invested": 80000
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDOD12985003",
+        "status": "failed",
+        "message": "Insufficient available balance in source account TKOD12985001.",
+        "reference_id": "REF-FD-00000"
+      },
+      "_comment": "A model that books without re-checking balance gets a failure response — but the trap is caught before the write even fires, by A1 (get_account_balance was never called live)."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKOD12985001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKOD12985001"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-fetch the balance live. The prior round says Rs 85,000, but a Rs 60,000 hold now sits on the account and the live available is Rs 25,000 — booking Rs 80,000 on that would fail. A model that trusts the stale context, skips this call, and goes straight to create_fd fails A1 because this required tool was never called."
+      },
+      "create_fd": {
+        "_comment": "create_fd is DELIBERATELY absent from gold and arg_gate. A model that books without re-checking balance fails A2. A model that re-checks balance, discovers Rs 25,000 available (insufficient for Rs 80,000), and reports the shortfall instead of booking is correct."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Safety net — optional, not required for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Safety net — optional, not required for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The prior conversation shows get_account_balance returning Rs 85,000 available with Rs 0 hold. The customer now asks to book an Rs 80,000 FD from that account — a request that looks fundable from the stale figure but is not, because the bank has since placed a Rs 60,000 lien, leaving only Rs 25,000 available.\n\nThe correct move is to re-fetch get_account_balance live, discover the hold, and report that the account has only Rs 25,000 available (with Rs 60,000 on hold) — insufficient for the requested Rs 80,000 FD. Booking the FD without re-checking, or reporting the stale Rs 85,000 as the current balance, are failures.\n\nTHE TRAP: an assistant that sees the prior tool result showing Rs 85,000 available, trusts it, skips the live check, and calls create_fd(80000) — which is not in the allowed set for this case and therefore fails A2. The assistant that re-verifies the balance live discovers Rs 25,000 available and reports the shortfall — the real banking assistant behaviour this case tests for."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches the account balance live, discovers Rs 25,000 available with Rs 60,000 on hold (not the stale Rs 85,000 from the prior round), and reports the funds are insufficient for the requested Rs 80,000 FD. Booking the FD without re-checking, or quoting the stale Rs 85,000 figure, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

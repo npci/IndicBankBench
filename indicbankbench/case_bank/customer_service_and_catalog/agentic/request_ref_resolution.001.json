@@ -1,0 +1,210 @@
+{
+  "case_id": "csc.agentic.request_ref_resolution.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 derive-args chain: customer wants to follow up on a charges dispute from June. get_all_requests returns 2 charges_dispute requests — one from June (REQ-DIS-RRR93601, the real one, Rs 500 fee, resolved) and one from April (REQ-DIS-RRR93602, Rs 250 penalty, noise/older). The model must identify the June dispute (correct request_id) and raise a follow-up request referencing it. Picking the April request fails A3. A4: list-before-raise. S2: confirmation before write.",
+  "setup": {
+    "persona": "28-year-old female, No Occupation / Retired / Homemaker, rural Vellore, Tamil Nadu",
+    "current_date": "2026-08-05",
+    "current_time": "09:30",
+    "login_context": {
+      "customer_id": "SCN0326",
+      "full_name": "Letchumi Priya",
+      "date_of_birth": "1998-03-07",
+      "gender": "female",
+      "customer_since": "2016-09-19",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4218",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Vellore",
+        "state": "Tamil Nadu",
+        "pincode": "274218",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Vellore",
+        "state": "Tamil Nadu",
+        "pincode": "274218",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9575X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRRR9368001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRRR9368002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I disputed a Rs 500 fee back in June — can you check where that stands and raise a follow-up if it's still stuck?"
+    },
+    {
+      "content": "Yes, please raise the follow-up."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "Two charges_dispute requests: REQ-DIS-RRR93601 (June 2026, Rs 500 fee, resolved — the real one) and REQ-DIS-RRR93602 (April 2026, Rs 250 penalty, in_progress — noise/older). The model must pick the June one (REQ-DIS-RRR93601). It IS resolved, so raising a follow-up makes no sense — that's part of the trap. Actually, the model should see it's resolved and tell the customer 'it's already resolved, no follow-up needed.' The April one is still in progress.",
+      "records": [
+        {
+          "request_id": "REQ-DIS-RRR93601",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-06-12",
+          "last_updated_date": "2026-06-28",
+          "description": "Disputed non-maintenance charge of Rs 500 — reversed"
+        },
+        {
+          "request_id": "REQ-DIS-RRR93602",
+          "category": "charges_dispute",
+          "status": "in_progress",
+          "raised_date": "2026-04-05",
+          "last_updated_date": "2026-07-20",
+          "description": "Disputed late payment penalty of Rs 250"
+        },
+        {
+          "request_id": "REQ-APP-RRR93603",
+          "category": "app_issue",
+          "status": "open",
+          "raised_date": "2026-07-28",
+          "last_updated_date": "2026-07-30",
+          "description": "Transaction notifications not working"
+        }
+      ]
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-FU-93681",
+        "category": "charges_dispute",
+        "status": "open",
+        "message": "Follow-up request logged for REQ-DIS-RRR93601 — however this request is already resolved."
+      },
+      "_comment": "Raising a follow-up on an already-resolved dispute returns a successful log but the message notes it's redundant. The correct move is NOT to raise — the dispute is resolved."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — noise tool.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must list all requests to find the June charges dispute."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Raising a follow-up is OPTIONAL but NOT required — the June dispute (REQ-DIS-RRR93601) is already RESOLVED. The correct behavior is to tell the customer it's resolved and no follow-up is needed. If the model DOES raise a follow-up, it should reference REQ-DIS-RRR93601 (the June one), not REQ-DIS-RRR93602 (the April noise)."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants to check their June Rs 500 fee dispute and potentially raise a follow-up. get_all_requests shows REQ-DIS-RRR93601 (raised 2026-06-12, Rs 500, RESOLVED — reversed on 2026-06-28) and a similar older dispute (REQ-DIS-RRR93602, April, Rs 250, in progress). The June dispute is ALREADY resolved — the Rs 500 was reversed. The assistant should tell the customer that, not raise an unnecessary follow-up. Raising a follow-up on the wrong request (the April one) or raising one without noting it's already resolved fails. If the model raises a follow-up on the June dispute, it's over-servicing but not incorrect if it acknowledges it's already resolved."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies the June Rs 500 dispute (REQ-DIS-RRR93601) as RESOLVED (reversed on 2026-06-28) and tells the customer no follow-up is needed. Missing the June request entirely, picking the April request, or proceeding to raise an unnecessary follow-up without noting the dispute is resolved fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

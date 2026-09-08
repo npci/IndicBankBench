@@ -1,0 +1,307 @@
+{
+  "case_id": "cards.agentic.card_block_type_mismatch.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+block_card",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'block my credit card 1122 — someone's been using it.' get_card_details shows 1122 is a DEBIT card, 2233 is the CREDIT card. Correction: block_card on TKCBW2233 (the credit card).",
+  "setup": {
+    "persona": "38-year-old male, Model, rural Kishanganj, Bihar",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0144",
+      "full_name": "Abdul Rustom",
+      "date_of_birth": "1988-12-05",
+      "gender": "male",
+      "customer_since": "2023-01-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4219",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "60 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Kishanganj",
+        "state": "Bihar",
+        "pincode": "114219",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "60 Jubilee Road",
+        "line2": "Adyar",
+        "city": "Kishanganj",
+        "state": "Bihar",
+        "pincode": "114219",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8115X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSCB9500204",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBW1122",
+          "card_type": "debit",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCBW2233",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "block_card",
+    "get_account_balance",
+    "get_card_details",
+    "get_transaction_history",
+    "set_card_controls",
+    "toggle_card_freeze"
+  ],
+  "user_turns": [
+    {
+      "content": "Block my credit card ending 1122 — I saw some fraud charges online. Block it right now."
+    },
+    {
+      "content": "Yes, block the actual credit card — go ahead."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCBW1122",
+          "masked_number": "****1122",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "02/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCBW2233",
+          "masked_number": "****2233",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 350000,
+          "available_limit": 230000,
+          "expiry": "07/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 10000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 60000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 35000
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "Customer says 'credit card 1122' but 1122 is debit. 2233 is the actual credit card."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card permanently blocked and hotlisted across all payment networks.",
+        "reference_id": "REF-BLK-95043"
+      }
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "success",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBW1122",
+            "TKCBW2233"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCBW2233",
+          "reason": "fraud"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCBW1122",
+                "TKCBW2233"
+              ],
+              [
+                "TKCBW1122"
+              ],
+              [
+                "TKCBW2233"
+              ]
+            ]
+          }
+        },
+        "_comment": "Customer named 1122 as credit but it's debit. 2233 is the actual credit card."
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCBW2233"
+        },
+        "forbidden_ids": [
+          "TKCBW1122"
+        ],
+        "_comment": "CORRECTED card_id=TKCBW2233. Customer said credit card 1122 — the debit 1122 is wrong type."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'block my credit card 1122.' get_card_details shows: 1122 is a DEBIT card (rupay, domestic-only). 2233 is the CREDIT card (visa, international enabled, ₹3.5L limit). Customer named the wrong suffix AND wrong type — 1122 is not even a credit card. The assistant must correct: 'Card 1122 is a debit card, not a credit card. Your credit card is 2233. I'll block that one for the suspicious charges.' After confirmation, calls block_card on TKCBW2233. arg_gate pins card_id=TKCBW2233 and forbidden_ids=[TKCBW1122]."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reads both card details, identifies 1122 is debit not credit, 2233 is the actual credit card, communicates the type+mismatch correction, and after confirmation blocks TKCBW2233. FAIL if block_card is called on TKCBW1122."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

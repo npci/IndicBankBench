@@ -1,0 +1,182 @@
+{
+  "case_id": "calc.calculate_gold_loan_ltv.confusing_intent.002",
+  "axis": "3_confusing_intent",
+  "domain": "calculators",
+  "tool": "calculate_gold_loan_ltv",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 mid-flight correction to an earlier argument (purity: 22 karat -> 24 karat) on a rate->LTV chain with a derive-args dependency (A4: gold_rate_per_gram must come from a fresh get_gold_rate call at the same purity). The corrected purity changes the value from 3,76,290 to 3,60,000 and the eligible loan from 2,82,217 to 2,70,000. Named careless failure mode: reporting the pre-correction 22K figures after the correction — the arg_gate pins the invariant keys (grams, tool-returned rate) and the R bar verifies the corrected 24K final answer.",
+  "setup": {
+    "persona": "18-year-old male, No Occupation / Retired / Homemaker, rural Anantapur, Andhra Pradesh",
+    "current_date": "2026-08-12",
+    "current_time": "15:10",
+    "login_context": {
+      "customer_id": "SCN0256",
+      "full_name": "Chinnakotaiah Alikonda",
+      "date_of_birth": "2008-02-19",
+      "gender": "male",
+      "customer_since": "2026-06-22",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5129",
+      "registered_email": "c*****@gmail.com",
+      "communication_address": {
+        "line1": "50 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Anantapur",
+        "state": "Andhra Pradesh",
+        "pincode": "905129",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "50 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Anantapur",
+        "state": "Andhra Pradesh",
+        "pincode": "905129",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9575X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGLT4603001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCLT4603002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_gold_rate",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "calculate_emi",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "My wife's 22 karat chain weighs 60 grams — how much gold loan can I get against it?"
+    },
+    {
+      "content": "She says it's actually 24 karat — redo it."
+    }
+  ],
+  "mock": {
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 6000,
+        "rate_date": "2026-08-12"
+      },
+      "_comment": "Flat tool — outcome_fixed by convention. The executor echoes the queried purity_karat back. The rate returned is the 24K rate; the corrected final call must be made at purity 24 and use exactly this figure."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 360000,
+        "eligible_loan_amount": 270000,
+        "ltv_percent_used": 75
+      },
+      "_comment": "60 grams at the 24K rate 6000: value 3,60,000; LTV cap 75% -> 2,70,000 eligible (trunc(grams x rate x 0.75))."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_gold_rate",
+        "arguments": {
+          "purity_karat": 24
+        }
+      },
+      {
+        "tool": "calculate_gold_loan_ltv",
+        "arguments": {
+          "gold_grams": 60,
+          "purity_karat": 24,
+          "gold_rate_per_gram": 6000
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_gold_rate",
+        "calculate_gold_loan_ltv"
+      ]
+    ],
+    "arg_gate": {
+      "get_gold_rate": {
+        "required": {},
+        "_comment": "purity_karat is deliberately NOT pinned (confusing_intent.001 precedent): the mid-flight correction (22K -> 24K) means a compliant model legitimately queries both purities. The corrected final purity (24) is verified by the R bar, not A3."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {
+          "gold_grams": 60,
+          "gold_rate_per_gram": 6000
+        },
+        "_comment": "grams and the tool-returned per-gram rate are invariant across the pre-correction (22K) and corrected (24K) calls, so they stay pinned. purity_karat is deliberately NOT pinned (confusing_intent.001 precedent): the corrected final purity (24) is verified by the R bar, not A3."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer first states the chain is 22 karat, then corrects it to 24 karat. The assistant must re-run at the corrected purity: get_gold_rate(24) -> rate 6,000 per gram, then calculate_gold_loan_ltv(60 grams, 24K, 6000) -> gold value INR 3,60,000, eligible loan INR 2,70,000 at the 75% LTV cap. Reporting the pre-correction 22K figures (value 3,76,290 / eligible 2,82,217 at 6,271.50 per gram) is the careless failure — the correction must propagate into both calls and the final answer, and the rate must come from a fresh get_gold_rate call (A4 ordering)."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the LTV is computed at the CORRECTED 24 karat purity with the tool-sourced 24K rate: value INR 3,60,000, eligible INR 2,70,000; FAIL if the 22K figures (3,76,290 / 2,82,217) are reported after the correction or the rate is not freshly sourced."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

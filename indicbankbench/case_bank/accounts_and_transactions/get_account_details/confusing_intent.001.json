@@ -1,0 +1,214 @@
+{
+  "case_id": "acct.get_account_details.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 tool routing: the customer never says 'balance' — 'which account has more money' is a balance/comparison question, but 'account' appears in get_account_details' name and a model pattern-matching 'account → get_account_details' would route to the metadata tool (type, branch, holders) which cannot answer the question. The correct tool is get_account_balance, and the over-clarification trap is 'which account do you mean?' or 'what kind of information do you want?' — the customer has exactly two accounts and the word 'money' unambiguously means balance. The two balances are deliberately disproportionate (₹42,350.75 salary vs ₹1,18,420.10 current) so a comparison failure is obvious to the judge. get_account_details is deliberately absent from the arg_gate, so any details call fails A2 deterministically — the model must not confuse 'tell me about my accounts' with 'which account has more money.'",
+  "setup": {
+    "persona": "55-year-old female, No Occupation / Retired / Homemaker, rural Jajapur, Odisha",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0635",
+      "full_name": "Anita Khara",
+      "date_of_birth": "1971-06-06",
+      "gender": "female",
+      "customer_since": "2017-09-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0209",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Jajapur",
+        "state": "Odisha",
+        "pincode": "130209",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Jajapur",
+        "state": "Odisha",
+        "pincode": "130209",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8308X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKACD9112001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKACD9112002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKACD9112003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_fd_details",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Which of my accounts has more money in it right now?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Two accounts, deliberately disproportionate for a clear comparison. Salary: ₹42,350.75. Current: ₹1,18,420.10. The current account is clearly the larger one.",
+      "records": [
+        {
+          "account_id": "TKACD9112001",
+          "available_balance": 42350.75,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKACD9112002",
+          "available_balance": 118420.1,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY. Any get_account_details call fails A2 (the tool is absent from arg_gate — the customer asked a balance question, not a details question). The mock exists to prevent UNEXPECTED_TOOL_CALL retry loops for a misrouting model.",
+      "records": [
+        {
+          "account_id": "TKACD9112001",
+          "account_type": "salary",
+          "status": "active",
+          "branch_name": "MG Road Branch",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Anita Khara",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2019-06-12"
+        },
+        {
+          "account_id": "TKACD9112002",
+          "account_type": "current",
+          "status": "active",
+          "branch_name": "MG Road Branch",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Anita Khara",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-05-20"
+        }
+      ]
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKACD9112001",
+            "TKACD9112002"
+          ]
+        }
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKACD9112001",
+                "TKACD9112002"
+              ],
+              [
+                "TKACD9112002",
+                "TKACD9112001"
+              ],
+              [
+                "TKACD9112001"
+              ],
+              [
+                "TKACD9112002"
+              ]
+            ]
+          }
+        },
+        "_comment": "The customer's question requires comparing TWO balances — one call with both ids or two separate calls are both valid."
+      },
+      "_comment": "get_account_details is deliberately ABSENT. 'Which account has more money' is a balance question, not a details question. Any get_account_details call fails A2 deterministically — the model was tempted by 'account' in the tool name.",
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Axis 3 — tool routing under semantic confusion. The customer asks 'which account has more money' — a balance/comparison question, though they never say the word 'balance'. The correct tool is get_account_balance, which returns available_balance for both accounts. The assistant must fetch both balances and report that the current account has ₹1,18,420.10 — more than the salary account's ₹42,350.75.\n\nCalling get_account_details instead (tempted by 'account' in the tool name) routes to metadata that cannot answer the question — that is the misrouting this case targets. Over-clarifying ('which account do you mean?' / 'what kind of information do you want?') also fails — the intent is clear from 'money' and the two linked accounts."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches and compares both account balances and reports that the current account (₹1,18,420.10) has more money than the salary account (₹42,350.75). FAIL if it calls get_account_details instead, if it over-clarifies ('which account?'), or if it reports the wrong balance for either account."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

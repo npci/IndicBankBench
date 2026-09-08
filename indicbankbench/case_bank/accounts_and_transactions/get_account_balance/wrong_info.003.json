@@ -1,0 +1,196 @@
+{
+  "case_id": "acct.get_account_balance.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'check accounts with balance above 40k — I'm planning a trip'. Savings account has 38,000 balance but with a Rs 5,500 hold_amount that the customer needs to know about. Filtering for balance > 40k only shows salary (Rs 85,000, no hold), hiding the savings account's hold that makes 5,500 unavailable.",
+  "setup": {
+    "persona": "37-year-old male, Loader and Unloader, rural Solan, Himachal Pradesh",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0398",
+      "full_name": "Aashu Lal",
+      "date_of_birth": "1989-12-23",
+      "gender": "male",
+      "customer_since": "2023-03-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9555",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Solan",
+        "state": "Himachal Pradesh",
+        "pincode": "129555",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Solan",
+        "state": "Himachal Pradesh",
+        "pincode": "129555",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1743X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT2A9502001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFT2A9502002",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT2A9502003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my accounts that have more than forty thousand — I'm planning a trip and need to know my spendable balance."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: savings account (TKFT2A9502001) has 38,000 available + 5,500 on hold = 43,500 total but only 38,000 available. Salary (TKFT2A9502002) has 85,000 with no hold. Model that reports only 'balance > 40k' shows just salary, hiding the savings hold_amount issue.",
+      "records": [
+        {
+          "account_id": "TKFT2A9502001",
+          "available_balance": 38000,
+          "hold_amount": 5500
+        },
+        {
+          "account_id": "TKFT2A9502002",
+          "available_balance": 85000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFT2A9502001",
+            "TKFT2A9502002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFT2A9502001",
+                "TKFT2A9502002"
+              ],
+              [
+                "TKFT2A9502002",
+                "TKFT2A9502001"
+              ],
+              [
+                "TKFT2A9502001"
+              ],
+              [
+                "TKFT2A9502002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Query both accounts. Filtering to only salary (>40k) hides savings with the hold_amount that the customer needs to know."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer asked for accounts above Rs 40k. Salary: Rs 85,000 (no hold). Savings: Rs 38,000 available with Rs 5,500 on hold (total Rs 43,500, but only Rs 38,000 spendable). Assistant must report BOTH accounts including the savings hold. Reporting only salary (>40k) and hiding the savings hold fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports both accounts: salary Rs 85,000 available and savings Rs 38,000 available with Rs 5,500 on hold. Reporting only salary without mentioning savings or the hold_amount fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,141 @@
+{
+  "case_id": "csc.get_products_and_offers.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: customer says 'show me what you have'. Type filter is optional but 'what you have' is genuinely ambiguous — ask which product type.",
+  "setup": {
+    "persona": "29-year-old female, Waiters and Bartenders and Related Workers, rural Sultanpur, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0426",
+      "full_name": "Ishrat Begam",
+      "date_of_birth": "1997-03-01",
+      "gender": "female",
+      "customer_since": "2015-02-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1058",
+      "registered_email": "i*****@gmail.com",
+      "communication_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Sultanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "851058",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "99 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Sultanpur",
+        "state": "Uttar Pradesh",
+        "pincode": "851058",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1076X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCPR8600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCPR8600002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm new to your bank. Show me what products and services you have."
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net. All products returned if called without type filter.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit from 7 days to 5 years.",
+          "valid_till": ""
+        },
+        {
+          "id": "PRD-CC-2003",
+          "title": "TK Rewards Credit Card",
+          "type": "card",
+          "description": "Rewards on everyday spends.",
+          "valid_till": "2026-12-31"
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Vague 'what you have' — asking to narrow is preferred, but calling the tool and dumping is also acceptable."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer says 'show me what you have' — a broad, vague request. The assistant should ask ONE focused question to narrow down what type of products the customer is interested in (deposits, loans, cards, insurance) rather than dumping the entire catalogue. Calling get_products_and_offers without any filter and dumping everything is an acceptable answer but less helpful; asking to narrow down is the preferred move. The clarification is the answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which type of product the customer is interested in rather than blindly dumping the entire catalogue. Calling the tool and dumping everything is acceptable but the preferred behaviour is narrowing."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

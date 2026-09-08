@@ -1,0 +1,238 @@
+{
+  "case_id": "csc.agentic.statement_wrong_fromdate.001",
+  "axis": "general_agentic_multitool",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_transaction_history+request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION trap. Customer says 'statement from Oct 2025 to June 2026.' get_transaction_history shows first txn is Dec 2025. Correction: from_date=2025-12-01.",
+  "setup": {
+    "persona": "38-year-old male, Mukadam, Salt Production, rural Dohad, Gujarat",
+    "current_date": "2026-08-24",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0126",
+      "full_name": "Bhil Kumar",
+      "date_of_birth": "1988-11-11",
+      "gender": "male",
+      "customer_since": "2022-08-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3634",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "35 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Dohad",
+        "state": "Gujarat",
+        "pincode": "493634",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "35 Mill Road",
+        "line2": "Banjara Hills",
+        "city": "Dohad",
+        "state": "Gujarat",
+        "pincode": "493634",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0223X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSC9960001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSC9960002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_products_and_offers",
+    "get_request_status",
+    "get_transaction_history",
+    "request_duplicate_statement",
+    "search_knowledge_base"
+  ],
+  "user_turns": [
+    {
+      "content": "Send me a duplicate statement covering October 2025 to June 2026. I need it for loan verification."
+    },
+    {
+      "content": "Ok, send it for December to June — go ahead."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "date": "2026-06-20T14:30:00",
+          "amount": 35000,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-996001",
+          "transaction_note": "Furniture store purchase",
+          "status": "success",
+          "running_balance": 115000
+        },
+        {
+          "date": "2026-03-05T10:00:00",
+          "amount": 100000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-996002",
+          "transaction_note": "FD maturity proceeds",
+          "status": "success",
+          "running_balance": 150000
+        },
+        {
+          "date": "2025-12-15T09:00:00",
+          "amount": 50000,
+          "type": "credit",
+          "channel": "internal",
+          "reference_id": "TXN-996003",
+          "transaction_note": "Initial deposit — account opening",
+          "status": "success",
+          "running_balance": 50000
+        }
+      ],
+      "static_output": {
+        "total_count": 3
+      },
+      "_comment": "Account opened Dec 2025. No data before then. Customer asked Oct 2025 which has no records."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-DS-99601",
+        "status": "success",
+        "message": "Duplicate statement request logged for TKCSC9960001 (2025-12-01 to 2026-06-30). Will be emailed."
+      }
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKCSC9960001"
+        }
+      },
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKCSC9960001",
+          "from_date": "2025-12-01",
+          "to_date": "2026-06-30"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "request_duplicate_statement"
+      ]
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKCSC9960001"
+        },
+        "_comment": "Reveals earliest txn is Dec 2025, not Oct 2025."
+      },
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKCSC9960001",
+          "from_date": "2025-12-01",
+          "to_date": "2026-06-30"
+        },
+        "_comment": "CORRECTED from_date=2025-12-01. Customer said Oct 2025 but no data before Dec 2025."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. Customer says 'statement from October 2025 to June 2026.' get_transaction_history shows earliest transaction is December 15, 2025 — no data before then. The assistant must correct: 'Your account has no transactions before December 2025. I'll send the statement from December 2025 to June 2026.' After confirmation, calls request_duplicate_statement with from_date=2025-12-01. arg_gate pins from_date=2025-12-01."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant fetches transaction history, identifies no data before December 2025, communicates the date correction, and after confirmation calls request_duplicate_statement with from_date=2025-12-01 and to_date=2026-06-30. FAIL if from_date=2025-10-01 is used."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,2912 @@
+{
+  "schema_version": "3.0-extended",
+  "generated_from": "updated_tools_defs_v3.json",
+  "note": "Superset of updated_tools_defs_v3.json (the OpenAI function-calling format actually sent to the model). category/action_type/confirmation/call_before/related_tools/notes are structured fields derived from updated_tools_defs_v3.json's prose. output_schema is sourced from tools.json's hand-authored inputs/outputs/prerequisites spec (the authoritative reference-shape documentation for engineering and eval use) and converted to JSON-Schema shape; it is not sent to the model. Tools absent from tools.json (currently: get_all_requests) keep a hand-authored output_schema instead, since tools.json has not been updated with this tool yet.",
+  "global_conventions": {
+    "auth": "Handled entirely by the platform. All tools execute inside an already-authenticated customer session; no auth token is passed between tools. Every write tool still requires explicit customer confirmation in conversation before it is called.",
+    "session_context": "login_context (customer_id, full_name, date_of_birth, gender, customer_since, customer_segment, registered_mobile, registered_email, communication_address, permanent_address, kyc_status, pan_masked, preferred_language, linked_products_summary, linked_accounts, linked_products, linked_cards) is injected into the system prompt at session start. linked_products entries carry their product type (fd, rd, loan, policy). linked_products_summary is a quick-glance count by type only — full IDs still come from linked_products. date_of_birth and customer_segment (enum: regular | premium | wealth | senior_citizen | staff) are the eligibility signals for senior_citizen_rate in get_deposit_loan_rates and for personalised offers in get_products_and_offers. kyc_status (enum: verified | pending | expired) may cause write tools to fail — check the returned message field in that case. communication_address/permanent_address reflect the last verified update, not any pending address-update request submitted via raise_request. registered_mobile, registered_email, and pan_masked are masked, display-only values. All IDs passed to tools must come from login_context or from a prior tool result — never invented or assumed.",
+    "naming": "Array inputs use plural names (e.g. account_ids). All IDs are opaque tokens, never raw PANs or card numbers.",
+    "write_outcomes": "Every write tool returns status (success|failed) and message (human-readable outcome or failure reason). Tools that act directly on an account, card or deposit also return reference_id (audit reference). Tools that create a trackable service request — raise_request, request_cheque_book, request_duplicate_statement — return request_id instead; that IS their audit reference, and they do not return reference_id.",
+    "dates": "YYYY-MM-DD for dates, ISO 8601 for timestamps.",
+    "amounts": "Always positive numbers. Direction (credit/debit) is carried by a separate 'type' field, never by the sign of the amount. All amounts are in INR (Indian Rupees) unless otherwise stated.",
+    "confirmation_policy": "action_type='write' tools require explicit customer confirmation in the conversation before being called, regardless of whether prerequisites were already satisfied."
+  },
+  "tool_count": 32,
+  "tools": [
+    {
+      "name": "search_knowledge_base",
+      "category": "knowledge",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Searches the bank's knowledge corpus (product documents, RBI circulars, scheme details, FAQs, how-to guides) with a natural-language query. Use for policy, process, eligibility, or regulatory questions that cannot be answered from the customer's own account or product data.",
+      "call_before": [],
+      "related_tools": [],
+      "notes": [
+        "Any rule or policy quoted in a response to the customer must be grounded in the snippets returned by this tool — never asserted from memory."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Natural-language question or search phrase. Example: 'premature FD penalty rules'.",
+            "examples": [
+              "premature FD penalty rules"
+            ]
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "chunk": {
+                  "type": "string",
+                  "description": "retrieved text; quote or paraphrase this when grounding a policy answer."
+                },
+                "source": {
+                  "type": "string",
+                  "description": "title, circular number, or URL identifying the source document."
+                }
+              }
+            },
+            "description": "Ranked list of retrieved text chunks, most relevant first."
+          }
+        },
+        "required": [
+          "results"
+        ]
+      }
+    },
+    {
+      "name": "get_account_balance",
+      "category": "accounts",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns current available balance and hold/lien amount for one or more linked accounts.",
+      "call_before": [],
+      "related_tools": [],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Account IDs, all from login_context.linked_accounts.",
+            "examples": [
+              [
+                "SB00123456"
+              ]
+            ]
+          }
+        },
+        "required": [
+          "account_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "balances": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "account_id": {
+                  "type": "string",
+                  "description": "echo of queried ID"
+                },
+                "available_balance": {
+                  "type": "number",
+                  "description": "spendable balance = total balance minus hold_amount."
+                },
+                "hold_amount": {
+                  "type": "number",
+                  "description": "amount under lien/hold, excluded from available_balance"
+                }
+              }
+            },
+            "description": "One entry per requested account."
+          }
+        },
+        "required": [
+          "balances"
+        ]
+      }
+    },
+    {
+      "name": "get_account_details",
+      "category": "accounts",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns account metadata — type, status, home branch, IFSC, holders, nominee, open date. Does not return balances (use get_account_balance) or transactions (use get_transaction_history).",
+      "call_before": [],
+      "related_tools": [],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Account IDs, all from login_context.linked_accounts."
+          }
+        },
+        "required": [
+          "account_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "accounts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "account_id": {
+                  "type": "string"
+                },
+                "account_type": {
+                  "type": "string",
+                  "enum": [
+                    "savings",
+                    "salary",
+                    "current",
+                    "nre",
+                    "nro"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "dormant",
+                    "frozen",
+                    "closed"
+                  ]
+                },
+                "branch_name": {
+                  "type": "string"
+                },
+                "ifsc": {
+                  "type": "string"
+                },
+                "holders": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  },
+                  "description": "each {name, role: primary|joint}"
+                },
+                "nominee": {
+                  "type": "object",
+                  "description": "{name, relationship} — absent if none registered"
+                },
+                "open_date": {
+                  "type": "string",
+                  "format": "date"
+                }
+              }
+            },
+            "description": "One entry per requested account."
+          }
+        },
+        "required": [
+          "accounts"
+        ]
+      }
+    },
+    {
+      "name": "get_transaction_history",
+      "category": "accounts",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns statement entries for a single account, newest first, with date/direction/channel filters and pagination.",
+      "call_before": [],
+      "related_tools": [],
+      "notes": [
+        "Each returned entry includes a status field (e.g. success, pending, failed, reversed) reflecting the transaction's processing state. This status is specific to this tool's output — it is not carried into the official statement produced by request_duplicate_statement."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "A linked account ID."
+          },
+          "from_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Start of date range. No lower bound if omitted."
+          },
+          "to_date": {
+            "type": "string",
+            "format": "date",
+            "description": "End of date range. No upper bound if omitted."
+          },
+          "type": {
+            "type": "string",
+            "description": "Filter by direction.",
+            "enum": [
+              "debit",
+              "credit",
+              "all"
+            ],
+            "default": "all"
+          },
+          "channel": {
+            "type": "string",
+            "description": "Filter by payment rail.",
+            "enum": [
+              "upi",
+              "neft",
+              "imps",
+              "rtgs",
+              "atm",
+              "pos",
+              "cheque",
+              "internal",
+              "all"
+            ],
+            "default": "all"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Max rows to return.",
+            "default": 10
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Rows to skip, for pagination.",
+            "default": 0
+          }
+        },
+        "required": [
+          "account_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "transactions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "always positive; direction is in 'type'"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "debit",
+                    "credit"
+                  ]
+                },
+                "channel": {
+                  "type": "string"
+                },
+                "reference_id": {
+                  "type": "string",
+                  "description": "UTR/RRN/internal ID; pass as related_transaction_id in raise_request for disputes"
+                },
+                "transaction_note": {
+                  "type": "string",
+                  "description": "narration or payee/reference detail as received from the payment rail, e.g. payee name, UPI handle, or biller reference."
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "success",
+                    "pending",
+                    "failed",
+                    "reversed"
+                  ],
+                  "description": "the transaction's processing state; specific to this tool's output and not carried into the official statement produced by request_duplicate_statement."
+                },
+                "running_balance": {
+                  "type": "number"
+                }
+              }
+            },
+            "description": "Matching entries, newest first."
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "Total matching rows across all pages, not just this page."
+          }
+        },
+        "required": [
+          "transactions",
+          "total_count"
+        ]
+      }
+    },
+    {
+      "name": "get_fd_details",
+      "category": "deposits",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns full details of the customer's Fixed Deposits.",
+      "call_before": [],
+      "related_tools": [
+        "get_rd_details",
+        "update_deposit_renewal",
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ],
+      "notes": [
+        "Mandatory prerequisite before update_deposit_renewal and get_deposit_closure_quote — always surface the current state before proposing a change or showing a closure quote.",
+        "payout_account defaults to source_account at the time of booking and cannot be changed on an active deposit. The only way to redirect proceeds is the optional payout_account override at close_deposit time."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "deposit_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "FD IDs from login_context.linked_products.",
+            "examples": [
+              [
+                "FD90011"
+              ]
+            ]
+          }
+        },
+        "required": [
+          "deposit_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deposits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "deposit_id": {
+                  "type": "string"
+                },
+                "principal_amount": {
+                  "type": "number",
+                  "description": "lump-sum principal"
+                },
+                "interest_rate": {
+                  "type": "number",
+                  "description": "contracted annual rate (%)"
+                },
+                "tenure_months": {
+                  "type": "integer"
+                },
+                "start_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "maturity_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "maturity_amount": {
+                  "type": "number",
+                  "description": "projected value at maturity"
+                },
+                "payout_type": {
+                  "type": "string",
+                  "enum": [
+                    "cumulative",
+                    "monthly",
+                    "quarterly"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "matured",
+                    "closed",
+                    "premature_closed"
+                  ]
+                },
+                "maturity_instruction": {
+                  "type": "string",
+                  "enum": [
+                    "no_renewal",
+                    "renew_principal",
+                    "renew_principal_interest"
+                  ]
+                },
+                "payout_account": {
+                  "type": "string"
+                },
+                "nominee": {
+                  "type": "object",
+                  "description": "{name, relationship} — absent if none"
+                }
+              }
+            },
+            "description": "One entry per FD."
+          }
+        },
+        "required": [
+          "deposits"
+        ]
+      }
+    },
+    {
+      "name": "get_rd_details",
+      "category": "deposits",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns full details of the customer's Recurring Deposits, including installment amount, installments paid so far, and total accumulated to date.",
+      "call_before": [],
+      "related_tools": [
+        "get_fd_details",
+        "update_deposit_renewal",
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ],
+      "notes": [
+        "Mandatory prerequisite before update_deposit_renewal and get_deposit_closure_quote — always surface the current state before proposing a change or showing a closure quote.",
+        "total_deposited is the accumulated-so-far figure; maturity_amount is the projected final figure. Do not conflate the two when answering the customer.",
+        "payout_account defaults to source_account at the time of booking and cannot be changed on an active deposit. The only way to redirect proceeds is the optional payout_account override at close_deposit time."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "deposit_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "RD IDs from login_context.linked_products.",
+            "examples": [
+              [
+                "RD30022"
+              ]
+            ]
+          }
+        },
+        "required": [
+          "deposit_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deposits": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "deposit_id": {
+                  "type": "string"
+                },
+                "monthly_installment": {
+                  "type": "number",
+                  "description": "amount debited every month"
+                },
+                "installments_paid": {
+                  "type": "integer",
+                  "description": "number of installments paid so far"
+                },
+                "total_deposited": {
+                  "type": "number",
+                  "description": "monthly_installment x installments_paid"
+                },
+                "interest_rate": {
+                  "type": "number",
+                  "description": "contracted annual rate (%)"
+                },
+                "tenure_months": {
+                  "type": "integer",
+                  "description": "total tenure = total installments"
+                },
+                "start_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "next_debit_date": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "next scheduled installment debit"
+                },
+                "maturity_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "maturity_amount": {
+                  "type": "number",
+                  "description": "projected value at maturity"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "matured",
+                    "closed",
+                    "premature_closed"
+                  ]
+                },
+                "maturity_instruction": {
+                  "type": "string",
+                  "enum": [
+                    "no_renewal",
+                    "renew_principal",
+                    "renew_principal_interest"
+                  ]
+                },
+                "payout_account": {
+                  "type": "string"
+                },
+                "nominee": {
+                  "type": "object",
+                  "description": "{name, relationship} — absent if none"
+                }
+              }
+            },
+            "description": "One entry per RD."
+          }
+        },
+        "required": [
+          "deposits"
+        ]
+      }
+    },
+    {
+      "name": "get_deposit_loan_rates",
+      "category": "rates",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns the current rate card for a deposit or loan product, by tenure/amount slab. The sole authoritative source for any rate used in a calculator or a booking — never use memory, assumption, or a customer-supplied rate.",
+      "call_before": [],
+      "related_tools": [
+        "calculate_fd_maturity",
+        "calculate_rd_maturity",
+        "calculate_emi",
+        "create_fd",
+        "create_rd"
+      ],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "product_type": {
+            "type": "string",
+            "description": "Product to fetch rates for.",
+            "enum": [
+              "fd",
+              "rd",
+              "home_loan",
+              "personal_loan",
+              "gold_loan",
+              "auto_loan",
+              "education_loan"
+            ]
+          },
+          "tenure_months": {
+            "type": "integer",
+            "description": "Filter to the slab covering this tenure. All slabs if omitted.",
+            "examples": [
+              24
+            ]
+          },
+          "amount": {
+            "type": "number",
+            "description": "Filter to the slab covering this amount. All slabs if omitted.",
+            "examples": [
+              100000
+            ]
+          }
+        },
+        "required": [
+          "product_type"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "product_type": {
+            "type": "string",
+            "description": "Echo of the queried product."
+          },
+          "rates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "slab": {
+                  "type": "string",
+                  "description": "tenure/amount range label, e.g. '12–24 months'"
+                },
+                "rate": {
+                  "type": "number",
+                  "description": "standard annual rate (%)"
+                },
+                "senior_citizen_rate": {
+                  "type": "number",
+                  "description": "present only when product_type is fd or rd; absent for all loan product types."
+                }
+              }
+            },
+            "description": "Applicable rate slabs."
+          },
+          "effective_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date this rate card became effective."
+          }
+        },
+        "required": [
+          "product_type",
+          "rates",
+          "effective_date"
+        ]
+      }
+    },
+    {
+      "name": "calculate_fd_maturity",
+      "category": "calculators",
+      "action_type": "calculator",
+      "requires_confirmation": false,
+      "summary": "Computes maturity value and interest earned for a Fixed Deposit. Compounding is quarterly by default (bank standard) and not configurable via input.",
+      "call_before": [
+        {
+          "tool": "get_deposit_loan_rates",
+          "reason": "rate must be sourced here, never assumed or taken from the customer"
+        }
+      ],
+      "related_tools": [
+        "create_fd",
+        "get_deposit_loan_rates"
+      ],
+      "notes": [
+        "For payout_type of monthly or quarterly, the maturity_amount returned is principal only — interest is paid out periodically during the tenure rather than accumulated to maturity."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "principal_amount": {
+            "type": "number",
+            "description": "Lump-sum principal.",
+            "examples": [
+              100000
+            ]
+          },
+          "rate": {
+            "type": "number",
+            "description": "Annual rate (%) from get_deposit_loan_rates.",
+            "examples": [
+              7.1
+            ]
+          },
+          "tenure_months": {
+            "type": "integer",
+            "description": "Tenure in months.",
+            "examples": [
+              24
+            ]
+          },
+          "payout_type": {
+            "type": "string",
+            "description": "Interest payout mode.",
+            "enum": [
+              "cumulative",
+              "monthly",
+              "quarterly"
+            ],
+            "default": "cumulative"
+          }
+        },
+        "required": [
+          "principal_amount",
+          "rate",
+          "tenure_months"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "maturity_amount": {
+            "type": "number",
+            "description": "Value at maturity. For monthly/quarterly payout: principal only (interest already paid out during tenure)."
+          },
+          "interest_earned": {
+            "type": "number",
+            "description": "Total interest over the tenure."
+          },
+          "total_principal_invested": {
+            "type": "number",
+            "description": "Equal to principal_amount."
+          }
+        },
+        "required": [
+          "maturity_amount",
+          "interest_earned",
+          "total_principal_invested"
+        ]
+      }
+    },
+    {
+      "name": "calculate_rd_maturity",
+      "category": "calculators",
+      "action_type": "calculator",
+      "requires_confirmation": false,
+      "summary": "Computes maturity value and interest earned for a Recurring Deposit. Interest is always paid at maturity. Compounding is quarterly by default (bank standard) and not configurable via input.",
+      "call_before": [
+        {
+          "tool": "get_deposit_loan_rates",
+          "reason": "rate must be sourced here, never assumed or taken from the customer"
+        }
+      ],
+      "related_tools": [
+        "create_rd",
+        "get_deposit_loan_rates"
+      ],
+      "notes": [
+        "Mandatory prerequisite before create_rd.",
+        "RDs have no periodic payout option — interest always accrues and is credited only at maturity, unlike FDs which support monthly/quarterly payout."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "monthly_installment": {
+            "type": "number",
+            "description": "Amount deposited each month.",
+            "examples": [
+              5000
+            ]
+          },
+          "rate": {
+            "type": "number",
+            "description": "Annual rate (%) from get_deposit_loan_rates.",
+            "examples": [
+              7.1
+            ]
+          },
+          "tenure_months": {
+            "type": "integer",
+            "description": "Tenure in months (= number of installments).",
+            "examples": [
+              24
+            ]
+          }
+        },
+        "required": [
+          "monthly_installment",
+          "rate",
+          "tenure_months"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "maturity_amount": {
+            "type": "number",
+            "description": "Total value at maturity: all installments plus interest."
+          },
+          "interest_earned": {
+            "type": "number",
+            "description": "Total interest over the tenure."
+          },
+          "total_principal_invested": {
+            "type": "number",
+            "description": "monthly_installment x tenure_months."
+          }
+        },
+        "required": [
+          "maturity_amount",
+          "interest_earned",
+          "total_principal_invested"
+        ]
+      }
+    },
+    {
+      "name": "create_fd",
+      "category": "deposits",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Books a new Fixed Deposit, debiting principal_amount from the source account as a one-time transaction.",
+      "call_before": [
+        {
+          "tool": "get_deposit_loan_rates",
+          "reason": "obtain the applicable rate based on the user's age"
+        },
+        {
+          "tool": "calculate_fd_maturity",
+          "reason": "show the customer the rate and projected maturity value before booking"
+        },
+        {
+          "tool": "get_account_balance",
+          "reason": "verify the source account can fund principal_amount"
+        }
+      ],
+      "related_tools": [],
+      "notes": [
+        "payout_account is not a separate input — proceeds to source_account and cannot be changed later on an active deposit.",
+        "If payout_type is non-cumulative (monthly or quarterly), maturity_instruction cannot be renew_principal_interest — interest is already being paid out periodically, so there is no accumulated interest left to renew. Only no_renewal or renew_principal are valid in that case."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "principal_amount": {
+            "type": "number",
+            "description": "Lump-sum principal to debit.",
+            "examples": [
+              100000
+            ]
+          },
+          "tenure_months": {
+            "type": "integer",
+            "description": "Tenure in months.",
+            "examples": [
+              24
+            ]
+          },
+          "source_account": {
+            "type": "string",
+            "description": "Linked account to debit once, at booking."
+          },
+          "payout_type": {
+            "type": "string",
+            "description": "Interest payout mode.",
+            "enum": [
+              "cumulative",
+              "monthly",
+              "quarterly"
+            ],
+            "default": "cumulative"
+          },
+          "maturity_instruction": {
+            "type": "string",
+            "description": "Maturity action.",
+            "enum": [
+              "no_renewal",
+              "renew_principal",
+              "renew_principal_interest"
+            ],
+            "default": "no_renewal"
+          },
+          "nominee": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Nominee's full name.",
+                "examples": [
+                  "Rahul Sharma"
+                ]
+              },
+              "relationship": {
+                "type": "string",
+                "description": "Relationship to holder.",
+                "examples": [
+                  "Spouse"
+                ]
+              },
+              "date_of_birth": {
+                "type": "string",
+                "format": "date",
+                "description": "Nominee's date of birth."
+              },
+              "guardian_name": {
+                "type": "string",
+                "description": "Required if nominee's date_of_birth indicates the nominee is under 18 at the time of registration. Must be validated at call time even though not schema-enforced."
+              }
+            },
+            "required": [
+              "name",
+              "relationship",
+              "date_of_birth"
+            ],
+            "description": "Nominee to register."
+          }
+        },
+        "required": [
+          "principal_amount",
+          "tenure_months",
+          "source_account"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deposit_id": {
+            "type": "string",
+            "description": "New FD ID."
+          },
+          "principal_amount": {
+            "type": "number",
+            "description": "Echo of the principal amount debited at booking."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          },
+          "interest_rate": {
+            "type": "number",
+            "description": "Rate (%) applied at booking."
+          },
+          "maturity_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Computed maturity date."
+          },
+          "maturity_amount": {
+            "type": "number",
+            "description": "Projected maturity value."
+          },
+          "payout_type": {
+            "type": "string",
+            "description": "Stored payout mode."
+          },
+          "maturity_instruction": {
+            "type": "string",
+            "description": "Stored maturity instruction."
+          },
+          "nominee": {
+            "type": "object",
+            "description": "Registered nominee {name, relationship}. Absent if none."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Booking audit reference."
+          }
+        },
+        "required": [
+          "deposit_id",
+          "principal_amount",
+          "status",
+          "message",
+          "interest_rate",
+          "maturity_date",
+          "maturity_amount",
+          "payout_type",
+          "maturity_instruction",
+          "reference_id"
+        ]
+      }
+    },
+    {
+      "name": "create_rd",
+      "category": "deposits",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Books a new Recurring Deposit. This authorizes a recurring monthly debit of monthly_installment from source_account for the entire tenure; the first installment is debited at booking. This recurring commitment must be stated explicitly when seeking customer confirmation.",
+      "call_before": [
+        {
+          "tool": "get_deposit_loan_rates",
+          "reason": "obtain the applicable rate"
+        },
+        {
+          "tool": "calculate_rd_maturity",
+          "reason": "show the customer the rate and projected maturity value before booking"
+        },
+        {
+          "tool": "get_account_balance",
+          "reason": "verify the source account can fund the first installment — note this does NOT verify the customer can sustain the full multi-month commitment; confirm that separately in conversation"
+        }
+      ],
+      "related_tools": [],
+      "notes": [
+        "payout_account is not a separate input — proceeds default to source_account and cannot be changed later on an active deposit.",
+        "No payout_type input — RDs always pay interest at maturity only.",
+        "maturity_instruction is optional and defaults to no_renewal. It can only be set here, at booking: update_deposit_renewal is FD-only, so an RD's maturity instruction cannot be changed once the RD is active."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "monthly_installment": {
+            "type": "number",
+            "description": "Amount to debit every month.",
+            "examples": [
+              5000
+            ]
+          },
+          "tenure_months": {
+            "type": "integer",
+            "description": "Tenure in months (= number of installments).",
+            "examples": [
+              24
+            ]
+          },
+          "source_account": {
+            "type": "string",
+            "description": "Linked account debited monthly for the full tenure."
+          },
+          "maturity_instruction": {
+            "type": "string",
+            "description": "Maturity action.",
+            "enum": [
+              "no_renewal",
+              "renew_principal",
+              "renew_principal_interest"
+            ],
+            "default": "no_renewal"
+          },
+          "nominee": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Nominee's full name."
+              },
+              "relationship": {
+                "type": "string",
+                "description": "Relationship to holder.",
+                "examples": [
+                  "Spouse"
+                ]
+              },
+              "date_of_birth": {
+                "type": "string",
+                "format": "date",
+                "description": "Nominee's date of birth."
+              },
+              "guardian_name": {
+                "type": "string",
+                "description": "Required if nominee's date_of_birth indicates the nominee is under 18 at the time of registration. Must be validated at call time even though not schema-enforced."
+              }
+            },
+            "required": [
+              "name",
+              "relationship",
+              "date_of_birth"
+            ],
+            "description": "Nominee to register."
+          }
+        },
+        "required": [
+          "monthly_installment",
+          "tenure_months",
+          "source_account"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deposit_id": {
+            "type": "string",
+            "description": "New RD ID."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          },
+          "interest_rate": {
+            "type": "number",
+            "description": "Rate (%) applied at booking."
+          },
+          "maturity_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Computed maturity date."
+          },
+          "maturity_amount": {
+            "type": "number",
+            "description": "Projected maturity value."
+          },
+          "monthly_debit_date": {
+            "type": "integer",
+            "description": "Day of month subsequent installments will be debited."
+          },
+          "maturity_instruction": {
+            "type": "string",
+            "description": "Stored maturity instruction."
+          },
+          "nominee": {
+            "type": "object",
+            "description": "Registered nominee {name, relationship}. Absent if none."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Booking audit reference."
+          }
+        },
+        "required": [
+          "deposit_id",
+          "status",
+          "message",
+          "interest_rate",
+          "maturity_date",
+          "maturity_amount",
+          "monthly_debit_date",
+          "maturity_instruction",
+          "reference_id"
+        ]
+      }
+    },
+    {
+      "name": "get_deposit_closure_quote",
+      "category": "deposits",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Quotes the payout if an FD or RD were closed today. Before maturity, interest is credited only at the card rate applicable to the period the deposit has actually run — normally lower than the rate contracted for its original tenure — and a separate premature-closure charge of penalty_rate% of principal_amount is then deducted. After maturity no charge applies (penalty_rate = 0) and the full contracted interest is paid. estimated_payout is the net figure after any charge; effective_rate is the net annual rate the customer actually earns. Read-only — does not close anything.",
+      "call_before": [
+        {
+          "tool": "get_fd_details",
+          "reason": "surface the current FD state before showing the closure quote"
+        },
+        {
+          "tool": "get_rd_details",
+          "reason": "surface the current RD state before showing the closure quote"
+        }
+      ],
+      "related_tools": [
+        "close_deposit",
+        "get_fd_details",
+        "get_rd_details"
+      ],
+      "notes": [
+        "Mandatory prerequisite before close_deposit — the quote, including any penalty, must be shown to the customer before they confirm closure.",
+        "When penalty_rate is 0 (post-maturity closure), penalty_amount will also be 0.",
+        "principal_amount (number) is returned for both FD and RD quotes: for an FD it is the original principal (see get_fd_details.principal_amount); for an RD it is the sum of installments paid to date."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "deposit_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Linked FD/RD IDs to quote."
+          }
+        },
+        "required": [
+          "deposit_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "quotes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "deposit_id": {
+                  "type": "string"
+                },
+                "principal_amount": {
+                  "type": "number",
+                  "description": "in case of FD it is the original principal (see get_fd_details.principal_amount), in case of RD it is sum of installments paid to date."
+                },
+                "accrued_interest": {
+                  "type": "number",
+                  "description": "interest accrued to date at the card rate applicable to the period the deposit has actually run, BEFORE the premature-closure charge is deducted"
+                },
+                "penalty_rate": {
+                  "type": "number",
+                  "description": "premature-closure charge as a percentage of principal_amount; 0 if the deposit has already matured"
+                },
+                "penalty_amount": {
+                  "type": "number",
+                  "description": "the charge itself: principal_amount x penalty_rate / 100"
+                },
+                "effective_rate": {
+                  "type": "number",
+                  "description": "net annual rate (%) the customer actually earns, i.e. after the premature-closure charge"
+                },
+                "estimated_payout": {
+                  "type": "number",
+                  "description": "net amount payable on closure today"
+                }
+              }
+            },
+            "description": "One quote per deposit."
+          }
+        },
+        "required": [
+          "quotes"
+        ]
+      }
+    },
+    {
+      "name": "close_deposit",
+      "category": "deposits",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Closes an FD or RD prematurely and credits proceeds to the payout account. For an RD, closure also permanently stops all future monthly installment debits — there is no separate way to 'pause' or 'stop' an RD without closing it.",
+      "call_before": [
+        {
+          "tool": "get_deposit_closure_quote",
+          "reason": "show the customer the payout amount and any penalty before they confirm closure"
+        }
+      ],
+      "related_tools": [],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "deposit_id": {
+            "type": "string",
+            "description": "Linked FD/RD ID to close."
+          },
+          "payout_account": {
+            "type": "string",
+            "description": "Linked account to credit.",
+            "default": "the deposit's registered payout account"
+          }
+        },
+        "required": [
+          "deposit_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deposit_id": {
+            "type": "string",
+            "description": "Closed deposit ID."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          },
+          "amount_credited": {
+            "type": "number",
+            "description": "Net amount credited after any penalty."
+          },
+          "payout_account": {
+            "type": "string",
+            "description": "Account the proceeds were credited to."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Audit reference."
+          }
+        },
+        "required": [
+          "deposit_id",
+          "status",
+          "message",
+          "amount_credited",
+          "payout_account",
+          "reference_id"
+        ]
+      }
+    },
+    {
+      "name": "update_deposit_renewal",
+      "category": "deposits",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Sets the maturity instruction on an active FD. Takes effect on the maturity date, not immediately.",
+      "call_before": [
+        {
+          "tool": "get_fd_details",
+          "reason": "surface the current instruction and maturity date before changing it"
+        }
+      ],
+      "related_tools": [],
+      "notes": [
+        "If the deposit's payout_type (from get_fd_details) is non-cumulative (monthly or quarterly), instruction cannot be set to renew_principal_interest — only no_renewal or renew_principal are valid."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "deposit_id": {
+            "type": "string",
+            "description": "Linked FD ID."
+          },
+          "instruction": {
+            "type": "string",
+            "description": "Maturity action.",
+            "enum": [
+              "no_renewal",
+              "renew_principal",
+              "renew_principal_interest"
+            ]
+          }
+        },
+        "required": [
+          "deposit_id",
+          "instruction"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "deposit_id": {
+            "type": "string",
+            "description": "Updated deposit ID."
+          },
+          "instruction": {
+            "type": "string",
+            "description": "Stored instruction."
+          },
+          "maturity_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Next maturity date."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Audit reference."
+          }
+        },
+        "required": [
+          "deposit_id",
+          "instruction",
+          "maturity_date",
+          "status",
+          "message",
+          "reference_id"
+        ]
+      }
+    },
+    {
+      "name": "get_loan_details",
+      "category": "loans",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns current loan state: outstanding balance, EMI, rate, remaining tenure, next due date.",
+      "call_before": [],
+      "related_tools": [
+        "get_loan_foreclosure_quote",
+        "calculate_emi"
+      ],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "loan_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Loan IDs from login_context.linked_products.",
+            "examples": [
+              [
+                "LN55003"
+              ]
+            ]
+          }
+        },
+        "required": [
+          "loan_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "loans": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "loan_id": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "home",
+                    "personal",
+                    "auto",
+                    "gold",
+                    "education"
+                  ]
+                },
+                "principal": {
+                  "type": "number",
+                  "description": "original sanctioned amount"
+                },
+                "outstanding": {
+                  "type": "number",
+                  "description": "current outstanding principal"
+                },
+                "emi_amount": {
+                  "type": "number"
+                },
+                "interest_rate": {
+                  "type": "number",
+                  "description": "annual (%)"
+                },
+                "emi_day_of_month": {
+                  "type": "integer",
+                  "description": "day of month EMI falls due (e.g., 5 means the 5th of every month) — not a full date. See next_due_date for the actual upcoming date."
+                },
+                "tenure_remaining": {
+                  "type": "integer",
+                  "description": "EMIs remaining"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "closed",
+                    "overdue",
+                    "foreclosed"
+                  ]
+                },
+                "next_due_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "emi_account_id": {
+                  "type": "string",
+                  "description": "account debited for EMIs"
+                }
+              }
+            },
+            "description": "One entry per loan."
+          }
+        },
+        "required": [
+          "loans"
+        ]
+      }
+    },
+    {
+      "name": "get_loan_foreclosure_quote",
+      "category": "loans",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Quotes the total payoff to close a loan early as of a given date. Informational only — no tool in this system closes a loan.",
+      "call_before": [],
+      "related_tools": [
+        "get_loan_details"
+      ],
+      "notes": [
+        "If a customer asks to 'pause', 'stop', or 'reduce' EMIs, use this tool to show foreclosure cost, since no such capability exists in this system.",
+        "No tool in this system closes a loan. After presenting the quote, direct the customer to raise_request or a branch visit to proceed with foreclosure."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "loan_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Linked loan IDs to quote."
+          },
+          "as_of_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Value date for the quote. Defaults to the current server date; a future date may be passed to plan ahead.",
+            "default": "today"
+          }
+        },
+        "required": [
+          "loan_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "quotes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "loan_id": {
+                  "type": "string"
+                },
+                "outstanding_principal": {
+                  "type": "number",
+                  "description": "as of as_of_date"
+                },
+                "accrued_interest": {
+                  "type": "number",
+                  "description": "since last EMI"
+                },
+                "foreclosure_charges": {
+                  "type": "number",
+                  "description": "per Schedule of Charges"
+                },
+                "total_payoff": {
+                  "type": "number",
+                  "description": "sum of the above three"
+                }
+              }
+            },
+            "description": "One quote per loan."
+          }
+        },
+        "required": [
+          "quotes"
+        ]
+      }
+    },
+    {
+      "name": "calculate_emi",
+      "category": "calculators",
+      "action_type": "calculator",
+      "requires_confirmation": false,
+      "summary": "Computes the fixed monthly EMI, total interest, total repayment, and full amortisation schedule for a loan.",
+      "call_before": [
+        {
+          "tool": "get_deposit_loan_rates",
+          "reason": "rate should be sourced here for actual loan bookings; a customer-supplied rate is permitted only for hypothetical/exploratory 'what-if' calculations, not for use in an actual transaction."
+        }
+      ],
+      "related_tools": [],
+      "notes": [
+        "Interest and principal split changes every month even though the emi total is fixed — early installments are interest-heavy, later ones principal-heavy, because interest is charged on the shrinking outstanding balance.",
+        "closing_balance at the last installment should be 0."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "principal": {
+            "type": "number",
+            "description": "Loan amount.",
+            "examples": [
+              500000
+            ]
+          },
+          "rate": {
+            "type": "number",
+            "description": "Annual rate (%).",
+            "examples": [
+              9.5
+            ]
+          },
+          "tenure_months": {
+            "type": "integer",
+            "description": "Tenure in months.",
+            "examples": [
+              60
+            ]
+          }
+        },
+        "required": [
+          "principal",
+          "rate",
+          "tenure_months"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "emi": {
+            "type": "number",
+            "description": "The fixed amount payable every month for the full tenure, covering both interest and principal; constant across all installments."
+          },
+          "total_interest": {
+            "type": "number",
+            "description": "Total interest over the tenure."
+          },
+          "total_payment": {
+            "type": "number",
+            "description": "Principal + total_interest."
+          },
+          "schedule": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "installment_no": {
+                  "type": "integer"
+                },
+                "principal_component": {
+                  "type": "number",
+                  "description": "portion of this installment reducing principal"
+                },
+                "interest_component": {
+                  "type": "number",
+                  "description": "portion of this installment paying interest"
+                },
+                "closing_balance": {
+                  "type": "number",
+                  "description": "principal remaining after this installment"
+                }
+              }
+            },
+            "description": "One entry per installment, up to tenure_months."
+          }
+        },
+        "required": [
+          "emi",
+          "total_interest",
+          "total_payment",
+          "schedule"
+        ]
+      }
+    },
+    {
+      "name": "get_gold_rate",
+      "category": "loans",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns today's gold rate per gram for a given purity. Sole valid source for gold_rate_per_gram in calculate_gold_loan_ltv — never assume, recall, or accept this value from customer input.",
+      "call_before": [],
+      "related_tools": [
+        "calculate_gold_loan_ltv"
+      ],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "purity_karat": {
+            "type": "integer",
+            "description": "Must match the purity of the gold being pledged.",
+            "enum": [
+              18,
+              22,
+              24
+            ]
+          }
+        },
+        "required": [
+          "purity_karat"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "purity_karat": {
+            "type": "integer",
+            "description": "Echo of queried purity."
+          },
+          "rate_per_gram": {
+            "type": "number",
+            "description": "Current rate per gram for this purity."
+          },
+          "rate_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the rate applies to."
+          }
+        },
+        "required": [
+          "purity_karat",
+          "rate_per_gram",
+          "rate_date"
+        ]
+      }
+    },
+    {
+      "name": "calculate_gold_loan_ltv",
+      "category": "calculators",
+      "action_type": "calculator",
+      "requires_confirmation": false,
+      "summary": "Values gold collateral (grams x rate) and applies the bank's current Loan-to-Value cap to compute the maximum eligible loan amount. The LTV cap itself is applied internally by the backend, not supplied by the caller.",
+      "call_before": [
+        {
+          "tool": "get_gold_rate",
+          "reason": "gold_rate_per_gram must come from a fresh call at the same purity — never assumed or customer-supplied"
+        }
+      ],
+      "related_tools": [
+        "get_gold_rate"
+      ],
+      "notes": [
+        "Always pass the rate_per_gram returned by get_gold_rate for the same purity_karat — this links the calculation to a verifiable rate source, which is why the rate must be supplied by the caller rather than fetched internally."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "gold_grams": {
+            "type": "number",
+            "description": "Weight of gold in grams.",
+            "examples": [
+              50
+            ]
+          },
+          "purity_karat": {
+            "type": "integer",
+            "description": "Must match the purity used in the get_gold_rate call.",
+            "enum": [
+              18,
+              22,
+              24
+            ]
+          },
+          "gold_rate_per_gram": {
+            "type": "number",
+            "description": "Rate from get_gold_rate for the same purity.",
+            "examples": [
+              6200
+            ]
+          }
+        },
+        "required": [
+          "gold_grams",
+          "purity_karat",
+          "gold_rate_per_gram"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "gold_value": {
+            "type": "number",
+            "description": "Market value of the pledged gold."
+          },
+          "eligible_loan_amount": {
+            "type": "number",
+            "description": "Maximum loan at the bank's LTV cap."
+          },
+          "ltv_percent_used": {
+            "type": "number",
+            "description": "The LTV cap (%) actually applied, per current bank/RBI policy."
+          }
+        },
+        "required": [
+          "gold_value",
+          "eligible_loan_amount",
+          "ltv_percent_used"
+        ]
+      }
+    },
+    {
+      "name": "get_card_details",
+      "category": "cards",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns card metadata, status, credit/available limits, and per-channel usage controls. Use to diagnose card declines.",
+      "call_before": [],
+      "related_tools": [
+        "set_card_controls",
+        "toggle_card_freeze",
+        "block_card"
+      ],
+      "notes": [
+        "Mandatory prerequisite before set_card_controls — surface current settings before proposing changes."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "card_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tokenised card IDs from login_context.linked_cards.",
+            "examples": [
+              [
+                "CARD10021"
+              ]
+            ]
+          }
+        },
+        "required": [
+          "card_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "card_id": {
+                  "type": "string"
+                },
+                "masked_number": {
+                  "type": "string",
+                  "description": "display-only, e.g. '****4321'"
+                },
+                "card_type": {
+                  "type": "string",
+                  "enum": [
+                    "credit",
+                    "debit",
+                    "prepaid"
+                  ]
+                },
+                "network": {
+                  "type": "string",
+                  "enum": [
+                    "visa",
+                    "mastercard",
+                    "rupay",
+                    "amex"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "frozen (reversible)",
+                    "blocked (permanent)",
+                    "inactive",
+                    "expired"
+                  ]
+                },
+                "credit_limit": {
+                  "type": "number",
+                  "description": "present for credit cards only; absent for debit and prepaid card types."
+                },
+                "available_limit": {
+                  "type": "number",
+                  "description": "present for credit cards only; absent for debit and prepaid card types."
+                },
+                "controls": {
+                  "type": "object",
+                  "description": "{atm, online, pos}, each {domestic: {enabled, daily_limit}, international: {enabled, daily_limit}}"
+                },
+                "expiry": {
+                  "type": "string",
+                  "description": "MM/YY"
+                }
+              }
+            },
+            "description": "One entry per card."
+          }
+        },
+        "required": [
+          "cards"
+        ]
+      }
+    },
+    {
+      "name": "toggle_card_freeze",
+      "category": "cards",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Temporarily freezes or unfreezes a card. Reversible at any time. Use freeze when a card is misplaced but may be found.\nFor loss, theft, fraud, or damage use block_card instead, which is permanent.",
+      "call_before": [
+        {
+          "tool": "get_card_details",
+          "reason": null
+        }
+      ],
+      "related_tools": [],
+      "notes": [
+        "Cannot unfreeze a card whose status is blocked or expired — only active/frozen cards are valid targets."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "description": "Tokenised card ID."
+          },
+          "state": {
+            "type": "string",
+            "description": "Desired state.",
+            "enum": [
+              "freeze",
+              "unfreeze"
+            ]
+          }
+        },
+        "required": [
+          "card_id",
+          "state"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "description": "Affected card ID."
+          },
+          "card_status": {
+            "type": "string",
+            "description": "Resulting status: frozen | active."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason, e.g. card is blocked and cannot be unfrozen."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Audit reference."
+          }
+        },
+        "required": [
+          "card_id",
+          "card_status",
+          "status",
+          "message",
+          "reference_id"
+        ]
+      }
+    },
+    {
+      "name": "block_card",
+      "category": "cards",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Permanently and irreversibly blocks a card. Confirm the customer understands this before calling. For fraud, theft, or loss, block immediately. For damaged cards, block to enable a replacement request. A replacement can be requested via raise_request.",
+      "confirmation_note": "and also ask for a reason to block the card",
+      "call_before": [
+        {
+          "tool": "get_card_details",
+          "reason": null
+        }
+      ],
+      "related_tools": [],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "description": "Tokenised card ID."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for blocking.",
+            "enum": [
+              "lost",
+              "stolen",
+              "fraud",
+              "damaged"
+            ]
+          }
+        },
+        "required": [
+          "card_id",
+          "reason"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "description": "Blocked card ID."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Audit reference."
+          }
+        },
+        "required": [
+          "card_id",
+          "status",
+          "message",
+          "reference_id"
+        ]
+      }
+    },
+    {
+      "name": "set_card_controls",
+      "category": "cards",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Updates per-channel card controls. Each channel (atm, online, pos) has independent domestic and international enable/limit settings. Only provided fields change; omitted fields keep their current values.",
+      "call_before": [
+        {
+          "tool": "get_card_details",
+          "reason": "provide current control settings before proposing changes"
+        }
+      ],
+      "related_tools": [],
+      "notes": [
+        "For enabling/disabling the channel. Only call the tool if the current and requested status is different.",
+        "For changing limits, follow: Check if the channel is enabled.; The requested limit must be less than the credit_limit.; The requested limit should not be equal to the current limit; The requested limit should not be negative",
+        "For requests containing multiple parameters in a channel/channels: Send the same control dictionary with the requested changes.",
+        "Do not make changes to a channel's enable/disable status and daily limit in the same tool call.",
+        "If required do sequential tool calls to fulfill the user's request.",
+        "The channel objects (atm / online / pos) are optional in the schema but they carry the request: omitting all of them changes nothing. If the customer has not made clear which channel, which region (domestic/international), or what value they want, ask — never guess a channel or invent a limit to avoid asking."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "description": "Tokenised card ID."
+          },
+          "atm": {
+            "type": "object",
+            "properties": {
+              "domestic": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "daily_limit": {
+                    "type": "number"
+                  }
+                },
+                "description": "Domestic transactions on this channel."
+              },
+              "international": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "daily_limit": {
+                    "type": "number"
+                  }
+                },
+                "description": "International transactions on this channel."
+              }
+            },
+            "description": "ATM cash withdrawal controls. Omit to leave unchanged."
+          },
+          "online": {
+            "type": "object",
+            "properties": {
+              "domestic": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "daily_limit": {
+                    "type": "number"
+                  }
+                },
+                "description": "Domestic transactions on this channel."
+              },
+              "international": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "daily_limit": {
+                    "type": "number"
+                  }
+                },
+                "description": "International transactions on this channel."
+              }
+            },
+            "description": "Online (card-not-present) payment controls. Omit to leave unchanged."
+          },
+          "pos": {
+            "type": "object",
+            "properties": {
+              "domestic": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "daily_limit": {
+                    "type": "number"
+                  }
+                },
+                "description": "Domestic transactions on this channel."
+              },
+              "international": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "daily_limit": {
+                    "type": "number"
+                  }
+                },
+                "description": "International transactions on this channel."
+              }
+            },
+            "description": "In-store POS transaction controls. Omit to leave unchanged."
+          }
+        },
+        "required": [
+          "card_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "card_id": {
+            "type": "string",
+            "description": "Updated card ID."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          },
+          "controls": {
+            "type": "object",
+            "description": "Full resulting controls, all channels and regions, same shape as input."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Audit reference."
+          }
+        },
+        "required": [
+          "card_id",
+          "status",
+          "message",
+          "controls",
+          "reference_id"
+        ]
+      }
+    },
+    {
+      "name": "show_mandates",
+      "category": "mandates",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Lists mandates on the customer's profile. Recurring subscription debits are mandates, not card transactions — look them up here, not via card tools.",
+      "call_before": [],
+      "related_tools": [],
+      "notes": [
+        "If a customer asks about a mandate or wants it cancelled, paused or resumed, inform them of this limitation and direct them to raise_request or a branch visit."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "Filter to mandates on one linked account. All accounts if omitted."
+          },
+          "status": {
+            "type": "string",
+            "description": "Filter by status.",
+            "enum": [
+              "active",
+              "paused",
+              "cancelled",
+              "all"
+            ],
+            "default": "all"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "mandates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "mandate_id": {
+                  "type": "string",
+                  "description": "unique identifier for this mandate"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "enach",
+                    "upi_autopay",
+                    "si"
+                  ]
+                },
+                "payee": {
+                  "type": "string",
+                  "description": "merchant/beneficiary authorised to debit"
+                },
+                "amount": {
+                  "type": "number",
+                  "description": "max amount per debit"
+                },
+                "frequency": {
+                  "type": "string",
+                  "enum": [
+                    "monthly",
+                    "quarterly",
+                    "yearly",
+                    "as_presented"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "paused",
+                    "cancelled"
+                  ]
+                },
+                "next_debit_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "account_id": {
+                  "type": "string",
+                  "description": "account the mandate debits"
+                }
+              }
+            },
+            "description": "Matching mandates."
+          }
+        },
+        "required": [
+          "mandates"
+        ]
+      }
+    },
+    {
+      "name": "stop_cheque_payment",
+      "category": "cheques",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Places a stop-payment instruction on one or more cheques issued from an account. Only affects cheques that have not already cleared; per-cheque outcomes are returned individually.",
+      "call_before": [],
+      "related_tools": [],
+      "notes": [
+        "Cheque clearing status is checked in the backend at call time, not supplied by the caller — a cheque that has already cleared is returned with a failed per-cheque outcome rather than being blocked pre-emptively by the model."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "Linked account the cheques were issued from."
+          },
+          "cheque_numbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cheque numbers to stop.",
+            "examples": [
+              [
+                "100234",
+                "100235"
+              ]
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for stopping.",
+            "enum": [
+              "lost",
+              "dispute",
+              "other"
+            ]
+          }
+        },
+        "required": [
+          "account_id",
+          "cheque_numbers"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "Affected account ID."
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cheque_number": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "stopped",
+                    "already_cleared",
+                    "failed"
+                  ]
+                }
+              }
+            },
+            "description": "One outcome per cheque."
+          },
+          "status": {
+            "type": "string",
+            "description": "Overall outcome: success (all stopped) | partial | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary."
+          },
+          "reference_id": {
+            "type": "string",
+            "description": "Audit reference."
+          }
+        },
+        "required": [
+          "account_id",
+          "results",
+          "status",
+          "message",
+          "reference_id"
+        ]
+      }
+    },
+    {
+      "name": "request_cheque_book",
+      "category": "service_requests",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Orders a new cheque book for a savings or current account.",
+      "call_before": [],
+      "related_tools": [],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "Linked savings/current account."
+          },
+          "leaves": {
+            "type": "integer",
+            "description": "Number of cheque leaves.",
+            "default": 25
+          }
+        },
+        "required": [
+          "account_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Track with get_request_status."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          },
+          "delivery_address": {
+            "type": "string",
+            "description": "Address the cheque book will be sent to."
+          }
+        },
+        "required": [
+          "request_id",
+          "status",
+          "message",
+          "delivery_address"
+        ]
+      }
+    },
+    {
+      "name": "request_duplicate_statement",
+      "category": "service_requests",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Orders an official duplicate account statement for a date range, delivered by email. Use this — not raw get_transaction_history output",
+      "call_before": [],
+      "related_tools": [
+        "get_transaction_history",
+        "get_request_status"
+      ],
+      "notes": [
+        "The statement does not include the per-entry status field returned by get_transaction_history — it lists only cleared/posted transactions."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string",
+            "description": "Linked account ID."
+          },
+          "from_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Start of covered period."
+          },
+          "to_date": {
+            "type": "string",
+            "format": "date",
+            "description": "End of covered period."
+          },
+          "delivery_mode": {
+            "type": "string",
+            "description": "Delivery method.",
+            "enum": [
+              "email"
+            ],
+            "default": "email"
+          }
+        },
+        "required": [
+          "account_id",
+          "from_date",
+          "to_date"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Track with get_request_status."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          }
+        },
+        "required": [
+          "request_id",
+          "status",
+          "message"
+        ]
+      }
+    },
+    {
+      "name": "raise_request",
+      "category": "service_requests",
+      "action_type": "write",
+      "requires_confirmation": true,
+      "summary": "Registers a complaint or general service request — the single escalation channel for disputes, service issues, and any action no other tool can perform (e.g. card replacement after block_card, insurance premium/claim needs, premature-closure follow-up beyond close_deposit, postal address update).",
+      "call_before": [
+        {
+          "tool": "get_transaction_history",
+          "reason": "locate the disputed transaction and pass its reference_id as related_transaction_id"
+        }
+      ],
+      "related_tools": [
+        "get_transaction_history",
+        "get_request_status",
+        "get_all_requests",
+        "block_card"
+      ],
+      "notes": [
+        "unauthorized_debit requests are treated as urgent by default.",
+        "Never promise a specific outcome, e.g. a fee waiver — the request is routed for review, not resolved on the spot.",
+        "related_transaction_id is required when category is failed_transaction or unauthorized_debit — this is not enforced at the schema level and must be validated at call time.",
+        "This system has no tool to update a customer's email, phone number, or postal address. Direct customers requesting any of these to raise_request.",
+        "category has no default and must always be explicitly chosen — pick the closest fit rather than a catch-all; there is no general_query option."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "What happened / what is needed, with enough context to action it."
+          },
+          "category": {
+            "type": "string",
+            "description": "Best-fit category. Required — no default.",
+            "enum": [
+              "failed_transaction",
+              "unauthorized_debit",
+              "service_quality",
+              "app_issue",
+              "charges_dispute",
+              "other"
+            ]
+          },
+          "related_transaction_id": {
+            "type": "string",
+            "description": "reference_id of the disputed transaction from get_transaction_history. Required for failed_transaction and unauthorized_debit."
+          },
+          "account_id": {
+            "type": "string",
+            "description": "Related linked account, if applicable — helps routing."
+          }
+        },
+        "required": [
+          "description",
+          "category"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Track with get_request_status."
+          },
+          "status": {
+            "type": "string",
+            "description": "success | failed"
+          },
+          "message": {
+            "type": "string",
+            "description": "Outcome summary / failure reason."
+          },
+          "category": {
+            "type": "string",
+            "description": "Registered category."
+          }
+        },
+        "required": [
+          "request_id",
+          "status",
+          "message",
+          "category"
+        ]
+      }
+    },
+    {
+      "name": "get_request_status",
+      "category": "service_requests",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns the current status of a previously raised service request. Use when a customer follows up on an earlier request, before raising a duplicate.",
+      "call_before": [],
+      "related_tools": [
+        "get_all_requests"
+      ],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Service request ID returned by any request tool."
+          }
+        },
+        "required": [
+          "request_id"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "description": "Looked-up request ID."
+          },
+          "status": {
+            "type": "string",
+            "description": "enum: open | in_progress | resolved | rejected | cancelled"
+          },
+          "raised_date": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the request was raised."
+          },
+          "last_update": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Most recent activity on the request."
+          },
+          "remarks": {
+            "type": "string",
+            "description": "Latest agent/system remarks. Absent if none."
+          }
+        },
+        "required": [
+          "request_id",
+          "status",
+          "raised_date",
+          "last_update"
+        ]
+      }
+    },
+    {
+      "name": "get_all_requests",
+      "category": "service_requests",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Lists the customer's service requests (raised via raise_request, request_cheque_book, request_duplicate_statement, or stop_cheque_payment), most recent first. Use when a customer asks about their outstanding or past requests generally, without a specific request_id — use get_request_status instead once a specific request_id is known.",
+      "call_before": [],
+      "related_tools": [
+        "get_request_status",
+        "raise_request"
+      ],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Filter by status.",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved",
+              "rejected",
+              "all"
+            ],
+            "default": "all"
+          },
+          "category": {
+            "type": "string",
+            "description": "Filter by request category. All categories if omitted.",
+            "enum": [
+              "cheque_book",
+              "duplicate_statement",
+              "stop_cheque_payment",
+              "failed_transaction",
+              "unauthorized_debit",
+              "service_quality",
+              "app_issue",
+              "charges_dispute",
+              "other"
+            ]
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Max rows to return.",
+            "default": 10
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Rows to skip, for pagination.",
+            "default": 0
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "requests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "request_id": {
+                  "type": "string"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "in_progress",
+                    "resolved",
+                    "rejected"
+                  ]
+                },
+                "raised_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "last_updated_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "request_id",
+                "category",
+                "status",
+                "raised_date"
+              ]
+            }
+          },
+          "total_count": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requests",
+          "total_count",
+          "limit",
+          "offset"
+        ]
+      }
+    },
+    {
+      "name": "get_insurance_details",
+      "category": "insurance",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns policy details for the customer's bancassurance policies. No premium-payment or claim tools exist in this system — route those needs via raise_request.",
+      "call_before": [],
+      "related_tools": [
+        "raise_request"
+      ],
+      "notes": [],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "policy_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Policy IDs from login_context.linked_products.",
+            "examples": [
+              [
+                "POL778812"
+              ]
+            ]
+          }
+        },
+        "required": [
+          "policy_ids"
+        ]
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "policies": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "policy_id": {
+                  "type": "string"
+                },
+                "policy_type": {
+                  "type": "string",
+                  "enum": [
+                    "life",
+                    "health",
+                    "general"
+                  ]
+                },
+                "insurer": {
+                  "type": "string"
+                },
+                "sum_assured": {
+                  "type": "number"
+                },
+                "premium": {
+                  "type": "number",
+                  "description": "amount due per premium_frequency cycle"
+                },
+                "premium_frequency": {
+                  "type": "string",
+                  "enum": [
+                    "monthly",
+                    "quarterly",
+                    "half_yearly",
+                    "yearly"
+                  ]
+                },
+                "premium_due_date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "lapsed",
+                    "matured",
+                    "claimed"
+                  ],
+                  "description": "claimed indicates a claim has been settled and the policy is closed."
+                }
+              }
+            },
+            "description": "One entry per policy."
+          }
+        },
+        "required": [
+          "policies"
+        ]
+      }
+    },
+    {
+      "name": "get_products_and_offers",
+      "category": "catalog",
+      "action_type": "read",
+      "requires_confirmation": false,
+      "summary": "Returns a combined list of the bank's products and the customer's personalised offers, optionally filtered by type. You represent the bank, not an independent advisor — proactively call this and recommend relevant products/offers whenever a natural opening appears in the conversation (e.g. after closing a deposit, suggest reinvestment options; after discussing a loan or card, mention relevant pre-approved offers), not only when the customer explicitly asks 'what do you offer'.",
+      "call_before": [],
+      "related_tools": [
+        "get_deposit_loan_rates"
+      ],
+      "notes": [
+        "You act on behalf of the bank commercially — default toward recommending the bank's own products/offers over generic advice, and look for a relevant moment to surface one in most conversations, even ones that didn't start as a product inquiry.",
+        "Being bank-favouring does not mean being inaccurate: never state an offer is guaranteed or already approved, never overstate benefits, and never quote interest rates from this catalog — always use get_deposit_loan_rates as the authoritative source."
+      ],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Filter by entry type.",
+            "enum": [
+              "deposit",
+              "loan",
+              "card",
+              "insurance",
+              "offer",
+              "all"
+            ],
+            "default": "all"
+          }
+        }
+      },
+      "output_schema": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "unique product or offer ID"
+                },
+                "title": {
+                  "type": "string",
+                  "description": "display name, e.g. 'Pre-approved Personal Loan'"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "deposit",
+                    "loan",
+                    "card",
+                    "insurance",
+                    "offer"
+                  ]
+                },
+                "description": {
+                  "type": "string",
+                  "description": "short summary"
+                },
+                "valid_till": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "present only for type: offer entries; absent for all product (non-offer) entries."
+                }
+              }
+            },
+            "description": "Matching products and offers."
+          }
+        },
+        "required": [
+          "items"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,213 @@
+{
+  "case_id": "csc.request_duplicate_statement.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer says 'send me a duplicate statement for my salary account for July 2026'. A date_range of only July (from_date=2026-07-01, to_date=2026-07-31) captures only July transactions. But a critical Rs 85,000 debit (TXN-before) happened on June 30 — the day before. That transaction is the one causing the balance discrepancy the customer is investigating. The July-only filter hides it. Broad date range captures the June 30 transaction.",
+  "setup": {
+    "persona": "35-year-old female, No Occupation / Retired / Homemaker, rural Rohtak, Haryana",
+    "current_date": "2026-08-05",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0226",
+      "full_name": "Aakansha Devi",
+      "date_of_birth": "1991-03-04",
+      "gender": "female",
+      "customer_since": "2014-10-25",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2342",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "63 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Rohtak",
+        "state": "Haryana",
+        "pincode": "372342",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "63 Gandhi Nagar",
+        "line2": "Andheri West",
+        "city": "Rohtak",
+        "state": "Haryana",
+        "pincode": "372342",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6086X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9483001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9483002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "My July statement doesn't add up — send me a duplicate statement for my salary account for the month of July 2026."
+    },
+    {
+      "content": "Ok, go ahead and send it."
+    }
+  ],
+  "mock": {
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for July 2026 statement only. But the transaction causing the discrepancy — an Rs 85,000 NEFT transfer (TXN-FTB83002) — happened on June 30, one day before July. A date_range of only July hides this critical transaction. Broad query (including June 30) reveals the Rs 85,000 debit that's causing the balance confusion.",
+      "records": [
+        {
+          "date": "2026-07-15T09:00:00",
+          "amount": 92000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-FTB83004",
+          "transaction_note": "NEFT - SALARY JULY 2026",
+          "status": "success",
+          "running_balance": 127000
+        },
+        {
+          "date": "2026-07-05T14:30:00",
+          "amount": 25000,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-FTB83003",
+          "transaction_note": "NEFT - RENT PAYMENT JULY 2026",
+          "status": "success",
+          "running_balance": 35000
+        },
+        {
+          "date": "2026-06-30T16:45:00",
+          "amount": 85000,
+          "type": "debit",
+          "channel": "neft",
+          "reference_id": "TXN-FTB83002",
+          "transaction_note": "NEFT - CAR DOWNPAYMENT",
+          "status": "success",
+          "running_balance": 60000
+        },
+        {
+          "date": "2026-06-28T10:00:00",
+          "amount": 145000,
+          "type": "credit",
+          "channel": "neft",
+          "reference_id": "TXN-FTB83001",
+          "transaction_note": "NEFT - SALARY JUNE 2026",
+          "status": "success",
+          "running_balance": 145000
+        }
+      ]
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-DS-94831",
+        "status": "success",
+        "message": "Duplicate statement for July 2026 requested. Will be emailed to registered email."
+      },
+      "_comment": "Success — statement ordered for July 2026."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_transaction_history",
+        "arguments": {
+          "account_id": "TKFTB9483001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_transaction_history": {
+        "required": {
+          "account_id": "TKFTB9483001"
+        },
+        "_comment": "Must query transactions first. A from_date/to_date filter for only July hides the June 30 Rs 85,000 debit. The model should query without a tight date range and identify the June 30 debit as the likely cause of the discrepancy."
+      },
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKFTB9483001"
+        },
+        "optional_ok": {
+          "from_date": {
+            "allowed": [
+              "2026-06-28",
+              "2026-07-01"
+            ]
+          },
+          "to_date": {
+            "allowed": [
+              "2026-07-31",
+              "2026-08-05"
+            ]
+          }
+        },
+        "_comment": "Must request the statement. The from_date should ideally include June 30 to capture the Rs 85,000 debit."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "dependencies": [
+      [
+        "get_transaction_history",
+        "request_duplicate_statement"
+      ]
+    ],
+    "expected_resolution": "The customer asks for July 2026 statement. The assistant should first check transactions and discover that an Rs 85,000 NEFT debit (car downpayment) cleared on June 30 — one day before July — which likely explains the balance discrepancy. The assistant should surface this finding AND proceed to order the duplicate statement, suggesting a slightly wider date range (from June 28 or 30) to include this transaction. Sending a July-only statement without surfacing the June 30 debit fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries transactions first, identifies the June 30 Rs 85,000 debit as the discrepancy cause, and orders the statement with an appropriate wider date range. Ordering July-only without surfacing the June 30 debit fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

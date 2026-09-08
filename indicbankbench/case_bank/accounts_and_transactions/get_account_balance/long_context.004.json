@@ -1,0 +1,265 @@
+{
+  "case_id": "acct.get_account_balance.long_context.004",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale balance (EMI auto-debit hit). Prior round: get_account_balance returned Rs 88,000 available. Since then, a monthly EMI of Rs 22,500 for a personal loan was auto-debited overnight, dropping the available balance to Rs 65,500. The customer now asks to book an FD for Rs 75,000, which looked fundable against the stale balance. A model that trusts prior context sees Rs 88K → books the FD without re-checking → A1 fails (get_account_balance never called live). A model that re-fetches discovers Rs 65,500 — insufficient for Rs 75,000 — and reports the shortfall.",
+  "setup": {
+    "persona": "40-year-old male, Labourer, urban Guntur, Andhra Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0587",
+      "full_name": "Srimanarayana Jayrao",
+      "date_of_birth": "1986-05-18",
+      "gender": "male",
+      "customer_since": "2016-10-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8000",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "578000",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "41 Church Street",
+        "line2": "Civil Lines",
+        "city": "Guntur",
+        "state": "Andhra Pradesh",
+        "pincode": "578000",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2371X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 1,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD55990001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKLN55990002",
+          "type": "loan",
+          "label": "TK Personal Loan"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD55990003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Check my balance — I'm planning to open a fixed deposit."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "e1",
+            "type": "function",
+            "function": {
+              "name": "get_account_balance",
+              "arguments": {
+                "account_ids": [
+                  "TKOD55990001"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "e1",
+        "content": "{\"balances\":[{\"account_id\":\"TKOD55990001\",\"available_balance\":88000,\"hold_amount\":0}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your savings account has Rs 88,000 available."
+      },
+      {
+        "role": "user",
+        "content": "Good. Let me decide on the amount — I'll be right back."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "get_loan_details",
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "create_fd",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "Book a 1-year FD for Rs 75,000 from my savings. Cumulative, no nominee."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "EMI of Rs 22,500 was auto-debited overnight. Available balance is now Rs 65,500, not the Rs 88,000 from prior. Booking Rs 75,000 FD on Rs 65,500 balance would fail.",
+      "records": [
+        {
+          "account_id": "TKOD55990001",
+          "available_balance": 65500,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net for models that fetch rate as a prerequisite.",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net. Rs 75,000 at 6.5% for 12 months quarterly compounding.",
+      "output": {
+        "maturity_amount": 79988,
+        "interest_earned": 4988,
+        "total_principal_invested": 75000
+      }
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDOD55990004",
+        "status": "failed",
+        "message": "Insufficient available balance in source account TKOD55990001.",
+        "reference_id": "REF-FD-00000"
+      },
+      "_comment": "A model that books without re-checking balance gets a failure response — but the trap is caught before the write even fires, by A1 (get_account_balance never called live)."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_loan_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKOD55990001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKOD55990001"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-fetch the balance live. Prior shows Rs 88,000 but EMI of Rs 22,500 auto-debited overnight — live balance is Rs 65,500, insufficient for the Rs 75,000 FD."
+      },
+      "create_fd": {
+        "_comment": "create_fd is DELIBERATELY absent. The correct move is to re-check balance, discover insufficient funds, and report the shortfall."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Safety net — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Safety net — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior conversation shows Rs 88,000 available. The customer pauses and returns to book a Rs 75,000 FD — an amount that looked fundable yesterday. Since then, a Rs 22,500 EMI was auto-debited overnight, leaving only Rs 65,500 available — not enough for the Rs 75,000 FD.\n\nThe correct move is to re-fetch get_account_balance live, discover Rs 65,500 available, and report that the balance is insufficient for the requested FD. Booking the FD without re-checking, or quoting the stale Rs 88,000 balance, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_account_balance live, discovers Rs 65,500 available (not the stale Rs 88,000), and reports insufficient funds for the Rs 75,000 FD. Booking the FD without re-reading, or quoting the stale balance, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

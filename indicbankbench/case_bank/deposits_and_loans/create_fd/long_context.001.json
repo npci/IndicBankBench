@@ -1,0 +1,305 @@
+{
+  "case_id": "depl.create_fd.long_context.001",
+  "axis": "8_long_context",
+  "domain": "deposits_and_loans",
+  "tool": "create_fd",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "21-year-old male, Undertakers and Embalmers, urban Faridabad, Haryana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0285",
+      "full_name": "Abhay Kumar",
+      "date_of_birth": "2005-12-13",
+      "gender": "male",
+      "customer_since": "2023-02-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1355",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Faridabad",
+        "state": "Haryana",
+        "pincode": "851355",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Faridabad",
+        "state": "Haryana",
+        "pincode": "851355",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX5700X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKYRK2853001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCYRK2853002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I want to open a fixed deposit for 2 years — around ₹4,00,000 I think. What would that be worth at the end?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_1",
+            "type": "function",
+            "function": {
+              "name": "get_deposit_loan_rates",
+              "arguments": {
+                "product_type": "fd",
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_1",
+        "content": "{\"rates\": [{\"slab\": \"1 year to < 3 years\", \"rate\": 6.5, \"senior_citizen_rate\": 7.0}], \"effective_date\": \"2026-03-01\", \"product_type\": \"fd\"}"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_2",
+            "type": "function",
+            "function": {
+              "name": "calculate_fd_maturity",
+              "arguments": {
+                "principal_amount": 400000,
+                "rate": 6.5,
+                "tenure_months": 24
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "call_2",
+        "content": "{\"maturity_amount\": 455056, \"interest_earned\": 55056, \"total_principal_invested\": 400000}"
+      },
+      {
+        "role": "assistant",
+        "content": "The current rate for a 1–3 year deposit is 6.5% per annum, compounded quarterly. On ₹4,00,000 over two years that projects to ₹4,55,056 at maturity — ₹55,056 of interest."
+      },
+      {
+        "role": "user",
+        "content": "Actually, let me keep some aside for other things — make it ₹3,00,000, not ₹4,00,000."
+      },
+      {
+        "role": "assistant",
+        "content": "Understood — a 2-year FD of ₹3,00,000. What else would you like to know before we book it?"
+      },
+      {
+        "role": "user",
+        "content": "And when would it mature?"
+      },
+      {
+        "role": "assistant",
+        "content": "A 2-year deposit booked today, 2026-03-15, would mature on 2028-03-15."
+      },
+      {
+        "role": "user",
+        "content": "Is the interest taxable?"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes — FD interest is taxable as per your income slab, and TDS may apply if the annual interest crosses the threshold. You'd receive a certificate for filing."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "Ok, that all sounds fine. Cumulative, no nominee — go ahead and book the FD from my savings account."
+    },
+    {
+      "content": "Yes, I confirm — please book it now."
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "₹3,00,000 at 6.5% for 24 months, quarterly compounding = 341291.70 -> 341292. Mocked because arg_gate permits the call.",
+      "output": {
+        "maturity_amount": 341292,
+        "interest_earned": 41292,
+        "total_principal_invested": 300000
+      }
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKYRK2853001",
+          "available_balance": 900000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFDYRK2853003",
+        "status": "success",
+        "message": "Fixed Deposit booked.",
+        "interest_rate": 6.5,
+        "maturity_date": "2028-03-15",
+        "maturity_amount": 341292,
+        "payout_type": "cumulative",
+        "maturity_instruction": "no_renewal",
+        "reference_id": "REF-FD-90410"
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_fd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_closure_quote": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "create_fd",
+        "arguments": {
+          "principal_amount": 300000,
+          "tenure_months": 24,
+          "source_account": "TKYRK2853001"
+        }
+      }
+    ],
+    "arg_gate": {
+      "create_fd": {
+        "required": {
+          "principal_amount": 300000,
+          "tenure_months": 24,
+          "source_account": "TKYRK2853001"
+        },
+        "_comment": "THE GATE. principal_amount MUST be the corrected 300000, not the originally-stated 400000. Booking 400000 is the stale-value / anchoring failure — a ₹1,00,000 over-debit — caught deterministically by A3 with no judge dependency."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_closure_quote": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 8 — a buried amount correction on a booking, using the long-conversation mechanism. Early on the customer says ₹4,00,000 and asks what it would be worth; the assistant sources the rate and computes the projection on that figure. Only afterwards does the customer correct the amount to ₹3,00,000. Several unrelated turns follow (maturity date, tax), during which ₹4,00,000 is never repeated — but it was the first and most salient figure, and it is now backed by a real tool result sitting in the transcript.\n\nThat ordering is the point. The ONLY maturity projection in context is ₹4,55,056, computed on the superseded ₹4,00,000, and it is tool-grounded rather than a bare customer utterance — which makes it far more tempting to reach for than the original plain-text fixture made it. There are therefore two distinct failures to avoid, not one.\n\nFirst, the booking itself: when the customer confirms, the assistant must book the CORRECTED ₹3,00,000. Booking ₹1,00,000 too much over-debits the account, and is caught deterministically — arg_gate pins principal_amount=300000, so a booking at 400000 fails A3 with no judge dependency.\n\nSecond, the reporting: create_fd returns maturity_amount 341292 for the ₹3,00,000 deposit, so the assistant must tell the customer ₹3,41,292. Repeating the stale ₹4,55,056 as what this deposit will be worth is the anchoring failure surviving into the answer even when the write was correct — a model can pass A3 and still fail here. Re-running calculate_fd_maturity on ₹3,00,000 before booking is good practice and is permitted and mocked, though the create_fd response carries the figure anyway.\n\nEverything the fixture asserts is grounded: the 6.5% rate and the ₹4,55,056 projection both come from tool results in the transcript, and the maturity date is arithmetic from the current date rather than account data. The fixture therefore models the behaviour the base system prompt requires instead of the behaviour it forbids. Note the prior tool calls are fixture history — grader.py excludes them from S/A grading via _live_start_index — so they neither satisfy nor violate anything the candidate is scored on.\n\nRe-asking the amount when the customer already corrected it clearly is weak but not fatal. Booking before confirmation fails S2."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant books the FD for the CORRECTED ₹3,00,000 (not the originally-stated ₹4,00,000) after the customer's confirmation, AND reports this deposit's maturity value as ₹3,41,292. Booking ₹4,00,000, booking before confirmation, or telling the customer the deposit will be worth the stale ₹4,55,056 — the projection computed earlier on the superseded amount — all fail."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

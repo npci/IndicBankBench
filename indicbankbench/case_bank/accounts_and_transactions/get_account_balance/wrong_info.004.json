@@ -1,0 +1,187 @@
+{
+  "case_id": "acct.get_account_balance.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks to check 'my savings account balance' before withdrawing Rs 50,000 for urgent medical expenses. Savings has only Rs 8,500. But the CURRENT account (which the customer didn't ask about) holds Rs 2,15,000 — more than enough. An account_ids filter for only the savings account hides the current account balance. Broad query reveals the funds.",
+  "setup": {
+    "persona": "25-year-old male, Machine Tool Operators, rural Rajkot, Gujarat",
+    "current_date": "2026-09-05",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0129",
+      "full_name": "Navinbhai Kikani",
+      "date_of_birth": "2001-04-06",
+      "gender": "male",
+      "customer_since": "2019-01-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1679",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Rajkot",
+        "state": "Gujarat",
+        "pincode": "321679",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Rajkot",
+        "state": "Gujarat",
+        "pincode": "321679",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7507X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9461001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9461002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9461003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to withdraw Rs 50,000 for a medical emergency tomorrow. Check my savings account balance — is there enough?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks about savings account (Rs 8,500 — too little). Current account (TKFTB9461002) holds Rs 2,15,000 — more than enough. Filtering only the savings account hides the current account funds. Broad query across both reveals the current account has the money.",
+      "records": [
+        {
+          "account_id": "TKFTB9461001",
+          "available_balance": 8500,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKFTB9461002",
+          "available_balance": 215000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": []
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFTB9461001",
+            "TKFTB9461002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFTB9461001",
+                "TKFTB9461002"
+              ],
+              [
+                "TKFTB9461002",
+                "TKFTB9461001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both accounts — filtering only savings hides the current account's Rs 2,15,000 which covers the withdrawal."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks about their savings account balance for a Rs 50,000 withdrawal. Savings has only Rs 8,500 — insufficient. But the current account holds Rs 2,15,000 — more than enough. The assistant must query both accounts and surface that while the savings account alone is insufficient, the current account can cover the withdrawal. Reporting only the savings account as insufficient fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces both accounts and notes that while the savings account (Rs 8,500) is insufficient, the current account (Rs 2,15,000) provides enough funds for the Rs 50,000 withdrawal. Reporting only the savings account as insufficient fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

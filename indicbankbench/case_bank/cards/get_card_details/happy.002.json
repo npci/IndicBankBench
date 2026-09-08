@@ -1,0 +1,253 @@
+{
+  "case_id": "cards.get_card_details.happy.002",
+  "axis": "1_happy_path",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Over-specific-vs-general record selection. Two cards returned: a RuPay debit card (first — bait, no spending limits) and a Visa credit card (second — has credit_limit/available_limit). The customer asks about spending limits — only credit cards carry those fields. A weak model picks the debit card (first) and reports no limits or wrong information; a strong model spots that debit has no credit_limit/available_limit and picks the credit card.",
+  "setup": {
+    "persona": "31-year-old female, Dairy Worker, General, rural Adilabad, Telangana",
+    "current_date": "2026-08-23",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0694",
+      "full_name": "Ganapuram Raju",
+      "date_of_birth": "1995-02-15",
+      "gender": "female",
+      "customer_since": "2013-04-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5065",
+      "registered_email": "g*****@gmail.com",
+      "communication_address": {
+        "line1": "26 Station Road",
+        "line2": "Civil Lines",
+        "city": "Adilabad",
+        "state": "Telangana",
+        "pincode": "555065",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "26 Station Road",
+        "line2": "Civil Lines",
+        "city": "Adilabad",
+        "state": "Telangana",
+        "pincode": "555065",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4907X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOSC8284001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOSC8284002",
+          "card_type": "debit",
+          "masked_number": "****2297",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCOSC8284003",
+          "card_type": "credit",
+          "masked_number": "****5970",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_request_status",
+    "create_fd"
+  ],
+  "user_turns": [
+    {
+      "content": "What are the spending limits on my card?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Two cards. Debit card (first) has no credit_limit/available_limit — the bait. Credit card (second) carries both. 'Spending limits' maps to credit_limit/available_limit.",
+      "records": [
+        {
+          "card_id": "TKCOSC8284002",
+          "masked_number": "****2297",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCOSC8284003",
+          "masked_number": "****5970",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "n_a",
+        "raised_date": "2026-01-01",
+        "last_update": "2026-01-01",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCOSC8284003"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCOSC8284003"
+              ],
+              [
+                "TKCOSC8284002",
+                "TKCOSC8284003"
+              ]
+            ],
+            "_comment": "Fetching only the credit card (which has spending limits) or both cards are acceptable. Fetching ONLY the debit card would miss the credit card entirely — S1 prevents any fabricated card id, and the R bar catches reporting debit-card controls as 'spending limits'."
+          }
+        }
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about the 'spending limits' on their card. Two cards exist: a RuPay debit card (****2297, listed first) and a Visa credit card (****5970, listed second). Per the card schema, credit_limit and available_limit exist only on credit cards — the debit card has neither. 'Spending limits' is the everyday phrase for exactly those fields.\n\nThe assistant must call get_card_details and report the credit card (****5970): total credit limit of ₹2,00,000 with ₹1,43,500 still available. Reporting the debit card's daily channel controls as 'spending limits' misses the point — those are per-channel transaction caps, not the overall credit facility the customer is asking about. Reporting only the debit card because it was listed first is the failure this case targets.\n\nA model that fetches both and explains the distinction (debit has no overall spending limit, credit has ₹1,43,500 remaining of ₹2,00,000) earns full credit."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the credit card's spending limits — total credit limit ₹2,00,000 with ₹1,43,500 available — grounded in get_card_details output. Reporting only the debit card's per-channel daily controls (or stating there are no spending limits) fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

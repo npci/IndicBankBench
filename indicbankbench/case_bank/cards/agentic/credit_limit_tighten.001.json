@@ -1,0 +1,261 @@
+{
+  "case_id": "cards.agentic.credit_limit_tighten.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+set_card_controls",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — check-then-act write with the multi-constraint limit rules: the requested 1,00,000 daily limit must be below the card's credit_limit (3,00,000), must differ from the current online domestic limit (2,00,000), and must not be bundled with an enable/disable change (the reject_when rule refuses such a combined call). The arg_gate pins the exact nested payload — {online: {domestic: {daily_limit: 100000}}} — so a call that also touches enabled, another channel, or a different figure fails A3. Named careless failure modes: (a) transcribing the credit limit as the daily limit (the 3,00,000 reflex); (b) setting the limit while also disabling the channel in one call; (c) acting without surfacing current controls (A4 + disclosed prerequisite).",
+  "setup": {
+    "persona": "34-year-old female, No Occupation / Retired / Homemaker, rural Shimoga, Karnataka",
+    "current_date": "2026-08-16",
+    "current_time": "18:25",
+    "login_context": {
+      "customer_id": "SCN0103",
+      "full_name": "Lakshmibai Lokanavara",
+      "date_of_birth": "1992-05-06",
+      "gender": "female",
+      "customer_since": "2016-12-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3984",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Shimoga",
+        "state": "Karnataka",
+        "pincode": "413984",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Shimoga",
+        "state": "Karnataka",
+        "pincode": "413984",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2422X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCLT6622001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCLT6622002",
+          "card_type": "credit",
+          "masked_number": "****7685",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I keep overspending on my credit card — lower my online spending limit to ₹1,00,000 a day."
+    },
+    {
+      "content": "Yes, please set it."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCLT6622002",
+          "masked_number": "****7685",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 214500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 15000
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 200000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 20000
+              }
+            }
+          }
+        }
+      ],
+      "_comment": "Current online domestic daily_limit is 2,00,000 (differs from the requested 1,00,000) and the credit_limit is 3,00,000, so the requested figure satisfies every disclosed constraint."
+    },
+    "set_card_controls": {
+      "kind": "outcome_merged",
+      "merge": {
+        "state_from": "get_card_details",
+        "match_on": "card_id",
+        "field": "controls"
+      },
+      "output": {
+        "status": "success",
+        "message": "Card controls updated.",
+        "reference_id": "REF-CTL-66221"
+      },
+      "reject_when": {
+        "payload_has_all_of": [
+          "enabled",
+          "daily_limit"
+        ],
+        "output": {
+          "status": "failed",
+          "message": "Send them as sequential calls."
+        }
+      },
+      "_comment": "A call bundling an enabled flag with the limit change is refused per the disclosed sequential-calls rule; the gold payload carries only daily_limit, so it is accepted."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCLT6622002"
+          ]
+        }
+      },
+      {
+        "tool": "set_card_controls",
+        "arguments": {
+          "card_id": "TKCCLT6622002",
+          "online": {
+            "domestic": {
+              "daily_limit": 100000
+            }
+          }
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "set_card_controls"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCCLT6622002"
+          ]
+        },
+        "_comment": "Current controls and the credit_limit must be surfaced before the change (also the disclosed prerequisite)."
+      },
+      "set_card_controls": {
+        "required": {
+          "card_id": "TKCCLT6622002",
+          "online": {
+            "domestic": {
+              "daily_limit": 100000
+            }
+          }
+        },
+        "_comment": "The write carries exactly online.domestic.daily_limit=100000 — nothing else. The exact-match required dict fails a call with an extra enabled flag, another channel, or a different figure (e.g. the 3,00,000 credit-limit reflex)."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "block_card": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer wants the credit card's online daily spending limit lowered to 1,00,000. The assistant must surface the current state (get_card_details: online domestic limit currently 2,00,000, credit_limit 3,00,000), confirm the change, and then write set_card_controls(card_id=TKCCLT6622002, online={domestic: {daily_limit: 100000}}) — a figure below the credit limit, different from the current limit, and not bundled with any enable/disable change (a combined call is refused by the mock's sequential-calls rule). Setting 3,00,000 (the credit-limit reflex), changing the wrong channel, or skipping the current-state read, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant surfaces the current controls and sets exactly the online domestic daily limit of INR 1,00,000 (below the credit limit, different from the current 2,00,000) after confirmation, without bundling any enable/disable change; FAIL if the credit limit is copied as the daily limit, another channel is touched, or the read is skipped."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

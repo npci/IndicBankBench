@@ -1,0 +1,244 @@
+{
+  "case_id": "cards.block_card.contradicting_info.001",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 mid-flight contradiction on a WRITE: turn 1 says the card was lost; turn 2 introduces a NEW contradictory element — an unrecognized Rs 45,000 purchase that might be fraud. The block must go out with the UPDATED reason (fraud), not the stale 'lost' one. Careless failure mode: blocking with reason=lost because that was the first thing said, never re-reading the newer turn.",
+  "setup": {
+    "persona": "40-year-old male, Stall and Market Salespersons, rural Alappuzha, Kerala",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0531",
+      "full_name": "Arun Mon",
+      "date_of_birth": "1986-07-01",
+      "gender": "male",
+      "customer_since": "2018-04-18",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4598",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "79 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Alappuzha",
+        "state": "Kerala",
+        "pincode": "684598",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "79 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Alappuzha",
+        "state": "Kerala",
+        "pincode": "684598",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8225X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGBLK9300001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKGBLK9302741",
+          "card_type": "credit",
+          "masked_number": "****2741",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "request_duplicate_statement",
+    "create_rd"
+  ],
+  "user_turns": [
+    {
+      "content": "Block my credit card — I lost it yesterday."
+    },
+    {
+      "content": "Wait — I just saw a Rs 45,000 purchase on it that I didn't make. This might be fraud."
+    },
+    {
+      "content": "Go ahead and block it."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Card is active; the block reason must reflect the NEWER fraud claim, not the original lost.",
+      "records": [
+        {
+          "card_id": "TKGBLK9302741",
+          "masked_number": "****2741",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 180000,
+          "available_limit": 126800,
+          "expiry": "02/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 25000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "_comment": "Block with the updated reason.",
+      "output": {
+        "status": "success",
+        "message": "Card permanently blocked (reason: fraud). A replacement can be requested via raise_request.",
+        "reference_id": "REF-BLK-93010"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      }
+    },
+    "create_rd": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "deposit_id": "TKRD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKGBLK9302741"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKGBLK9302741",
+          "reason": "fraud"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKGBLK9302741"
+          ]
+        }
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKGBLK9302741",
+          "reason": "fraud"
+        },
+        "_comment": "The reason must be the UPDATED one — fraud, not the stale 'lost'."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "create_rd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer first says the card was lost, then mid-flight reports an unrecognized Rs 45,000 purchase that might be fraud. After confirmation the assistant must block the card with the updated reason fraud — not lost. Blocking before confirmation, or blocking with the stale lost reason, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "blocks the card after confirmation with reason fraud (the updated reason from the later turn). Blocking with reason lost, or blocking without confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

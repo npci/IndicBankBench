@@ -1,0 +1,384 @@
+{
+  "case_id": "cards.get_card_details.long_context.001",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 via the BIG-LIST mechanism, which cards did not have — both existing long_context cases use a long prior conversation. The deposits twin is get_fd_details/long_context.001. No harness change is needed: each card carries six control settings (3 channels x 2 regions), so five cards is thirty enable/limit pairs in one response, on top of limits, expiries and networks.\n\nExactly ONE international setting is enabled anywhere: POS international on the Mastercard ending 4646. Three things are arranged to punish skimming. It is third of five, so neither first nor last. It is the SMALLEST credit line of the three credit cards (₹1,50,000) while a different card carries the largest (₹5,00,000), so the most salient card is not the answer. And every other international setting on every card is off — so a model that samples one card, or that checks only the international ONLINE channel it was probably expecting, concludes 'nothing is enabled', which is the wrong answer.\n\nPer the ARCHITECTURE Part 1 discriminator this is axis 8, not axis 4: nothing is ambiguous and there is nothing to ask — every fact needed is present in the response, and the difficulty is retrieval under bulk.",
+  "setup": {
+    "persona": "46-year-old male, Supervisor, Customer Technical Service, rural Mewat, Haryana",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0332",
+      "full_name": "Suraj Rawat",
+      "date_of_birth": "1980-02-26",
+      "gender": "male",
+      "customer_since": "2013-02-15",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4349",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "110 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Mewat",
+        "state": "Haryana",
+        "pincode": "424349",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "110 Station Road",
+        "line2": "Banjara Hills",
+        "city": "Mewat",
+        "state": "Haryana",
+        "pincode": "424349",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0421X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKAFEDK001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCAFEDK3489",
+          "card_type": "credit",
+          "masked_number": "****3489",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCAFEDK8567",
+          "card_type": "debit",
+          "masked_number": "****8567",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCAFEDK4646",
+          "card_type": "credit",
+          "masked_number": "****4646",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCAFEDK8502",
+          "card_type": "credit",
+          "masked_number": "****8502",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCAFEDK3782",
+          "card_type": "debit",
+          "masked_number": "****3782",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "set_card_controls",
+    "toggle_card_freeze",
+    "block_card",
+    "request_cheque_book",
+    "calculate_fd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm about to travel and I want to be careful. Across all my cards, is international use switched on anywhere — and if so, which card and which channel?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "THE BIG LIST. Five cards, thirty enable/limit pairs. Exactly one international setting is enabled anywhere: pos.international on the Mastercard ending 4646 (₹45,000). Every other international setting across all five cards is disabled, so a model that samples one card — or checks only the online channel — concludes 'nothing is enabled'. The answer card is third of five and has the SMALLEST credit line; the largest belongs to a card with nothing enabled.",
+      "records": [
+        {
+          "card_id": "TKCAFEDK3489",
+          "masked_number": "****3489",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCAFEDK8567",
+          "masked_number": "****8567",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCAFEDK4646",
+          "masked_number": "****4646",
+          "card_type": "credit",
+          "network": "mastercard",
+          "status": "active",
+          "credit_limit": 150000,
+          "available_limit": 98000,
+          "expiry": "03/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 60000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 45000
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCAFEDK8502",
+          "masked_number": "****8502",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 500000,
+          "available_limit": 412000,
+          "expiry": "06/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 15000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCAFEDK3782",
+          "masked_number": "****3782",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "09/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 35000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCAFEDK3489",
+            "TKCAFEDK8567",
+            "TKCAFEDK4646",
+            "TKCAFEDK8502",
+            "TKCAFEDK3782"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "card_ids is not pinned — `required` compares lists by exact equality including order, and any sufficient query shape is correct. Coverage is self-enforcing: a model that reads only some of the cards cannot answer 'across all my cards' correctly and fails R. S1 still enforces that every id is real."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Axis 8 via the big-list mechanism. The customer asks whether international use is enabled anywhere across their cards, and on which card and channel. Answering means reading all five cards and scanning thirty enable/limit pairs.\n\nExactly one is on: international POS on the Mastercard ending 4646, with a ₹45,000 daily limit. Every other international setting — ATM, online and POS across all five cards — is disabled.\n\nBoth halves must be right: naming the card without the channel, or the channel without the card, is not an answer to what was asked. The failure this case targets is 'no, international use is off everywhere', which is what a model that samples one card or checks only the online channel will conclude. Offering to switch that setting off is a sensible next step but is not required, and acting on it without confirmation would be wrong."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant identifies that international use is enabled in exactly one place — POS on the Mastercard ending 4646 — and names BOTH the card and the channel. Answering that nothing is enabled fails. Naming the wrong card or the wrong channel fails. Reporting a card as having international use on when it does not also fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

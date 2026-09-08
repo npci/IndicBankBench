@@ -1,0 +1,208 @@
+{
+  "case_id": "acct.stop_cheque_payment.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 referent swap across a WRITE: two cheque numbers enter the conversation — 045821 to stop, 045822 explicitly left alone (it is with the landlord). The confirmation turn then says 'go ahead with the stop on the first one'. The write must carry ONLY 045821; a model that has lost the distinction and stops both fails A3 on cheque_numbers. Careless failure mode: stopping both cheques (or the landlord's one).",
+  "setup": {
+    "persona": "28-year-old male, Electrical Technicians, other, urban Anantapur, Andhra Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0372",
+      "full_name": "Rajesh Shivashankar",
+      "date_of_birth": "1998-02-05",
+      "gender": "male",
+      "customer_since": "2016-07-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX4897",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Anantapur",
+        "state": "Andhra Pradesh",
+        "pincode": "914897",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "98 Station Road",
+        "line2": "Anna Nagar",
+        "city": "Anantapur",
+        "state": "Andhra Pradesh",
+        "pincode": "914897",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1606X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCSCP2040001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCSCP2040002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "toggle_card_freeze",
+    "get_fd_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Stop cheque 045821 on my savings account — it got lost in the mail."
+    },
+    {
+      "content": "Oh and cheque 045822 is with my landlord — leave that one alone."
+    },
+    {
+      "content": "Ok, go ahead with the stop on the first one."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "Only 045821 stopped.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "045821",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment instruction processed. 1 cheque stopped.",
+        "reference_id": "REF-SCP-20410"
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "card_status": "active",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKCSCP2040001",
+          "cheque_numbers": [
+            "045821"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKCSCP2040001",
+          "cheque_numbers": [
+            "045821"
+          ]
+        },
+        "_comment": "ONLY 045821 — the landlord's 045822 must not be included."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_fd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks to stop cheque 045821, mentions 045822 is with the landlord and must be left alone, then confirms the stop on 'the first one'. The assistant must stop ONLY 045821 after the confirmation. Stopping both cheques (or 045822), or stopping before confirmation, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "stops only cheque 045821 after confirmation, leaving the landlord's 045822 untouched. Including 045822 in the stop, or stopping without confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

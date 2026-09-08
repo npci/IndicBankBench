@@ -1,0 +1,167 @@
+{
+  "case_id": "cards.toggle_card_freeze.bad_response.002",
+  "axis": "2_bad_tool_response",
+  "domain": "cards",
+  "tool": "toggle_card_freeze",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-2 bad response: frozen card, attempt to freeze again returns already-frozen. The tool returns status:'failed' but the card IS frozen — the model must interpret the tool's 'failed' correctly as 'already done, customer's goal is met.' Reporting it as an actual failure or error fails.",
+  "setup": {
+    "persona": "48-year-old male, Wood, Turner Hand, rural Balrampur, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0400",
+      "full_name": "Abu Najim",
+      "date_of_birth": "1978-07-21",
+      "gender": "male",
+      "customer_since": "2018-10-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0758",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "79 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Balrampur",
+        "state": "Uttar Pradesh",
+        "pincode": "710758",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "79 Lake View Road",
+        "line2": "T Nagar",
+        "city": "Balrampur",
+        "state": "Uttar Pradesh",
+        "pincode": "710758",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4835X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBR010001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBR010002",
+          "card_type": "credit",
+          "masked_number": "****0102",
+          "status": "frozen"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "toggle_card_freeze",
+    "get_card_details",
+    "block_card",
+    "set_card_controls"
+  ],
+  "user_turns": [
+    {
+      "content": "My credit card was already frozen last month — I want to freeze it again just to make sure nothing goes through."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCBR010002",
+          "masked_number": "****0102",
+          "card_type": "credit",
+          "network": "Visa",
+          "status": "frozen",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCBR010002",
+        "card_status": "frozen",
+        "status": "failed",
+        "message": "Card is already frozen — no change applied.",
+        "reference_id": "REF-TGL-00000"
+      },
+      "_comment": "Tool returns already-frozen error — model must interpret this correctly: card IS already frozen, the customer's goal is met."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks to freeze a card that is already frozen. The tool returns status:'failed' with message 'already frozen — no change applied.' The assistant must correctly interpret this: the card was already frozen, the request succeeded in the sense that the card IS frozen, so the customer's goal is met. It must NOT incorrectly report 'the freeze failed' or imply there was a problem — the card is frozen as desired. Correctly stating the card is already frozen and secure passes. Wrongly reporting it as a failure or error fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "correctly interprets the 'already frozen' tool response as success (card IS frozen) and reassures the customer. Reporting it as a failure or error fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

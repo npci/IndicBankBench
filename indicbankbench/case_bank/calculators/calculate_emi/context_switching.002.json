@@ -1,0 +1,244 @@
+{
+  "case_id": "calc.calculate_emi.context_switching.002",
+  "axis": "6_context_switching",
+  "domain": "calculators",
+  "tool": "calculate_emi",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6 two-thread calculator: the home-loan EMI is computed first, an FD-maturity detour intervenes, and the customer returns to 'the EMI'. The final answer must be the EMI (Rs 21,854) — the FD figure (Rs 2,27,528) is the most recently computed and the likely bleed. The EMI and FD arguments are pinned, so computing either with the other's inputs fails A3. Careless failure mode: answering the final ask with the FD maturity figure.",
+  "setup": {
+    "persona": "50-year-old female, No Occupation / Retired / Homemaker, rural Gautam Buddha Nagar, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0184",
+      "full_name": "Lakshmi Devi",
+      "date_of_birth": "1976-02-27",
+      "gender": "female",
+      "customer_since": "2013-12-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2793",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Gautam Buddha Nagar",
+        "state": "Uttar Pradesh",
+        "pincode": "412793",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "74 Station Road",
+        "line2": "Bandra East",
+        "city": "Gautam Buddha Nagar",
+        "state": "Uttar Pradesh",
+        "pincode": "412793",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1460X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [],
+      "linked_products": [],
+      "linked_cards": []
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_deposit_loan_rates",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_gold_rate",
+    "show_mandates",
+    "get_insurance_details"
+  ],
+  "user_turns": [
+    {
+      "content": "What's the EMI on a Rs 25,00,000 home loan for 20 years?"
+    },
+    {
+      "content": "Hold on — first, what would a Rs 2,00,000 FD for 2 years be worth at maturity?"
+    },
+    {
+      "content": "Now the EMI — what was it again?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "Both products visible at once; the model must pick the right row per thread (8.6% home, 6.5% FD).",
+      "output": {
+        "rates": [
+          {
+            "slab": "home loan",
+            "rate": 8.6
+          },
+          {
+            "slab": "fd 1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "2L @ 6.5% / 24mo -> 227,528.",
+      "output": {
+        "maturity_amount": 227528,
+        "interest_earned": 27528,
+        "total_principal_invested": 200000
+      }
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      }
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "_comment": "25L @ 8.6% / 240mo -> EMI 21854; interest 2,744,960.",
+      "output": {
+        "emi": 21854,
+        "total_interest": 2744960,
+        "total_payment": 5244960
+      }
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      }
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "_comment": "Noise tool — safety net.",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      }
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "home_loan",
+          "tenure_months": 240
+        }
+      },
+      {
+        "tool": "calculate_emi",
+        "arguments": {
+          "principal": 2500000,
+          "rate": 8.6,
+          "tenure_months": 240
+        }
+      },
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 24
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {},
+        "_comment": "Called for both threads; the model must pick the right slab per thread — judged at R."
+      },
+      "calculate_emi": {
+        "required": {
+          "principal": 2500000,
+          "rate": 8.6,
+          "tenure_months": 240
+        },
+        "_comment": "The EMI thread's inputs — the FD detour must not leak into them."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 200000,
+          "rate": 6.5,
+          "tenure_months": 24
+        }
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed."
+      }
+    },
+    "expected_resolution": "The customer asks for a Rs 25,00,000 home loan EMI over 20 years, detours to a Rs 2,00,000 2-year FD maturity, then returns to the EMI. The assistant must keep the threads separate and answer the final ask with the EMI: Rs 21,854 a month at 8.6% (total interest Rs 27,44,960). The FD detour is worth Rs 2,27,528 at maturity. Answering the final ask with the FD figure, or computing either with the other thread's inputs, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "answers the final ask with the home-loan EMI (Rs 21,854 at 8.6%), not the FD maturity figure. Mixing the two threads' figures or inputs fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

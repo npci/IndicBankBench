@@ -1,0 +1,186 @@
+{
+  "case_id": "csc.request_duplicate_statement.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_duplicate_statement",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3 tool routing (disclosed): the customer needs an OFFICIAL/stamped statement for a visa application. request_duplicate_statement's description says to 'Use this — not raw get_transaction_history output — whenever the customer needs a formal statement.' The trap is get_transaction_history: a naive model dumps recent transactions as 'your statement', but that is not the official document the customer needs. The assistant must order the duplicate statement for the requested period, after confirming. Calling get_transaction_history to satisfy this fails A2 (it is exposed but not in the allowed set — using it here is the misroute). Confirmation precedes the write (S2). from_date/to_date are schema-required, so a ~6-month range must be supplied.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, rural Dadra & Nagar Haveli, Dadra & Nagar Haveli",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0481",
+      "full_name": "Devi Patel",
+      "date_of_birth": "2008-09-27",
+      "gender": "female",
+      "customer_since": "2026-04-23",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1504",
+      "registered_email": "d*****@gmail.com",
+      "communication_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Dadra & Nagar Haveli",
+        "state": "Dadra & Nagar Haveli",
+        "pincode": "591504",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "105 Temple Road",
+        "line2": "Adyar",
+        "city": "Dadra & Nagar Haveli",
+        "state": "Dadra & Nagar Haveli",
+        "pincode": "591504",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3196X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKPAZ2694001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCPAZ2694002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I need an official bank statement for the last 6 months for my visa application — the embassy wants a proper stamped one, emailed to me."
+    },
+    {
+      "content": "Yes, please order it."
+    }
+  ],
+  "mock": {
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-STM-66220",
+        "status": "success",
+        "message": "Duplicate statement for 2025-09-15 to 2026-03-15 requested for TKPAZ2694001; it will be emailed to your registered address."
+      }
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "_comment": "Safety net only — this is the WRONG tool here. Raw transaction history is not the official statement the customer needs. Migrated to the CONVENTIONS.md §13 record shape: `description` renamed to `transaction_note` with rail-style narration, the invented `account_id` dropped, and `channel` / `reference_id` / `status` / `running_balance` added. Balances chain newest-first; reference ids are a per-case series so no two cases share one.",
+      "records": [
+        {
+          "date": "2026-03-10T11:26:00",
+          "amount": 1500,
+          "type": "debit",
+          "channel": "pos",
+          "reference_id": "TXN-1174390",
+          "transaction_note": "POS PURCHASE - RELIANCE FRESH",
+          "status": "success",
+          "running_balance": 33905
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "SAFETY NET ONLY — get_products_and_offers stays A2-forbidden here (the conflict was resolved by keeping it forbidden). The mock does NOT permit the call: it is absent from gold.tool_calls and arg_gate, so A2 still fails it. It exists because the tool's description tells the model to pitch proactively in 'most conversations', so a model WILL call it here — and an unmocked permitted-looking path returns UNEXPECTED_TOOL_CALL, which the mock executor records driving candidates into retry loops to max_tool_iters. A looped case writes no score.json and vanishes from the denominator instead of failing visibly. With the mock the model fails cleanly on A2. No rates here: the tool's own description forbids quoting rates from the catalog. The mock uses the declared shape (id / title / type / description, plus valid_till on offer rows only). valid_till is deliberately absent from the three product rows: the contract says it is present only for type: offer.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        },
+        {
+          "id": "PRD-PL-2002",
+          "title": "TK Personal Loan",
+          "type": "loan",
+          "description": "Unsecured personal loan, tenure up to 60 months."
+        },
+        {
+          "id": "PRD-CC-2003",
+          "title": "TK Rewards Credit Card",
+          "type": "card",
+          "description": "Rewards on everyday spends; annual fee waiver on qualifying usage."
+        },
+        {
+          "id": "OFF-PL-3021",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Personal loan up to ₹10,00,000, minimal documentation. Indicative only.",
+          "valid_till": "2026-06-30"
+        }
+      ]
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "request_duplicate_statement",
+        "arguments": {
+          "account_id": "TKPAZ2694001",
+          "from_date": "2025-09-15",
+          "to_date": "2026-03-15",
+          "delivery_mode": "email"
+        }
+      }
+    ],
+    "arg_gate": {
+      "request_duplicate_statement": {
+        "required": {
+          "account_id": "TKPAZ2694001",
+          "delivery_mode": "email"
+        },
+        "_comment": "The official-statement tool, for account TKPAZ2694001, delivered by email (the customer asked for it emailed). The exact from/to dates for 'last 6 months' may vary slightly in how the model computes them, so only account_id + delivery_mode are pinned; a ~6-month range must still be present (S3 requires from_date/to_date)."
+      },
+      "_comment": "get_transaction_history is exposed but must NOT be used to satisfy this — an official statement is a formal document, not a raw transaction dump. A get_transaction_history call fails A2.",
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer needs an official, stamped bank statement for the last 6 months for a visa application, emailed to them. The correct tool is request_duplicate_statement (the formal-statement channel) — NOT get_transaction_history, which returns raw transaction data, not an official document. The assistant should confirm and order the duplicate statement for account TKPAZ2694001 over roughly the last six months (2025-09-15 to 2026-03-15), delivered by email, and report that the request is logged and the statement will be emailed. Dumping transaction history as if it were the statement is the misroute this case targets. Ordering before confirmation fails S2."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant orders an official duplicate statement (request_duplicate_statement) for ~the last 6 months, delivered by email, after confirming — rather than dumping raw get_transaction_history output as 'the statement'. Using transaction history to satisfy the official-statement request, or ordering before confirmation, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

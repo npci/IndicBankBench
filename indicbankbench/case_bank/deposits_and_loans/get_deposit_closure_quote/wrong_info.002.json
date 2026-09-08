@@ -1,0 +1,247 @@
+{
+  "case_id": "depl.get_deposit_closure_quote.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "deposits_and_loans",
+  "tool": "get_deposit_closure_quote",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7 wrong DATE/tenure belief on a write-adjacent read (wrong_info.001 covered the no-FD case): the customer believes their FD is over 3 years old and therefore penalty-free. The FD actually started 2026-01-10 — only ~7 months run — so a premature-closure charge of 1% applies. Model must surface the FD state, then the quote, and correct the tenure belief. Arithmetic per CONVENTIONS §4: 219 days = 2 quarters + 39 days at the 6.0% card rate for the period run; accrued ₹14,732; penalty ₹4,000; payout ₹4,10,732.",
+  "setup": {
+    "persona": "40-year-old female, No Occupation / Retired / Homemaker, rural Etawah, Uttar Pradesh",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0627",
+      "full_name": "Laung Devi",
+      "date_of_birth": "1986-11-10",
+      "gender": "female",
+      "customer_since": "2022-01-28",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8406",
+      "registered_email": "l*****@gmail.com",
+      "communication_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Etawah",
+        "state": "Uttar Pradesh",
+        "pincode": "538406",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "47 Mill Road",
+        "line2": "Sector 17",
+        "city": "Etawah",
+        "state": "Uttar Pradesh",
+        "pincode": "538406",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX7465X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKDQA9652001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDQ9652002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCDQ9652003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to break my FD today. It's been running over 3 years, so there's no penalty — just tell me what I'll get in hand."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "The FD started 2026-01-10 — NOT 3+ years ago. Contracted 6.5% (1-3y slab at booking) for 36 months.",
+      "records": [
+        {
+          "deposit_id": "TKFDQ9652002",
+          "principal_amount": 400000,
+          "interest_rate": 6.5,
+          "tenure_months": 36,
+          "start_date": "2026-01-10",
+          "maturity_date": "2029-01-10",
+          "maturity_amount": 485363,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKDQA9652001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "219 days run = 2 full quarters + 39 residual days. Interest at the 6.0% card rate for the period actually run (6mo-<1yr slab): 400000 x (1.015)^2 = 412090 -> 12,090 for the quarters, plus 412090 x 6% x 39/365 = 2,642 simple on the residual -> accrued 14,732. Penalty 1% of principal = 4,000. estimated_payout = 400000 + 14732 - 4000 = 410,732. effective_rate 4.47 is the annualised net yield after the charge.",
+      "records": [
+        {
+          "deposit_id": "TKFDQ9652002",
+          "principal_amount": 400000,
+          "accrued_interest": 14732,
+          "penalty_rate": 1.0,
+          "penalty_amount": 4000,
+          "effective_rate": 4.47,
+          "estimated_payout": 410732
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely.",
+        "amount_credited": 410732,
+        "payout_account": "TKDQA9652001",
+        "reference_id": "REF-CLS-00000"
+      },
+      "_comment": "Safety net only — the customer is asking for a quote, not closing."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDQ9652002"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDQ9652002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDQ9652002"
+          ]
+        },
+        "_comment": "Required state read for the tenure correction (the FD start date 2026-01-10 is the evidence the '3+ years' belief is wrong). NO A4 pair pins it before the quote: the quote's args come from login_context, not from this call's output, so batching the two reads is fine (A4 is only for args derived from an earlier call's output)."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDQ9652002"
+          ]
+        }
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer believes their FD has run over 3 years and is penalty-free. The assistant must surface the FD state (get_fd_details) and then the closure quote (get_deposit_closure_quote), and correct the premise: the FD started 2026-01-10 — only about 7 months ago — so a premature-closure charge applies. The in-hand figure is ₹4,10,732: principal ₹4,00,000 plus ₹14,732 accrued interest, less a ₹4,000 (1%) premature-closure charge. The assistant must not agree there is no penalty, and must not quote a penalty-free figure. Quoting a no-penalty payout, or claiming the FD is 3+ years old, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "surfaces the FD state and the closure quote, corrects the tenure belief (FD started 2026-01-10, not 3+ years ago), and reports the net payout ₹4,10,732 including the ₹4,000 premature-closure charge. Claiming no penalty applies, or quoting a penalty-free figure, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

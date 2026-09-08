@@ -1,0 +1,271 @@
+{
+  "case_id": "cards.block_card.long_context.003",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "answer",
+  "_variant_note": "STALE-INFORMATION: prior conversation checked card details and found the credit card active and healthy. Since then the bank's fraud detection system triggered and blocked the card. Customer now asks about using the card — model must re-fetch get_card_details live to discover the card is now blocked, not trust the prior active status.",
+  "setup": {
+    "persona": "48-year-old male, Shop Attendant, rural Salem, Tamil Nadu",
+    "current_date": "2026-09-18",
+    "current_time": "16:00",
+    "login_context": {
+      "customer_id": "SCN0681",
+      "full_name": "Satheesh Tath",
+      "date_of_birth": "1978-03-02",
+      "gender": "male",
+      "customer_since": "2014-09-17",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9598",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "39 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Salem",
+        "state": "Tamil Nadu",
+        "pincode": "689598",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "39 Gandhi Nagar",
+        "line2": "Boring Road",
+        "city": "Salem",
+        "state": "Tamil Nadu",
+        "pincode": "689598",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9700X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBLC9600001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCBLC9600002",
+          "card_type": "credit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "Check my credit card — is it active and ready to use?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_card_details",
+              "arguments": {
+                "card_ids": [
+                  "TKCBLC9600002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"cards\":[{\"card_id\":\"TKCBLC9600002\",\"masked_number\":\"****7834\",\"card_type\":\"credit\",\"network\":\"visa\",\"status\":\"active\",\"credit_limit\":200000,\"available_limit\":150000,\"controls\":{\"atm\":{\"domestic\":{\"enabled\":true,\"daily_limit\":50000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":true,\"daily_limit\":200000},\"international\":{\"enabled\":true,\"daily_limit\":50000}},\"pos\":{\"domestic\":{\"enabled\":true,\"daily_limit\":200000},\"international\":{\"enabled\":true,\"daily_limit\":50000}}},\"expiry\":\"09/27\"}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your credit card ending 7834 is active with Rs 1,50,000 available credit out of Rs 2,00,000 limit. All domestic channels are enabled."
+      },
+      {
+        "role": "user",
+        "content": "Perfect, I'll use it later for a big purchase."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "block_card",
+    "toggle_card_freeze",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I just got an SMS saying my card was blocked? That can't be right — I checked earlier and it was active. What's going on with my card?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Fraud detection triggered after prior conversation. Card now blocked — status changed from active (stale in prior) to blocked.",
+      "records": [
+        {
+          "card_id": "TKCBLC9600002",
+          "masked_number": "****7834",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "blocked",
+          "credit_limit": 200000,
+          "available_limit": 150000,
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          },
+          "expiry": "09/27"
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "TKCBLC9600002",
+        "status": "failed",
+        "message": "Card is already blocked.",
+        "reference_id": "REF-BLC-96000"
+      },
+      "_comment": "Safety net — card is already blocked."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "NOISE-CARD",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      }
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCBLC9600002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCBLC9600002"
+          ]
+        },
+        "_comment": "Must re-fetch live. Prior showed active but card is now blocked by fraud detection."
+      },
+      "block_card": {
+        "required": {},
+        "_comment": "Not required — card is already blocked. Re-blocking is unnecessary."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The prior conversation confirmed the credit card was active. Since then, the bank's fraud detection triggered and the card is now blocked. The customer asks why — the assistant must re-fetch get_card_details live, discover the 'blocked' status, and report the updated status. Saying the card is still active based on the stale prior conversation fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "re-fetches card details live and reports the card is now blocked (not active). Relying on stale prior status fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

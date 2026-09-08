@@ -1,0 +1,235 @@
+{
+  "case_id": "csc.get_products_and_offers.contradicting_info.002",
+  "axis": "5_contradicting_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-5 MULTI-TURN FILTER TRAP on type dimension: turn 1 the customer asks for loan offers (type=loan bait). A pre-approved credit card offer is the hidden evidence — filtered out by type=loan. Turn 2 the customer contradicts by mentioning a pre-approved card the bank flagged last week, hinting to re-query broadly. Strong model re-queries without type filter, finds the card offer. Weak model sticks with type=loan, misses the card.",
+  "setup": {
+    "persona": "32-year-old female, Parcher (Food Grain), rural Jamui, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "14:15",
+    "login_context": {
+      "customer_id": "SCN0071",
+      "full_name": "Sumitra Kumari",
+      "date_of_birth": "1994-07-12",
+      "gender": "female",
+      "customer_since": "2018-11-09",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2154",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Jamui",
+        "state": "Bihar",
+        "pincode": "762154",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Jamui",
+        "state": "Bihar",
+        "pincode": "762154",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9266X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGPOF02001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGPF02001",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm looking into borrowing options — what loan offers do you have for me right now?"
+    },
+    {
+      "content": "Actually, last week the app showed me a pre-approved credit card. I want to check that too — show me all offers, not just loans."
+    }
+  ],
+  "mock": {
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the pre-approved credit card (CAT-CRD-GPF020) is type=card — filtered out by type=loan. The only loan entry is a general personal loan catalogue item.",
+      "records": [
+        {
+          "id": "CAT-LN-GPF020",
+          "title": "TK Personal Loan - Festival Offer",
+          "type": "loan",
+          "description": "Personal loans from 10.5% p.a., up to Rs 10,00,000 with minimal documentation"
+        },
+        {
+          "id": "CAT-DP-GPF020",
+          "title": "TK SuperSaver FD",
+          "type": "deposit",
+          "description": "Fixed Deposits with quarterly compounding, rates up to 6.75% for 3-5 year tenure"
+        },
+        {
+          "id": "CAT-CRD-GPF020",
+          "title": "TK Platinum Credit Card",
+          "type": "card",
+          "description": "Pre-approved — 5X reward points on online and travel spends, annual fee Rs 964"
+        },
+        {
+          "id": "CAT-INS-GPF020",
+          "title": "TK Health Secure",
+          "type": "insurance",
+          "description": "Health insurance with Rs 5,00,000 sum assured, premiums from Rs 450/month"
+        }
+      ]
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "raised_date": "2026-01-01T00:00:00",
+        "last_update": "2026-01-01T00:00:00",
+        "remarks": "Noise tool."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Pinning nothing. Turn 1 may filter type=loan (the bait). Turn 2 the model must drop the type filter to find the pre-approved credit card. The judge verifies the re-query surfaced the card offer."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Turn 1: the customer asks for loan offers. The assistant may query get_products_and_offers with type=loan, finding the TK Personal Loan listing. Turn 2: the customer mentions the pre-approved credit card the app showed last week. The assistant must re-query broadly (no type filter) and surface the TK Platinum Credit Card (CAT-CRD-GPF020, pre-approved, 5X reward points, Rs 964 annual fee) alongside the other offers. Reporting only the loan offer or failing to surface the credit card after the correction fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the customer mentions the pre-approved credit card, the assistant surfaces the TK Platinum Credit Card offer (CAT-CRD-GPF020, pre-approved, 5X reward points, Rs 964 annual fee). If the assistant still reports only loan offers or never surfaces the credit card offer, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

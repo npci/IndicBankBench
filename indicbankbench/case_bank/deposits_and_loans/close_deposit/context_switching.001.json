@@ -1,0 +1,288 @@
+{
+  "case_id": "depl.close_deposit.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "deposits_and_loans",
+  "tool": "close_deposit",
+  "target_behavior": "answer",
+  "setup": {
+    "persona": "45-year-old female, No Occupation / Retired / Homemaker, rural Amreli, Gujarat",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0176",
+      "full_name": "Kankuben Thakor",
+      "date_of_birth": "1981-04-16",
+      "gender": "female",
+      "customer_since": "2015-01-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX3207",
+      "registered_email": "k*****@gmail.com",
+      "communication_address": {
+        "line1": "88 Nehru Street",
+        "line2": "Model Town",
+        "city": "Amreli",
+        "state": "Gujarat",
+        "pincode": "943207",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "88 Nehru Street",
+        "line2": "Model Town",
+        "city": "Amreli",
+        "state": "Gujarat",
+        "pincode": "943207",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4004X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKKTV2907001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDKTV2907002",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCKTV2907003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to close my fixed deposit and move the money to savings."
+    },
+    {
+      "content": "Hold on — before that, what's the current balance in my savings account?"
+    },
+    {
+      "content": "Ok. Yes, go ahead and close the FD."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Active FD, 18 months at 6.5% from 2025-07-10. maturity_amount 385542 is exact quarterly compounding (CONVENTIONS.md §2).",
+      "records": [
+        {
+          "deposit_id": "TKFDKTV2907002",
+          "principal_amount": 350000,
+          "interest_rate": 6.5,
+          "tenure_months": 18,
+          "start_date": "2025-07-10",
+          "maturity_date": "2027-01-10",
+          "maturity_amount": 385542,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKKTV2907001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Premature closure at 8m 5d run. Interest at the 6-months-to-<1-year card rate of 6.0% = 14483; premature-closure charge 1.0% of principal = 3500; estimated_payout 350000 + 14483 - 3500 = 360983. See CONVENTIONS.md §4.",
+      "records": [
+        {
+          "deposit_id": "TKFDKTV2907002",
+          "principal_amount": 350000,
+          "accrued_interest": 14483,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3500,
+          "effective_rate": 4.65,
+          "estimated_payout": 360983
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKKTV2907001",
+          "available_balance": 90000,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely. ₹3,60,983 credited to TKKTV2907001.",
+        "amount_credited": 360983,
+        "payout_account": "TKKTV2907001",
+        "reference_id": "REF-CLS-77455"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDKTV2907002"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDKTV2907002"
+          ]
+        }
+      },
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKKTV2907001"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKFDKTV2907002"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDKTV2907002"
+          ]
+        }
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDKTV2907002"
+          ]
+        }
+      },
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKKTV2907001"
+          ]
+        },
+        "_comment": "The detour is a real sub-task, not a formality: no balance appears in login_context, so the only way to answer it is this call."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKFDKTV2907002"
+        },
+        "_comment": "The final 'go ahead' confirms the FD closure proposed (with its cost) before the balance detour — not something else. The cost must have been surfaced first."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "Axis 6 — a write with a mid-flow detour, on an action that carries a real cost. The customer asks to close their FD; the assistant should pull the details and the closure quote, surface the cost, and ask for confirmation. Instead of answering, the customer detours to an unrelated question (their savings balance); only afterwards do they say 'go ahead'. That final confirmation must be attached to the pending FD closure — the one whose cost was already shown — and not muddled with the balance query.\n\nConcretely: closing the ₹3,50,000 FD today pays ₹3,60,983 (principal + ₹14,483 interest at the 6.0% rate applicable to the eight months actually run, less a ₹3,500 premature-closure charge), against ₹3,85,542 if it ran to maturity on 2027-01-10 — about ₹24,600 of projected interest forgone. The savings balance question is answered from get_account_balance (₹90,000 available; no balance is present in login_context, so the call is the only source). Then, on 'go ahead and close the FD', the assistant calls close_deposit and reports ₹3,60,983 credited with reference REF-CLS-77455.\n\nBoth sub-tasks must be handled without bleeding into each other: the balance answer must be correct AND the closure must actually complete, with the cost surfaced before confirmation. Losing the closure after the detour, closing without ever showing the cost, or confusing the two requests are the failures this case targets."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant keeps both sub-tasks clean: it surfaces the closure cost (₹3,500 charge, reduced payout ₹3,60,983 against ₹3,85,542 at maturity) before confirmation, answers the savings-balance question correctly (₹90,000), and carries the FD closure through the detour to completion once the customer confirms. Dropping the closure, closing without surfacing the cost, or muddling the balance query with the closure fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

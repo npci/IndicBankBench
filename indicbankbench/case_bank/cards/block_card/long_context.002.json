@@ -1,0 +1,239 @@
+{
+  "case_id": "cards.block_card.long_context.002",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale card status. Prior round: get_card_details returned status 'active' for the card. The customer discussed the card but didn't block it. Since then, the bank's fraud system flagged and hotlisted the card. The customer now says 'block that card, it was stolen' — a request that made sense against the stale 'active' status but is moot now. A model that trusts the prior context sees 'active' → calls block_card → fails (A2: block_card not in gold, or the mock returns 'already blocked' and the model mishandles). A model that re-fetches get_card_details live → sees status 'hotlisted' → reports it's already blocked → PASS.",
+  "setup": {
+    "persona": "35-year-old male, Building Construction Labourers, urban South Twenty Four Parganas, West Bengal",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0104",
+      "full_name": "Madan Khotik",
+      "date_of_birth": "1991-12-22",
+      "gender": "male",
+      "customer_since": "2023-01-21",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8391",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "South Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "428391",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "72 Jubilee Road",
+        "line2": "Gomti Nagar",
+        "city": "South Twenty Four Parganas",
+        "state": "West Bengal",
+        "pincode": "428391",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2257X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD22986001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD22986002",
+          "card_type": "credit",
+          "masked_number": "****8622",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I had my bag stolen earlier today at the station. Can you check whether my credit card has been used since?"
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "c1",
+            "type": "function",
+            "function": {
+              "name": "get_card_details",
+              "arguments": {
+                "card_ids": [
+                  "TKCOD22986002"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "c1",
+        "content": "{\"cards\":[{\"card_id\":\"TKCOD22986002\",\"masked_number\":\"****8622\",\"card_type\":\"credit\",\"network\":\"visa\",\"status\":\"active\",\"credit_limit\":200000,\"available_limit\":156500,\"expiry\":\"06/28\",\"controls\":{\"atm\":{\"domestic\":{\"enabled\":true,\"daily_limit\":20000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"online\":{\"domestic\":{\"enabled\":true,\"daily_limit\":50000},\"international\":{\"enabled\":false,\"daily_limit\":0}},\"pos\":{\"domestic\":{\"enabled\":true,\"daily_limit\":30000},\"international\":{\"enabled\":false,\"daily_limit\":0}}}}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your credit card ending 8622 is still active at this moment. I don't see any unauthorised transactions yet, but since your bag was stolen and the card was inside, I'd strongly recommend blocking it immediately."
+      },
+      {
+        "role": "user",
+        "content": "Let me file the police report first and work out what else was in the bag. I'll come back to this."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_gold_rate",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm back — go ahead and block that credit card. It was definitely stolen."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Between the prior round and now, the bank's fraud detection system flagged the card after spotting an attempted transaction from an unrecognised device. The live status is now 'hotlisted' — the card has already been blocked by the bank. A model that trusts the prior context and calls block_card without re-reading is acting on stale data.",
+      "records": [
+        {
+          "card_id": "TKCOD22986002",
+          "masked_number": "****8622",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "hotlisted",
+          "credit_limit": 200000,
+          "available_limit": 200000,
+          "expiry": "06/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": false,
+                "daily_limit": 0
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Card TKCOD22986002 is already hotlisted and cannot be blocked again.",
+        "reference_id": "REF-BLK-00000"
+      },
+      "_comment": "A model that acts on stale data, skips the get_card_details re-read, and calls block_card directly gets this failure response. The gold does not include block_card — the A2 gate catches it before the mock even fires."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCOD22986002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "THE GATE. The model MUST re-read the card live. The prior round shows status 'active' — but between then and now the bank's fraud system hotlisted the card. A model that trusts the stale context, skips this call, and goes straight to block_card fails A1 because this required tool was never called. card_ids is deliberately NOT pinned — `required` compares exact list equality, and pinning the order would fail a model that reads all cards differently."
+      },
+      "block_card": {
+        "_comment": "block_card is DELIBERATELY absent from gold and arg_gate. The correct move is to re-read get_card_details, discover the card is already hotlisted, and report that to the customer — not to attempt a redundant block. A model that calls block_card without re-reading fails A2."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The prior round shows the card as active. Between then and now the bank's fraud detection system flagged the card after spotting an attempted transaction from an unrecognised device — the card is now hotlisted. The customer returns and asks to block the 'stolen' card, not knowing it has already been done.\n\nThe correct move is to re-fetch get_card_details live, discover the card is already hotlisted (status: hotlisted, all controls disabled), and report that the bank has already blocked the card. Calling block_card on an already-hotlisted card is the failure: it wastes a turn on a no-op at best, and at worst the assistant looks like it didn't bother to check before acting — which is precisely the stale-context trap. A model that trusts the prior context, skips the live read, and fires block_card fails A2 because block_card is not in the allowed tool set for this case.\n\nAdditionally, the assistant should advise that since the card is already blocked, the customer may wish to request a replacement via raise_request."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_card_details live, discovers the card is already hotlisted (not the stale 'active' status from prior), and reports the card has already been blocked by the bank. Attempting to block the card without re-reading, or reporting it as still active, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

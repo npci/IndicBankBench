@@ -1,0 +1,320 @@
+{
+  "case_id": "cards.block_card.long_context.001",
+  "axis": "8_long_context",
+  "domain": "cards",
+  "tool": "block_card",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-8 buried-correction recall (the long-conversation mechanism — cards has no pagination surface, so the truncated-output mechanism does not apply here). The customer FIRST says the 1056 debit card is lost, then corrects herself two turns later: 1056 is in her drawer, it is the 9009 Visa that is missing. Ten turns of unrelated banking chatter follow, and — the trap — 1056 is mentioned again NEAR THE END ('the one I use for groceries'), so the WRONG card is the more recent mention while the correct answer sits far earlier. A model that anchors on the first-stated value, or on the most recent card id, blocks the wrong card. Because block_card is irreversible, that permanently destroys a perfectly good card the customer is holding. Caught deterministically: arg_gate pins card_id=TKCK2TCP9009 and forbids TKCK2TCP1056 (A3), so the judge is not needed to catch it.\n\nThe fixture asserts nothing tool-backed: no cards tool returns the annual fee, fee-waiver threshold, spend-to-date, statement or due dates, so the conversation carries only grounded talk. This keeps the distance the axis needs and leaves the recency trap — the safe 1056 card named again near the end — untouched. Deliberately NOT converted into fixture tool calls (CONVENTIONS §8): a get_card_details result sitting in context would tempt a model to skip the live read that D2 requires, adding a stale-context hazard that is not this case's axis.",
+  "setup": {
+    "persona": "23-year-old female, No Occupation / Retired / Homemaker, rural Chandauli, Uttar Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0143",
+      "full_name": "Rekha Devi",
+      "date_of_birth": "2003-11-07",
+      "gender": "female",
+      "customer_since": "2022-04-10",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5506",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "107 Mill Road",
+        "line2": "Sector 17",
+        "city": "Chandauli",
+        "state": "Uttar Pradesh",
+        "pincode": "255506",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "107 Mill Road",
+        "line2": "Sector 17",
+        "city": "Chandauli",
+        "state": "Uttar Pradesh",
+        "pincode": "255506",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9257X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKK2TCP001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCK2TCP9009",
+          "card_type": "credit",
+          "masked_number": "****9009",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCK2TCP1056",
+          "card_type": "debit",
+          "masked_number": "****1056",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "I think I've misplaced one of my cards — the RuPay debit card, the one ending 1056."
+      },
+      {
+        "role": "assistant",
+        "content": "I'm sorry to hear that, Rekha. Before we take any action on it, can you tell me when and where you last had it?"
+      },
+      {
+        "role": "user",
+        "content": "Hang on — let me check my desk drawer. ... Actually, my mistake. The 1056 debit card is right here in the drawer, safe and sound. It's the Visa credit card ending 9009 that I can't find. I used it at a restaurant last night and it isn't in my wallet this morning."
+      },
+      {
+        "role": "assistant",
+        "content": "Thank you for clarifying. So to be clear: your RuPay debit card ending 1056 is with you and safe, and it's the Visa credit card ending 9009 that is missing after last night. Would you like me to secure the 9009 card while you look for it?"
+      },
+      {
+        "role": "user",
+        "content": "Give me a bit — I want to check my car and call the restaurant first."
+      },
+      {
+        "role": "assistant",
+        "content": "Of course, take your time. Nothing will be actioned on either card until you tell me to."
+      },
+      {
+        "role": "user",
+        "content": "While I'm looking — if it does turn out to be gone, what happens about a replacement?"
+      },
+      {
+        "role": "assistant",
+        "content": "A replacement is arranged through a service request once a card is blocked. I can't give you a firm delivery estimate from here — the team handling the request confirms that."
+      },
+      {
+        "role": "user",
+        "content": "Ok. And remind me — the 1056 one, that's the card I use for groceries and the monthly SIP debit, right?"
+      },
+      {
+        "role": "assistant",
+        "content": "That's the RuPay debit card ending 1056 — the one you've told me you use day to day. And it's safe in your drawer."
+      },
+      {
+        "role": "user",
+        "content": "Right. I've checked the car, and I just called the restaurant — they've looked everywhere and they don't have it. Nobody's handed it in."
+      },
+      {
+        "role": "assistant",
+        "content": "I'm sorry, Rekha. Given it isn't at the restaurant and isn't in your car or wallet, it does sound like the card is genuinely lost rather than just mislaid."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_gold_rate",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "Yes, it's gone. Go ahead and block the lost one."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card blocked permanently and hotlisted across all payment networks.",
+        "reference_id": "REF-BLK-55210"
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCK2TCP9009",
+          "masked_number": "****9009",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCK2TCP1056",
+          "masked_number": "****1056",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rate_per_gram": 0,
+        "rate_date": "2026-08-17"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCK2TCP9009"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCK2TCP9009",
+          "reason": "lost"
+        }
+      }
+    ],
+    "arg_gate": {
+      "block_card": {
+        "required": {
+          "card_id": "TKCK2TCP9009",
+          "reason": "lost"
+        },
+        "forbidden_ids": [
+          "TKCK2TCP1056"
+        ],
+        "_comment": "THE GATE. The lost card is the Visa ****9009, established by the customer's correction early in the conversation. ****1056 is in her drawer and was mentioned MORE RECENTLY (groceries) — blocking it is the anchoring/recency failure this case targets, and it is caught deterministically here rather than by the judge. reason='lost' (searched the car and the restaurant, not handed in), not 'stolen'."
+      },
+      "get_card_details": {
+        "required": {},
+        "_comment": "Required, and disclosed: this tool's description says \"Call get_card_details before this tool\". Without the read the assistant can only act on the customer's stated premise, and in cards that premise is wrong often enough to cause unnecessary or doomed state changes — a freeze on an already-frozen card, an unfreeze on a blocked one, a block on a card that has already expired. card_ids is deliberately NOT pinned: `required` compares by exact equality (grader.py:216) and for a list that is order-sensitive, so pinning it would fail a model that reads all of the customer's cards — a natural and correct move, especially where more than one card is in play. A1 enforces that the read happens, A4 that it happens first, and S1 that the ids are real."
+      },
+      "_comment": "toggle_card_freeze is exposed but not expected: the card is confirmed gone (car checked, restaurant checked, not handed in), so a permanent block is the right call, not a freeze. Freezing would fail A2.",
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "Across a long conversation the customer first said the RuPay debit card ****1056 was lost, then CORRECTED herself: 1056 is safe in her drawer, and it is the Visa credit card ****9009 that is missing after a restaurant visit. Ten turns of unrelated chat follow, during which 1056 is mentioned again as her groceries card — so the wrong card is the most recent one named. She has now confirmed the 9009 card is genuinely gone (car and restaurant both checked, not handed in). The assistant must block the VISA ****9009 with reason='lost', after confirming and conveying that the block is permanent. Blocking ****1056 — the card sitting in her drawer — is the failure this case targets: it anchors on the first-stated or most-recently-mentioned card and permanently destroys a good card. Freezing instead under-reacts to a confirmed loss. Advising a replacement card is ideal.",
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ]
+    ]
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant correctly identifies the lost card as the Visa ****9009 — per the customer's correction early in the conversation — and NOT the RuPay ****1056 that is in her drawer (and was mentioned more recently as her groceries card). It blocks 9009 with reason='lost' after a confirmation that conveys permanence, and reports the outcome. Blocking or naming 1056 as the lost card fails, as does asking the customer to re-state which card is lost when she has already said so clearly."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

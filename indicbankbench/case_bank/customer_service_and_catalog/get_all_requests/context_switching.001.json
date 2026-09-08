@@ -1,0 +1,173 @@
+{
+  "case_id": "csc.get_all_requests.context_switching.001",
+  "axis": "6_context_switching",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-6: customer checks pending requests, detours to ask about FD products, returns to check a specific request status.",
+  "setup": {
+    "persona": "50-year-old male, Lady Health Visitor, urban Nizamabad, Telangana",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0466",
+      "full_name": "Shekhar Gajula",
+      "date_of_birth": "1976-02-11",
+      "gender": "male",
+      "customer_since": "2013-04-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX0041",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Nizamabad",
+        "state": "Telangana",
+        "pincode": "630041",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Nizamabad",
+        "state": "Telangana",
+        "pincode": "630041",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3984X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAR8900001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAR8900002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me all my pending service requests."
+    },
+    {
+      "content": "By the way, what FD products does your bank offer?"
+    },
+    {
+      "content": "Back to my requests — what was the status of the one about branch staff?"
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-GAR-001",
+          "category": "charges_dispute",
+          "status": "in_progress",
+          "raised_date": "2026-08-10T09:30:00",
+          "last_updated_date": "2026-08-14T14:00:00",
+          "description": "Dispute for incorrect charge of Rs 500"
+        },
+        {
+          "request_id": "REQ-GAR-002",
+          "category": "service_quality",
+          "status": "open",
+          "raised_date": "2026-08-15T11:00:00",
+          "last_updated_date": "2026-08-15T11:00:00",
+          "description": "Branch staff behaviour complaint at MG Road branch"
+        }
+      ]
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit from 7 days to 5 years. Interest compounded quarterly.",
+          "valid_till": ""
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      },
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {
+          "type": "deposit"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must fetch pending requests first."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Detour: must check FD products."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for their pending requests — the assistant fetches REQ-GAR-001 (charges dispute, in_progress) and REQ-GAR-002 (service quality, open). The customer detours to ask about FD products (SmartFD, 7 days to 5 years, quarterly compounding). The customer returns to ask about the branch staff complaint — the assistant must correctly recall REQ-GAR-002 is 'open' without confusing it with REQ-GAR-001's 'in_progress' status. Confusing the two request statuses, or forgetting which request is which, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "after the FD detour, correctly identifies the branch staff complaint as REQ-GAR-002 (status: open) without confusing it with the charges dispute. Mixing up the two requests, or forgetting their statuses, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

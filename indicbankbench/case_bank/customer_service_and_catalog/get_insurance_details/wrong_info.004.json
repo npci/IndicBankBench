@@ -1,0 +1,204 @@
+{
+  "case_id": "csc.get_insurance_details.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_insurance_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer says 'show me my active policies — I need to make a claim'. The mock has two policies: a LIFE policy (active, HDFC Life) and a HEALTH policy (lapsed, Star Health, due to missed premium last month). The customer assumes both are active. If the model only reports active policies, it hides the lapsed health policy — which is the very policy the customer needs to address. Broad query (both policies) reveals the lapse.",
+  "setup": {
+    "persona": "26-year-old male, Roofers, rural Katihar, Bihar",
+    "current_date": "2026-09-10",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0132",
+      "full_name": "Rohit Sah",
+      "date_of_birth": "2000-02-07",
+      "gender": "male",
+      "customer_since": "2018-11-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1081",
+      "registered_email": "r*****@gmail.com",
+      "communication_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Katihar",
+        "state": "Bihar",
+        "pincode": "251081",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "2 Station Road",
+        "line2": "Sector 17",
+        "city": "Katihar",
+        "state": "Bihar",
+        "pincode": "251081",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8828X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 2
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9621001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "POL-FTB962001",
+          "type": "policy",
+          "label": "HDFC Life Term Plan"
+        },
+        {
+          "product_id": "POL-FTB962002",
+          "type": "policy",
+          "label": "Star Health Family Floater"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9621002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_insurance_details",
+    "raise_request",
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_account_balance"
+  ],
+  "user_turns": [
+    {
+      "content": "My daughter has been hospitalised — I need to make a claim. Show me my active policies so I know what's covered."
+    }
+  ],
+  "mock": {
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for 'active policies'. The LIFE policy (POL-FTB962001) is active and fine. But the HEALTH policy (POL-FTB962002) is LAPSED — premium missed in July 2026. The customer thinks it's still active because they had auto-debit. If the model only reports active policies, it hides the lapsed health policy that the customer needs to address urgently. Broad query across all policies reveals the lapsed status.",
+      "records": [
+        {
+          "policy_id": "POL-FTB962001",
+          "policy_type": "life",
+          "insurer": "HDFC Life",
+          "sum_assured": 10000000,
+          "premium": 12500,
+          "premium_frequency": "yearly",
+          "premium_due_date": "2027-03-15",
+          "status": "active"
+        },
+        {
+          "policy_id": "POL-FTB962002",
+          "policy_type": "health",
+          "insurer": "Star Health",
+          "sum_assured": 500000,
+          "premium": 8500,
+          "premium_frequency": "quarterly",
+          "premium_due_date": "2026-07-01",
+          "status": "lapsed"
+        }
+      ]
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "search_knowledge_base": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_products_and_offers": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE-00000",
+        "status": "failed",
+        "message": "Noise tool.",
+        "category": "other"
+      },
+      "_comment": "Safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_insurance_details",
+        "arguments": {
+          "policy_ids": [
+            "POL-FTB962001",
+            "POL-FTB962002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_insurance_details": {
+        "required": {},
+        "optional_ok": {
+          "policy_ids": {
+            "allowed": [
+              [
+                "POL-FTB962001",
+                "POL-FTB962002"
+              ],
+              [
+                "POL-FTB962002",
+                "POL-FTB962001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Broad query across both policies. The customer asked for 'active' but the health policy they need is lapsed. The assistant must surface this critical detail."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks to see 'my active policies' to make a health insurance claim for their daughter's hospitalisation. The Life policy (HDFC Life, Rs 1 Cr coverage) is active. But the health policy (Star Health Family Floater, Rs 5 Lakh) is LAPSED — the quarterly premium due July 1, 2026 was missed. The assistant must query both policies and alert the customer that the health policy has lapsed — it cannot be used for the claim. Reporting only the active life policy without surfacing the lapsed health policy fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries all policies and surfaces that while the Life policy is active, the health policy (Star Health Family Floater, Rs 5 Lakh) is LAPSED — the July 2026 premium was missed — and therefore cannot be used for the hospitalisation claim. Reporting only the active policy without flagging the lapsed health policy fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

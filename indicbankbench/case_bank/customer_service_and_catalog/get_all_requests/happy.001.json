@@ -1,0 +1,163 @@
+{
+  "case_id": "csc.get_all_requests.happy.001",
+  "axis": "1_happy_path",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 baseline for get_all_requests: the customer simply asks what requests they have on file — no missing reference numbers, no 'what's still outstanding' filter requirement. This is the accuracy case the existing confusing_intent.001 is not: that case tests routing (get_request_status is the unreachable trap) and filtering (three live vs two resolved), but only ever exercised get_all_requests with a trap in the room. Here the model just fetches the list and reports it accurately — A1 + A3 (get_all_requests with no required args) + the R bar for faithful reporting. The trap is reaching for get_request_status when no single request was named (it requires a request_id the customer never gave), which A2 catches.",
+  "setup": {
+    "persona": "28-year-old male, Plumber, General, rural Y.S.R., Andhra Pradesh",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0376",
+      "full_name": "Somasekhar Suraiah",
+      "date_of_birth": "1998-01-04",
+      "gender": "male",
+      "customer_since": "2016-06-12",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8644",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "85 MG Road",
+        "line2": "Alkapuri",
+        "city": "Y.S.R.",
+        "state": "Andhra Pradesh",
+        "pincode": "128644",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "85 MG Road",
+        "line2": "Alkapuri",
+        "city": "Y.S.R.",
+        "state": "Andhra Pradesh",
+        "pincode": "128644",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3781X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAR9004001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKGAR9004002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_insurance_details",
+    "get_products_and_offers",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you list the requests I have on file right now?"
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "static_output": {
+        "total_count": 3
+      },
+      "_comment": "Three requests with clear statuses. No filtering is required — the customer asked for the list, not just the outstanding ones — so a faithful report is all three, each with its status.",
+      "records": [
+        {
+          "request_id": "REQ-APP-31950",
+          "category": "app_issue",
+          "status": "in_progress",
+          "raised_date": "2026-03-10",
+          "last_updated_date": "2026-03-13",
+          "description": "Mobile app crashes on the statement screen."
+        },
+        {
+          "request_id": "REQ-DIS-31522",
+          "category": "charges_dispute",
+          "status": "open",
+          "raised_date": "2026-02-18",
+          "last_updated_date": "2026-02-22",
+          "description": "Disputed non-maintenance charge of ₹500."
+        },
+        {
+          "request_id": "REQ-CHQ-30881",
+          "category": "cheque_book",
+          "status": "resolved",
+          "raised_date": "2026-01-25",
+          "last_updated_date": "2026-02-02",
+          "description": "25-leaf cheque book, delivered."
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "dependencies": [],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "No filters required — the customer asked for the full list. Any status/category filter would still be acceptable if it returns everything, but a filter that excludes a request (e.g. status=resolved only) would be answering a question the customer did not ask; the R bar checks the report is complete."
+      },
+      "get_request_status": {
+        "required": {},
+        "_comment": "The wrong tool here. It requires a request_id, and the customer did not name one — any call must carry an invented id (S1) or ask for one the customer never hinted at. A2 also fails the call itself, since the tool is neither expected nor optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks what requests they have on file. The right tool is get_all_requests, which lists them. The assistant should report all three — the app issue (REQ-APP-31950, in progress), the ₹500 charges dispute (REQ-DIS-31522, open), and the cheque-book delivery (REQ-CHQ-30881, resolved) — each with its status, without inventing or omitting any. Calling get_request_status with an invented id, or reporting only a subset as though it were the whole list, are the failures."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant uses get_all_requests and reports all three requests — the app issue (in progress), the ₹500 charges dispute (open), and the cheque-book delivery (resolved) — each with its status, without inventing any. Calling get_request_status, or omitting a request from the report, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

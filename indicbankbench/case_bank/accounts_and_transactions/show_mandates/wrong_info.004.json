@@ -1,0 +1,181 @@
+{
+  "case_id": "acct.show_mandates.wrong_info.004",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "show_mandates",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap: customer asks 'show my eNACH mandates'. Two mandates exist — Netflix (eNACH on salary) and Zomato Gold (UPI Autopay on savings with inflated Rs 1,299 amount). A type=enach filter hides the UPI Autopay mandate with the wrong amount. Broad query reveals both.",
+  "setup": {
+    "persona": "47-year-old male, Statistical Assistant Statistical, Mathematical and Related Associate Professionals, urban Darjiling, West Bengal",
+    "current_date": "2026-08-15",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0643",
+      "full_name": "Shyamal Bishvis",
+      "date_of_birth": "1979-04-02",
+      "gender": "male",
+      "customer_since": "2015-09-05",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7759",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Darjiling",
+        "state": "West Bengal",
+        "pincode": "997759",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "40 Nehru Street",
+        "line2": "Alkapuri",
+        "city": "Darjiling",
+        "state": "West Bengal",
+        "pincode": "997759",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8771X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT1S9501001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFT1S9501002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT1S9501003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me the eNACH mandates I have set up — I think something is overcharging me."
+    }
+  ],
+  "mock": {
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for eNACH mandates specifically. The Zomato Gold mandate (MND-FT1S-95013, Rs 1,299/month UPI Autopay with suspicious amount) is on savings. The Netflix mandate (MND-FT1S-95012, Rs 649 eNACH) is on salary. A type=enach filter hides the UPI Autopay Zomato mandate — which is exactly what the customer is worried about.",
+      "records": [
+        {
+          "mandate_id": "MND-FT1S-95012",
+          "type": "enach",
+          "payee": "Netflix",
+          "amount": 649,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-09-01",
+          "account_id": "TKFT1S9501001"
+        },
+        {
+          "mandate_id": "MND-FT1S-95013",
+          "type": "upi_autopay",
+          "payee": "Zomato Gold",
+          "amount": 1299,
+          "frequency": "monthly",
+          "status": "active",
+          "next_debit_date": "2026-08-22",
+          "account_id": "TKFT1S9501002"
+        }
+      ]
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "show_mandates",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "show_mandates": {
+        "required": {},
+        "_comment": "Broad query — customer asked for eNACH mandates but the suspicious Zomato Gold mandate is a UPI Autopay. A type=enach filter hides it. The model must query all mandate types."
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "Customer is worried about overcharging and asks for eNACH mandates. The eNACH mandate is Netflix (Rs 649/month on salary). The Zomato Gold mandate (MND-FT1S-95013, Rs 1,299/month UPI Autopay on savings, next debit Aug 22) is the suspicious one — a UPI Autopay, not eNACH. The assistant must query all mandate types and surface the Zomato Gold mandate with the suspicious Rs 1,299 amount on the savings account."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries all mandates regardless of type and surfaces the Zomato Gold UPI Autopay (MND-FT1S-95013, Rs 1,299/month, savings) as the likely overcharge. Only reporting Netflix eNACH without surfacing Zomato Gold fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

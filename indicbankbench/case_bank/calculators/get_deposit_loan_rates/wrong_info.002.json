@@ -1,0 +1,201 @@
+{
+  "case_id": "calc.get_deposit_loan_rates.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "get_deposit_loan_rates",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap (slab-level): customer asks for 'FD rate for a 2-year deposit'. get_deposit_loan_rates returns ALL slabs for FD. The 2-year rate is 6.5% (1-3 yr slab). But the model might report only the first slab it sees or summarise incorrectly, missing that the 3-5 year rate (6.75%) exists. A model that queries broadly and reports ALL slabs gives the customer complete information to make a considered decision (maybe they'd pick 3 years instead). The trap is narrow reporting vs comprehensive disclosure.",
+  "_variant_note_revised": "Wave-4 filter-trap (slab-level): customer asks for 'FD rate for 3 years'. The 3-year slab actually falls in the '3 years to < 5 years' bucket at 6.75%, NOT the '1 year to < 3 years' bucket (6.5%). But the customer might assume the 1-3 year rate applies since they said '3 years'. A filter-by-tenure or a model that stops at the first slab it sees might pick 6.5% when it should be 6.75%. But actually get_deposit_loan_rates doesn't take tenure as input — it returns ALL slabs for a product_type. So the trap is in the model's REPORTING, not the tool call. Let me design a cleaner slab trap.",
+  "setup": {
+    "persona": "24-year-old female, No Occupation / Retired / Homemaker, rural Pashchimi Singhbhum, Jharkhand",
+    "current_date": "2026-07-10",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0462",
+      "full_name": "Madi Hosda",
+      "date_of_birth": "2002-06-23",
+      "gender": "female",
+      "customer_since": "2020-01-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8189",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Pashchimi Singhbhum",
+        "state": "Jharkhand",
+        "pincode": "258189",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "30 Market Road",
+        "line2": "Adyar",
+        "city": "Pashchimi Singhbhum",
+        "state": "Jharkhand",
+        "pincode": "258189",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2172X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKSLB9417001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCSLB9417002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "calculate_emi",
+    "calculate_gold_loan_ltv",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "get_card_details",
+    "create_fd"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to open an FD for 2 years with Rs 3,00,000. What rate will I get and what's the maturity?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "_comment": "FILTER TRAP (slab-level): the customer asks for 2-year FD rate. The 2-year rate is 6.5% (1yr to <3yr slab). But the NEXT slab (3-5 years) at 6.75% would give a noticeably higher maturity — Rs 3,66,158 vs Rs 3,41,513 — for just one more year. A model that contextually reports only the 2-year rate answers the question; a model that reports all FD slabs lets the customer discover the 6.75% option they didn't know about. The trap is narrow-context response vs proactive slab disclosure.",
+      "output": {
+        "product_type": "fd",
+        "rates": [
+          {
+            "slab": "7 days to < 6 months",
+            "rate": 5.0,
+            "tenure_min_days": 7,
+            "tenure_max_days": 180
+          },
+          {
+            "slab": "6 months to < 1 year",
+            "rate": 6.0,
+            "tenure_min_days": 181,
+            "tenure_max_days": 365
+          },
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "tenure_min_days": 366,
+            "tenure_max_days": 1095
+          },
+          {
+            "slab": "3 years to < 5 years",
+            "rate": 6.75,
+            "tenure_min_days": 1096,
+            "tenure_max_days": 1825
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net. If the model computes with 6.5%: M = 300000 x (1+6.5/400)^(8) = 300000 x 1.13708 = 341124. With 6.75% for 3 years: M = 300000 x (1+6.75/400)^(12) = 300000 x 1.22196 = 366588.",
+      "output": {
+        "maturity_amount": 341124,
+        "interest_earned": 41124,
+        "total_principal_invested": 300000
+      }
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_gold_rate": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd"
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Must query FD rates. The 2-year rate is 6.5%. The model should report this and optionally compute maturity. The filter trap is narrow slab disclosure vs proactively mentioning the adjacent 3-5 year slab at 6.75% which gives significantly better returns for just one additional year."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Optional — computing maturity after getting the rate is good practice."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_gold_rate": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for a 2-year FD rate for Rs 3,00,000. The rate is 6.5% (1yr to <3yr slab), giving approximately Rs 3,41,124 at maturity. However, the 3-year slab (3-5 years) offers 6.75% — which would yield approximately Rs 3,66,588, an additional Rs 25,464 for just one more year. A thorough assistant should mention this as a relevant alternative. Reporting only the 2-year rate without surfacing the 3-year option is acceptable but incomplete."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports the 2-year FD rate (6.5%) correctly and explains the approximate maturity. Ideally surfaces the 3-year slab at 6.75% as an alternative worth considering. Quoting a wrong rate, or fabricating a rate not in the card, fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

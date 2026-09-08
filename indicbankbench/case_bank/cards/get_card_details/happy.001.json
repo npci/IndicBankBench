@@ -1,0 +1,239 @@
+{
+  "case_id": "cards.get_card_details.happy.001",
+  "axis": "1_happy_path",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-1 baseline read for the cards domain: the customer asks how much credit is left. Per schema, credit_limit/available_limit are present for credit cards ONLY (absent for debit) — so the answer must come from the credit card (****5970), not the debit card. Straight fetch-and-report.",
+  "setup": {
+    "persona": "45-year-old male, Wastewater-Treatment-Plant Operator, urban Chandrapur, Maharashtra",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0337",
+      "full_name": "Ankush Rangnath",
+      "date_of_birth": "1981-04-12",
+      "gender": "male",
+      "customer_since": "2015-05-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2615",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Chandrapur",
+        "state": "Maharashtra",
+        "pincode": "142615",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "16 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Chandrapur",
+        "state": "Maharashtra",
+        "pincode": "142615",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2720X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKUDMYQ001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCUDMYQ5970",
+          "card_type": "credit",
+          "masked_number": "****5970",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCUDMYQ2297",
+          "card_type": "debit",
+          "masked_number": "****2297",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_request_status",
+    "create_fd"
+  ],
+  "user_turns": [
+    {
+      "content": "How much credit do I have left on my credit card?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCUDMYQ5970",
+          "masked_number": "****5970",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCUDMYQ2297",
+          "masked_number": "****2297",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "11/27",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCUDMYQ5970"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "_comment": "card_ids is an array — fetching just the credit card, or both cards, are BOTH acceptable (the tool takes a list and the customer has only one credit card). So the id set is not pinned. S1 independently blocks any fabricated card id. What matters is that the credit card's available_limit is what gets reported. Enumerated forbidden_ids were removed: they listed invented strings a candidate would never emit, while the real protection is S1, which fails any id absent from login_context."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks how much credit is left. get_card_details returns both cards; only the credit card (TKCUDMYQ5970, ****5970) carries credit_limit/available_limit — the debit card has neither, per schema. The assistant should report the available limit of ₹1,43,500 (optionally alongside the ₹2,00,000 total credit limit), attributed to the credit card. Reporting the debit card's figures (it has none), inventing a number, or confusing total credit_limit with available_limit are failures."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant reports the correct available limit (₹1,43,500) for the credit card, grounded in the tool output. Quoting the total credit limit (₹2,00,000) as the remaining credit, inventing a figure, or attributing limits to the debit card fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

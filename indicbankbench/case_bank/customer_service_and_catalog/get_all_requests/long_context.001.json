@@ -1,0 +1,212 @@
+{
+  "case_id": "csc.get_all_requests.long_context.001",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Customer has 8 requests across different statuses/categories. Model must summarize — not dump all 8 rows verbatim.",
+  "setup": {
+    "persona": "34-year-old male, Sales Supervisor, Retail Trade, rural Nadia, West Bengal",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0528",
+      "full_name": "Anwar Islam",
+      "date_of_birth": "1992-09-14",
+      "gender": "male",
+      "customer_since": "2020-06-02",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9508",
+      "registered_email": "a*****@gmail.com",
+      "communication_address": {
+        "line1": "69 Temple Road",
+        "line2": "Boring Road",
+        "city": "Nadia",
+        "state": "West Bengal",
+        "pincode": "449508",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "69 Temple Road",
+        "line2": "Boring Road",
+        "city": "Nadia",
+        "state": "West Bengal",
+        "pincode": "449508",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3393X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAR9700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAR9700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "calculate_rd_maturity",
+    "calculate_emi"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me all my recent requests and briefly summarise what's pending, resolved, and rejected."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "request_id": "REQ-97001",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-07-10T10:00:00",
+          "last_updated_date": "2026-08-05T14:00:00",
+          "description": "Disputed Rs 500 maintenance charge"
+        },
+        {
+          "request_id": "REQ-97002",
+          "category": "address_update",
+          "status": "resolved",
+          "raised_date": "2026-06-15T09:00:00",
+          "last_updated_date": "2026-07-01T11:00:00",
+          "description": "Changed communication address to new residence"
+        },
+        {
+          "request_id": "REQ-97003",
+          "category": "service_quality",
+          "status": "in_progress",
+          "raised_date": "2026-08-12T14:00:00",
+          "last_updated_date": "2026-08-15T16:00:00",
+          "description": "Branch staff behaviour complaint at MG Road"
+        },
+        {
+          "request_id": "REQ-97004",
+          "category": "app_issue",
+          "status": "rejected",
+          "raised_date": "2026-05-20T12:00:00",
+          "last_updated_date": "2026-05-25T10:00:00",
+          "description": "App crash during UPI payment (resolved by app update)"
+        },
+        {
+          "request_id": "REQ-97005",
+          "category": "other",
+          "status": "open",
+          "raised_date": "2026-08-16T08:00:00",
+          "last_updated_date": "2026-08-16T08:00:00",
+          "description": "Request for locker availability at Boring Road branch"
+        },
+        {
+          "request_id": "REQ-97006",
+          "category": "failed_transaction",
+          "status": "resolved",
+          "raised_date": "2026-07-25T18:00:00",
+          "last_updated_date": "2026-08-02T09:00:00",
+          "description": "ATM cash not dispensed but account debited"
+        },
+        {
+          "request_id": "REQ-97007",
+          "category": "unauthorized_debit",
+          "status": "in_progress",
+          "raised_date": "2026-08-14T11:00:00",
+          "last_updated_date": "2026-08-16T15:00:00",
+          "description": "Unfamiliar POS transaction of Rs 3,500 on credit card"
+        },
+        {
+          "request_id": "REQ-97008",
+          "category": "other",
+          "status": "open",
+          "raised_date": "2026-08-17T07:00:00",
+          "last_updated_date": "2026-08-17T07:00:00",
+          "description": "Enquiry about education loan eligibility"
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must fetch all 8 requests and summarize by status."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for a summary of all requests broken down by status. The assistant must call get_all_requests, which returns 8 requests. Rather than dumping all 8 rows verbatim, the assistant should summarize concisely: 3 resolved (charges dispute, address update, ATM cash), 2 in_progress (staff complaint, unauthorized debit), 2 open (locker enquiry, education loan), 1 rejected (app crash). Dumping all rows verbatim with no summary, or miscounting the statuses, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "summarizes 8 requests by status (3 resolved, 2 in progress, 2 open, 1 rejected) concisely. Dumping all rows verbatim without synthesis, or miscounting, fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

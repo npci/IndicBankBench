@@ -1,0 +1,208 @@
+{
+  "case_id": "csc.request_cheque_book.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "request_cheque_book",
+  "target_behavior": "answer",
+  "_variant_note": "WRITE-AFTER-CORRECTION: customer says 'send cheque book to my savings account'. Lookup (get_account_details) reveals savings account has restrictions (can't issue cheque books). Correction: send to current account instead. arg_gate pins corrected account.",
+  "setup": {
+    "persona": "38-year-old male, Senior Officials of Political Party Organisations, urban Ambala, Haryana",
+    "current_date": "2026-10-13",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0238",
+      "full_name": "Basau Singh",
+      "date_of_birth": "1988-07-06",
+      "gender": "male",
+      "customer_since": "2018-12-26",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6594",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Ambala",
+        "state": "Haryana",
+        "pincode": "766594",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "115 Lake View Road",
+        "line2": "Alkapuri",
+        "city": "Ambala",
+        "state": "Haryana",
+        "pincode": "766594",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9108X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWAC98002T1",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKWAC98002T2",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCWAC9802T03",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_details",
+    "request_cheque_book",
+    "get_account_balance",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "I've run out of cheques — please send a new cheque book for my savings account."
+    },
+    {
+      "content": "Ok, send it to the current account then."
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "_comment": "WRITE-AFTER-CORRECTION: savings account has cheque facility disabled/inapplicable. Current account can receive cheques. Correct to current account.",
+      "records": [
+        {
+          "account_id": "TKWAC98002T1",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Basau Singh",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2020-01-16"
+        },
+        {
+          "account_id": "TKWAC98002T2",
+          "account_type": "current",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Basau Singh",
+              "role": "primary"
+            }
+          ],
+          "open_date": "2023-06-01"
+        }
+      ]
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "_comment": "Issue to corrected (current) account.",
+      "output": {
+        "request_id": "REQ-CHQ-WAC9802",
+        "status": "success",
+        "message": "Cheque book request placed.",
+        "delivery_address": ""
+      }
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKWAC98002T1",
+            "TKWAC98002T2"
+          ]
+        }
+      },
+      {
+        "tool": "request_cheque_book",
+        "arguments": {
+          "account_id": "TKWAC98002T2",
+          "leaves": 50
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {
+          "account_ids": [
+            "TKWAC98002T1",
+            "TKWAC98002T2"
+          ]
+        },
+        "_comment": "Must check both accounts. Savings account shouldn't get cheque books — current account is the right one."
+      },
+      "request_cheque_book": {
+        "required": {
+          "account_id": "TKWAC98002T2"
+        },
+        "forbidden_ids": [
+          "TKWAC98002T1"
+        ],
+        "_comment": "CORRECTED: send to current account, not savings."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "dependencies": [
+      [
+        "get_account_details",
+        "request_cheque_book"
+      ]
+    ],
+    "expected_resolution": "Customer says 'savings account' but the proper account for cheque books is the current account. The assistant must check get_account_details, discover the current account is the correct one, inform the customer, and issue to the current account after confirmation. Issuing cheque book to savings account without checking fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "checks account details, corrects to current account, confirms, and requests cheque book for the right account. Issuing to savings without checking fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

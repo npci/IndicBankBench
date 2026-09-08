@@ -1,0 +1,289 @@
+{
+  "case_id": "cards.agentic.block_and_replacement.001",
+  "axis": "general_agentic_multitool",
+  "domain": "cards",
+  "tool": "get_card_details+block_card+raise_request",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — block-then-replace pipeline with a disclosed cross-tool dependency: block_card's description says a damaged card must be blocked to ENABLE a replacement, and the replacement goes via raise_request. The block's reference_id (REF-BLK-65211) exists only in the block's output, so the raise_request description should cite it — A4 pins details before block, and the block must precede the raise. Named careless failure modes: (a) blocking without arranging the replacement (the customer asked for both); (b) raising the replacement request WITHOUT the block first (the block enables the replacement). The category 'other' is stated by the customer to keep the enum obtainable.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, rural Bhiwani, Haryana",
+    "current_date": "2026-08-16",
+    "current_time": "17:05",
+    "login_context": {
+      "customer_id": "SCN0010",
+      "full_name": "Shila Devi",
+      "date_of_birth": "2008-06-02",
+      "gender": "female",
+      "customer_since": "2026-07-03",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8369",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Bhiwani",
+        "state": "Haryana",
+        "pincode": "438369",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "90 Market Road",
+        "line2": "Adyar",
+        "city": "Bhiwani",
+        "state": "Haryana",
+        "pincode": "438369",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9164X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKBRP6521001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCBRP6521002",
+          "card_type": "debit",
+          "masked_number": "****9088",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "raise_request",
+    "get_request_status",
+    "get_all_requests",
+    "get_transaction_history"
+  ],
+  "user_turns": [
+    {
+      "content": "My debit card's chip has stopped working — it's damaged. Block it and arrange a replacement card."
+    },
+    {
+      "content": "Yes, please block it — and yes, raise the replacement card request, 'other' category."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "card_id": "TKCCBRP6521002",
+          "masked_number": "****9088",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "03/29",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "block_card": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Card permanently blocked.",
+        "reference_id": "REF-BLK-65211"
+      },
+      "_comment": "card_id is echoed by the executor."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-REP-65212",
+        "status": "success",
+        "message": "Replacement card request registered and routed."
+      },
+      "_comment": "category is echoed by the executor."
+    },
+    "toggle_card_freeze": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_status": "frozen",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "no such request",
+        "raised_date": "2026-08-16T17:05:00",
+        "last_update": "2026-08-16T17:05:00",
+        "remarks": "Noise tool — safety net."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCBRP6521002"
+          ]
+        }
+      },
+      {
+        "tool": "block_card",
+        "arguments": {
+          "card_id": "TKCCBRP6521002",
+          "reason": "damaged"
+        }
+      },
+      {
+        "tool": "raise_request",
+        "arguments": {
+          "category": "other",
+          "description": "Replacement debit card request for card TKCCBRP6521002 (chip damaged) — card blocked with reference REF-BLK-65211; customer needs a replacement card issued."
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_card_details",
+        "block_card"
+      ],
+      [
+        "block_card",
+        "raise_request"
+      ]
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {
+          "card_ids": [
+            "TKCCBRP6521002"
+          ]
+        },
+        "_comment": "Surface the card before acting (disclosed prerequisite)."
+      },
+      "block_card": {
+        "required": {
+          "card_id": "TKCCBRP6521002",
+          "reason": "damaged"
+        },
+        "_comment": "The damaged card is blocked with the customer-stated reason; the block's reference enables the replacement request."
+      },
+      "raise_request": {
+        "required": {
+          "category": "other"
+        },
+        "_comment": "The replacement request (category 'other', stated by the customer) follows the block; its description should cite the blocked card and the block reference."
+      },
+      "toggle_card_freeze": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer's debit card chip is damaged and they want it blocked and replaced. The assistant must surface the card (get_card_details), then — after confirmation — block it with reason damaged (REF-BLK-65211), and raise the replacement request (category other, REQ-REP-65212) whose description cites the blocked card and the block reference. Blocking without arranging the replacement, or raising the replacement without the block (the disclosed 'block to enable a replacement' chain), is the careless failure; the A4 pairs pin details -> block -> raise."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant blocks the damaged debit card (reason damaged) and raises the replacement request (category other) citing the card and the block reference, in that order after confirmation; FAIL if the replacement is skipped, raised before the block, or filed under a different category."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

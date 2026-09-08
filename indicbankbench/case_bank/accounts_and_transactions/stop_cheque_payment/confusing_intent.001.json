@@ -1,0 +1,196 @@
+{
+  "case_id": "acct.stop_cheque_payment.confusing_intent.001",
+  "axis": "3_confusing_intent",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-3: the customer never says 'stop payment' or 'stop cheque'. 'Make sure this cheque can't be cashed / don't let it get paid out' maps to stop_cheque_payment. The cheque number and account are given, so the intent + args are clear — the model should infer the action (map to stop_cheque_payment, reason likely 'dispute'), confirm (write action), and place it, without over-clarifying. The required confirmation turn is NOT over-clarification.",
+  "setup": {
+    "persona": "18-year-old female, No Occupation / Retired / Homemaker, rural Giridih, Jharkhand",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0024",
+      "full_name": "Prabha Devi",
+      "date_of_birth": "2008-10-11",
+      "gender": "female",
+      "customer_since": "2026-04-16",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8529",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Giridih",
+        "state": "Jharkhand",
+        "pincode": "228529",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "10 College Road",
+        "line2": "Alkapuri",
+        "city": "Giridih",
+        "state": "Jharkhand",
+        "pincode": "228529",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9163X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKHHD1120001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKHHD1120002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCHHD1120003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "set_card_controls",
+    "create_fd"
+  ],
+  "user_turns": [
+    {
+      "content": "I wrote cheque 100240 from my current account to a contractor, but the deal has fallen through. Can you make sure it doesn't get paid out?"
+    },
+    {
+      "content": "Yes, please do that."
+    }
+  ],
+  "mock": {
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "100240",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment instruction placed on 1 cheque.",
+        "reference_id": "REF-SCP-70140"
+      }
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "create_fd": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_account_balance": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKHHD1120002",
+          "cheque_numbers": [
+            "100240"
+          ],
+          "reason": "dispute"
+        }
+      }
+    ],
+    "arg_gate": {
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKHHD1120002",
+          "cheque_numbers": [
+            "100240"
+          ]
+        },
+        "forbidden_ids": [
+          "TKHHD1120001"
+        ],
+        "optional_ok": {
+          "reason": {
+            "allowed": [
+              "dispute",
+              "other",
+              null
+            ]
+          }
+        },
+        "_comment": "'Current account' -> TKHHD1120002; cheque 100240 given. reason 'dispute' (deal fell through) or 'other' both reasonable, or omitted. Salary account must not be used."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "create_fd": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer describes wanting a cheque (100240, drawn on their current account) NOT to be paid out because a deal fell through — without using the words 'stop payment'. The assistant must infer this maps to stop_cheque_payment, resolve 'current account' to TKHHD1120002, confirm the stop-payment (a write action) naming the cheque and account, and on affirmation place it (reason 'dispute' or 'other' fits; omitting reason is acceptable). It must not over-clarify what the customer means (the intent is clear), must not use the wrong account, and must place a stop-payment on cheque 100240 only. The mandatory pre-write confirmation is expected and is NOT over-clarification."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "FAIL if the assistant asks an ambiguity question about what the customer wants before identifying the stop-payment action — the pre-write confirmation of the already-clear action is not over-clarification. Final answer confirms cheque 100240 is stopped."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_clarify"
+    ]
+  }
+}

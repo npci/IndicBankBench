@@ -1,0 +1,181 @@
+{
+  "case_id": "acct.get_account_details.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_details",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer asks about their 'NRE savings account' but linked_accounts has only salary and savings — no NRE. Model must fetch accounts, report no NRE exists, and show what's actually linked.",
+  "setup": {
+    "persona": "19-year-old male, No Occupation / Retired / Homemaker, urban Coimbatore, Tamil Nadu",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0551",
+      "full_name": "Mugamathu Runnan",
+      "date_of_birth": "2007-03-25",
+      "gender": "male",
+      "customer_since": "2025-07-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5394",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "75 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Coimbatore",
+        "state": "Tamil Nadu",
+        "pincode": "665394",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "75 Gandhi Nagar",
+        "line2": "Adyar",
+        "city": "Coimbatore",
+        "state": "Tamil Nadu",
+        "pincode": "665394",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX1203X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAD8600001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKGAD8600002",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCGAD8600003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_transaction_history",
+    "get_account_balance",
+    "get_account_details",
+    "get_rd_details",
+    "request_duplicate_statement"
+  ],
+  "user_turns": [
+    {
+      "content": "Can you tell me the branch name and IFSC code for my NRE savings account?"
+    }
+  ],
+  "mock": {
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [
+        {
+          "account_id": "TKGAD8600001",
+          "account_type": "salary",
+          "status": "active",
+          "branch_name": "MG Road",
+          "ifsc": "TKBK0001234",
+          "holders": [
+            {
+              "name": "Mugamathu Runnan",
+              "role": "primary"
+            }
+          ],
+          "nominee": null,
+          "open_date": "2020-01-15"
+        },
+        {
+          "account_id": "TKGAD8600002",
+          "account_type": "savings",
+          "status": "active",
+          "branch_name": "Adyar",
+          "ifsc": "TKBK0005678",
+          "holders": [
+            {
+              "name": "Mugamathu Runnan",
+              "role": "primary"
+            }
+          ],
+          "nominee": null,
+          "open_date": "2022-06-10"
+        }
+      ]
+    },
+    "get_rd_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_details",
+        "arguments": {
+          "account_ids": [
+            "TKGAD8600001",
+            "TKGAD8600002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_details": {
+        "required": {},
+        "_comment": "Must check the accounts. Reporting only the non-existent NRE account data fails; reporting the actual salary and savings accounts is expected."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for details of their NRE savings account, but no NRE account exists in linked_accounts — they have a salary account (MG Road branch, IFSC TKBK0001234) and a savings account (Adyar, IFSC TKBK0005678). The assistant must call get_account_details, identify that there is no NRE account, and report what's actually linked. It must not fabricate an NRE account with invented branch/IFSC details. Offering the actual accounts as information the assistant can provide is expected."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "calls get_account_details, reports that no NRE account exists, and surfaces the actual linked accounts instead. Fabricating an NRE account with invented details fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

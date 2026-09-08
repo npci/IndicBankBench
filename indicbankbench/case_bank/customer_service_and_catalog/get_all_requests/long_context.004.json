@@ -1,0 +1,229 @@
+{
+  "case_id": "csc.get_all_requests.long_context.004",
+  "axis": "8_long_context",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_all_requests",
+  "target_behavior": "answer",
+  "_variant_note": "Buried-in-noise: 10 request records returned. The key record (unauthorized_debit, in_progress, position 9) matches 'disputed transaction' semantically. A similar-looking bait record (charges_dispute, resolved, position 3) matches the keyword 'dispute' but is already resolved. A weak model stops scanning at position 3-4 and picks the resolved charges_dispute. A strong model scans all 10 and finds the in_progress unauthorized_debit at position 9.",
+  "setup": {
+    "persona": "32-year-old male, Ships’ Deck Ratings, Barge Crews and Boatmen, rural Varanasi, Uttar Pradesh",
+    "current_date": "2026-08-22",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0605",
+      "full_name": "Pyare Singh",
+      "date_of_birth": "1994-07-21",
+      "gender": "male",
+      "customer_since": "2018-02-14",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6502",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "103 Lake View Road",
+        "line2": "Model Town",
+        "city": "Varanasi",
+        "state": "Uttar Pradesh",
+        "pincode": "666502",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "103 Lake View Road",
+        "line2": "Model Town",
+        "city": "Varanasi",
+        "state": "Uttar Pradesh",
+        "pincode": "666502",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX6204X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKGAR99001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCAR99002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "calculate_rd_maturity",
+    "calculate_emi"
+  ],
+  "user_turns": [
+    {
+      "content": "What's happening with the disputed transaction I raised? Is there any update on it?"
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "10 requests. Bait = position 3 (charges_dispute, resolved) matches 'disputed' keyword but is already settled. Key = position 9 (unauthorized_debit, in_progress) is the actual disputed transaction. A weak model that stops scanning early picks position 3. A strong model scans all 10.",
+      "records": [
+        {
+          "request_id": "REQ-99011",
+          "category": "cheque_book",
+          "status": "open",
+          "raised_date": "2026-08-21T11:00:00",
+          "last_updated_date": "2026-08-21T11:00:00",
+          "description": "25-leaf cheque book for savings account"
+        },
+        {
+          "request_id": "REQ-99012",
+          "category": "service_quality",
+          "status": "in_progress",
+          "raised_date": "2026-08-18T15:30:00",
+          "last_updated_date": "2026-08-22T09:00:00",
+          "description": "Branch staff behaviour complaint at Model Town"
+        },
+        {
+          "request_id": "REQ-99013",
+          "category": "charges_dispute",
+          "status": "resolved",
+          "raised_date": "2026-07-10T10:00:00",
+          "last_updated_date": "2026-08-05T14:00:00",
+          "description": "Disputed Rs 500 maintenance charge refund processed"
+        },
+        {
+          "request_id": "REQ-99014",
+          "category": "duplicate_statement",
+          "status": "resolved",
+          "raised_date": "2026-07-12T09:00:00",
+          "last_updated_date": "2026-07-14T16:00:00",
+          "description": "Statement Apr to Jun 2026"
+        },
+        {
+          "request_id": "REQ-99015",
+          "category": "app_issue",
+          "status": "rejected",
+          "raised_date": "2026-05-20T12:00:00",
+          "last_updated_date": "2026-05-25T10:00:00",
+          "description": "App crash during UPI payment resolved by app update"
+        },
+        {
+          "request_id": "REQ-99016",
+          "category": "other",
+          "status": "open",
+          "raised_date": "2026-08-20T08:00:00",
+          "last_updated_date": "2026-08-20T08:00:00",
+          "description": "Enquiry about locker availability at MG Road"
+        },
+        {
+          "request_id": "REQ-99017",
+          "category": "service_quality",
+          "status": "resolved",
+          "raised_date": "2026-07-28T14:00:00",
+          "last_updated_date": "2026-08-10T11:00:00",
+          "description": "ATM cash not dispensed complaint resolved"
+        },
+        {
+          "request_id": "REQ-99018",
+          "category": "failed_transaction",
+          "status": "resolved",
+          "raised_date": "2026-07-25T18:00:00",
+          "last_updated_date": "2026-08-02T09:00:00",
+          "description": "NEFT transfer failed amount reversed"
+        },
+        {
+          "request_id": "REQ-99019",
+          "category": "unauthorized_debit",
+          "status": "in_progress",
+          "raised_date": "2026-08-14T11:00:00",
+          "last_updated_date": "2026-08-21T16:00:00",
+          "description": "Unauthorized POS transaction of Rs 8,500 on debit card under investigation"
+        },
+        {
+          "request_id": "REQ-99020",
+          "category": "address_update",
+          "status": "resolved",
+          "raised_date": "2026-06-15T09:00:00",
+          "last_updated_date": "2026-07-01T11:00:00",
+          "description": "Communication address updated to new residence"
+        }
+      ]
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool safety net."
+    },
+    "calculate_emi": {
+      "kind": "outcome_fixed",
+      "output": {
+        "emi": 0,
+        "total_interest": 0,
+        "total_payment": 0
+      },
+      "_comment": "Noise tool safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_all_requests",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "_comment": "Must fetch all 10 requests. The bait is REQ-99013 (charges_dispute, resolved) at position 3 matches the 'disputed' keyword. The correct record is REQ-99019 (unauthorized_debit, in_progress) at position 9 the actual disputed transaction."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      },
+      "calculate_emi": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool optional."
+      }
+    },
+    "expected_resolution": "The customer asks about 'the disputed transaction'. get_all_requests returns 10 requests. The bait is REQ-99013 at position 3 a charges_dispute (resolved) which matches the keyword 'disputed' in its category and description. The correct record is REQ-99019 at position 9 an unauthorized_debit (in_progress) for Rs 8,500 under investigation. A weak model that stops scanning at position 3-4 picks the resolved charges_dispute and says it's already settled. A strong model scans all 10 and finds the in_progress unauthorized_debit at position 9 reporting it is still under investigation as of 21 Aug. Picking the resolved charges_dispute or saying no disputed transaction exists fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "identifies the unauthorized_debit request (REQ-99019, in_progress, Rs 8,500 under investigation) as the disputed transaction NOT the resolved charges_dispute (REQ-99013) at position 3. Picking the wrong request fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "case_id": "acct.get_account_balance.wrong_info.005",
+  "axis": "7_wrong_info",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "FILTER-TRAP: customer asks to check only the savings account balance. The savings account looks fine (Rs 45,000). But a suspicious hold of Rs 2,50,000 has been placed on the CURRENT account by the bank — that's what the customer needs to know about. A narrow savings-only query hides the current account hold.",
+  "setup": {
+    "persona": "23-year-old female, No Occupation / Retired / Homemaker, urban Kurukshetra, Haryana",
+    "current_date": "2026-10-01",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0304",
+      "full_name": "Sarita Pati",
+      "date_of_birth": "2003-12-03",
+      "gender": "female",
+      "customer_since": "2023-03-20",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX7715",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Kurukshetra",
+        "state": "Haryana",
+        "pincode": "707715",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "36 Jubilee Road",
+        "line2": "Salt Lake",
+        "city": "Kurukshetra",
+        "state": "Haryana",
+        "pincode": "707715",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0495X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9800001",
+          "account_type": "savings",
+          "status": "active"
+        },
+        {
+          "account_id": "TKFTB9800002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9800003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I got a notification about some unusual activity. Can you check my savings account balance? That's the one I use for everything."
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: savings account looks fine (Rs 45,000). Current account has Rs 2,50,000 hold. A savings-only query (TKFTB9800001 alone) hides the hold. Broad query across both accounts reveals it.",
+      "records": [
+        {
+          "account_id": "TKFTB9800001",
+          "available_balance": 45000,
+          "hold_amount": 0
+        },
+        {
+          "account_id": "TKFTB9800002",
+          "available_balance": 320000,
+          "hold_amount": 250000
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": []
+    },
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "output": {
+        "results": [],
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      }
+    },
+    "get_card_details": {
+      "kind": "outcome_fixed",
+      "output": {}
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKFTB9800001",
+            "TKFTB9800002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {},
+        "optional_ok": {
+          "account_ids": {
+            "allowed": [
+              [
+                "TKFTB9800001",
+                "TKFTB9800002"
+              ],
+              [
+                "TKFTB9800002",
+                "TKFTB9800001"
+              ]
+            ]
+          }
+        },
+        "_comment": "Must query both accounts. Savings-only query hides the Rs 2,50,000 hold on the current account."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true
+      },
+      "stop_cheque_payment": {
+        "required": {},
+        "optional": true
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true
+      }
+    },
+    "expected_resolution": "The customer asks to check only the savings account balance — which shows Rs 45,000, no issues. But the current account has a Rs 2,50,000 hold on Rs 3,20,000 balance — that's the unusual activity. The assistant must query both accounts and surface the hold on the current account. Reporting only the savings balance fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both accounts and surfaces the Rs 2,50,000 hold on the current account. Reporting savings-only or missing the hold fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

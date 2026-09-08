@@ -1,0 +1,240 @@
+{
+  "case_id": "csc.get_request_status.not_enough_info.001",
+  "axis": "4_not_enough_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_request_status",
+  "target_behavior": "clarify",
+  "_variant_note": "Axis-4: the customer asks for an update on 'my request' but supplies no request ID, and get_request_status takes exactly one. The ID is discoverable — via get_all_requests — but the customer has TWO open requests (cheque book and duplicate statement), so even after listing them the assistant cannot know which one 'my request that needs it soon' means. Call-then-clarify pattern: list the candidates (get_all_requests is optional), then ask which. Calling get_request_status on a guess fails A2.",
+  "setup": {
+    "persona": "45-year-old female, University and College Teacher, Medicine and Surgery, urban Kottayam, Kerala",
+    "current_date": "2026-08-20",
+    "current_time": "12:30",
+    "login_context": {
+      "customer_id": "SCN0497",
+      "full_name": "Bincy David",
+      "date_of_birth": "1981-12-25",
+      "gender": "female",
+      "customer_since": "2023-01-06",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX6187",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "108 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Kottayam",
+        "state": "Kerala",
+        "pincode": "236187",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "108 Jubilee Road",
+        "line2": "Andheri West",
+        "city": "Kottayam",
+        "state": "Kerala",
+        "pincode": "236187",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX3654X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKRST6700001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCRST6700002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_loan_details"
+  ],
+  "user_turns": [
+    {
+      "content": "Any update on my request? I need it for the 1st."
+    }
+  ],
+  "mock": {
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "_comment": "Two open requests — the cheque book the customer likely means, and a duplicate statement. Listing both and asking which is the move; the IDs appear here so that any later get_request_status call on one is S1-clean, which is why guessing must instead fail A2.",
+      "records": [
+        {
+          "request_id": "REQ-CB-94101",
+          "category": "cheque_book",
+          "status": "in_progress",
+          "raised_date": "2026-08-12",
+          "last_updated_date": "2026-08-12",
+          "description": "Cheque book request placed for savings account."
+        },
+        {
+          "request_id": "REQ-DS-94102",
+          "category": "duplicate_statement",
+          "status": "open",
+          "raised_date": "2026-08-15",
+          "last_updated_date": "2026-08-15",
+          "description": "Duplicate account statement request."
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "_comment": "Safety net — a guessed single-request lookup. Any call is wrong on this turn because the ID is still unidentified.",
+      "output": {
+        "status": null,
+        "raised_date": null,
+        "last_update": null,
+        "remarks": "Noise tool — safety net."
+      }
+    },
+    "search_knowledge_base": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_insurance_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_loan_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_cheque_book": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "request_duplicate_statement": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [],
+    "arg_gate": {
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "The natural first move: list the customer's requests to name candidates. Permitted and encouraged as framing for the question."
+      },
+      "get_request_status": {
+        "required": {},
+        "_comment": "Must NOT be called yet — the customer's description matches two requests, and get_request_status demands one ID. Any call is a guess (A2 fails it; S1 would not, since the IDs are in get_all_requests output)."
+      },
+      "search_knowledge_base": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_loan_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_cheque_book": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "request_duplicate_statement": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_products_and_offers": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "expected_resolution": "The customer asks for an update on 'my request' but gives no request ID, and they have two open requests on file: a cheque book request (REQ-CB-94101, in progress, raised 12 Aug) and a duplicate statement request (REQ-DS-94102, open, raised 15 Aug). The assistant should list what it can see — using get_all_requests to ground the candidates — and ask ONE focused question to identify which request the customer means, rather than assuming the cheque book request and answering for it, or calling get_request_status on a guessed ID. The clarification is the complete answer for this turn."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "clarify",
+      "axis_gate_rule": "asks which request the customer means — ideally naming the visible candidates from get_all_requests — rather than assuming the cheque book request or calling get_request_status on a guessed ID. Answering a status for one request unilaterally fails; listing both and asking which is the preferred move."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_clarify",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

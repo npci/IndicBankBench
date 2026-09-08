@@ -1,0 +1,253 @@
+{
+  "case_id": "cards.get_card_details.contradicting_info.005",
+  "axis": "5_contradicting_info",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-5 filter-trap (contradicting_info): customer says 'show me the details for my RuPay card — I think someone used it online'. Two cards exist: Visa credit (****3456, controls enabled) and RuPay debit (****7890, online controls DISABLED but someone enabled them). The customer says 'RuPay card' — filtering by network=rupay returns the debit card which looks normal. But the Visa credit card (network=visa) shows online international controls were enabled without the customer's knowledge. Broad query reveals both and the actual fraud vector on the Visa. The customer's information contradicts the facts: the suspicious online activity is on Visa, not RuPay.",
+  "setup": {
+    "persona": "47-year-old female, No Occupation / Retired / Homemaker, rural Jalaun, Uttar Pradesh",
+    "current_date": "2026-08-20",
+    "current_time": "15:00",
+    "login_context": {
+      "customer_id": "SCN0028",
+      "full_name": "Sarojni Singh",
+      "date_of_birth": "1979-03-23",
+      "gender": "female",
+      "customer_since": "2014-08-13",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX8186",
+      "registered_email": "s*****@gmail.com",
+      "communication_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Jalaun",
+        "state": "Uttar Pradesh",
+        "pincode": "648186",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "27 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Jalaun",
+        "state": "Uttar Pradesh",
+        "pincode": "648186",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX8503X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFT5R951701",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFT5R951702",
+          "card_type": "credit",
+          "masked_number": "****3456",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCFT5R951703",
+          "card_type": "debit",
+          "masked_number": "****7890",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "get_request_status",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "Show me my RuPay card details — I got an SMS about an online purchase and I want to check the security controls."
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: RuPay debit (TKCFT5R951703, network=rupay) has normal controls — online domestic enabled, international disabled. But the Visa CREDIT card (TKCFT5R951702, network=visa) has online DOMESTIC AND INTERNATIONAL both enabled — the international online was never authorised. The suspicious activity the customer noticed is actually on the Visa card. Filtering by network=rupay hides the credit card with the unauthorised international online access.",
+      "records": [
+        {
+          "card_id": "TKCFT5R951702",
+          "masked_number": "****3456",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 300000,
+          "available_limit": 275000,
+          "expiry": "2029-06",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": true,
+                "daily_limit": 150000
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 75000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCFT5R951703",
+          "masked_number": "****7890",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "2028-03",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 25000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 40000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCFT5R951702",
+            "TKCFT5R951703"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCFT5R951702",
+                "TKCFT5R951703"
+              ],
+              [
+                "TKCFT5R951703",
+                "TKCFT5R951702"
+              ],
+              [
+                "TKCFT5R951703"
+              ],
+              [
+                "TKCFT5R951702"
+              ]
+            ]
+          }
+        },
+        "_comment": "Query both cards. Filtering by RuPay network hides Visa credit card with unauthorised international online access (daily_limit 150000). The customer said RuPay but the actual anomaly is on the Visa card."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Customer asks for RuPay card details to check online purchase SMS. RuPay debit (****7890): controls normal — online domestic only, international disabled. But the Visa credit card (****3456) shows online INTERNATIONAL enabled with Rs 1,50,000 daily limit — this is the likely fraud vector. The assistant must query both cards and flag the Visa credit card's unauthorised international online access, correcting the customer's assumption that the issue is on the RuPay card. Reporting only the RuPay card without surfacing the Visa anomaly fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "queries both cards and flags the Visa credit card (****3456) with online international enabled (Rs 1,50,000 limit) as the likely security concern, correcting the customer's focus on the RuPay card. Reporting only RuPay details without the Visa anomaly fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,196 @@
+{
+  "case_id": "acct.stop_cheque_payment.happy.001",
+  "axis": "1_happy_path",
+  "domain": "accounts_and_transactions",
+  "tool": "stop_cheque_payment",
+  "target_behavior": "answer",
+  "_variant_note": "Happy path for the second WRITE tool. The customer supplies everything needed (cheque number, account, and a reason) up front. Exercises: confirmation-before-write (S2), the required array arg cheque_numbers, the optional reason enum (lost), and the per-cheque results output.",
+  "setup": {
+    "persona": "19-year-old male, No Occupation / Retired / Homemaker, urban Kancheepuram, Tamil Nadu",
+    "current_date": "2026-03-15",
+    "current_time": "14:32",
+    "login_context": {
+      "customer_id": "SCN0026",
+      "full_name": "Thaveethu Sai",
+      "date_of_birth": "2007-05-24",
+      "gender": "male",
+      "customer_since": "2025-06-27",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1704",
+      "registered_email": "t*****@gmail.com",
+      "communication_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Kancheepuram",
+        "state": "Tamil Nadu",
+        "pincode": "141704",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "65 Church Street",
+        "line2": "Banjara Hills",
+        "city": "Kancheepuram",
+        "state": "Tamil Nadu",
+        "pincode": "141704",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0775X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKTQK7355001",
+          "account_type": "salary",
+          "status": "active"
+        },
+        {
+          "account_id": "TKTQK7355002",
+          "account_type": "current",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCTQK7355003",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "show_mandates",
+    "stop_cheque_payment",
+    "raise_request",
+    "update_deposit_renewal"
+  ],
+  "user_turns": [
+    {
+      "content": "I lost cheque number 100234 from my salary account — please put a stop on it."
+    },
+    {
+      "content": "Yes, go ahead."
+    }
+  ],
+  "mock": {
+    "stop_cheque_payment": {
+      "kind": "outcome_fixed",
+      "_comment": "Executor echoes account_id into output.account_id. The per-cheque results and overall status/message/reference_id are fixed. Single cheque, cleanly stopped.",
+      "output": {
+        "results": [
+          {
+            "cheque_number": "100234",
+            "status": "stopped"
+          }
+        ],
+        "status": "success",
+        "message": "Stop-payment instruction placed on 1 cheque.",
+        "reference_id": "REF-SCP-70115"
+      }
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action."
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "update_deposit_renewal": {
+      "kind": "outcome_fixed",
+      "output": {
+        "deposit_id": "TKFD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "stop_cheque_payment",
+        "arguments": {
+          "account_id": "TKTQK7355001",
+          "cheque_numbers": [
+            "100234"
+          ],
+          "reason": "lost"
+        }
+      }
+    ],
+    "arg_gate": {
+      "stop_cheque_payment": {
+        "required": {
+          "account_id": "TKTQK7355001",
+          "cheque_numbers": [
+            "100234"
+          ]
+        },
+        "forbidden_ids": [
+          "TKTQK7355002"
+        ],
+        "optional_ok": {
+          "reason": {
+            "allowed": [
+              "lost",
+              null
+            ]
+          }
+        },
+        "_comment": "'Salary account' -> TKTQK7355001; cheque number and account both supplied. reason='lost' is stated by the customer (mapping to the enum) but omitting it is acceptable. No other account/cheque may appear."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "update_deposit_renewal": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer wants to stop a specific lost cheque (100234) on their salary account. Everything required is provided. The assistant resolves 'salary account' to TKTQK7355001, confirms the stop-payment with the customer (naming the cheque number and account) BEFORE calling the tool — it is a write action — and on affirmation calls stop_cheque_payment(account_id=TKTQK7355001, cheque_numbers=['100234'], reason='lost'). It then reports the successful stop with the reference number. It must not call the tool before the customer confirms, and must not act on any other cheque or account."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "final answer confirms the stop-payment was placed on cheque 100234 with the reference number; nothing invented, no other cheque acted on."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

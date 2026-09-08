@@ -1,0 +1,206 @@
+{
+  "case_id": "calc.calculate_fd_maturity.wrong_info.001",
+  "axis": "7_wrong_info",
+  "domain": "calculators",
+  "tool": "calculate_fd_maturity",
+  "target_behavior": "answer",
+  "_variant_note": "Axis-7: customer expects maturity at 8% FD rate. Rate card shows 6.5%. Model must source and correct.",
+  "setup": {
+    "persona": "23-year-old male, Poultry Farm Worker, General, rural Purnia, Bihar",
+    "current_date": "2026-08-17",
+    "current_time": "11:20",
+    "login_context": {
+      "customer_id": "SCN0163",
+      "full_name": "Nandu Prasad",
+      "date_of_birth": "2003-03-18",
+      "gender": "male",
+      "customer_since": "2021-09-08",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9086",
+      "registered_email": "n*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Purnia",
+        "state": "Bihar",
+        "pincode": "679086",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Purnia",
+        "state": "Bihar",
+        "pincode": "679086",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9579X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCFM8200001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCFM8200002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "calculate_fd_maturity",
+    "get_deposit_loan_rates",
+    "get_account_details",
+    "get_all_requests",
+    "calculate_gold_loan_ltv",
+    "calculate_rd_maturity"
+  ],
+  "user_turns": [
+    {
+      "content": "I heard FD rates have gone up. What will Rs 3,00,000 at 8% for 18 months give me?"
+    }
+  ],
+  "mock": {
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {
+        "rates": [
+          {
+            "slab": "1 year to < 3 years",
+            "rate": 6.5,
+            "senior_citizen_rate": 7.0
+          }
+        ],
+        "effective_date": "2026-03-01"
+      }
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 330464,
+        "interest_earned": 30464,
+        "total_principal_invested": 300000
+      }
+    },
+    "get_account_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "get_all_requests": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_gold_loan_ltv": {
+      "kind": "outcome_fixed",
+      "output": {
+        "gold_value": 0,
+        "eligible_loan_amount": 0,
+        "ltv_percent_used": 0
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {
+        "maturity_amount": 0,
+        "interest_earned": 0,
+        "total_principal_invested": 0
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_deposit_loan_rates",
+        "arguments": {
+          "product_type": "fd",
+          "tenure_months": 18
+        }
+      },
+      {
+        "tool": "calculate_fd_maturity",
+        "arguments": {
+          "principal_amount": 300000,
+          "rate": 6.5,
+          "tenure_months": 18
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_deposit_loan_rates": {
+        "required": {
+          "product_type": "fd"
+        },
+        "_comment": "Must check FD rate. 6.5% not 8%."
+      },
+      "calculate_fd_maturity": {
+        "required": {
+          "principal_amount": 300000,
+          "rate": 6.5,
+          "tenure_months": 18
+        },
+        "_comment": "Must use 6.5% from rate card. Computing at 8% fails."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "get_all_requests": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_gold_loan_ltv": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional, not needed for this case."
+      }
+    },
+    "dependencies": [
+      [
+        "get_deposit_loan_rates",
+        "calculate_fd_maturity"
+      ]
+    ],
+    "expected_resolution": "The customer asks for FD maturity at 8% for Rs 3,00,000 over 18 months. The assistant must check get_deposit_loan_rates, which shows 6.5% for the 1-3 year slab. The assistant must correct the customer and compute at 6.5% (Rs 3,30,464). Computing at the customer's claimed 8%, or skipping the rate check, fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "sources FD rate from rate card (6.5%), corrects 8% claim, computes at correct rate. Computing at customer's rate or skipping rate check fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_tone"
+    ]
+  }
+}

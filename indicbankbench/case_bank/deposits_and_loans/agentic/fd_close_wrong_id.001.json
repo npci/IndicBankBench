@@ -1,0 +1,286 @@
+{
+  "case_id": "depl.agentic.fd_close_wrong_id.001",
+  "axis": "general_agentic_multitool",
+  "domain": "deposits_and_loans",
+  "tool": "get_fd_details+get_deposit_closure_quote+close_deposit",
+  "target_behavior": "answer",
+  "_variant_note": "GENERAL EVAL — WRITE-AFTER-CORRECTION trap. Customer says 'close my FD-8334' (the OFF-BY-ONE ID). The model looks up FDs via get_fd_details, finds only FKFDWI8335 (the REAL FD — ₹3L, 24 months, matching the customer's description of 'my ₹3L FD'). The model must correct the customer's stated ID in prose AND propagate the correction into the close_deposit call with TKFDWI8335, not the wrong TKFDWI8334. A weak model corrects in prose but writes close_deposit with TKFDWI8334. A strong model carries the correction through to the write. The arg_gate pins the CORRECTED deposit_id (TKFDWI8335); forbidden_ids blocks TKFDWI8334.",
+  "setup": {
+    "persona": "48-year-old male, Middle School Teachers, rural Kangra, Himachal Pradesh",
+    "current_date": "2026-08-15",
+    "current_time": "14:00",
+    "login_context": {
+      "customer_id": "SCN0283",
+      "full_name": "Manoj Chand",
+      "date_of_birth": "1978-06-09",
+      "gender": "male",
+      "customer_since": "2017-01-04",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX5413",
+      "registered_email": "m*****@gmail.com",
+      "communication_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Kangra",
+        "state": "Himachal Pradesh",
+        "pincode": "565413",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "54 Market Road",
+        "line2": "Boring Road",
+        "city": "Kangra",
+        "state": "Himachal Pradesh",
+        "pincode": "565413",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX4891X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 1,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKWID7800001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [
+        {
+          "product_id": "TKFDWI8335",
+          "type": "fd",
+          "label": "TK SmartFD"
+        }
+      ],
+      "linked_cards": [
+        {
+          "card_id": "TKCWID7800002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_fd_details",
+    "get_rd_details",
+    "create_fd",
+    "create_rd",
+    "get_deposit_closure_quote",
+    "close_deposit",
+    "update_deposit_renewal",
+    "get_loan_details",
+    "get_loan_foreclosure_quote",
+    "get_deposit_loan_rates",
+    "get_gold_rate",
+    "calculate_fd_maturity",
+    "calculate_rd_maturity",
+    "get_account_balance",
+    "get_card_details"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to close my 3 lakh FD — FD-8334. I need the money urgently. Please close it."
+    },
+    {
+      "content": "Yes, go ahead and close it."
+    }
+  ],
+  "mock": {
+    "get_fd_details": {
+      "kind": "record_set_filtered",
+      "_comment": "Only TKFDWI8335 exists — the real ₹3L FD matching the customer's description. TKFDWI8334 does NOT exist — the customer got the ID wrong by one digit. ₹3L at 6.5% over 24 months, started 2025-06-01. About 14 months run.",
+      "records": [
+        {
+          "deposit_id": "TKFDWI8335",
+          "principal_amount": 300000,
+          "interest_rate": 6.5,
+          "tenure_months": 24,
+          "start_date": "2025-06-01",
+          "maturity_date": "2027-06-01",
+          "maturity_amount": 341292,
+          "payout_type": "cumulative",
+          "status": "active",
+          "maturity_instruction": "no_renewal",
+          "payout_account": "TKWID7800001",
+          "nominee": {
+            "name": "Vivek Gupta",
+            "relationship": "Spouse"
+          }
+        }
+      ]
+    },
+    "get_deposit_closure_quote": {
+      "kind": "record_set_filtered",
+      "_comment": "Closure at ~14.5 months run. Step-down to 1yr-<3yr slab at 6.5% (same as contracted). Accrued: 300000 x 6.5% x 14/12 = ₹22,750. Penalty 1% of principal = ₹3,000. Payout: 300000 + 22750 - 3000 = ₹3,19,750.",
+      "records": [
+        {
+          "deposit_id": "TKFDWI8335",
+          "principal_amount": 300000,
+          "accrued_interest": 22750,
+          "penalty_rate": 1.0,
+          "penalty_amount": 3000,
+          "effective_rate": 5.65,
+          "estimated_payout": 319750
+        }
+      ]
+    },
+    "close_deposit": {
+      "kind": "outcome_fixed",
+      "output": {
+        "status": "success",
+        "message": "Fixed Deposit closed prematurely. ₹3,19,750 credited to TKWID7800001.",
+        "amount_credited": 319750,
+        "payout_account": "TKWID7800001",
+        "reference_id": "REF-CLS-78001"
+      }
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "calculate_fd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    },
+    "calculate_rd_maturity": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_rd_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_fd_details",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDWI8335"
+          ]
+        }
+      },
+      {
+        "tool": "get_deposit_closure_quote",
+        "arguments": {
+          "deposit_ids": [
+            "TKFDWI8335"
+          ]
+        }
+      },
+      {
+        "tool": "close_deposit",
+        "arguments": {
+          "deposit_id": "TKFDWI8335"
+        }
+      }
+    ],
+    "dependencies": [
+      [
+        "get_fd_details",
+        "get_deposit_closure_quote"
+      ],
+      [
+        "get_deposit_closure_quote",
+        "close_deposit"
+      ]
+    ],
+    "arg_gate": {
+      "get_fd_details": {
+        "required": {
+          "deposit_ids": [
+            "TKFDWI8335"
+          ]
+        },
+        "_comment": "Must fetch FD details. TKFDWI8334 does not exist — the model must look up the real FD (TKFDWI8335, ₹3L) to identify the correct one."
+      },
+      "get_deposit_closure_quote": {
+        "required": {
+          "deposit_ids": [
+            "TKFDWI8335"
+          ]
+        },
+        "_comment": "Must quote the REAL FD. Quoting TKFDWI8334 fails A3."
+      },
+      "close_deposit": {
+        "required": {
+          "deposit_id": "TKFDWI8335"
+        },
+        "forbidden_ids": [
+          "TKFDWI8334"
+        ],
+        "_comment": "The CORRECTED ID is pinned. The customer said 8334 (off by one); the real FD is 8335. Writing close_deposit with the customer's WRONG id (TKFDWI8334) fails A3 via forbidden_ids. Writing with TKFDWI8335 passes."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "calculate_fd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_account_balance": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "calculate_rd_maturity": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_rd_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "Write-after-correction trap. The customer says 'close my FD-8334' but that ID does not exist in linked_products. The assistant looks up FDs via get_fd_details and finds only TKFDWI8335 — the real ₹3L FD with a 24-month tenure started 2025-06-01. The assistant must correct the customer: 'You said FD-8334, but your ₹3L FD is actually FD-8335 (TKFDWI8335).' The assistant must then pull the closure quote (₹3,19,750 net payout after ₹22,750 accrued interest and ₹3,000 penalty), disclose the cost, and — after the customer confirms — call close_deposit with TKFDWI8335 (the CORRECTED id). A weak model might acknowledge the correction in prose but still write close_deposit with TKFDWI8334 (the customer's wrong id). A strong model carries the correction through to the write call. The arg_gate pins deposit_id=TKFDWI8335 in close_deposit and also sets forbidden_ids=['TKFDWI8334'] to catch the weak-model failure deterministically via A3."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant identifies that the customer's stated ID (FD-8334) does not match any linked FD, finds the real ₹3L FD (TKFDWI8335/FD-8335), surfaces the closure cost (₹3,19,750 payout), and after confirmation calls close_deposit with TKFDWI8335. FAIL if close_deposit is called with the customer's wrong ID (TKFDWI8334), even if the prose acknowledges the correction."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

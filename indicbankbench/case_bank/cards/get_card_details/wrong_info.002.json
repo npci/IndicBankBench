@@ -1,0 +1,249 @@
+{
+  "case_id": "cards.get_card_details.wrong_info.002",
+  "axis": "7_wrong_info",
+  "domain": "cards",
+  "tool": "get_card_details",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks about 'my Visa card'. The profile has a Visa CREDIT card and a RuPay DEBIT card. A model that queries get_card_details for the credit card alone (because 'Visa' = credit in their mind) gets the credit card but misses the RuPay debit card that also needs attention. Broad query surfaces both. Critical twist: the RuPay debit card has an EXPIRED expiry (Dec 2025), and the model should flag it — but querying only the Visa card hides this.",
+  "setup": {
+    "persona": "29-year-old male, Building Construction Labourers, urban Ahmadabad, Gujarat",
+    "current_date": "2026-04-15",
+    "current_time": "10:30",
+    "login_context": {
+      "customer_id": "SCN0488",
+      "full_name": "Bhai Dharjiya",
+      "date_of_birth": "1997-04-07",
+      "gender": "male",
+      "customer_since": "2015-12-01",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX9995",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "749995",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "76 Nehru Street",
+        "line2": "Indiranagar",
+        "city": "Ahmadabad",
+        "state": "Gujarat",
+        "pincode": "749995",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX9189X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKCDV9414001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCCDV9414002",
+          "card_type": "credit",
+          "masked_number": "****8095",
+          "status": "active"
+        },
+        {
+          "card_id": "TKCDDV9414003",
+          "card_type": "debit",
+          "masked_number": "****2252",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "get_card_details",
+    "toggle_card_freeze",
+    "block_card",
+    "set_card_controls",
+    "get_account_balance",
+    "search_knowledge_base",
+    "get_request_status",
+    "show_mandates"
+  ],
+  "user_turns": [
+    {
+      "content": "I need to check the limit and validity on my Visa card — is it still active and what's available?"
+    }
+  ],
+  "mock": {
+    "get_card_details": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: the customer asks about 'my Visa card'. The Visa is a credit card (TKCCDV9414002, network=visa, active, Rs 2,00,000 limit, Rs 1,43,500 available). But the RuPay debit card (TKCDDV9414003, network=rupay) has EXPIRED — expiry 12/25, and today is 2026-04-15. A model that only queries the Visa card answers the question but misses the expired RuPay card entirely. Broad query surfaces the expired card as a critical alert.",
+      "records": [
+        {
+          "card_id": "TKCCDV9414002",
+          "masked_number": "****8095",
+          "card_type": "credit",
+          "network": "visa",
+          "status": "active",
+          "credit_limit": 200000,
+          "available_limit": 143500,
+          "expiry": "08/28",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        },
+        {
+          "card_id": "TKCDDV9414003",
+          "masked_number": "****2252",
+          "card_type": "debit",
+          "network": "rupay",
+          "status": "active",
+          "expiry": "12/25",
+          "controls": {
+            "atm": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 20000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "online": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 50000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            },
+            "pos": {
+              "domestic": {
+                "enabled": true,
+                "daily_limit": 30000
+              },
+              "international": {
+                "enabled": false,
+                "daily_limit": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    "get_request_status": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise tool — safety net."
+    },
+    "show_mandates": {
+      "kind": "record_set_filtered",
+      "records": [],
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_card_details",
+        "arguments": {
+          "card_ids": [
+            "TKCCDV9414002"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_card_details": {
+        "required": {},
+        "optional_ok": {
+          "card_ids": {
+            "allowed": [
+              [
+                "TKCCDV9414002"
+              ],
+              [
+                "TKCCDV9414002",
+                "TKCDDV9414003"
+              ],
+              [
+                "TKCDDV9414003",
+                "TKCCDV9414002"
+              ]
+            ]
+          }
+        },
+        "_comment": "Querying the Visa card answers the stated question. Querying both cards surfaces the expired RuPay debit card (expiry 12/25 — expired 4 months ago), which is a critical alert the model should flag. The judge determines whether the expired card is mentioned."
+      },
+      "get_request_status": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "show_mandates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The customer asks about the Visa card. The Visa credit card (****8095) is active, Rs 2,00,000 credit limit, Rs 1,43,500 available, expires 08/28. However, the RuPay debit card (****2252) expired in December 2025 — it's been expired for 4 months. A thorough assistant should query both cards and flag the expired RuPay debit card as an important alert, even though the customer only asked about the Visa. Reporting only the Visa card details passes; flagging the expired RuPay card is excellent."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "correctly reports the Visa credit card details (active, Rs 2,00,000 limit, Rs 1,43,500 available, expires 08/28). Ideally also surfaces the expired RuPay debit card (****2252, expired 12/25) as a critical alert. Reporting only the Visa card is acceptable; ignoring card information is not."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}

@@ -1,0 +1,226 @@
+{
+  "case_id": "acct.get_account_balance.long_context.003",
+  "axis": "8_long_context",
+  "domain": "accounts_and_transactions",
+  "tool": "get_account_balance",
+  "target_behavior": "answer",
+  "_variant_note": "OUT-OF-DATE INFORMATION TRAP — stale balance (salary credited overnight). Prior round: get_account_balance returned Rs 42,500. Since then, salary of Rs 1,25,000 was credited overnight by employer. The customer asks to transfer Rs 1,00,000 to a relative, assuming the stale Rs 42,500 is the current balance. A model that trusts prior context sees Rs 42.5K → reports insufficient → A1 fails (get_account_balance never called live). A model that re-fetches live discovers Rs 1,67,500 balance → confirms sufficient → PASS.",
+  "setup": {
+    "persona": "18-year-old male, Construction and Maintenance Labourers, rural Pashchimi Singhbhum, Jharkhand",
+    "current_date": "2026-08-20",
+    "current_time": "10:15",
+    "login_context": {
+      "customer_id": "SCN0209",
+      "full_name": "Birsa Murmu",
+      "date_of_birth": "2008-03-22",
+      "gender": "male",
+      "customer_since": "2026-02-24",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX2686",
+      "registered_email": "b*****@gmail.com",
+      "communication_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Pashchimi Singhbhum",
+        "state": "Jharkhand",
+        "pincode": "682686",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "87 Gandhi Nagar",
+        "line2": "Gomti Nagar",
+        "city": "Pashchimi Singhbhum",
+        "state": "Jharkhand",
+        "pincode": "682686",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX2389X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKOD54990001",
+          "account_type": "salary",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCOD54990002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": [
+      {
+        "role": "user",
+        "content": "What's my balance? I need to plan a transfer."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "b1",
+            "type": "function",
+            "function": {
+              "name": "get_account_balance",
+              "arguments": {
+                "account_ids": [
+                  "TKOD54990001"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "b1",
+        "content": "{\"balances\":[{\"account_id\":\"TKOD54990001\",\"available_balance\":42500,\"hold_amount\":0}]}"
+      },
+      {
+        "role": "assistant",
+        "content": "Your salary account has Rs 42,500 available with no holds."
+      },
+      {
+        "role": "user",
+        "content": "That's lower than I expected. Let me wait for my salary to hit — should be any day now."
+      }
+    ]
+  },
+  "tools_exposed": [
+    "get_account_balance",
+    "get_account_details",
+    "get_transaction_history",
+    "get_card_details",
+    "set_card_controls",
+    "raise_request"
+  ],
+  "user_turns": [
+    {
+      "content": "I want to transfer Rs 1,00,000 to my brother today. Do I have enough?"
+    }
+  ],
+  "mock": {
+    "get_account_balance": {
+      "kind": "record_set_filtered",
+      "_comment": "Salary of Rs 1,25,000 was credited overnight. The live available balance is now Rs 1,67,500 — very different from the Rs 42,500 in the prior messages. A model that trusts the stale prior and says 'you only have Rs 42,500' without re-fetching fails A1.",
+      "records": [
+        {
+          "account_id": "TKOD54990001",
+          "available_balance": 167500,
+          "hold_amount": 0
+        }
+      ]
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_account_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_card_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "set_card_controls": {
+      "kind": "outcome_fixed",
+      "output": {
+        "card_id": "CARD-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "reference_id": "REF-NOISE-00000"
+      },
+      "_comment": "Noise tool — safety net."
+    },
+    "raise_request": {
+      "kind": "outcome_fixed",
+      "output": {
+        "request_id": "REQ-NOISE",
+        "status": "failed",
+        "message": "Noise tool — not the intended action.",
+        "category": "other"
+      },
+      "_comment": "Noise tool — safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_account_balance",
+        "arguments": {
+          "account_ids": [
+            "TKOD54990001"
+          ]
+        }
+      }
+    ],
+    "arg_gate": {
+      "get_account_balance": {
+        "required": {
+          "account_ids": [
+            "TKOD54990001"
+          ]
+        },
+        "_comment": "THE GATE. The model MUST re-fetch the balance live. Prior shows Rs 42,500 but salary of Rs 1,25,000 was credited overnight — the live balance is now Rs 1,67,500. A model that trusts stale data, skips the re-read, and says insufficient funds fails A1."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Safety net — optional."
+      },
+      "get_account_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_card_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "set_card_controls": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      },
+      "raise_request": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise tool — optional."
+      }
+    },
+    "expected_resolution": "The prior conversation shows the salary account balance as Rs 42,500. The customer pauses and waits for salary. Since then, Rs 1,25,000 salary was credited overnight — the live balance is now Rs 1,67,500, more than enough for the requested Rs 1,00,000 transfer.\n\nThe correct move is to re-fetch get_account_balance live, report the updated balance of Rs 1,67,500, and confirm the customer has sufficient funds for the transfer. Reporting the stale Rs 42,500 without re-checking, or stating the transfer cannot be made due to insufficient funds, is the failure — the assistant is relying on information that was true yesterday but is wrong today.\n\nThe case does not gate a transfer/write tool — the customer asked only about sufficiency, which the correct model answers by re-reading the balance."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "the assistant re-fetches get_account_balance live, discovers Rs 1,67,500 (not the stale Rs 42,500), and confirms the customer has sufficient funds for the transfer. Quoting the stale balance or claiming funds are insufficient without a live call fails."
+    },
+    "judge_advisory": [
+      "Q_grounded",
+      "Q_complete",
+      "Q_tone"
+    ]
+  }
+}

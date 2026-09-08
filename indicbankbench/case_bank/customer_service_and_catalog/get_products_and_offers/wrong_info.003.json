@@ -1,0 +1,170 @@
+{
+  "case_id": "csc.get_products_and_offers.wrong_info.003",
+  "axis": "7_wrong_info",
+  "domain": "customer_service_and_catalog",
+  "tool": "get_products_and_offers",
+  "target_behavior": "answer",
+  "_variant_note": "Wave-4 filter-trap: customer asks 'show me your deposit products'. A type=deposit filter on get_products_and_offers returns only deposit products (FD, RD). But there's a LOAN offer — a pre-approved personal loan at a special rate — that the customer would benefit from knowing about. The type=deposit filter hides the loan pre-approval. Broad query (type=all) reveals the pre-approved offer.",
+  "setup": {
+    "persona": "43-year-old female, Kitchen Porter, rural Palamu, Jharkhand",
+    "current_date": "2026-08-22",
+    "current_time": "10:00",
+    "login_context": {
+      "customer_id": "SCN0178",
+      "full_name": "Paro Kumari",
+      "date_of_birth": "1983-04-25",
+      "gender": "female",
+      "customer_since": "2015-10-11",
+      "customer_segment": "regular",
+      "registered_mobile": "XXXXXX1603",
+      "registered_email": "p*****@gmail.com",
+      "communication_address": {
+        "line1": "4 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Palamu",
+        "state": "Jharkhand",
+        "pincode": "931603",
+        "country": "India"
+      },
+      "permanent_address": {
+        "line1": "4 Nehru Street",
+        "line2": "T Nagar",
+        "city": "Palamu",
+        "state": "Jharkhand",
+        "pincode": "931603",
+        "country": "India"
+      },
+      "kyc_status": "verified",
+      "pan_masked": "XXXXX0586X",
+      "preferred_language": "en",
+      "linked_products_summary": {
+        "fd": 0,
+        "rd": 0,
+        "loan": 0,
+        "policy": 0
+      },
+      "linked_accounts": [
+        {
+          "account_id": "TKFTB9478001",
+          "account_type": "savings",
+          "status": "active"
+        }
+      ],
+      "linked_products": [],
+      "linked_cards": [
+        {
+          "card_id": "TKCFTB9478002",
+          "card_type": "debit",
+          "status": "active"
+        }
+      ]
+    },
+    "prior_messages": []
+  },
+  "tools_exposed": [
+    "search_knowledge_base",
+    "get_products_and_offers",
+    "get_insurance_details",
+    "raise_request",
+    "request_cheque_book",
+    "request_duplicate_statement",
+    "get_all_requests",
+    "get_request_status",
+    "get_transaction_history",
+    "get_deposit_loan_rates"
+  ],
+  "user_turns": [
+    {
+      "content": "I'm thinking of saving some money — show me what deposit products you offer."
+    }
+  ],
+  "mock": {
+    "get_products_and_offers": {
+      "kind": "record_set_filtered",
+      "_comment": "FILTER TRAP: customer asks for deposit products. A type=deposit filter returns only PRD-FD-2001 (SmartFD) and PRD-RD-3001 (FlexiRD). But there's a PRE-APPROVED personal loan offer (OFF-PL-7801) — the customer might benefit from this as an alternative or complementary product. The deposit-only filter hides the pre-approved offer. Broad query reveals it.",
+      "records": [
+        {
+          "id": "PRD-FD-2001",
+          "title": "TK SmartFD",
+          "type": "deposit",
+          "description": "Fixed deposit with flexible tenure from 7 days to 5 years."
+        },
+        {
+          "id": "PRD-RD-3001",
+          "title": "TK FlexiRD",
+          "type": "deposit",
+          "description": "Recurring deposit starting from Rs 500 per month with competitive rates."
+        },
+        {
+          "id": "OFF-PL-7801",
+          "title": "Pre-approved Personal Loan",
+          "type": "offer",
+          "description": "Pre-approved personal loan up to Rs 5,00,000 at preferential rate. Zero documentation.",
+          "valid_till": "2026-09-30"
+        }
+      ]
+    },
+    "get_insurance_details": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_transaction_history": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    },
+    "get_deposit_loan_rates": {
+      "kind": "outcome_fixed",
+      "output": {},
+      "_comment": "Noise prerequisite safety net."
+    }
+  },
+  "gold": {
+    "tool_calls": [
+      {
+        "tool": "get_products_and_offers",
+        "arguments": {}
+      }
+    ],
+    "arg_gate": {
+      "get_products_and_offers": {
+        "required": {},
+        "_comment": "Broad query without type filter. A type=deposit filter returns only SmartFD and FlexiRD, hiding the pre-approved personal loan offer (OFF-PL-7801, valid till Sep 30). The model must query all products and offers and surface the pre-approved loan as a relevant financial option."
+      },
+      "get_transaction_history": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_insurance_details": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      },
+      "get_deposit_loan_rates": {
+        "required": {},
+        "optional": true,
+        "_comment": "Noise prerequisite — optional."
+      }
+    },
+    "expected_resolution": "The customer asks for deposit products. The bank offers SmartFD and FlexiRD. But the assistant should query broadly and ALSO surface the pre-approved personal loan offer (OFF-PL-7801, up to Rs 5,00,000, valid till Sep 30) as a relevant financial option they may want to consider. Reporting only deposit products without the pre-approved offer fails."
+  },
+  "grading": {
+    "invariants_active": [
+      "S1",
+      "S2",
+      "S3",
+      "S4"
+    ],
+    "judge_gate": {
+      "behavior_class": "answer",
+      "axis_gate_rule": "reports deposit products AND surfaces the pre-approved personal loan offer (OFF-PL-7801) as a relevant option. Reporting only deposits without the pre-approved offer fails."
+    },
+    "judge_advisory": [
+      "behavior_advisory",
+      "Q_grounded",
+      "Q_complete"
+    ]
+  }
+}
