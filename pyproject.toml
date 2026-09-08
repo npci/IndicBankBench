@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "indic-bank-bench"
+version = "0.1.0"
+description = "A benchmark for evaluating the safety and reliability of language models in Indian retail banking."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "PyYAML>=6.0",
+    "openai>=1.40.0",
+    "rich>=13.0",
+    "tqdm>=4.66.3",
+    "huggingface_hub>=1.0",
+]
+
+[project.scripts]
+indicbankbench = "harness.cli:main"
+
+[tool.setuptools]
+packages = ["harness"]
+package-dir = { "" = "indicbankbench" }

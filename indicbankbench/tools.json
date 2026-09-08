@@ -1,0 +1,1216 @@
+{
+  "schema_version": "3.0-openai",
+  "global_conventions": {
+    "auth": "Handled entirely by the platform. All tools execute inside an already-authenticated customer session; no auth token is passed between tools. Every write tool still requires explicit customer confirmation in conversation before it is called.",
+    "session_context": "login_context (customer_id, full_name, date_of_birth, gender, customer_since, customer_segment, registered_mobile, registered_email, communication_address, permanent_address, kyc_status, pan_masked, preferred_language, linked_products_summary, linked_accounts, linked_products, linked_cards) is injected into the system prompt at session start. linked_products entries carry their product type (fd, rd, loan, policy). linked_products_summary is a quick-glance count by type only — full IDs still come from linked_products. date_of_birth and customer_segment (enum: regular | premium | wealth | senior_citizen | staff) are the eligibility signals for senior_citizen_rate in get_deposit_loan_rates and for personalised offers in get_products_and_offers. kyc_status (enum: verified | pending | expired) may cause write tools to fail — check the returned message field in that case. communication_address/permanent_address reflect the last verified update, not any pending address-update request submitted via raise_request. registered_mobile, registered_email, and pan_masked are masked, display-only values. All IDs passed to tools must come from login_context or from a prior tool result — never invented or assumed.",
+    "naming": "Array inputs use plural names (e.g. account_ids). All IDs are opaque tokens, never raw PANs or card numbers.",
+    "write_outcomes": "Every write tool returns status (success|failed) and message (human-readable outcome or failure reason). Tools that act directly on an account, card or deposit also return reference_id (audit reference). Tools that create a trackable service request — raise_request, request_cheque_book, request_duplicate_statement — return request_id instead; that IS their audit reference, and they do not return reference_id.",
+    "dates": "YYYY-MM-DD for dates, ISO 8601 for timestamps.",
+    "amounts": "Always positive numbers. Direction (credit/debit) is carried by a separate 'type' field, never by the sign of the amount. All amounts are in INR (Indian Rupees) unless otherwise stated.",
+    "confirmation_policy": "action_type='write' tools require explicit customer confirmation in the conversation before being called, regardless of whether prerequisites were already satisfied."
+  },
+  "tool_count": 32,
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "search_knowledge_base",
+        "description": "Searches the bank's knowledge corpus (product documents, RBI circulars, scheme details, FAQs, how-to guides) with a natural-language query. Use for policy, process, eligibility, or regulatory questions that cannot be answered from the customer's own account or product data.\n\nCategory: knowledge | Action type: read\n\nNotes:\n- Any rule or policy quoted in a response to the customer must be grounded in the snippets returned by this tool — never asserted from memory.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Natural-language question or search phrase. Example: 'premature FD penalty rules'.",
+              "examples": [
+                "premature FD penalty rules"
+              ]
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_account_balance",
+        "description": "Returns current available balance and hold/lien amount for one or more linked accounts.\n\nCategory: accounts | Action type: read",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "account_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Account IDs, all from login_context.linked_accounts.",
+              "examples": [
+                [
+                  "SB00123456"
+                ]
+              ]
+            }
+          },
+          "required": [
+            "account_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_account_details",
+        "description": "Returns account metadata — type, status, home branch, IFSC, holders, nominee, open date. Does not return balances (use get_account_balance) or transactions (use get_transaction_history).\n\nCategory: accounts | Action type: read",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "account_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Account IDs, all from login_context.linked_accounts."
+            }
+          },
+          "required": [
+            "account_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_transaction_history",
+        "description": "Returns statement entries for a single account, newest first, with date/direction/channel filters and pagination.\n\nCategory: accounts | Action type: read\n\nNotes:\n- Each returned entry includes a status field (e.g. success, pending, failed, reversed) reflecting the transaction's processing state. This status is specific to this tool's output — it is not carried into the official statement produced by request_duplicate_statement.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "account_id": {
+              "type": "string",
+              "description": "A linked account ID."
+            },
+            "from_date": {
+              "type": "string",
+              "format": "date",
+              "description": "Start of date range. No lower bound if omitted."
+            },
+            "to_date": {
+              "type": "string",
+              "format": "date",
+              "description": "End of date range. No upper bound if omitted."
+            },
+            "type": {
+              "type": "string",
+              "description": "Filter by direction.",
+              "enum": [
+                "debit",
+                "credit",
+                "all"
+              ],
+              "default": "all"
+            },
+            "channel": {
+              "type": "string",
+              "description": "Filter by payment rail.",
+              "enum": [
+                "upi",
+                "neft",
+                "imps",
+                "rtgs",
+                "atm",
+                "pos",
+                "cheque",
+                "internal",
+                "all"
+              ],
+              "default": "all"
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max rows to return.",
+              "default": 10
+            },
+            "offset": {
+              "type": "integer",
+              "description": "Rows to skip, for pagination.",
+              "default": 0
+            }
+          },
+          "required": [
+            "account_id"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_fd_details",
+        "description": "Returns full details of the customer's Fixed Deposits.\n\nCategory: deposits | Action type: read\n\nRelated tools: get_rd_details, update_deposit_renewal, get_deposit_closure_quote, close_deposit\n\nNotes:\n- Mandatory prerequisite before update_deposit_renewal and get_deposit_closure_quote — always surface the current state before proposing a change or showing a closure quote.\n- payout_account defaults to source_account at the time of booking and cannot be changed on an active deposit. The only way to redirect proceeds is the optional payout_account override at close_deposit time.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "deposit_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "FD IDs from login_context.linked_products.",
+              "examples": [
+                [
+                  "FD90011"
+                ]
+              ]
+            }
+          },
+          "required": [
+            "deposit_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_rd_details",
+        "description": "Returns full details of the customer's Recurring Deposits, including installment amount, installments paid so far, and total accumulated to date.\n\nCategory: deposits | Action type: read\n\nRelated tools: get_fd_details, update_deposit_renewal, get_deposit_closure_quote, close_deposit\n\nNotes:\n- Mandatory prerequisite before update_deposit_renewal and get_deposit_closure_quote — always surface the current state before proposing a change or showing a closure quote.\n- total_deposited is the accumulated-so-far figure; maturity_amount is the projected final figure. Do not conflate the two when answering the customer.\n- payout_account defaults to source_account at the time of booking and cannot be changed on an active deposit. The only way to redirect proceeds is the optional payout_account override at close_deposit time.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "deposit_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "RD IDs from login_context.linked_products.",
+              "examples": [
+                [
+                  "RD30022"
+                ]
+              ]
+            }
+          },
+          "required": [
+            "deposit_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_deposit_loan_rates",
+        "description": "Returns the current rate card for a deposit or loan product, by tenure/amount slab. The sole authoritative source for any rate used in a calculator or a booking — never use memory, assumption, or a customer-supplied rate.\n\nCategory: rates | Action type: read\n\nRelated tools: calculate_fd_maturity, calculate_rd_maturity, calculate_emi, create_fd, create_rd",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "product_type": {
+              "type": "string",
+              "description": "Product to fetch rates for.",
+              "enum": [
+                "fd",
+                "rd",
+                "home_loan",
+                "personal_loan",
+                "gold_loan",
+                "auto_loan",
+                "education_loan"
+              ]
+            },
+            "tenure_months": {
+              "type": "integer",
+              "description": "Filter to the slab covering this tenure. All slabs if omitted.",
+              "examples": [
+                24
+              ]
+            },
+            "amount": {
+              "type": "number",
+              "description": "Filter to the slab covering this amount. All slabs if omitted.",
+              "examples": [
+                100000
+              ]
+            }
+          },
+          "required": [
+            "product_type"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "calculate_fd_maturity",
+        "description": "Computes maturity value and interest earned for a Fixed Deposit. Compounding is quarterly by default (bank standard) and not configurable via input.\n\nCategory: calculators | Action type: calculator\n\nCall before this tool, in order:\n?. get_deposit_loan_rates — rate must be sourced here, never assumed or taken from the customer\n\nRelated tools: create_fd, get_deposit_loan_rates\n\nNotes:\n- For payout_type of monthly or quarterly, the maturity_amount returned is principal only — interest is paid out periodically during the tenure rather than accumulated to maturity.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "principal_amount": {
+              "type": "number",
+              "description": "Lump-sum principal.",
+              "examples": [
+                100000
+              ]
+            },
+            "rate": {
+              "type": "number",
+              "description": "Annual rate (%) from get_deposit_loan_rates.",
+              "examples": [
+                7.1
+              ]
+            },
+            "tenure_months": {
+              "type": "integer",
+              "description": "Tenure in months.",
+              "examples": [
+                24
+              ]
+            },
+            "payout_type": {
+              "type": "string",
+              "description": "Interest payout mode.",
+              "enum": [
+                "cumulative",
+                "monthly",
+                "quarterly"
+              ],
+              "default": "cumulative"
+            }
+          },
+          "required": [
+            "principal_amount",
+            "rate",
+            "tenure_months"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "calculate_rd_maturity",
+        "description": "Computes maturity value and interest earned for a Recurring Deposit. Interest is always paid at maturity. Compounding is quarterly by default (bank standard) and not configurable via input.\n\nCategory: calculators | Action type: calculator\n\nCall before this tool, in order:\n?. get_deposit_loan_rates — rate must be sourced here, never assumed or taken from the customer\n\nRelated tools: create_rd, get_deposit_loan_rates\n\nNotes:\n- Mandatory prerequisite before create_rd.\n- RDs have no periodic payout option — interest always accrues and is credited only at maturity, unlike FDs which support monthly/quarterly payout.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "monthly_installment": {
+              "type": "number",
+              "description": "Amount deposited each month.",
+              "examples": [
+                5000
+              ]
+            },
+            "rate": {
+              "type": "number",
+              "description": "Annual rate (%) from get_deposit_loan_rates.",
+              "examples": [
+                7.1
+              ]
+            },
+            "tenure_months": {
+              "type": "integer",
+              "description": "Tenure in months (= number of installments).",
+              "examples": [
+                24
+              ]
+            }
+          },
+          "required": [
+            "monthly_installment",
+            "rate",
+            "tenure_months"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "create_fd",
+        "description": "Books a new Fixed Deposit, debiting principal_amount from the source account as a one-time transaction.\n\nCategory: deposits | Action type: write | REQUIRES explicit customer confirmation before calling\n\nCall before this tool, in order:\n1. get_deposit_loan_rates — obtain the applicable rate based on the user's age\n2. calculate_fd_maturity — show the customer the rate and projected maturity value before booking\n3. get_account_balance — verify the source account can fund principal_amount\n\nNotes:\n- payout_account is not a separate input — proceeds to source_account and cannot be changed later on an active deposit.\n- If payout_type is non-cumulative (monthly or quarterly), maturity_instruction cannot be renew_principal_interest — interest is already being paid out periodically, so there is no accumulated interest left to renew. Only no_renewal or renew_principal are valid in that case.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "principal_amount": {
+              "type": "number",
+              "description": "Lump-sum principal to debit.",
+              "examples": [
+                100000
+              ]
+            },
+            "tenure_months": {
+              "type": "integer",
+              "description": "Tenure in months.",
+              "examples": [
+                24
+              ]
+            },
+            "source_account": {
+              "type": "string",
+              "description": "Linked account to debit once, at booking."
+            },
+            "payout_type": {
+              "type": "string",
+              "description": "Interest payout mode.",
+              "enum": [
+                "cumulative",
+                "monthly",
+                "quarterly"
+              ],
+              "default": "cumulative"
+            },
+            "maturity_instruction": {
+              "type": "string",
+              "description": "Maturity action.",
+              "enum": [
+                "no_renewal",
+                "renew_principal",
+                "renew_principal_interest"
+              ],
+              "default": "no_renewal"
+            },
+            "nominee": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Nominee's full name.",
+                  "examples": [
+                    "Rahul Sharma"
+                  ]
+                },
+                "relationship": {
+                  "type": "string",
+                  "description": "Relationship to holder.",
+                  "examples": [
+                    "Spouse"
+                  ]
+                },
+                "date_of_birth": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Nominee's date of birth."
+                },
+                "guardian_name": {
+                  "type": "string",
+                  "description": "Required if nominee's date_of_birth indicates the nominee is under 18 at the time of registration. Must be validated at call time even though not schema-enforced."
+                }
+              },
+              "required": [
+                "name",
+                "relationship",
+                "date_of_birth"
+              ],
+              "description": "Nominee to register."
+            }
+          },
+          "required": [
+            "principal_amount",
+            "tenure_months",
+            "source_account"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "create_rd",
+        "description": "Books a new Recurring Deposit. This authorizes a recurring monthly debit of monthly_installment from source_account for the entire tenure; the first installment is debited at booking. This recurring commitment must be stated explicitly when seeking customer confirmation.\n\nCategory: deposits | Action type: write | REQUIRES explicit customer confirmation before calling\n\nCall before this tool, in order:\n1. get_deposit_loan_rates — obtain the applicable rate\n2. calculate_rd_maturity — show the customer the rate and projected maturity value before booking\n3. get_account_balance — verify the source account can fund the first installment — note this does NOT verify the customer can sustain the full multi-month commitment; confirm that separately in conversation\n\nNotes:\n- payout_account is not a separate input — proceeds default to source_account and cannot be changed later on an active deposit.\n- No payout_type input — RDs always pay interest at maturity only.\n- maturity_instruction is optional and defaults to no_renewal. It can only be set here, at booking: update_deposit_renewal is FD-only, so an RD's maturity instruction cannot be changed once the RD is active.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "monthly_installment": {
+              "type": "number",
+              "description": "Amount to debit every month.",
+              "examples": [
+                5000
+              ]
+            },
+            "tenure_months": {
+              "type": "integer",
+              "description": "Tenure in months (= number of installments).",
+              "examples": [
+                24
+              ]
+            },
+            "source_account": {
+              "type": "string",
+              "description": "Linked account debited monthly for the full tenure."
+            },
+            "maturity_instruction": {
+              "type": "string",
+              "description": "Maturity action.",
+              "enum": [
+                "no_renewal",
+                "renew_principal",
+                "renew_principal_interest"
+              ],
+              "default": "no_renewal"
+            },
+            "nominee": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Nominee's full name."
+                },
+                "relationship": {
+                  "type": "string",
+                  "description": "Relationship to holder.",
+                  "examples": [
+                    "Spouse"
+                  ]
+                },
+                "date_of_birth": {
+                  "type": "string",
+                  "format": "date",
+                  "description": "Nominee's date of birth."
+                },
+                "guardian_name": {
+                  "type": "string",
+                  "description": "Required if nominee's date_of_birth indicates the nominee is under 18 at the time of registration. Must be validated at call time even though not schema-enforced."
+                }
+              },
+              "required": [
+                "name",
+                "relationship",
+                "date_of_birth"
+              ],
+              "description": "Nominee to register."
+            }
+          },
+          "required": [
+            "monthly_installment",
+            "tenure_months",
+            "source_account"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_deposit_closure_quote",
+        "description": "Quotes the payout if an FD or RD were closed today. Before maturity, interest is credited only at the card rate applicable to the period the deposit has actually run — normally lower than the rate contracted for its original tenure — and a separate premature-closure charge of penalty_rate% of principal_amount is then deducted. After maturity no charge applies (penalty_rate = 0) and the full contracted interest is paid. estimated_payout is the net figure after any charge; effective_rate is the net annual rate the customer actually earns. Read-only — does not close anything.\n\nCategory: deposits | Action type: read\n\nCall before this tool, in order:\n0. get_fd_details — surface the current FD state before showing the closure quote\n0. get_rd_details — surface the current RD state before showing the closure quote\n\nRelated tools: close_deposit, get_fd_details, get_rd_details\n\nNotes:\n- Mandatory prerequisite before close_deposit — the quote, including any penalty, must be shown to the customer before they confirm closure.\n- When penalty_rate is 0 (post-maturity closure), penalty_amount will also be 0.\n- principal_amount (number) is returned for both FD and RD quotes: for an FD it is the original principal (see get_fd_details.principal_amount); for an RD it is the sum of installments paid to date.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "deposit_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Linked FD/RD IDs to quote."
+            }
+          },
+          "required": [
+            "deposit_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "close_deposit",
+        "description": "Closes an FD or RD prematurely and credits proceeds to the payout account. For an RD, closure also permanently stops all future monthly installment debits — there is no separate way to 'pause' or 'stop' an RD without closing it.\n\nCategory: deposits | Action type: write | REQUIRES explicit customer confirmation before calling\n\nCall before this tool, in order:\n1. get_deposit_closure_quote — show the customer the payout amount and any penalty before they confirm closure",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "deposit_id": {
+              "type": "string",
+              "description": "Linked FD/RD ID to close."
+            },
+            "payout_account": {
+              "type": "string",
+              "description": "Linked account to credit.",
+              "default": "the deposit's registered payout account"
+            }
+          },
+          "required": [
+            "deposit_id"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "update_deposit_renewal",
+        "description": "Sets the maturity instruction on an active FD. Takes effect on the maturity date, not immediately.\n\nCategory: deposits | Action type: write | REQUIRES explicit customer confirmation before calling\n\nCall before this tool, in order:\n1. get_fd_details — surface the current instruction and maturity date before changing it\n\nNotes:\n- If the deposit's payout_type (from get_fd_details) is non-cumulative (monthly or quarterly), instruction cannot be set to renew_principal_interest — only no_renewal or renew_principal are valid.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "deposit_id": {
+              "type": "string",
+              "description": "Linked FD ID."
+            },
+            "instruction": {
+              "type": "string",
+              "description": "Maturity action.",
+              "enum": [
+                "no_renewal",
+                "renew_principal",
+                "renew_principal_interest"
+              ]
+            }
+          },
+          "required": [
+            "deposit_id",
+            "instruction"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_loan_details",
+        "description": "Returns current loan state: outstanding balance, EMI, rate, remaining tenure, next due date.\n\nCategory: loans | Action type: read\n\nRelated tools: get_loan_foreclosure_quote, calculate_emi",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "loan_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Loan IDs from login_context.linked_products.",
+              "examples": [
+                [
+                  "LN55003"
+                ]
+              ]
+            }
+          },
+          "required": [
+            "loan_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_loan_foreclosure_quote",
+        "description": "Quotes the total payoff to close a loan early as of a given date. Informational only — no tool in this system closes a loan.\n\nCategory: loans | Action type: read\n\nRelated tools: get_loan_details\n\nNotes:\n- If a customer asks to 'pause', 'stop', or 'reduce' EMIs, use this tool to show foreclosure cost, since no such capability exists in this system.\n- No tool in this system closes a loan. After presenting the quote, direct the customer to raise_request or a branch visit to proceed with foreclosure.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "loan_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Linked loan IDs to quote."
+            },
+            "as_of_date": {
+              "type": "string",
+              "format": "date",
+              "description": "Value date for the quote. Defaults to the current server date; a future date may be passed to plan ahead.",
+              "default": "today"
+            }
+          },
+          "required": [
+            "loan_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "calculate_emi",
+        "description": "Computes the fixed monthly EMI, total interest, total repayment, and full amortisation schedule for a loan.\n\nCategory: calculators | Action type: calculator\n\nCall before this tool, in order:\n?. get_deposit_loan_rates — rate should be sourced here for actual loan bookings; a customer-supplied rate is permitted only for hypothetical/exploratory 'what-if' calculations, not for use in an actual transaction.\n\nNotes:\n- Interest and principal split changes every month even though the emi total is fixed — early installments are interest-heavy, later ones principal-heavy, because interest is charged on the shrinking outstanding balance.\n- closing_balance at the last installment should be 0.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "principal": {
+              "type": "number",
+              "description": "Loan amount.",
+              "examples": [
+                500000
+              ]
+            },
+            "rate": {
+              "type": "number",
+              "description": "Annual rate (%).",
+              "examples": [
+                9.5
+              ]
+            },
+            "tenure_months": {
+              "type": "integer",
+              "description": "Tenure in months.",
+              "examples": [
+                60
+              ]
+            }
+          },
+          "required": [
+            "principal",
+            "rate",
+            "tenure_months"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_gold_rate",
+        "description": "Returns today's gold rate per gram for a given purity. Sole valid source for gold_rate_per_gram in calculate_gold_loan_ltv — never assume, recall, or accept this value from customer input.\n\nCategory: loans | Action type: read\n\nRelated tools: calculate_gold_loan_ltv",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "purity_karat": {
+              "type": "integer",
+              "description": "Must match the purity of the gold being pledged.",
+              "enum": [
+                18,
+                22,
+                24
+              ]
+            }
+          },
+          "required": [
+            "purity_karat"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "calculate_gold_loan_ltv",
+        "description": "Values gold collateral (grams x rate) and applies the bank's current Loan-to-Value cap to compute the maximum eligible loan amount. The LTV cap itself is applied internally by the backend, not supplied by the caller.\n\nCategory: calculators | Action type: calculator\n\nCall before this tool, in order:\n1. get_gold_rate — gold_rate_per_gram must come from a fresh call at the same purity — never assumed or customer-supplied\n\nRelated tools: get_gold_rate\n\nNotes:\n- Always pass the rate_per_gram returned by get_gold_rate for the same purity_karat — this links the calculation to a verifiable rate source, which is why the rate must be supplied by the caller rather than fetched internally.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "gold_grams": {
+              "type": "number",
+              "description": "Weight of gold in grams.",
+              "examples": [
+                50
+              ]
+            },
+            "purity_karat": {
+              "type": "integer",
+              "description": "Must match the purity used in the get_gold_rate call.",
+              "enum": [
+                18,
+                22,
+                24
+              ]
+            },
+            "gold_rate_per_gram": {
+              "type": "number",
+              "description": "Rate from get_gold_rate for the same purity.",
+              "examples": [
+                6200
+              ]
+            }
+          },
+          "required": [
+            "gold_grams",
+            "purity_karat",
+            "gold_rate_per_gram"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_card_details",
+        "description": "Returns card metadata, status, credit/available limits, and per-channel usage controls. Use to diagnose card declines.\n\nCategory: cards | Action type: read\n\nRelated tools: set_card_controls, toggle_card_freeze, block_card\n\nNotes:\n- Mandatory prerequisite before set_card_controls — surface current settings before proposing changes.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "card_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Tokenised card IDs from login_context.linked_cards.",
+              "examples": [
+                [
+                  "CARD10021"
+                ]
+              ]
+            }
+          },
+          "required": [
+            "card_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "toggle_card_freeze",
+        "description": "Temporarily freezes or unfreezes a card. Reversible at any time. Use freeze when a card is misplaced but may be found.\nFor loss, theft, fraud, or damage use block_card instead, which is permanent.\n\nCategory: cards | Action type: write | REQUIRES explicit customer confirmation before calling\n\nCall  get_card_details before this tool\n\nNotes:\n- Cannot unfreeze a card whose status is blocked or expired — only active/frozen cards are valid targets.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "card_id": {
+              "type": "string",
+              "description": "Tokenised card ID."
+            },
+            "state": {
+              "type": "string",
+              "description": "Desired state.",
+              "enum": [
+                "freeze",
+                "unfreeze"
+              ]
+            }
+          },
+          "required": [
+            "card_id",
+            "state"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "block_card",
+        "description": "Permanently and irreversibly blocks a card. Confirm the customer understands this before calling. For fraud, theft, or loss, block immediately. For damaged cards, block to enable a replacement request. A replacement can be requested via raise_request.\n\nCategory: cards | Action type: write | REQUIRES explicit customer confirmation before calling and also ask for a reason to block the card\n\nCall get_card_details before this tool",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "card_id": {
+              "type": "string",
+              "description": "Tokenised card ID."
+            },
+            "reason": {
+              "type": "string",
+              "description": "Reason for blocking.",
+              "enum": [
+                "lost",
+                "stolen",
+                "fraud",
+                "damaged"
+              ]
+            }
+          },
+          "required": [
+            "card_id",
+            "reason"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "set_card_controls",
+        "description": "Updates per-channel card controls. Each channel (atm, online, pos) has independent domestic and international enable/limit settings. Only provided fields change; omitted fields keep their current values.\n\nCategory: cards | Action type: write | REQUIRES explicit customer confirmation before calling\n\nCall before this tool, in order:\n1. get_card_details — provide current control settings before proposing changes\n\nNotes:\n- For enabling/disabling the channel. Only call the tool if the current and requested status is different.\n- For changing limits, follow:\n-- Check if the channel is enabled. \n-- The requested limit must be less than the credit_limit.\n-- The requested limit should not be equal to the current limit\n-- The requested limit should not be negative\n\n- For requests containing multiple parameters in a channel/channels:\n-- Send the same control dictionary with the requested changes.\n\n- Do not make changes to a channel's enable/disable status and daily limit in the same tool call.\n- If required do sequential tool calls to fulfill the user's request.\n- The channel objects (atm / online / pos) are optional in the schema but they carry the request: omitting all of them changes nothing. If the customer has not made clear which channel, which region (domestic/international), or what value they want, ask — never guess a channel or invent a limit to avoid asking.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "card_id": {
+              "type": "string",
+              "description": "Tokenised card ID."
+            },
+            "atm": {
+              "type": "object",
+              "properties": {
+                "domestic": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "daily_limit": {
+                      "type": "number"
+                    }
+                  },
+                  "description": "Domestic transactions on this channel."
+                },
+                "international": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "daily_limit": {
+                      "type": "number"
+                    }
+                  },
+                  "description": "International transactions on this channel."
+                }
+              },
+              "description": "ATM cash withdrawal controls. Omit to leave unchanged."
+            },
+            "online": {
+              "type": "object",
+              "properties": {
+                "domestic": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "daily_limit": {
+                      "type": "number"
+                    }
+                  },
+                  "description": "Domestic transactions on this channel."
+                },
+                "international": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "daily_limit": {
+                      "type": "number"
+                    }
+                  },
+                  "description": "International transactions on this channel."
+                }
+              },
+              "description": "Online (card-not-present) payment controls. Omit to leave unchanged."
+            },
+            "pos": {
+              "type": "object",
+              "properties": {
+                "domestic": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "daily_limit": {
+                      "type": "number"
+                    }
+                  },
+                  "description": "Domestic transactions on this channel."
+                },
+                "international": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "daily_limit": {
+                      "type": "number"
+                    }
+                  },
+                  "description": "International transactions on this channel."
+                }
+              },
+              "description": "In-store POS transaction controls. Omit to leave unchanged."
+            }
+          },
+          "required": [
+            "card_id"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "show_mandates",
+        "description": "Lists mandates on the customer's profile. Recurring subscription debits are mandates, not card transactions — look them up here, not via card tools.\n\nCategory: mandates | Action type: read\n\nNotes:If a customer asks about a mandate or wants it cancelled, paused or resumed, inform them of this limitation and direct them to raise_request or a branch visit.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "account_id": {
+              "type": "string",
+              "description": "Filter to mandates on one linked account. All accounts if omitted."
+            },
+            "status": {
+              "type": "string",
+              "description": "Filter by status.",
+              "enum": [
+                "active",
+                "paused",
+                "cancelled",
+                "all"
+              ],
+              "default": "all"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "stop_cheque_payment",
+        "description": "Places a stop-payment instruction on one or more cheques issued from an account. Only affects cheques that have not already cleared; per-cheque outcomes are returned individually.\n\nCategory: cheques | Action type: write | REQUIRES explicit customer confirmation before calling\n\nNotes:\n- Cheque clearing status is checked in the backend at call time, not supplied by the caller — a cheque that has already cleared is returned with a failed per-cheque outcome rather than being blocked pre-emptively by the model.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "account_id": {
+              "type": "string",
+              "description": "Linked account the cheques were issued from."
+            },
+            "cheque_numbers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Cheque numbers to stop.",
+              "examples": [
+                [
+                  "100234",
+                  "100235"
+                ]
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "description": "Reason for stopping.",
+              "enum": [
+                "lost",
+                "dispute",
+                "other"
+              ]
+            }
+          },
+          "required": [
+            "account_id",
+            "cheque_numbers"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "request_cheque_book",
+        "description": "Orders a new cheque book for a savings or current account.\n\nCategory: service_requests | Action type: write | REQUIRES explicit customer confirmation before calling",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "account_id": {
+              "type": "string",
+              "description": "Linked savings/current account."
+            },
+            "leaves": {
+              "type": "integer",
+              "description": "Number of cheque leaves.",
+              "default": 25
+            }
+          },
+          "required": [
+            "account_id"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "request_duplicate_statement",
+        "description": "Orders an official duplicate account statement for a date range, delivered by email. Use this — not raw get_transaction_history output\n\nCategory: service_requests | Action type: write | REQUIRES explicit customer confirmation before calling\n\nRelated tools: get_transaction_history, get_request_status\n\nNotes:\n- The statement does not include the per-entry status field returned by get_transaction_history — it lists only cleared/posted transactions.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "account_id": {
+              "type": "string",
+              "description": "Linked account ID."
+            },
+            "from_date": {
+              "type": "string",
+              "format": "date",
+              "description": "Start of covered period."
+            },
+            "to_date": {
+              "type": "string",
+              "format": "date",
+              "description": "End of covered period."
+            },
+            "delivery_mode": {
+              "type": "string",
+              "description": "Delivery method.",
+              "enum": [
+                "email"
+              ],
+              "default": "email"
+            }
+          },
+          "required": [
+            "account_id",
+            "from_date",
+            "to_date"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "raise_request",
+        "description": "Registers a complaint or general service request — the single escalation channel for disputes, service issues, and any action no other tool can perform (e.g. card replacement after block_card, insurance premium/claim needs, premature-closure follow-up beyond close_deposit, postal address update).\n\nCategory: service_requests | Action type: write | REQUIRES explicit customer confirmation before calling\n\nCall before this tool, in order:\n1. get_transaction_history — locate the disputed transaction and pass its reference_id as related_transaction_id\n\nRelated tools: get_transaction_history, get_request_status, get_all_requests, block_card\n\nNotes:\n- unauthorized_debit requests are treated as urgent by default.\n- Never promise a specific outcome, e.g. a fee waiver — the request is routed for review, not resolved on the spot.\n- related_transaction_id is required when category is failed_transaction or unauthorized_debit — this is not enforced at the schema level and must be validated at call time.\n- This system has no tool to update a customer's email, phone number, or postal address. Direct customers requesting any of these to raise_request.\n- category has no default and must always be explicitly chosen — pick the closest fit rather than a catch-all; there is no general_query option.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "description": "What happened / what is needed, with enough context to action it."
+            },
+            "category": {
+              "type": "string",
+              "description": "Best-fit category. Required — no default.",
+              "enum": [
+                "failed_transaction",
+                "unauthorized_debit",
+                "service_quality",
+                "app_issue",
+                "charges_dispute",
+                "other"
+              ]
+            },
+            "related_transaction_id": {
+              "type": "string",
+              "description": "reference_id of the disputed transaction from get_transaction_history. Required for failed_transaction and unauthorized_debit."
+            },
+            "account_id": {
+              "type": "string",
+              "description": "Related linked account, if applicable — helps routing."
+            }
+          },
+          "required": [
+            "description",
+            "category"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_request_status",
+        "description": "Returns the current status of a previously raised service request. Use when a customer follows up on an earlier request, before raising a duplicate.\n\nCategory: service_requests | Action type: read\n\nRelated tools: get_all_requests",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "request_id": {
+              "type": "string",
+              "description": "Service request ID returned by any request tool."
+            }
+          },
+          "required": [
+            "request_id"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_all_requests",
+        "description": "Lists the customer's service requests (raised via raise_request, request_cheque_book, request_duplicate_statement, or stop_cheque_payment), most recent first. Use when a customer asks about their outstanding or past requests generally, without a specific request_id — use get_request_status instead once a specific request_id is known.\n\nCategory: service_requests | Action type: read\n\nRelated tools: get_request_status, raise_request",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Filter by status.",
+              "enum": [
+                "open",
+                "in_progress",
+                "resolved",
+                "rejected",
+                "all"
+              ],
+              "default": "all"
+            },
+            "category": {
+              "type": "string",
+              "description": "Filter by request category. All categories if omitted.",
+              "enum": [
+                "cheque_book",
+                "duplicate_statement",
+                "stop_cheque_payment",
+                "failed_transaction",
+                "unauthorized_debit",
+                "service_quality",
+                "app_issue",
+                "charges_dispute",
+                "other"
+              ]
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Max rows to return.",
+              "default": 10
+            },
+            "offset": {
+              "type": "integer",
+              "description": "Rows to skip, for pagination.",
+              "default": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_insurance_details",
+        "description": "Returns policy details for the customer's bancassurance policies. No premium-payment or claim tools exist in this system — route those needs via raise_request.\n\nCategory: insurance | Action type: read\n\nRelated tools: raise_request",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "policy_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Policy IDs from login_context.linked_products.",
+              "examples": [
+                [
+                  "POL778812"
+                ]
+              ]
+            }
+          },
+          "required": [
+            "policy_ids"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "get_products_and_offers",
+        "description": "Returns a combined list of the bank's products and the customer's personalised offers, optionally filtered by type. You represent the bank, not an independent advisor — proactively call this and recommend relevant products/offers whenever a natural opening appears in the conversation (e.g. after closing a deposit, suggest reinvestment options; after discussing a loan or card, mention relevant pre-approved offers), not only when the customer explicitly asks 'what do you offer'.\n\nCategory: catalog | Action type: read\n\nRelated tools: get_deposit_loan_rates\n\nNotes:\n- You act on behalf of the bank commercially — default toward recommending the bank's own products/offers over generic advice, and look for a relevant moment to surface one in most conversations, even ones that didn't start as a product inquiry.\n- Being bank-favouring does not mean being inaccurate: never state an offer is guaranteed or already approved, never overstate benefits, and never quote interest rates from this catalog — always use get_deposit_loan_rates as the authoritative source.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "description": "Filter by entry type.",
+              "enum": [
+                "deposit",
+                "loan",
+                "card",
+                "insurance",
+                "offer",
+                "all"
+              ],
+              "default": "all"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

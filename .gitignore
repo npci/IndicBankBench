@@ -1,0 +1,25 @@
+.env
+.venv/
+.claude/
+.vscode/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# setuptools build output. Without this a stale build/lib/ copy of the harness
+# lingers in the tree and gets published alongside the real one.
+build/
+dist/
+indicbankbench/results/
+
+# The case bank, fetched from the dataset repo (see README). ./data is the location the
+# docs tell you to download into, so it must never be committed back into the harness repo.
+data/
+
+# Generated local review and scan-report artifacts; never include in source scans
+# or in a published repo (they embed internal paths and unremediated CVE detail).
+output/
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store
