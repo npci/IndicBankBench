@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="940" height="590" viewBox="0 0 940 590" role="img" aria-labelledby="title desc">
+  <title id="title">IndicBankBench strict pass cubed versus pass at three</title>
+  <desc id="desc">A grouped horizontal bar chart comparing strict pass cubed and pass at three for eight models.</desc>
+  <rect width="940" height="590" fill="#ffffff"/>
+  <style>
+    text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+    .title { font-size: 25px; font-weight: 700; }
+    .sub { font-size: 14px; fill: #526078; }
+    .axis { font-size: 12px; fill: #667085; }
+    .label { font-size: 14px; font-weight: 600; }
+    .value { font-size: 12px; font-weight: 700; }
+  </style>
+  <text x="470" y="48" text-anchor="middle" class="title">Strict reliability versus at-least-once success</text>
+  <line x1="310" y1="100" x2="850" y2="100" stroke="#d0d5dd" stroke-width="1"/>
+  <g class="axis" text-anchor="middle">
+    <text x="310" y="85">0%</text><text x="378" y="85">10%</text><text x="445" y="85">20%</text><text x="513" y="85">30%</text><text x="580" y="85">40%</text><text x="648" y="85">50%</text><text x="715" y="85">60%</text><text x="783" y="85">70%</text><text x="850" y="85">80%</text>
+  </g>
+  <g stroke="#eef1f5" stroke-width="1">
+    <line x1="310" y1="100" x2="310" y2="520"/><line x1="378" y1="100" x2="378" y2="520"/><line x1="445" y1="100" x2="445" y2="520"/><line x1="513" y1="100" x2="513" y2="520"/><line x1="580" y1="100" x2="580" y2="520"/><line x1="648" y1="100" x2="648" y2="520"/><line x1="715" y1="100" x2="715" y2="520"/><line x1="783" y1="100" x2="783" y2="520"/><line x1="850" y1="100" x2="850" y2="520"/>
+  </g>
+  <g>
+    <text x="288" y="130" text-anchor="end" class="label">DeepSeek-V4-Pro-0813</text><rect x="310" y="111" width="393" height="16" rx="3" fill="#185fa5"/><text x="711" y="124" class="value">58.2%</text><rect x="310" y="135" width="485" height="16" rx="3" fill="#78addb"/><text x="803" y="148" class="value">71.8%</text>
+    <text x="288" y="180" text-anchor="end" class="label">Qwen3.8-2.4T-A95B</text><rect x="310" y="161" width="390" height="16" rx="3" fill="#185fa5"/><text x="708" y="174" class="value">57.8%</text><rect x="310" y="185" width="499" height="16" rx="3" fill="#78addb"/><text x="817" y="198" class="value">74.0%</text>
+    <text x="288" y="230" text-anchor="end" class="label">GLM-5.3-Flash</text><rect x="310" y="211" width="383" height="16" rx="3" fill="#185fa5"/><text x="701" y="224" class="value">56.8%</text><rect x="310" y="235" width="502" height="16" rx="3" fill="#78addb"/><text x="820" y="248" class="value">74.3%</text>
+    <text x="288" y="280" text-anchor="end" class="label">DeepSeek-V4-Flash-0731</text><rect x="310" y="261" width="366" height="16" rx="3" fill="#185fa5"/><text x="684" y="274" class="value">54.2%</text><rect x="310" y="285" width="490" height="16" rx="3" fill="#78addb"/><text x="808" y="298" class="value">72.6%</text>
+    <text x="288" y="330" text-anchor="end" class="label">Gemma 4 31B IT</text><rect x="310" y="311" width="365" height="16" rx="3" fill="#185fa5"/><text x="683" y="324" class="value">54.1%</text><rect x="310" y="335" width="443" height="16" rx="3" fill="#78addb"/><text x="761" y="348" class="value">65.7%</text>
+    <text x="288" y="380" text-anchor="end" class="label">Gemma 4 26B A4B IT</text><rect x="310" y="361" width="342" height="16" rx="3" fill="#185fa5"/><text x="660" y="374" class="value">50.7%</text><rect x="310" y="385" width="449" height="16" rx="3" fill="#78addb"/><text x="767" y="398" class="value">66.5%</text>
+    <text x="288" y="430" text-anchor="end" class="label">MiniMax M3</text><rect x="310" y="411" width="325" height="16" rx="3" fill="#185fa5"/><text x="643" y="424" class="value">48.2%</text><rect x="310" y="435" width="470" height="16" rx="3" fill="#78addb"/><text x="788" y="448" class="value">69.6%</text>
+    <text x="288" y="480" text-anchor="end" class="label">Gemma 4 E4B IT</text><rect x="310" y="461" width="295" height="16" rx="3" fill="#185fa5"/><text x="613" y="474" class="value">43.7%</text><rect x="310" y="485" width="406" height="16" rx="3" fill="#78addb"/><text x="724" y="498" class="value">60.1%</text>
+  </g>
+  <rect x="160" y="540" width="15" height="15" rx="3" fill="#185fa5"/><text x="184" y="553" class="sub">Strict pass³ — passed all 3 trials</text>
+  <rect x="530" y="540" width="15" height="15" rx="3" fill="#78addb"/><text x="554" y="553" class="sub">pass@3 — passed at least once</text>
+</svg>

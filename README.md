@@ -1,6 +1,6 @@
 # IndicBankBench — A Benchmark for Evaluating the Safety and Reliability of Language Models in Indian Retail Banking
 
-[Dataset](https://huggingface.co/datasets/NPCI/IndicBankBench) · [Documentation](docs/ARCHITECTURE.md) · [Run guide](HOW_TO_RUN.md)
+[🤗 Dataset](https://huggingface.co/datasets/NPCI/IndicBankBench) · [📚 Documentation](docs/ARCHITECTURE.md) · [▶️ Run guide](HOW_TO_RUN.md)
 
 IndicBankBench is a benchmark for evaluating safe and reliable language models in Indian retail
 banking. Across 799 synthetic multi-turn cases, it measures whether a model can ground its
@@ -12,6 +12,15 @@ risky, and out-of-scope requests.
 | Grounded | Safe | Reliable |
 | --- | --- | --- |
 | Uses the customer and tool context provided | Takes only permitted actions and protects sensitive details | Resolves multi-turn requests with the right answer, clarification, or refusal |
+
+## Reliability comparison across models
+
+![Strict pass³ and pass@3 across the eight models evaluated in the paper.](docs/assets/model_comparisons.svg)
+
+Our evaluation covers eight open-source models from five model families, with 2,397 trajectories
+evaluated per model. Across every model, requiring success on all three trials lowers results by
+12–21 percentage points relative to at-least-once success, showing why single-run scores can
+overstate reliability in banking workflows.
 
 ## Quickstart
 
