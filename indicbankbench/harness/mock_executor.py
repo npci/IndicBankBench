@@ -18,6 +18,26 @@ def _filter_records(records, arguments, raw_tool_def):
         # "all" means no filter.
         if arg_val == "all":
             continue
+
+        # >>> CHANGED (start): range filters for from_X / to_X arguments <<<
+        # Previously from_date / to_date were silently skipped by the
+        # "field not in sample_keys" check below, so date ranges were never
+        # applied. Now `from_<field>` / `to_<field>` map to an inclusive bound
+        # on record field `<field>` (e.g. from_date -> record["date"]).
+        # Only the date part (first 10 chars, YYYY-MM-DD) is compared, since
+        # record dates are ISO timestamps like "2026-06-28T16:45:00".
+        # This block must stay ABOVE the field lookup below.
+        if arg_key.startswith(("from_", "to_")):
+            range_field = arg_key.split("_", 1)[1]
+            if range_field in sample_keys:
+                bound = str(arg_val)[:10]
+                if arg_key.startswith("from_"):
+                    filtered = [r for r in filtered if str(r.get(range_field, ""))[:10] >= bound]
+                else:
+                    filtered = [r for r in filtered if str(r.get(range_field, ""))[:10] <= bound]
+                continue
+        # >>> CHANGED (end) <<<
+
         field = arg_key
         if field not in sample_keys and field.endswith("ids"):
             singular = field[:-1]
@@ -182,7 +202,7 @@ def execute(tool_name, arguments, case, raw_tools_by_name, state=None):
         if raw_tool_def:
             input_names = {i["name"] for i in raw_tool_def.get("inputs", [])}
             output_names = {o["name"] for o in raw_tool_def.get("outputs", [])}
-            for key in input_names & output_names:
+            for key in input_names & output_names: 
                 if key in (arguments or {}) and key not in output:
                     output[key] = arguments[key]
         return json.dumps(output)
