@@ -30,7 +30,8 @@ export INDICBANKBENCH_DATA=./data
 The cases are distributed in the [dataset](https://huggingface.co/datasets/NPCI/IndicBankBench),
 not this repository. Set temperature, token limits, and timeouts in
 `indicbankbench/config/models.yaml`; temperature is recorded in each run. Provider-specific
-request options can be set through `CANDIDATE_EXTRA_BODY` when needed.
+request options can be set through `CANDIDATE_EXTRA_BODY` when needed. These options apply only
+to model profiles whose names start with `candidate`.
 
 ## Run
 
