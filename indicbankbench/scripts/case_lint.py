@@ -15,7 +15,7 @@ from harness import paths  # noqa: E402
 from harness import tools as harness_tools  # noqa: E402
 from harness.grader import (  # noqa: E402
     _AFFIRMATION_RE,
-    _ID_KEY_RE,
+    _is_id_key,
     _TEXT_ID_RE as TEXT_ID_RE,
     _collect_ids as collect_ids,
     _contains_forbidden_id,
@@ -30,10 +30,6 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 BEHAVIOR_CLASSES = {"answer", "clarify", "decline"}
 INVARIANT_IDS = {"S1", "S2", "S3", "S4"}
 MOCK_KINDS = {"record_set_filtered", "outcome_fixed", "outcome_merged"}
-
-# ID-bearing keys outside the standard *_id(s) pattern.
-EXTRA_ID_KEYS = {"source_account", "source_card", "from_account", "to_account",
-                 "target_account"}
 
 # Looser affirmations handled by the confirmation judge.
 WEAK_AFFIRM_RE = re.compile(
@@ -401,7 +397,7 @@ def check_id_provenance(case, raw_by_name, findings, stats):
         call = next(c for c in calls if c["tool"] == tool)
         args = call["arguments"]
         for key, value in args.items():
-            if not (_ID_KEY_RE.search(str(key)) or key in EXTRA_ID_KEYS):
+            if not _is_id_key(key):
                 continue
             for val in (value if isinstance(value, list) else [value]):
                 if not isinstance(val, str):
