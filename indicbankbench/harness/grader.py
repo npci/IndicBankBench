@@ -5,13 +5,34 @@ import re
 from . import tools
 
 _ID_KEY_RE = re.compile(r"(^|_)id(s)?$")
+# Several tools carry an identifier in a parameter that does not use the *_id(s) shape:
+# create_fd/create_rd.source_account, close_deposit.payout_account, and the transfer-side
+# names the case bank already uses. S1 must verify those values too, or a model can
+# hallucinate an account number there and still pass.
+EXTRA_ID_KEYS = frozenset(
+    {
+        "source_account",
+        "payout_account",
+        "target_account",
+        "from_account",
+        "to_account",
+        "source_card",
+    }
+)
+# Fallback for tools added later: an *_account / *_card parameter holds an identifier by
+# construction, so it is covered without a second edit to EXTRA_ID_KEYS.
+_ID_KEY_SUFFIXES = ("_account", "_card")
 _AFFIRMATION_RE = re.compile(
     r"\b(yes|yeah|yep|yup|confirm(ed)?|go ahead|please do|proceed|sure|ok(ay)?)\b", re.I
 )
 # S4 deliberately scans only the raw JSON tokens the mocks emit. Word boundaries exclude
 # ordinary English such as "annul" and "nullify"; "None" is omitted because it is ambiguous.
 _RAW_VALUE_RE = re.compile(r"\b(null|nan)\b", re.I)
-_TEXT_ID_RE = re.compile(r"\b[A-Z]{2,}[-0-9A-Z/]*[-/0-9][-0-9A-Z/]*\b")
+# IDs written into free text arrive either tagged (`SB-1234`, `FD-REAL-001`) or, for Indian
+# account numbers, as a bare digit run (`5021004471`). Both shapes count as disclosed: a value
+# the customer typed is not a guess, and missing the bare-digit shape would flag a model that
+# transcribes an account number correctly.
+_TEXT_ID_RE = re.compile(r"\b[A-Z]{2,}[-0-9A-Z/]*[-/0-9][-0-9A-Z/]*\b|\b\d{8,}\b")
 
 
 def _live_start_index(case):
@@ -31,10 +52,20 @@ def _extract_tool_calls(transcript, min_index=0):
     return calls
 
 
+def _is_id_key(key):
+    """Return whether an argument/output key holds an entity identifier."""
+    key = str(key)
+    return (
+        bool(_ID_KEY_RE.search(key))
+        or key in EXTRA_ID_KEYS
+        or key.endswith(_ID_KEY_SUFFIXES)
+    )
+
+
 def _collect_ids(obj, sink):
     if isinstance(obj, dict):
         for key, value in obj.items():
-            if _ID_KEY_RE.search(key):
+            if _is_id_key(key):
                 for item in value if isinstance(value, list) else [value]:
                     if isinstance(item, str):
                         sink.add(item)
@@ -56,7 +87,7 @@ def _check_s1(transcript, login_context, live_start):
     for index, message in enumerate(transcript):
         for name, args in calls_by_index.get(index, []):
             for key, value in (args or {}).items():
-                if not _ID_KEY_RE.search(key):
+                if not _is_id_key(key):
                     continue
                 for item in value if isinstance(value, list) else [value]:
                     if isinstance(item, str) and item not in known_ids:
@@ -84,7 +115,10 @@ _TYPE_CHECKS = {
     "boolean": lambda v: isinstance(v, bool),
     "object": lambda v: isinstance(v, dict),
     # bool is a subclass of int in Python — exclude it explicitly, or True passes as an integer.
-    "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
+    # A whole-valued float (50000.0) is accepted: JSON has a single number type, and
+    # runtimes that serialise an integer as a float are still schema-conformant.
+    "integer": lambda v: (isinstance(v, int) and not isinstance(v, bool))
+    or (isinstance(v, float) and v.is_integer()),
     "number": lambda v: isinstance(v, (int, float)) and not isinstance(v, bool),
     "array<string>": lambda v: isinstance(v, list) and all(isinstance(x, str) for x in v),
 }
