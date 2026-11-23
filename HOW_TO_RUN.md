@@ -29,9 +29,17 @@ export INDICBANKBENCH_DATA=./data
 
 The cases are distributed in the [dataset](https://huggingface.co/datasets/NPCI/IndicBankBench),
 not this repository. Set temperature, token limits, and timeouts in
-`indicbankbench/config/models.yaml`; temperature is recorded in each run. Provider-specific
-request options can be set through `CANDIDATE_EXTRA_BODY` when needed. These options apply only
-to model profiles whose names start with `candidate`.
+`indicbankbench/config/models.yaml`; temperature is recorded in each run.
+
+To pass provider-specific request options, set `CANDIDATE_EXTRA_BODY` to a JSON object in `.env`.
+For example, if your candidate endpoint accepts `enable_thinking`, add:
+
+```dotenv
+CANDIDATE_EXTRA_BODY='{"enable_thinking": false}'
+```
+
+The harness forwards these options only to model profiles whose names start with `candidate`.
+It ignores malformed JSON and values that are not JSON objects.
 
 ## Run
 
