@@ -103,11 +103,13 @@ class ModelClient:
         if tools:
             kwargs["tools"] = tools
         extra_raw = os.environ.get("CANDIDATE_EXTRA_BODY")
-        if extra_raw:
+        if extra_raw and profile_name.startswith("candidate"):
             try:
-                kwargs["extra_body"] = json.loads(extra_raw)
+                extra_body = json.loads(extra_raw)
             except json.JSONDecodeError:
-                pass
+                extra_body = None
+            if isinstance(extra_body, dict):
+                kwargs["extra_body"] = extra_body
         response = client.chat.completions.create(**kwargs)
         msg = response.choices[0].message
         tool_calls = None
