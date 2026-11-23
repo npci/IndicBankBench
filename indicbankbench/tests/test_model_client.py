@@ -53,6 +53,12 @@ class CandidateExtraBodyIsolation(unittest.TestCase):
         request = self._request("candidate_default", "not valid JSON")
         self.assertNotIn("extra_body", request)
 
+    def test_non_object_candidate_json_is_ignored(self):
+        for extra_raw in ('["unexpected"]', '"unexpected"', '42', 'true', 'null'):
+            with self.subTest(extra_raw=extra_raw):
+                request = self._request("candidate_default", extra_raw)
+                self.assertNotIn("extra_body", request)
+
     def test_empty_candidate_options_are_omitted(self):
         request = self._request("candidate_default", "")
         self.assertNotIn("extra_body", request)
