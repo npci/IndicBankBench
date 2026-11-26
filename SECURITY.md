@@ -16,6 +16,7 @@ Please include a description of the issue, its impact, and steps to reproduce.
 
 | Version | Supported |
 | ------- | --------- |
+| 0.2.x   | yes       |
 | 0.1.x   | yes       |
 
 ## Scope

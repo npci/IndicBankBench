@@ -37,6 +37,10 @@ per model. Strict pass³, which requires success on all three trials, ranges fro
 points across these models. The gap shows why occasional success and repeatable success should be
 read separately.
 
+These scores come from the 0.1 harness. Version 0.2.0 changes grading (see the
+[changelog](CHANGELOG.md)), so its scores are not directly comparable with them. Updated reference
+results will be published with the next stable release.
+
 ## Quickstart
 
 ```bash

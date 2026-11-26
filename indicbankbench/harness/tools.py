@@ -64,9 +64,8 @@ def load_tool_definitions(path=None, model_schemas_path=None):
     # Reject a truncated tool specification.
     if len(data["tools"]) < 30:
         raise ContractMismatch(
-            f"{path.name} declares only {len(data['tools'])} tools — expected ~32; refusing to "
-            f"load a near-empty spec, which would make every test that loops over it pass "
-            f"vacuously")
+            f"{path.name} declares only {len(data['tools'])} tools; "
+            f"the bundled specification requires at least 30")
 
     spec_names = {t["name"] for t in data["tools"]}
     if spec_names != set(model_schemas):

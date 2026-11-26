@@ -16,6 +16,8 @@ source .venv/bin/activate
 python -m pip install -e .
 ```
 
+Keep `-e`: the harness reads its tools, prompts and settings from this clone.
+
 Copy `.env.example` to `.env` and set `CANDIDATE_*` for the model under test and `JUDGE_*` for
 the response judge. Both endpoints must be OpenAI-compatible; the candidate must support tool
 calls. They may use the same provider and API key. Use `EMPTY` only for an unauthenticated local
@@ -29,8 +31,19 @@ export INDICBANKBENCH_DATA=./data
 
 The cases are distributed in the [dataset](https://huggingface.co/datasets/NPCI/IndicBankBench),
 not this repository. Set temperature, token limits, and timeouts in
-`indicbankbench/config/models.yaml`; temperature is recorded in each run. Provider-specific
-request options can be set through `CANDIDATE_EXTRA_BODY` when needed.
+`indicbankbench/config/models.yaml`; temperature is recorded in each run.
+
+To pass provider-specific request options, set `CANDIDATE_EXTRA_BODY` to a JSON object in `.env`.
+For example, if your candidate endpoint accepts `enable_thinking`, add:
+
+```dotenv
+CANDIDATE_EXTRA_BODY='{"enable_thinking": false}'
+```
+
+The harness forwards these options only to model profiles whose names start with `candidate`,
+never to the judge. `JUDGE_EXTRA_BODY` works the same way for judge requests only, for example
+for a thinking judge that must return plain JSON. Both are recorded in `run.json`. The harness
+ignores malformed JSON and values that are not JSON objects, with a warning.
 
 ## Run
 
@@ -42,10 +55,17 @@ By default, the harness runs the full case bank three times. A case passes the s
 only if all three trials pass. Useful flags include `--passes`, `--cases`, `--concurrency`,
 `--prompt`, and `--fresh`; use `python -m harness.cli run --help` for their arguments.
 
+If an endpoint answers with an error instead of a completion, the harness retries and then records
+the trial as ERROR. It has no score and counts as not passed, and the report says how many trials
+have none; re-run the same run ID to fill them in. An empty reply is graded as the model's answer.
+
+If the judge fails after the candidate has answered, the answer is judged when you resume the run
+with the same settings.
+
 Reusing a run ID resumes missing trials and reuses scored trials whose case file, candidate model
-ID, temperature, seed, judge model ID, and prompt hash still match. Endpoint, token-limit, and
-provider-specific reasoning changes are not included in that cache check. Use a new run ID or
-`--fresh` for those changes.
+ID, sampling settings (temperature, top_p, max_tokens, seed, request options), judge model ID and
+request options, prompt hash, harness code and tool definitions still match. Endpoint changes are
+not included in that cache check; use a new run ID or `--fresh` for those.
 
 ## Read the results
 
@@ -60,7 +80,7 @@ REPORT.md
 
 Start with a transcript to inspect what the model did, then use its score to see the verdict and
 first blocking code. The [results reference](docs/RESULTS.md) explains summary values and
-per-case codes.
+per-case codes. Trials that ended in ERROR are listed in each pass's `errors.jsonl`.
 
 ## Compare runs
 

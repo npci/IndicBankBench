@@ -28,8 +28,7 @@ def _cases():
         yield path, json.loads(path.read_text())
     if not found:
         raise AssertionError(
-            f"_cases() yielded nothing from {CASE_BANK} — every test that loops over it would "
-            f"pass vacuously")
+            f"No active case files found under {CASE_BANK}")
 
 
 class GoldCallRoundTrip(unittest.TestCase):
@@ -138,8 +137,7 @@ class TransactionRecordShape(unittest.TestCase):
                 yield path.relative_to(CASE_BANK), mock["records"]
         if not found:
             raise AssertionError(
-                "_fixtures() yielded nothing — three TransactionRecordShape tests would pass "
-                "vacuously")
+                "No transaction records found for transaction validation")
 
 
     def test_transaction_values_follow_declared_enums(self):
@@ -198,7 +196,7 @@ class MockOutputShape(unittest.TestCase):
                 found += 1
                 yield path.relative_to(CASE_BANK), name, mock, canonical[name], schemas[name]
         if not found:
-            raise AssertionError("_mocks() yielded nothing — both shape tests would pass vacuously")
+            raise AssertionError("No canonical tool mocks found for output validation")
 
     @staticmethod
     def _wrapper(tool):
@@ -217,8 +215,7 @@ class MockOutputShape(unittest.TestCase):
             item = outs[wrapper].get("items")
             self.assertIsInstance(
                 item, dict,
-                f"cannot resolve declared item fields for {name}.{wrapper} — the check would "
-                f"otherwise skip silently, which is how this drift survived")
+                f"No item-field schema declared for {name}.{wrapper}")
             required = schema["properties"][wrapper]["items"].get("required", [])
             for i, record in enumerate(mock["records"]):
                 self.assertTrue(set(required) <= set(record), f"{rel}: missing required record fields")
@@ -265,14 +262,14 @@ class InlineToolDisclosure(unittest.TestCase):
                     yield path.relative_to(CASE_BANK), case, entry
         if not found:
             raise AssertionError(
-                "_inline_tools() yielded nothing — all four inline-tool tests would pass vacuously")
+                "No inline tools found for disclosure validation")
 
     def test_every_inline_tool_declares_category_and_action_type(self):
         for rel, _case, tool in self._inline_tools():
             with self.subTest(case=str(rel), tool=tool["name"]):
                 self.assertIn("Category:", tool["description"])
                 self.assertIn("Action type:", tool["description"],
-                              "an inline tool formatted unlike the real ones is a tell")
+                              "inline tools must use the same description format as catalog tools")
 
     def test_a_confirmation_requirement_is_stated_in_the_description(self):
         for rel, _case, tool in self._inline_tools():
@@ -299,7 +296,7 @@ class InlineToolDisclosure(unittest.TestCase):
 
 class DisclosedPrerequisiteIsReachable(unittest.TestCase):
 
-    # Approved cases without a transaction to locate.
+    # These scenarios do not require locating a transaction.
     NO_TRANSACTION_TO_LOCATE = {
         "csc.get_insurance_details.confusing_intent.001",
         "csc.raise_request.confusing_intent.001",
