@@ -2,15 +2,40 @@
 import copy
 import json
 
+from . import tools
+
 
 class MockExecutionError(Exception):
     pass
 
 
+class UnknownTarget(Exception):
+    """A write named an entity that has no record in this case."""
+
+
+def _record_field(arg_key, keys):
+    """The record field an argument filters on, or None."""
+    names = [arg_key, arg_key[:-1]] if arg_key.endswith("ids") else [arg_key]
+    return next((name for name in names if name in keys), None)
+
+
+def _date_part(value):
+    return str(value)[:10]
+
+
+def _range_bound(arg_key, raw_tool_def):
+    """(field, "from" or "to") for a date-typed from_<field> or to_<field> input, else None."""
+    spec = next((i for i in (raw_tool_def or {}).get("inputs", []) if i.get("name") == arg_key), None)
+    prefix, _, field = arg_key.partition("_")
+    if spec is None or spec.get("type") != "date" or prefix not in ("from", "to"):
+        return None
+    return field, prefix
+
+
 def _filter_records(records, arguments, raw_tool_def):
     if not records:
         return records
-    sample_keys = set(records[0].keys())
+    keys = set().union(*(r.keys() for r in records))
     filtered = records
     for arg_key, arg_val in arguments.items():
         if arg_val is None:
@@ -18,13 +43,20 @@ def _filter_records(records, arguments, raw_tool_def):
         # "all" means no filter.
         if arg_val == "all":
             continue
-        field = arg_key
-        if field not in sample_keys and field.endswith("ids"):
-            singular = field[:-1]
-            if singular in sample_keys:
-                field = singular
-        if field not in sample_keys:
-            continue  # arg doesn't map to a filterable record field — leave unfiltered on it
+        # Date bounds are inclusive.
+        bound = _range_bound(arg_key, raw_tool_def)
+        if bound is not None:
+            field = _record_field(bound[0], keys)
+            if field is not None:
+                limit = _date_part(arg_val)
+                if bound[1] == "from":
+                    filtered = [r for r in filtered if field not in r or _date_part(r[field]) >= limit]
+                else:
+                    filtered = [r for r in filtered if field not in r or _date_part(r[field]) <= limit]
+                continue
+        field = _record_field(arg_key, keys)
+        if field is None:
+            continue
         if isinstance(arg_val, list):
             filtered = [r for r in filtered if r.get(field) in arg_val]
         else:
@@ -76,21 +108,29 @@ def _merge_state(tool_name, arguments, mock, case, state):
         match_value = (arguments or {}).get(cfg["match_on"])
         record = next((r for r in source["records"] if r.get(cfg["match_on"]) == match_value), None)
         if record is None:
-            raise MockExecutionError(
-                f"{tool_name}: no {cfg['state_from']} record with {cfg['match_on']}={match_value!r} to merge into"
-            )
+            raise UnknownTarget(f"No record found for {cfg['match_on']} {match_value!r} on this customer's profile.")
         if cfg["field"] not in record:
             raise MockExecutionError(
                 f"{tool_name}: {cfg['state_from']} record has no '{cfg['field']}' field to merge into"
             )
         base = copy.deepcopy(record[cfg["field"]])
 
-    # Only structured arguments update state.
-    payload = {k: v for k, v in (arguments or {}).items() if isinstance(v, dict)}
-    merged = _deep_update(base, payload)
+    if isinstance(base, dict):
+        payload = {k: v for k, v in (arguments or {}).items() if isinstance(v, dict)}
+        merged = _deep_update(base, payload)
+    else:
+        merged = base
     if state is not None:
         state[key] = copy.deepcopy(merged)
     return cfg["field"], merged
+
+
+def _not_found(exc):
+    return json.dumps({
+        "error_code": "NOT_FOUND",
+        "error_message": str(exc),
+        "retriable": False,
+    })
 
 
 def _rejection(mock, arguments):
@@ -113,6 +153,32 @@ def _output_field_name(raw_tool_def, fallback):
     if outputs:
         return outputs[0]["name"]
     return fallback
+
+
+def _echo_identifying_inputs(output, arguments, raw_tool_def):
+    """Copy arguments that are also declared outputs into the reply, if the mock omits them."""
+    if not raw_tool_def:
+        return
+    output_names = {o["name"] for o in raw_tool_def.get("outputs", [])}
+    for spec in raw_tool_def.get("inputs", []):
+        key = spec["name"]
+        if key in output_names and key in (arguments or {}) and key not in output:
+            output[key] = arguments[key]
+
+
+def _whole_floats_to_int(arguments, inputs):
+    """Integer arguments sent as whole floats (5.0), as ints."""
+    specs = {spec["name"]: spec for spec in inputs or []}
+    out = {}
+    for key, value in arguments.items():
+        spec = specs.get(key) or {}
+        if spec.get("type") == "integer" and isinstance(value, float) and value.is_integer():
+            value = int(value)
+        elif isinstance(value, dict) and spec.get("properties"):
+            nested = [dict(sub, name=name) for name, sub in spec["properties"].items()]
+            value = _whole_floats_to_int(value, nested)
+        out[key] = value
+    return out
 
 
 def execute(tool_name, arguments, case, raw_tools_by_name, state=None):
@@ -142,6 +208,8 @@ def execute(tool_name, arguments, case, raw_tools_by_name, state=None):
                     "retriable": False,
                 }
             )
+        arguments = _whole_floats_to_int(arguments or {}, raw_tool_def.get("inputs"))
+        arguments = tools.resolve_today(arguments, raw_tool_def, (case.get("setup") or {}).get("current_date"))
 
     kind = mock.get("kind")
     if kind == "record_set_filtered":
@@ -164,12 +232,7 @@ def execute(tool_name, arguments, case, raw_tools_by_name, state=None):
 
     if kind == "outcome_fixed":
         output = dict(mock.get("output", {}))
-        if raw_tool_def:
-            input_names = {i["name"] for i in raw_tool_def.get("inputs", [])}
-            output_names = {o["name"] for o in raw_tool_def.get("outputs", [])}
-            for key in input_names & output_names:
-                if key in (arguments or {}) and key not in output:
-                    output[key] = arguments[key]
+        _echo_identifying_inputs(output, arguments, raw_tool_def)
         return json.dumps(output)
 
     if kind == "outcome_merged":
@@ -177,14 +240,14 @@ def execute(tool_name, arguments, case, raw_tools_by_name, state=None):
         if refused is not None:
             return json.dumps(refused)
         output = dict(mock.get("output", {}))
-        field, merged = _merge_state(tool_name, arguments, mock, case, state)
-        output[field] = merged
-        if raw_tool_def:
-            input_names = {i["name"] for i in raw_tool_def.get("inputs", [])}
-            output_names = {o["name"] for o in raw_tool_def.get("outputs", [])}
-            for key in input_names & output_names:
-                if key in (arguments or {}) and key not in output:
-                    output[key] = arguments[key]
+        try:
+            field, merged = _merge_state(tool_name, arguments, mock, case, state)
+        except UnknownTarget as exc:
+            return _not_found(exc)
+        # A single-value field must not overwrite a key the case wrote.
+        if isinstance(merged, dict) or field not in output:
+            output[field] = merged
+        _echo_identifying_inputs(output, arguments, raw_tool_def)
         return json.dumps(output)
 
     raise MockExecutionError(f"Unknown mock kind '{kind}' for tool '{tool_name}'")

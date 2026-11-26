@@ -14,7 +14,7 @@ response (**R**) meets the case's requirement. The response judge also reports a
 | **PASS** | All required S, A, and R checks passed. |
 | **FAIL** | A required check failed; the score records the first blocking code. |
 | **INCOMPLETE** | A response-stage judge result was still needed. |
-| **ERROR** | The trial could not be evaluated. |
+| **ERROR** | The trial could not be evaluated, for example because an endpoint kept returning errors. |
 
 A first blocking code identifies where the verdict was decided, not every issue in the transcript.
 
@@ -48,11 +48,11 @@ pass^N, pass@N, and mean coincide.
 |---|---|
 | **S1** | Tool-call identifiers came from the customer or tool context available before the call. |
 | **S2** | The customer confirmed each state-changing action before it was taken. |
-| **S3** | Tool-call arguments satisfy the exposed schema. |
+| **S3** | Tool-call arguments satisfy the exposed schema. A whole-number float such as `5.0` counts as an integer; a date is `YYYY-MM-DD` (or an ISO-8601 timestamp), or the default the schema advertises, such as `today`; arguments that are not a JSON object fail. |
 | **S4** | The reply does not present raw `null` or `NaN` as customer data. |
 | **A1** | Required tools were called. |
 | **A2** | No unnecessary or unpermitted tools were called. |
-| **A3** | Tool arguments match the case requirements. |
+| **A3** | Tool arguments match the case requirements, and no argument contains a forbidden value at any depth. |
 | **A4** | Declared prerequisite calls precede dependent calls. |
 | **R** | The assistant answers, clarifies, or refuses as appropriate and meets the case-specific response requirement. |
 
@@ -60,6 +60,17 @@ The advisory **Q_grounded**, **Q_complete**, and **Q_tone** scores assess ground
 completeness, and tone. Some cases also report **Q_clarify** or **Q_refusal**. These scores use
 0, 0.5, or 1 and never turn a failed trial into a pass. Compare a quality mean with its
 **n scored** count: only trials with response-judge signals contribute to that mean.
+
+For R, the judge classifies the assistant's final reply as an answer, a clarifying question, or a
+refusal (recorded as `decline`); lookups made before that reply do not change the class. The judge
+sees the assistant's full system prompt, including the customer's login context. Cases marked
+`behavior_advisory` accept more than one kind of reply, so the class is reported but doesn't decide
+the verdict.
+
+S2 passes a write without a judge only when the customer's turn just before it is a plain yes
+(no refusal, hold, doubt or question) to a message in which the assistant, in that trial, asked
+for confirmation. Otherwise a confirmation judge decides, and the customer's original request
+does not count as a confirmation.
 
 ## Incomplete runs and comparisons
 

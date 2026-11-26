@@ -5,7 +5,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from indicbankbench.harness import mock_executor, tools  # noqa: E402
 
@@ -105,9 +105,43 @@ class OutcomeMerged(unittest.TestCase):
             out = self._call({"card_id": CARD, "atm": {"international": ok}}, {})
             self.assertEqual("success", out["status"], f"{ok} alone must still be accepted")
 
-    def test_an_unknown_entity_raises(self):
-        with self.assertRaises(mock_executor.MockExecutionError):
-            self._call({"card_id": "CARD-TKN-NOSUCH", "atm": {"domestic": {"enabled": False}}}, {})
+    def test_an_unknown_entity_is_a_tool_error_not_a_crash(self):
+        state = {}
+        out = self._call({"card_id": "CARD-TKN-NOSUCH", "atm": {"domestic": {"enabled": False}}}, state)
+        self.assertEqual("NOT_FOUND", out["error_code"])
+        self.assertEqual({}, state, "a refused write must not change state")
+
+
+def _history_case():
+    records = [{"date": f"2026-06-{30 - i:02d}T10:00:00", "amount": 100 + i, "type": "debit",
+                "channel": "upi", "reference_id": f"T{i}", "transaction_note": "",
+                "status": "success", "running_balance": 1000} for i in range(5)]
+    return {"case_id": "test.paging.001", "tools_exposed": ["get_transaction_history"],
+            "setup": {"current_date": "2026-07-01"},
+            "mock": {"get_transaction_history": {"kind": "record_set_filtered", "records": records}}}
+
+
+class WholeFloatArguments(unittest.TestCase):
+    """Whole floats run as integers."""
+
+    def setUp(self):
+        _, defs = tools.load_tool_definitions()
+        self.case = _history_case()
+        self.raw, _ = tools.resolve_tools_exposed(self.case["tools_exposed"], defs)
+
+    def _refs(self, args):
+        out = json.loads(mock_executor.execute("get_transaction_history", args, self.case, self.raw, {}))
+        return [r["reference_id"] for r in out["transactions"]]
+
+    def test_whole_float_limit_and_offset_page_like_ints(self):
+        self.assertEqual(self._refs({"account_id": "A1", "limit": 2, "offset": 1}),
+                         self._refs({"account_id": "A1", "limit": 2.0, "offset": 1.0}))
+        self.assertEqual(["T1", "T2"], self._refs({"account_id": "A1", "limit": 2.0, "offset": 1.0}))
+
+    def test_fractional_limit_is_still_a_schema_error(self):
+        out = json.loads(mock_executor.execute(
+            "get_transaction_history", {"account_id": "A1", "limit": 2.5}, self.case, self.raw, {}))
+        self.assertEqual("SCHEMA_VALIDATION_ERROR", out["error_code"])
 
 
 if __name__ == "__main__":

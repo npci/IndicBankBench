@@ -24,10 +24,20 @@ def _to_wire(transcript):
         m = copy.deepcopy(msg)
         if m.get("tool_calls"):
             for tc in m["tool_calls"]:
+                # Arguments that were not a JSON object are sent as {}.
+                tc.pop("arguments_raw", None)
                 if isinstance(tc["function"]["arguments"], dict):
                     tc["function"]["arguments"] = json.dumps(tc["function"]["arguments"])
         wire.append(m)
     return wire
+
+
+def _malformed_arguments_error(tc):
+    return json.dumps({
+        "error_code": "MALFORMED_ARGUMENTS",
+        "error_message": f"The arguments for '{tc['function']['name']}' are not a valid JSON object.",
+        "retriable": True,
+    })
 
 
 def run_case(case, model_client, candidate_profile="candidate_default", max_tool_iters=MAX_TOOL_ITERS,
@@ -49,13 +59,21 @@ def run_case(case, model_client, candidate_profile="candidate_default", max_tool
         transcript.append({"role": "user", "content": turn["content"]})
 
         for _ in range(max_tool_iters):
-            response = model_client.chat(
-                candidate_profile, _to_wire(transcript), tools=openai_schemas
-            )
+            try:
+                response = model_client.chat(
+                    candidate_profile, _to_wire(transcript), tools=openai_schemas
+                )
+            except Exception as exc:
+                # Keep the partial transcript.
+                if getattr(exc, "transcript", None) is None:
+                    exc.transcript = transcript
+                raise
             if response.get("tool_calls"):
+                # Text sent with tool calls is part of the reply.
+                text = response.get("content")
                 assistant_msg = {
                     "role": "assistant",
-                    "content": None,
+                    "content": text if isinstance(text, str) and text.strip() else None,
                     "tool_calls": response["tool_calls"],
                 }
                 if response.get("reasoning"):
@@ -66,7 +84,10 @@ def run_case(case, model_client, candidate_profile="candidate_default", max_tool
                 for tc in response["tool_calls"]:
                     name = tc["function"]["name"]
                     args = tc["function"]["arguments"]
-                    output = mock_executor.execute(name, args, case, raw_tools_by_name, mock_state)
+                    if "arguments_raw" in tc:
+                        output = _malformed_arguments_error(tc)
+                    else:
+                        output = mock_executor.execute(name, args, case, raw_tools_by_name, mock_state)
                     transcript.append(
                         {"role": "tool", "tool_call_id": tc["id"], "content": output}
                     )
