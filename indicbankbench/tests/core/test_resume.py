@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
+
 class ResumeFingerprint(unittest.TestCase):
 
     def setUp(self):
@@ -45,3 +46,9 @@ class ResumeFingerprint(unittest.TestCase):
             other = {**self.cfg, "candidate_model": "m2"}
             self.assertNotEqual(self.cli._case_fingerprint(p, self.cfg),
                                 self.cli._case_fingerprint(p, other))
+
+    def test_fingerprint_changes_when_the_grading_code_changes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = self._case_file(tmp)
+            self.assertNotEqual(self.cli._case_fingerprint(p, {**self.cfg, "harness_hash": "a"}),
+                                self.cli._case_fingerprint(p, {**self.cfg, "harness_hash": "b"}))

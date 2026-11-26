@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from . import analysis, grader, judge, paths, prompt, runner, stub_client, tools
-from .model_client import ModelClient
+from .model_client import ModelClient, extra_body
 from tqdm import tqdm
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -72,12 +72,34 @@ def _get_g2_judge_result(judge_mode, case, transcript, real_client_getter):
     return judge.heuristic_confirmation_judge(case, transcript, write_calls)
 
 
+# Marks an answer not yet judged; a resume judges it.
+PENDING_JUDGE = "awaiting_judge.json"
+
+
+def _unjudged_transcript(out_dir, case_fingerprint):
+    """The saved answer whose judging failed under these settings, or None."""
+    try:
+        pending = json.loads((out_dir / PENDING_JUDGE).read_text())
+        if case_fingerprint and pending.get("_fingerprint") == case_fingerprint:
+            return json.loads((out_dir / "transcript.json").read_text())
+    except (OSError, json.JSONDecodeError):
+        pass
+    return None
+
+
 def _run_one(case, model_mode, judge_mode, real_client_getter, out_dir, case_fingerprint=None,
              base_prompt_path=None):
     out_dir.mkdir(parents=True, exist_ok=True)
     candidate_client, candidate_profile = _make_candidate_client(model_mode, real_client_getter)
+    pending_file = out_dir / PENDING_JUDGE
+    transcript = _unjudged_transcript(out_dir, case_fingerprint)
     try:
-        transcript = runner.run_case(case, candidate_client, candidate_profile, base_prompt_path=base_prompt_path)
+        if transcript is None:
+            pending_file.unlink(missing_ok=True)
+            transcript = runner.run_case(case, candidate_client, candidate_profile,
+                                         base_prompt_path=base_prompt_path)
+            (out_dir / "transcript.json").write_text(json.dumps(transcript, indent=2))
+            pending_file.write_text(json.dumps({"_fingerprint": case_fingerprint}))
     except runner.MaxToolIterationsError as exc:
         transcript = exc.transcript
         result = grader.grade(case, transcript)
@@ -93,6 +115,7 @@ def _run_one(case, model_mode, judge_mode, real_client_getter, out_dir, case_fin
         result["_fingerprint"] = case_fingerprint
     (out_dir / "transcript.json").write_text(json.dumps(transcript, indent=2))
     (out_dir / "score.json").write_text(json.dumps(result, indent=2))
+    pending_file.unlink(missing_ok=True)
     return result
 
 
@@ -133,6 +156,18 @@ def _hash_files(paths):
     return h.hexdigest()[:12]
 
 
+# Files whose hash is part of the resume check.
+_HARNESS_DIR = Path(__file__).resolve().parent
+GRADING_FILES = [
+    *(_HARNESS_DIR / name for name in (
+        "grader.py", "judge.py", "mock_executor.py", "runner.py", "tools.py", "contract.py", "prompt.py",
+        "model_client.py",
+    )),
+    tools.MODEL_SCHEMAS_PATH,
+    tools.HARNESS_SPEC_PATH,
+]
+
+
 def _run_config():
     """Return resolved candidate and judge configuration."""
     client = ModelClient()
@@ -142,10 +177,13 @@ def _run_config():
         "candidate_model": cand["model"],
         "candidate_base_url": cand["base_url"],
         "temperature": cand["temperature"],
+        "top_p": cand["top_p"],
         "max_tokens": cand["max_tokens"],
         "seed": cand.get("seed"),
+        "candidate_extra_body": extra_body("candidate_default"),
         "judge_model": judge_p["model"],
         "judge_base_url": judge_p["base_url"],
+        "judge_extra_body": extra_body("judge_default"),
     }
 
 
@@ -157,9 +195,12 @@ def _case_fingerprint(case_path, cfg):
             str(cfg["candidate_model"]).encode(),
             str(cfg["temperature"]).encode(),
             str(cfg.get("seed", "")).encode(),
+            json.dumps([cfg.get("top_p"), cfg.get("max_tokens"), cfg.get("candidate_extra_body") or {}],
+                       sort_keys=True).encode(),
             str(cfg["judge_model"]).encode(),
+            json.dumps(cfg.get("judge_extra_body") or {}, sort_keys=True).encode(),
             str(cfg.get("prompt_hash", "")).encode(),
-            str(cfg.get("candidate_reasoning", "")).encode(),
+            str(cfg.get("harness_hash", "")).encode(),
         ])
     ).hexdigest()[:16]
 
@@ -182,6 +223,10 @@ def _run_case_for_pass(case_path, get_client, pass_dir, cfg, fresh, base_prompt_
                     return cached, "cached"
             except json.JSONDecodeError:
                 pass  # unreadable cache -> just re-run it
+        # An old score must not outlive a failed re-run.
+        score_file.unlink(missing_ok=True)
+        if fresh:
+            (case_dir / PENDING_JUDGE).unlink(missing_ok=True)
         return _run_one(case, "live", "live", get_client, case_dir, case_fingerprint=fp,
                          base_prompt_path=base_prompt_path), "ran"
     except Exception as e:  # noqa: BLE001 - surface and continue
@@ -191,6 +236,7 @@ def _run_case_for_pass(case_path, get_client, pass_dir, cfg, fresh, base_prompt_
         entry = {
             "case_id": case_id,
             "case_path": str(case_path),
+            "error_type": type(e).__name__,
             "error": str(e),
         }
         with _ERROR_LOG_LOCK:
@@ -231,6 +277,9 @@ def cmd_run(args):
     if not cfg["candidate_base_url"]:
         print("CANDIDATE_BASE_URL is not set — see HOW_TO_RUN.md.", file=sys.stderr)
         sys.exit(2)
+    if not cfg["judge_base_url"]:
+        print("JUDGE_BASE_URL is not set — see HOW_TO_RUN.md.", file=sys.stderr)
+        sys.exit(2)
 
     resolved_prompt_path = Path(args.prompt).resolve() if args.prompt else prompt.BASE_PROMPT_PATH
     if not resolved_prompt_path.exists():
@@ -241,6 +290,7 @@ def cmd_run(args):
     except ValueError:
         cfg["prompt_path"] = str(resolved_prompt_path)
     cfg["prompt_hash"] = _hash_files([resolved_prompt_path])
+    cfg["harness_hash"] = _hash_files(GRADING_FILES)
     if args.candidate_label:
         cfg["candidate_label"] = args.candidate_label
 
@@ -341,7 +391,7 @@ def cmd_run(args):
         if summary["n_cases"] == 0:
             print("!! No results at all — nothing to report.")
             return summary
-        print("!! Numbers below cover only the cases that completed.\n")
+        print("!! Trials without a score count as not passed in the numbers below.\n")
 
     print(f"{label}: {summary['strict_pass']}/{summary['n_cases']} "
           f"({100 * summary['strict_rate']:.0f}%)")
@@ -405,7 +455,7 @@ def main():
     p.add_argument("--cases", nargs="+", default=None, metavar="PATH",
                    help="case files or directories to run (default: the whole case bank)")
     p.add_argument("--concurrency", type=int, default=4, metavar="N",
-                   help="cases in parallel (default: 4). All models share one judge, so keep this modest")
+                   help="cases in parallel (default: 4)")
     p.add_argument("--fresh", action="store_true",
                    help="ignore cached results and re-run every case")
     p.add_argument("--prompt", default=None, metavar="PATH",
@@ -414,9 +464,8 @@ def main():
                         "the resume fingerprint, so a prompt change invalidates the cache.")
     p.add_argument("--candidate-label", default=None, metavar="LABEL",
                    help="explicit human label for the candidate, recorded in run.json as "
-                        "candidate_label. Use this when the endpoint's /v1/models id is "
-                        "ambiguous or known-wrong (e.g. a 31b deployment serving under the id "
-                        "'gemma-e4b') — never rely on candidate_model alone in that case.")
+                        "candidate_label. Use this when the endpoint's /v1/models id doesn't "
+                        "identify the model.")
     p.set_defaults(func=cmd_run)
 
     c = sub.add_parser(

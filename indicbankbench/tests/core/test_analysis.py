@@ -98,6 +98,11 @@ class CompareWarnings(unittest.TestCase):
             _, warnings = self._two_runs(tmp, temperature=0.7)
         self.assertTrue(any("temperature" in w for w in warnings), warnings)
 
+    def test_harness_mismatch_warns(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _, warnings = self._two_runs(tmp, harness_hash="b")
+        self.assertTrue(any("harness_hash" in w for w in warnings), warnings)
+
     def test_passes_mismatch_warns(self):
         with tempfile.TemporaryDirectory() as tmp:
             _, warnings = self._two_runs(tmp, passes=2)

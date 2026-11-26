@@ -9,7 +9,7 @@ BENCH_ROOT = Path(__file__).resolve().parents[1]
 RESULTS_ROOT = BENCH_ROOT / "results"
 
 # Run settings that affect comparability.
-COMPARABLE_FIELDS = ("passes", "temperature", "case_bank_hash", "judge_model")
+COMPARABLE_FIELDS = ("passes", "temperature", "case_bank_hash", "judge_model", "harness_hash")
 
 
 def run_dir(run_id, results_root=None):
@@ -138,6 +138,8 @@ def summarize(run):
         s.get("fail_reason") for samples in run["scores"].values() for s in samples
         if s and s.get("verdict") != "PASS" and s.get("fail_reason")
     )
+    # Trials without a score count as not passed.
+    unscored = sum(1 for samples in run["scores"].values() for s in samples if not s)
 
     return {
         "run_id": run["run_id"],
@@ -150,6 +152,7 @@ def summarize(run):
         "any_pass": n_cases - failed_all,
         "any_rate": (n_cases - failed_all) / n_cases if n_cases else 0.0,
         "mean_single_shot": total_pass / (n * n_cases) if n_cases and n else 0.0,
+        "unscored": unscored,
         "inconsistent": inconsistent,
         "failed_all": failed_all,
         "k_distribution": {k: dist.get(k, 0) for k in range(n + 1)},
@@ -180,7 +183,15 @@ def compare(run_ids, results_root=None):
             f"runs cover different case sets — {len(all_cases)} cases seen, {len(common)} common to all; "
             "totals below are over each run's own cases and are NOT directly comparable"
         )
+    for s in summaries:
+        if s["unscored"]:
+            warnings.append(f"{s['run_id']}: {_unscored_note(s)}")
     return summaries, warnings
+
+
+def _unscored_note(summary):
+    return (f"{summary['unscored']} of {summary['passes'] * summary['n_cases']} trials have no score "
+            "(errored or not run) and count as not passed")
 
 
 def _pct(x):
@@ -200,6 +211,9 @@ def render_run_report(summary, generated_at=None):
 
     L.append(f"## pass^{n} — **{summary['strict_pass']}/{summary['n_cases']} ({_pct(summary['strict_rate'])})**")
     L.append("")
+    if summary["unscored"]:
+        L.append(f"> **Incomplete run:** {_unscored_note(summary)}. Re-run the same run ID to fill them in.")
+        L.append("")
 
     L.append("| metric | value |")
     L.append("|---|---|")

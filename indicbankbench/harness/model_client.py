@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import time
 from pathlib import Path
 
 import yaml
@@ -18,6 +19,57 @@ DOTENV_PATH = REPO_ROOT / ".env"
 envtools.load_dotenv(DOTENV_PATH)
 
 _ENV_VAR_RE = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:-(.*?))?\}")
+
+
+class ProviderError(RuntimeError):
+    """The endpoint answered with an error instead of a completion."""
+
+
+# Error text sent as the reply, such as "HTTP 503: Service temporarily unavailable.".
+_ERROR_TEXT_RE = re.compile(
+    r"^\s*(?:HTTP(?:/\d(?:\.\d)?)?\s*[45]\d\d\b"
+    r"|[45]\d\d\s+(?:Bad Gateway|Service Unavailable|Gateway Time-?out|Internal Server Error"
+    r"|Too Many Requests)\b)",
+    re.I,
+)
+_ERROR_TEXT_MAX_CHARS = 300
+
+
+def _has_reasoning(message):
+    for name in ("reasoning", "reasoning_content", "reasoning_details"):
+        value = getattr(message, name, None)
+        if isinstance(value, (str, list)) and value:
+            return True
+    return False
+
+
+def _is_error_text(choice):
+    """Whether the reply is a provider's error message."""
+    message = getattr(choice, "message", None)
+    content = getattr(message, "content", None)
+    if not isinstance(content, str) or len(content) > _ERROR_TEXT_MAX_CHARS:
+        return False
+    if getattr(message, "tool_calls", None) or _has_reasoning(message):
+        return False
+    return bool(_ERROR_TEXT_RE.match(content))
+
+
+def _provider_error(response):
+    """Why this response is a provider error, or None."""
+    error = getattr(response, "error", None)
+    choices = getattr(response, "choices", None)
+    if not choices:
+        return f"provider returned an error: {error}" if error else "provider returned no choices"
+    if getattr(choices[0], "finish_reason", None) == "error":
+        return "provider finished the completion with finish_reason='error'"
+    if error:
+        message = getattr(choices[0], "message", None)
+        if not (getattr(message, "content", None) or getattr(message, "tool_calls", None)):
+            return f"provider returned an error: {error}"
+        logging.warning("provider attached an error to a finished reply; the reply is kept: %s", error)
+    if _is_error_text(response.choices[0]):
+        return f"provider returned error text as the reply: {response.choices[0].message.content[:80]!r}"
+    return None
 
 
 def _expand_env(value):
@@ -39,6 +91,28 @@ def _expand_env_num(value, default):
     if expanded in (None, ""):
         return default
     return expanded
+
+
+def extra_body(profile_name):
+    """Request options for a call: CANDIDATE_EXTRA_BODY or JUDGE_EXTRA_BODY."""
+    if profile_name.startswith("candidate"):
+        env_name = "CANDIDATE_EXTRA_BODY"
+    elif profile_name.startswith(("judge", "report")):
+        env_name = "JUDGE_EXTRA_BODY"
+    else:
+        return {}
+    raw = os.environ.get(env_name)
+    if not raw:
+        return {}
+    try:
+        body = json.loads(raw)
+    except ValueError:
+        logging.warning("%s is not valid JSON; ignored", env_name)
+        return {}
+    if not isinstance(body, dict):
+        logging.warning("%s is not a JSON object; ignored", env_name)
+        return {}
+    return body
 
 
 class ModelClient:
@@ -102,29 +176,42 @@ class ModelClient:
             kwargs["seed"] = profile["seed"]
         if tools:
             kwargs["tools"] = tools
-        extra_raw = os.environ.get("CANDIDATE_EXTRA_BODY")
-        if extra_raw:
-            try:
-                kwargs["extra_body"] = json.loads(extra_raw)
-            except json.JSONDecodeError:
-                pass
-        response = client.chat.completions.create(**kwargs)
+        options = extra_body(profile_name)
+        if options:
+            kwargs["extra_body"] = options
+
+        # Retry replies that carry an error. An empty reply is graded, not retried.
+        attempts = int(profile.get("max_retries", 2)) + 1
+        for attempt in range(attempts):
+            response = client.chat.completions.create(**kwargs)
+            problem = _provider_error(response)
+            if problem is None:
+                break
+            logging.warning("%s (attempt %d/%d)", problem, attempt + 1, attempts)
+            if attempt + 1 < attempts:
+                time.sleep(min(2 ** attempt, 30))
+        else:
+            raise ProviderError(f"{problem} after {attempts} attempt(s)")
+
         msg = response.choices[0].message
         tool_calls = None
         if msg.tool_calls:
             tool_calls = []
             for tc in msg.tool_calls:
+                entry = {"id": tc.id, "type": "function", "function": {"name": tc.function.name}}
+                raw_args = tc.function.arguments
                 try:
-                    args = json.loads(tc.function.arguments) if tc.function.arguments else {}
-                except json.JSONDecodeError:
+                    args = json.loads(raw_args) if raw_args else {}
+                    if args is None:
+                        args = {}
+                    if not isinstance(args, dict):
+                        raise ValueError("arguments are not a JSON object")
+                except ValueError:
+                    # S3 fails the call; the raw text is kept in the transcript.
                     args = {}
-                tool_calls.append(
-                    {
-                        "id": tc.id,
-                        "type": "function",
-                        "function": {"name": tc.function.name, "arguments": args},
-                    }
-                )
+                    entry["arguments_raw"] = raw_args
+                entry["function"]["arguments"] = args
+                tool_calls.append(entry)
         # Preserve reasoning for later model turns.
         result = {"role": "assistant", "content": msg.content, "tool_calls": tool_calls}
         reasoning = getattr(msg, "reasoning", None)
