@@ -36,8 +36,21 @@ judge). See `HOW_TO_RUN.md` for the full setup and run workflow.
 ## Tests
 
 ```bash
-python -m unittest discover -s indicbankbench/tests
+python -m unittest discover -s indicbankbench/tests/core
 ```
+
+Core tests use small fixtures and do not require downloaded cases or live endpoints.
+
+To validate the downloaded case bank separately:
+
+```bash
+export INDICBANKBENCH_DATA=/path/to/dataset
+python -m unittest discover -s indicbankbench/tests/data
+```
+
+The data suite fails if no case bank is available. Run it for dataset releases and changes to
+tool contracts or grading. It checks structural consistency; scenario-specific inference and
+prerequisite-policy changes still require human review.
 
 The tests use only the stdlib plus the runtime dependencies in `pyproject.toml`.
 

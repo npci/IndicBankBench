@@ -4,7 +4,7 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 from indicbankbench.harness import mock_executor, tools  # noqa: E402
 from indicbankbench.harness.grader import _check_s1  # noqa: E402

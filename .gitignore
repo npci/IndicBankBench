@@ -14,7 +14,7 @@ indicbankbench/results/
 
 # The case bank, fetched from the dataset repo (see README). ./data is the location the
 # docs tell you to download into, so it must never be committed back into the harness repo.
-data/
+/data/
 
 # Generated local review and scan-report artifacts; never include in source scans
 # or in a published repo (they embed internal paths and unremediated CVE detail).
