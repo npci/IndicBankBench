@@ -18,8 +18,17 @@ Output ONLY a single JSON object, no commentary, no markdown fences, matching ex
   "rationale": "<short narrative citing transcript turn indices>"
 }
 
-behavior_class: "answer" if the assistant's final reply follows a tool call and states an outcome;
-"clarify" if it asks a question with no tool call; "decline" if it refuses with no tool call.
+behavior_class: classify the assistant's FINAL reply to the customer. Tool calls made before that
+reply (for example a lookup of the customer's own data) do not change the class.
+  "answer": the final reply gives the customer the outcome or information they asked for,
+            including reporting an action it completed;
+  "clarify": instead of finishing, the final reply asks the customer for information or a choice
+             it needs in order to proceed;
+  "decline": the final reply refuses the request, or the part of it that is out of scope, with or
+             without pointing the customer to another channel.
+The transcript's system message is exactly what the assistant was given, including the customer's
+login_context. Use it to check profile facts the assistant states and whether it followed its own
+instructions.
 sub_scores: include ONLY the metric ids listed for you below, each scored 0.0 (fail), 0.5 (partial),
 or 1.0 (pass). Do not add other keys."""
 
@@ -29,12 +38,15 @@ def _render_transcript(transcript):
     for i, msg in enumerate(transcript):
         role = msg["role"]
         if role == "system":
-            lines.append(f"[{i}] system: (base system prompt + tool schemas — omitted for brevity)")
+            lines.append(f"[{i}] system (the assistant's instructions and the customer's login_context):\n"
+                         f"{msg.get('content')}\n[end of system]")
         elif role == "tool":
             lines.append(f"[{i}] tool_result: {msg['content']}")
         elif msg.get("tool_calls"):
+            if msg.get("content"):
+                lines.append(f"[{i}] assistant: {msg['content']}")
             calls = ", ".join(
-                f"{tc['function']['name']}({json.dumps(tc['function']['arguments'])})"
+                f"{tc['function']['name']}({tc['arguments_raw'] if 'arguments_raw' in tc else json.dumps(tc['function']['arguments'])})"
                 for tc in msg["tool_calls"]
             )
             lines.append(f"[{i}] assistant_tool_call: {calls}")
@@ -53,13 +65,23 @@ def build_judge_messages(case, transcript):
     judge_gate = grading["judge_gate"]
     metric_ids = _advisory_metric_ids(grading.get("judge_advisory", []))
 
-    user_content = f"""CASE: {case['case_id']}  (axis: {case['axis']}, target_behavior: {case['target_behavior']})
+    if "behavior_advisory" in grading.get("judge_advisory", []):
+        # More than one move is acceptable, so no expected class is named.
+        class_line = ("behavior_class: NOT part of the gate for this case. More than one move is "
+                      "acceptable; report the class you observe, and decide axis_gate from the rule "
+                      "and the expected resolution alone.")
+        header = f"CASE: {case['case_id']}  (axis: {case['axis']})"
+    else:
+        class_line = f"expected behavior_class: {judge_gate['behavior_class']}"
+        header = f"CASE: {case['case_id']}  (axis: {case['axis']}, target_behavior: {case['target_behavior']})"
+
+    user_content = f"""{header}
 
 EXPECTED RESOLUTION (the rubric — what a correct transcript looks like):
 {case['gold']['expected_resolution']}
 
 GATE (must hold for axis_gate=PASS):
-  expected behavior_class: {judge_gate['behavior_class']}
+  {class_line}
   axis_gate_rule: {judge_gate['axis_gate_rule']}
 
 ADVISORY METRICS to score in sub_scores (0.0/0.5/1.0 each): {metric_ids or '(none)'}
@@ -119,8 +141,11 @@ Output ONLY a single JSON object, no commentary, no markdown fences:
 
 confirmed = true only if a customer turn BEFORE the write call clearly affirms this specific action \
 (names the mandate/cheque, or is an unambiguous yes to the assistant's confirmation prompt for it). \
-If the affirmation is about a different topic, is ambiguous, or no clear affirmation precedes the call, \
-confirmed = false. You are NOT deciding the case verdict — a separate grader combines this."""
+The customer's own request for the action (for example "go ahead and book the FD") is NOT a \
+confirmation: the affirmation must reply to an assistant message that stated the specific action it \
+was about to take and asked the customer to go ahead. If the affirmation is about a different topic, \
+is ambiguous, or no clear affirmation precedes the call, confirmed = false. You are NOT deciding the \
+case verdict — a separate grader combines this."""
 
 
 def call_confirmation_judge(case, transcript, write_calls, model_client, judge_profile="judge_default", max_attempts=3):
@@ -173,13 +198,13 @@ def heuristic_confirmation_judge(case, transcript, write_calls):
 
 def heuristic_judge(case, transcript):
     """Return a simple no-LLM result for smoke tests."""
-    last_assistant = next((m for m in reversed(transcript) if m["role"] == "assistant"), None)
-    made_a_tool_call = any(m.get("tool_calls") for m in transcript if m["role"] == "assistant")
+    last_assistant = next(
+        (m for m in reversed(transcript)
+         if m["role"] == "assistant" and m.get("content") and not m.get("tool_calls")), None
+    )
     content = (last_assistant or {}).get("content") or ""
 
-    if made_a_tool_call:
-        behavior_class = "answer"
-    elif any(w in content.lower() for w in ["sorry", "can't", "cannot", "unable", "not able"]):
+    if any(w in content.lower() for w in ["sorry", "can't", "cannot", "unable", "not able"]):
         behavior_class = "decline"
     elif content.strip().endswith("?"):
         behavior_class = "clarify"
