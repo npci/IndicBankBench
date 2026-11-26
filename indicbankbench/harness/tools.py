@@ -41,6 +41,19 @@ def _json_type(input_def):
     return schema
 
 
+TODAY = "today"
+
+
+def resolve_today(arguments, raw_tool_def, current_date):
+    """Replace "today" in date inputs with the case's current date."""
+    if not current_date or not arguments:
+        return arguments
+    dates = {i["name"] for i in (raw_tool_def or {}).get("inputs", []) if i.get("type") == "date"}
+    if not any(arguments.get(name) == TODAY for name in dates):
+        return arguments
+    return {k: (current_date if k in dates and v == TODAY else v) for k, v in arguments.items()}
+
+
 def load_tool_definitions(path=None, model_schemas_path=None):
     """Load merged raw and canonical tool definitions."""
     path = Path(path) if path else HARNESS_SPEC_PATH
